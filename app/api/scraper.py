@@ -5,6 +5,7 @@ from app import db
 from app.services.scraper_service import run_scraping_job
 from sqlalchemy.exc import SQLAlchemyError
 import logging
+import json
 from datetime import datetime
 
 bp = Blueprint('scraper', __name__, url_prefix='/api/scraper')
@@ -146,6 +147,53 @@ def get_history():
     except Exception as e:
         logging.error(f"Error fetching scraper history: {str(e)}")
         return jsonify({"error": "Failed to fetch scraper history"}), 500
+
+@bp.route('/seed', methods=['POST'])
+def seed_sources():
+    """Seed the database with sample scraper sources from seed.json"""
+    try:
+        # Check if sources already exist
+        existing_count = ScraperSource.query.count()
+        if existing_count > 0:
+            return jsonify({"error": "Scraper sources already exist in the database"}), 400
+        
+        # Load sample data from seed.json
+        try:
+            with open('seed.json', 'r') as f:
+                seed_data = json.load(f)
+                sources_data = seed_data.get('scraper_sources', [])
+        except (FileNotFoundError, json.JSONDecodeError) as e:
+            logging.error(f"Error loading seed data: {str(e)}")
+            return jsonify({"error": "Failed to load seed data"}), 500
+        
+        # Create sources from seed data
+        added_sources = []
+        for source_data in sources_data:
+            # Create new source object
+            new_source = ScraperSource(
+                name=source_data.get('name', ''),
+                url=source_data.get('url', ''),
+                selector_config=source_data.get('selector_config', {}),
+                is_active=source_data.get('is_active', True)
+            )
+            
+            db.session.add(new_source)
+            added_sources.append(new_source)
+        
+        db.session.commit()
+        
+        return jsonify({
+            "message": f"Successfully seeded {len(added_sources)} scraper sources",
+            "sources": [source.to_dict() for source in added_sources]
+        }), 201
+    
+    except SQLAlchemyError as e:
+        db.session.rollback()
+        logging.error(f"Database error seeding scraper sources: {str(e)}")
+        return jsonify({"error": "Database error occurred"}), 500
+    except Exception as e:
+        logging.error(f"Error seeding scraper sources: {str(e)}")
+        return jsonify({"error": "Failed to seed scraper sources"}), 500
 
 @bp.route('/initialize-sources', methods=['POST'])
 def initialize_sources():

@@ -64,5 +64,149 @@
       ]
     },
     "case_for_support": "Nitrogen Urban Network addresses the critical issues of environmental inequality and food insecurity in Detroit's underserved neighborhoods. Our holistic approach combines urban agriculture, sustainable infrastructure development, and youth empowerment to create lasting positive change. Through our programs, we've transformed vacant lots into productive gardens, trained youth in valuable skills, and advocated for policies that support environmental justice. Our work not only improves the physical environment but also builds community resilience, creates economic opportunities, and empowers residents to become agents of change in their neighborhoods. With additional support, we can expand our impact to more neighborhoods, reach more youth, and develop innovative solutions to the complex challenges facing urban communities."
-  }
+  },
+  "grants": [
+    {
+      "title": "Community Garden Expansion Initiative",
+      "funder": "Green Future Foundation",
+      "description": "Funding to expand community gardens in underserved neighborhoods with a focus on food security and community engagement.",
+      "amount": 75000,
+      "due_date": "2025-07-15",
+      "eligibility": "Nonprofit organizations working in urban agriculture with at least 3 years of experience.",
+      "website": "https://www.greenfuturefoundation.org/grants",
+      "status": "Not Started",
+      "match_score": 87,
+      "match_explanation": "Strong alignment with urban agriculture focus area and community development goals. Organization has demonstrated success with similar projects through Youth Urban Farmers program.",
+      "focus_areas": ["Urban Agriculture", "Food Security", "Community Development"],
+      "contact_info": "Jessica Martinez, Program Officer, jessica@greenfuturefoundation.org"
+    },
+    {
+      "title": "Youth Environmental Leadership Program",
+      "funder": "Bright Horizons Fund",
+      "description": "Support for programs that engage youth in environmental initiatives and develop leadership skills through hands-on projects.",
+      "amount": 45000,
+      "due_date": "2025-06-01",
+      "eligibility": "Organizations with youth programs focused on environmental education and leadership development.",
+      "website": "https://www.brighthorizonsfund.org/youth-programs",
+      "status": "In Progress",
+      "match_score": 92,
+      "match_explanation": "Excellent match with youth empowerment and environmental education focus. Organization's past success with youth programming is a strong advantage.",
+      "focus_areas": ["Youth Empowerment", "Environmental Education", "Leadership Development"],
+      "contact_info": "Michael Chen, Grants Manager, mchen@brighthorizonsfund.org"
+    },
+    {
+      "title": "Sustainable Infrastructure Development Grant",
+      "funder": "Resilient Cities Initiative",
+      "description": "Funding for innovative infrastructure projects that address climate resilience, water management, and sustainable development in urban areas.",
+      "amount": 120000,
+      "due_date": "2025-09-30",
+      "eligibility": "Nonprofit organizations partnering with local government entities on infrastructure projects.",
+      "website": "https://www.resilientcities.org/grants",
+      "status": "Not Started",
+      "match_score": 78,
+      "match_explanation": "Good alignment with sustainable infrastructure focus, but limited experience with government partnerships may be a challenge.",
+      "focus_areas": ["Sustainable Infrastructure", "Climate Resilience", "Water Management"],
+      "contact_info": "Dr. Amara Johnson, Director of Programs, ajohnson@resilientcities.org"
+    },
+    {
+      "title": "Environmental Justice Advocacy Grant",
+      "funder": "Justice Forward Foundation",
+      "description": "Support for advocacy work addressing environmental inequities in disadvantaged communities through policy change, education, and community organization.",
+      "amount": 65000,
+      "due_date": "2025-05-20",
+      "eligibility": "Organizations with a proven track record in environmental justice advocacy and community organizing.",
+      "website": "https://www.justiceforwardfoundation.org/grants",
+      "status": "Submitted",
+      "match_score": 95,
+      "match_explanation": "Exceptional alignment with environmental justice focus area. Organization's mission and past work directly address the grant priorities.",
+      "focus_areas": ["Environmental Justice", "Policy Advocacy", "Community Organizing"],
+      "contact_info": "Tasha Davis, Senior Program Officer, tdavis@justiceforwardfoundation.org"
+    },
+    {
+      "title": "Community Renewable Energy Project",
+      "funder": "Clean Energy Alliance",
+      "description": "Funding for community-based renewable energy projects that provide economic benefits to low-income communities while reducing carbon emissions.",
+      "amount": 90000,
+      "due_date": "2025-08-15",
+      "eligibility": "Nonprofit organizations working on renewable energy projects with community ownership models.",
+      "website": "https://www.cleanenergyalliance.org/community-grants",
+      "status": "Not Started",
+      "match_score": 68,
+      "match_explanation": "Moderate alignment with renewable energy focus, but organization has limited technical experience in energy projects.",
+      "focus_areas": ["Renewable Energy", "Economic Development", "Climate Action"],
+      "contact_info": "Robert Kim, Grants Coordinator, rkim@cleanenergyalliance.org"
+    },
+    {
+      "title": "Urban Green Space Development",
+      "funder": "Parks for All Foundation",
+      "description": "Support for converting vacant lots into functional green spaces that benefit community health, biodiversity, and climate resilience.",
+      "amount": 55000,
+      "due_date": "2025-06-30",
+      "eligibility": "Community-based organizations with experience in urban green space development.",
+      "website": "https://www.parksforall.org/funding",
+      "status": "Won",
+      "match_score": 89,
+      "match_explanation": "Strong alignment with urban green space development experience. Green Alleys Initiative demonstrates proven success in similar projects.",
+      "focus_areas": ["Green Spaces", "Community Development", "Public Health"],
+      "contact_info": "Lisa Thompson, Program Director, lthompson@parksforall.org"
+    },
+    {
+      "title": "Community Food Systems Grant",
+      "funder": "Healthy Food Foundation",
+      "description": "Funding to develop and improve local food systems in urban areas with limited access to fresh produce.",
+      "amount": 80000,
+      "due_date": "2025-04-30",
+      "eligibility": "Organizations working to address food insecurity and develop sustainable food systems.",
+      "website": "https://www.healthyfoodfoundation.org/grants",
+      "status": "Declined",
+      "match_score": 82,
+      "match_explanation": "Good alignment with urban agriculture focus, but proposal needed stronger evaluation metrics.",
+      "focus_areas": ["Food Systems", "Urban Agriculture", "Food Access"],
+      "contact_info": "David Wilson, Grant Officer, dwilson@healthyfoodfoundation.org"
+    }
+  ],
+  "scraper_sources": [
+    {
+      "name": "Green Grants Database",
+      "url": "https://www.greengrants.org/database",
+      "selector_config": {
+        "grants_container": ".grant-listings",
+        "grant_item": ".grant-item",
+        "title": ".grant-title",
+        "funder": ".funder-name",
+        "description": ".grant-description",
+        "amount": ".grant-amount",
+        "due_date": ".due-date"
+      },
+      "is_active": true
+    },
+    {
+      "name": "Environmental Funders Network",
+      "url": "https://www.envfunders.org/opportunities",
+      "selector_config": {
+        "grants_container": "#opportunities-list",
+        "grant_item": ".opportunity-card",
+        "title": "h3.opportunity-title",
+        "funder": ".organization-name",
+        "description": ".opportunity-summary",
+        "amount": ".funding-amount",
+        "due_date": ".deadline-date"
+      },
+      "is_active": true
+    },
+    {
+      "name": "Community Development Grants Portal",
+      "url": "https://www.communitygrants.org/open-grants",
+      "selector_config": {
+        "grants_container": ".grants-container",
+        "grant_item": ".grant-listing",
+        "title": ".grant-name",
+        "funder": ".sponsor-org",
+        "description": ".grant-details p",
+        "amount": ".award-amount",
+        "due_date": ".submission-deadline"
+      },
+      "is_active": true
+    }
+  ]
 }

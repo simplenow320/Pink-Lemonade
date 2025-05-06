@@ -4,6 +4,8 @@ from app import db
 from app.utils.helpers import parse_grant_data
 from sqlalchemy.exc import SQLAlchemyError
 import logging
+import json
+from datetime import datetime
 
 bp = Blueprint('grants', __name__, url_prefix='/api/grants')
 
@@ -204,6 +206,70 @@ def process_grant_url():
     except Exception as e:
         logging.error(f"Error processing grant URL: {str(e)}")
         return jsonify({"error": "Failed to process the grant URL"}), 500
+
+@bp.route('/seed', methods=['POST'])
+def seed_grants():
+    """Seed the database with sample grant data"""
+    try:
+        # Check if grants already exist
+        existing_grants = Grant.query.count()
+        if existing_grants > 0:
+            return jsonify({"error": "Grants already exist in the database"}), 400
+        
+        # Load sample data from seed.json
+        try:
+            with open('seed.json', 'r') as f:
+                seed_data = json.load(f)
+                grants_data = seed_data.get('grants', [])
+        except (FileNotFoundError, json.JSONDecodeError) as e:
+            logging.error(f"Error loading seed data: {str(e)}")
+            return jsonify({"error": "Failed to load seed data"}), 500
+        
+        # Create grants from seed data
+        added_grants = []
+        for grant_data in grants_data:
+            # Convert date string to date object
+            due_date = None
+            if grant_data.get('due_date'):
+                try:
+                    due_date = datetime.strptime(grant_data['due_date'], '%Y-%m-%d').date()
+                except ValueError:
+                    logging.warning(f"Invalid date format for grant: {grant_data.get('title')}")
+            
+            # Create new grant object
+            new_grant = Grant(
+                title=grant_data.get('title', ''),
+                funder=grant_data.get('funder', ''),
+                description=grant_data.get('description', ''),
+                amount=grant_data.get('amount'),
+                due_date=due_date,
+                eligibility=grant_data.get('eligibility', ''),
+                website=grant_data.get('website', ''),
+                status=grant_data.get('status', 'Not Started'),
+                match_score=grant_data.get('match_score', 0),
+                match_explanation=grant_data.get('match_explanation', ''),
+                focus_areas=grant_data.get('focus_areas', []),
+                contact_info=grant_data.get('contact_info', ''),
+                is_scraped=False
+            )
+            
+            db.session.add(new_grant)
+            added_grants.append(new_grant)
+        
+        db.session.commit()
+        
+        return jsonify({
+            "message": f"Successfully seeded {len(added_grants)} grants",
+            "grants": [grant.to_dict() for grant in added_grants]
+        }), 201
+    
+    except SQLAlchemyError as e:
+        db.session.rollback()
+        logging.error(f"Database error seeding grants: {str(e)}")
+        return jsonify({"error": "Database error occurred"}), 500
+    except Exception as e:
+        logging.error(f"Error seeding grants: {str(e)}")
+        return jsonify({"error": "Failed to seed grants"}), 500
 
 @bp.route('/dashboard', methods=['GET'])
 def get_dashboard_data():
