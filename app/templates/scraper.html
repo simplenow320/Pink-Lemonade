@@ -3,9 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GrantFlow - Simple Scraper</title>
+    <title>GrantFlow - Grant Scraper</title>
     
-    <!-- Simple styling -->
+    <!-- Styling -->
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -85,25 +85,105 @@
             margin-top: 20px;
             text-align: center;
         }
+        .progress-container {
+            margin: 20px 0;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            background-color: #f9f9f9;
+        }
+        .progress-bar {
+            height: 20px;
+            background-color: #3B82F6;
+            width: 0%;
+            border-radius: 2px;
+            transition: width 0.5s;
+        }
+        .source-list {
+            margin: 15px 0;
+            max-height: 300px;
+            overflow-y: auto;
+            border: 1px solid #eee;
+            padding: 10px;
+        }
+        .source-item {
+            padding: 8px;
+            margin-bottom: 4px;
+            border-left: 3px solid #ddd;
+        }
+        .source-item.pending {
+            border-left-color: #94a3b8; /* slate-400 */
+        }
+        .source-item.processing {
+            border-left-color: #3B82F6; /* blue-500 */
+            background-color: #f0f9ff; /* blue-50 */
+        }
+        .source-item.complete {
+            border-left-color: #10B981; /* emerald-500 */
+        }
+        .source-item.error {
+            border-left-color: #EF4444; /* red-500 */
+        }
+        .grant-item {
+            margin: 15px 0;
+            padding: 15px;
+            border-radius: 4px;
+            background-color: #f3f4f6;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        .match-score {
+            display: inline-block;
+            padding: 3px 8px;
+            font-size: 14px;
+            border-radius: 50px;
+            color: white;
+            background-color: #3B82F6;
+            margin-left: 10px;
+        }
+        .summary {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #f8fafc;
+            border-radius: 4px;
+            border: 1px solid #e2e8f0;
+        }
+        .flex {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>GrantFlow Simple Scraper</h1>
+        <h1>GrantFlow Grant Scraper</h1>
         
         <div id="status" class="status"></div>
         
         <div style="text-align: center;">
             <button id="run-button" class="button">Run Grant Scraper</button>
             
+            <div id="progress" class="progress-container hidden">
+                <h3>Scraping Progress</h3>
+                <div class="progress-bar" id="progress-bar"></div>
+                <p id="progress-text">Preparing to scrape sources...</p>
+                
+                <div class="source-list" id="source-list">
+                    <!-- Source items will be added here dynamically -->
+                </div>
+            </div>
+            
             <div id="loading" class="loading hidden">
                 <div class="spinner"></div>
-                <p>Running scraper... Please wait, this may take a few minutes.</p>
+                <p>Starting scraper... Please wait a moment.</p>
             </div>
             
             <div id="result" class="hidden">
-                <h3>Scraper Result</h3>
-                <p id="result-content"></p>
+                <h3>Scraper Results</h3>
+                <div id="results-summary" class="summary"></div>
+                <div id="new-grants-container">
+                    <!-- New grants will be added here -->
+                </div>
             </div>
         </div>
         
@@ -115,57 +195,216 @@
         const runButton = document.getElementById('run-button');
         const loading = document.getElementById('loading');
         const result = document.getElementById('result');
-        const resultContent = document.getElementById('result-content');
+        const progress = document.getElementById('progress');
+        const progressBar = document.getElementById('progress-bar');
+        const progressText = document.getElementById('progress-text');
+        const sourceList = document.getElementById('source-list');
+        const resultsSummary = document.getElementById('results-summary');
+        const newGrantsContainer = document.getElementById('new-grants-container');
         const status = document.getElementById('status');
+        
+        // Keep track of sources
+        let sources = [];
+        let currentSourceIndex = 0;
+        let completedSources = 0;
+        let totalGrantsFound = 0;
+        let totalGrantsAdded = 0;
         
         // Add event listener to button
         runButton.addEventListener('click', runScraper);
         
-        // Run scraper function
-        function runScraper() {
-            // Show loading and disable button
-            loading.classList.remove('hidden');
-            runButton.disabled = true;
-            showStatus('Running scraper...', 'info');
+        // Simulate getting sources before running scraper
+        function getSourcesAndRun() {
+            showStatus('Getting sources...', 'info');
             
-            // Call API to run scraper
-            fetch('/api/scraper/run', {
-                method: 'POST',
+            fetch('/api/scraper/sources', {
+                method: 'GET',
                 headers: {
                     'Content-Type': 'application/json'
                 }
             })
             .then(response => {
                 if (!response.ok) {
-                    throw new Error('Scraper failed to run');
+                    throw new Error('Failed to get sources');
                 }
                 return response.json();
             })
             .then(data => {
-                // Hide loading
+                sources = data.filter(source => source.is_active);
+                setupSourceList(sources);
+                
+                // Show progress container, hide loading
                 loading.classList.add('hidden');
+                progress.classList.remove('hidden');
                 
-                // Show results
-                result.classList.remove('hidden');
-                resultContent.textContent = `Scraping complete! Found ${data.results.grants_found} grants, added ${data.results.grants_added} new grants.`;
+                // Show status
+                showStatus(`Scraping ${sources.length} sources. This may take a few minutes.`, 'info');
                 
-                // Show success status
-                showStatus('Scraper completed successfully!', 'success');
-                
-                // Re-enable button
-                runButton.disabled = false;
+                // Now actually run the scraper
+                fetch('/api/scraper/run', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Scraper failed to run');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    // Hide progress container
+                    progress.classList.add('hidden');
+                    
+                    // Show results
+                    result.classList.remove('hidden');
+                    displayResults(data.results);
+                    
+                    // Show success status
+                    showStatus('Scraper completed successfully!', 'success');
+                    
+                    // Re-enable button
+                    runButton.disabled = false;
+                })
+                .catch(error => {
+                    // Show error
+                    showStatus('Error running scraper. Please try again.', 'error');
+                    console.error('Error:', error);
+                    
+                    // Re-enable button
+                    runButton.disabled = false;
+                });
             })
             .catch(error => {
                 // Hide loading
                 loading.classList.add('hidden');
                 
                 // Show error
-                showStatus('Error running scraper. Please try again.', 'error');
+                showStatus('Error getting sources. Please try again.', 'error');
                 console.error('Error:', error);
                 
                 // Re-enable button
                 runButton.disabled = false;
             });
+        }
+        
+        // Run scraper function
+        function runScraper() {
+            // Show loading and disable button
+            loading.classList.remove('hidden');
+            runButton.disabled = true;
+            result.classList.add('hidden');
+            
+            // Reset progress variables
+            currentSourceIndex = 0;
+            completedSources = 0;
+            totalGrantsFound = 0;
+            totalGrantsAdded = 0;
+            
+            // Get sources and then run the scraper
+            getSourcesAndRun();
+        }
+        
+        // Setup source list
+        function setupSourceList(sources) {
+            sourceList.innerHTML = '';
+            
+            sources.forEach((source, index) => {
+                const sourceItem = document.createElement('div');
+                sourceItem.className = 'source-item pending';
+                sourceItem.id = `source-${index}`;
+                sourceItem.innerHTML = `
+                    <div class="flex">
+                        <strong>${source.name}</strong>
+                        <span id="source-${index}-status">Pending</span>
+                    </div>
+                    <div>${source.url}</div>
+                `;
+                sourceList.appendChild(sourceItem);
+            });
+            
+            // Simulate progress updates
+            simulateProgress(sources);
+        }
+        
+        // Simulate progress updates for demonstration
+        function simulateProgress(sources) {
+            let processedSources = 0;
+            
+            function processNextSource() {
+                if (processedSources < sources.length) {
+                    const sourceItem = document.getElementById(`source-${processedSources}`);
+                    const sourceStatus = document.getElementById(`source-${processedSources}-status`);
+                    
+                    // Update UI to show processing
+                    sourceItem.className = 'source-item processing';
+                    sourceStatus.textContent = 'Processing...';
+                    
+                    // Update progress text and bar
+                    progressText.textContent = `Processing source ${processedSources + 1} of ${sources.length}: ${sources[processedSources].name}`;
+                    progressBar.style.width = `${(processedSources / sources.length) * 100}%`;
+                    
+                    // Simulate processing time (0.5-1.5 seconds per source)
+                    const processingTime = Math.random() * 1000 + 500;
+                    
+                    setTimeout(() => {
+                        // Mark as complete
+                        sourceItem.className = 'source-item complete';
+                        sourceStatus.textContent = 'Complete';
+                        
+                        // Increment counter
+                        processedSources++;
+                        
+                        // Process next source
+                        processNextSource();
+                    }, processingTime);
+                } else {
+                    // All sources processed
+                    progressText.textContent = 'Scraping complete! Processing results...';
+                    progressBar.style.width = '100%';
+                }
+            }
+            
+            // Start processing sources
+            processNextSource();
+        }
+        
+        // Display results
+        function displayResults(results) {
+            // Display summary
+            resultsSummary.innerHTML = `
+                <div><strong>Total sources scraped:</strong> ${results.sources_scraped}</div>
+                <div><strong>Total grants found:</strong> ${results.grants_found}</div>
+                <div><strong>New grants added:</strong> ${results.grants_added}</div>
+                <div><strong>Duration:</strong> ${getTimeDifference(results.start_time, results.end_time)}</div>
+            `;
+            
+            // Display new grants
+            newGrantsContainer.innerHTML = '';
+            
+            if (results.new_grants && results.new_grants.length > 0) {
+                results.new_grants.forEach(grant => {
+                    const grantElement = document.createElement('div');
+                    grantElement.className = 'grant-item';
+                    grantElement.innerHTML = `
+                        <h4>${grant.title} <span class="match-score">${Math.round(grant.match_score)}% Match</span></h4>
+                        <div>${grant.funder}</div>
+                    `;
+                    newGrantsContainer.appendChild(grantElement);
+                });
+            } else {
+                newGrantsContainer.innerHTML = '<p>No new grants were found in this scraping session.</p>';
+            }
+        }
+        
+        // Calculate time difference
+        function getTimeDifference(startTime, endTime) {
+            const start = new Date(startTime);
+            const end = new Date(endTime);
+            const diffMs = end - start;
+            const seconds = Math.floor(diffMs / 1000);
+            return `${seconds} seconds`;
         }
         
         // Show status message

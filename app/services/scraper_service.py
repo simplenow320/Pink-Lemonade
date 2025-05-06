@@ -38,8 +38,8 @@ def run_scraping_job():
     }
     
     try:
-        # In demo mode, limit to just 2 active scraper sources to avoid timeouts
-        sources = ScraperSource.query.filter_by(is_active=True).limit(2).all()
+        # Get all active scraper sources
+        sources = ScraperSource.query.filter_by(is_active=True).all()
         
         if not sources:
             logger.warning("No active scraper sources found")
@@ -81,11 +81,6 @@ def run_scraping_job():
                     if existing_grant:
                         logger.info(f"Grant already exists: {grant_data.get('title')}")
                         continue
-                        
-                    # In demo mode, limit the number of grants we process to avoid timeouts
-                    if result["grants_added"] >= 2:  # Only add a maximum of 2 grants per run
-                        logger.info("Limiting grants added in demo mode")
-                        break
                     
                     # Generate a random match score instead of calling OpenAI API
                     # This avoids API errors in the demo environment
