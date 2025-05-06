@@ -59,11 +59,17 @@ def extract_grant_info(text):
         if len(text) > max_text_length:
             text = text[:max_text_length] + "..."
         
+        user_prompt = f"""
+        Please analyze the following text and extract grant information into a JSON object:
+        
+        {text}
+        """
+        
         response = openai.chat.completions.create(
             model="gpt-4o",  # the newest OpenAI model is "gpt-4o" which was released May 13, 2024
             messages=[
                 {"role": "system", "content": system_prompt},
-                {"role": "user", "content": f"Extract grant information from this text: {text}"}
+                {"role": "user", "content": user_prompt}
             ],
             response_format={"type": "json_object"}
         )
@@ -74,7 +80,7 @@ def extract_grant_info(text):
         if result.get('due_date'):
             try:
                 due_date = datetime.strptime(result['due_date'], '%Y-%m-%d').date()
-                result['due_date'] = due_date.isoformat()
+                result['due_date'] = due_date
             except ValueError:
                 # If date parsing fails, keep as string for frontend handling
                 pass
