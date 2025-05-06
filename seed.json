@@ -1,0 +1,68 @@
+{
+  "organization": {
+    "name": "Nitrogen Urban Network",
+    "mission": "Empowering urban communities through sustainable development and environmental justice initiatives.",
+    "website": "www.nitrogenurban.org",
+    "location": {
+      "city": "Detroit",
+      "state": "MI",
+      "zip": "48201"
+    },
+    "founding_year": 2010,
+    "team": [
+      {
+        "name": "Sarah Johnson",
+        "title": "Executive Director",
+        "bio": "20 years experience in urban development and community organizing."
+      },
+      {
+        "name": "Marcus Williams",
+        "title": "Programs Director",
+        "bio": "Specializes in environmental justice and community engagement."
+      }
+    ],
+    "focus_areas": [
+      "Urban Agriculture",
+      "Environmental Justice",
+      "Community Development",
+      "Youth Empowerment",
+      "Sustainable Infrastructure"
+    ],
+    "keywords": [
+      "urban farming",
+      "food deserts",
+      "green spaces",
+      "community gardens",
+      "youth programs",
+      "environmental education",
+      "renewable energy",
+      "sustainable housing",
+      "job training",
+      "water conservation"
+    ],
+    "past_programs": [
+      {
+        "name": "Green Alleys Initiative",
+        "year": 2018,
+        "description": "Transformed 15 urban alleys into green spaces with native plants and sustainable drainage.",
+        "impact": "Reduced flooding by 40% and created 5 new community gathering spaces."
+      },
+      {
+        "name": "Youth Urban Farmers",
+        "year": 2019,
+        "description": "Trained 50 youth in urban farming techniques and entrepreneurship.",
+        "impact": "Created 3 community gardens that provide fresh produce to 200+ families."
+      }
+    ],
+    "financials": {
+      "annual_budget": 750000,
+      "funding_sources": [
+        "Foundation grants (60%)",
+        "Government grants (20%)",
+        "Individual donations (15%)",
+        "Program revenue (5%)"
+      ]
+    },
+    "case_for_support": "Nitrogen Urban Network addresses the critical issues of environmental inequality and food insecurity in Detroit's underserved neighborhoods. Our holistic approach combines urban agriculture, sustainable infrastructure development, and youth empowerment to create lasting positive change. Through our programs, we've transformed vacant lots into productive gardens, trained youth in valuable skills, and advocated for policies that support environmental justice. Our work not only improves the physical environment but also builds community resilience, creates economic opportunities, and empowers residents to become agents of change in their neighborhoods. With additional support, we can expand our impact to more neighborhoods, reach more youth, and develop innovative solutions to the complex challenges facing urban communities."
+  }
+}

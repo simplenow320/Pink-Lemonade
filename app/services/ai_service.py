@@ -1,0 +1,281 @@
+import os
+import logging
+import json
+import requests
+from bs4 import BeautifulSoup
+from datetime import datetime
+import trafilatura
+
+# Initialize OpenAI client if API key is available
+OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY")
+openai = None
+
+# Only initialize OpenAI if API key is provided
+if OPENAI_API_KEY:
+    from openai import OpenAI
+    openai = OpenAI(api_key=OPENAI_API_KEY)
+
+def extract_grant_info(text):
+    """
+    Extract structured grant information from text using OpenAI
+    
+    Args:
+        text (str): The text containing grant information
+        
+    Returns:
+        dict: Structured grant information
+    """
+    try:
+        # Check if OpenAI is available
+        if not openai:
+            return {
+                "error": "OpenAI API key not configured",
+                "title": "Unknown Grant",
+                "funder": "Unknown",
+                "description": text[:250] + "..." if len(text) > 250 else text,
+                "requires_api_key": True
+            }
+            
+        system_prompt = """
+        You are an expert at extracting grant information from text. Your task is to extract 
+        key details about a grant opportunity and format it into a structured JSON object.
+        
+        Extract the following fields (if present):
+        - title: The title of the grant
+        - funder: The organization providing the grant
+        - description: A brief description of the grant purpose
+        - amount: The grant amount (numerical value only)
+        - due_date: The application deadline in YYYY-MM-DD format
+        - eligibility: Who is eligible to apply
+        - website: The website URL for more information
+        - focus_areas: An array of focus areas (e.g., ["education", "health", "community development"])
+        - contact_info: Contact information for inquiries
+        
+        If information for a field is not available, use null for that field.
+        """
+        
+        # Truncate text if it's too long
+        max_text_length = 16000  # Approximate limit for GPT-4o with system message and output
+        if len(text) > max_text_length:
+            text = text[:max_text_length] + "..."
+        
+        response = openai.chat.completions.create(
+            model="gpt-4o",  # the newest OpenAI model is "gpt-4o" which was released May 13, 2024
+            messages=[
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": f"Extract grant information from this text: {text}"}
+            ],
+            response_format={"type": "json_object"}
+        )
+        
+        result = json.loads(response.choices[0].message.content)
+        
+        # Process the due date to ensure it's valid
+        if result.get('due_date'):
+            try:
+                due_date = datetime.strptime(result['due_date'], '%Y-%m-%d').date()
+                result['due_date'] = due_date.isoformat()
+            except ValueError:
+                # If date parsing fails, keep as string for frontend handling
+                pass
+        
+        return result
+    
+    except Exception as e:
+        logging.error(f"Error extracting grant information: {str(e)}")
+        return {
+            "error": "Could not extract grant information",
+            "title": "Unknown Grant",
+            "funder": "Unknown",
+            "description": text[:250] + "..." if len(text) > 250 else text
+        }
+
+def extract_grant_info_from_url(url):
+    """
+    Extract grant information from a URL
+    
+    Args:
+        url (str): The URL to extract grant information from
+        
+    Returns:
+        dict: Structured grant information
+    """
+    try:
+        # Fetch web content
+        downloaded = trafilatura.fetch_url(url)
+        if not downloaded:
+            raise Exception("Failed to download the URL")
+        
+        # Extract main content
+        text = trafilatura.extract(downloaded)
+        if not text:
+            # Fallback to simple HTML parsing
+            response = requests.get(url, headers={
+                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
+            })
+            soup = BeautifulSoup(response.content, 'html.parser')
+            
+            # Remove script and style elements
+            for script in soup(["script", "style"]):
+                script.extract()
+            
+            # Get text
+            text = soup.get_text(separator=' ', strip=True)
+        
+        # Process with the AI
+        grant_info = extract_grant_info(text)
+        
+        # Add the source URL
+        grant_info['website'] = url
+        
+        return grant_info
+    
+    except Exception as e:
+        logging.error(f"Error extracting grant from URL {url}: {str(e)}")
+        return {
+            "error": f"Could not extract grant information from URL: {str(e)}",
+            "title": "Unknown Grant",
+            "funder": "Unknown",
+            "website": url
+        }
+
+def analyze_grant_match(grant, organization):
+    """
+    Analyze how well a grant matches the organization profile
+    
+    Args:
+        grant (dict): The grant information
+        organization (dict): The organization profile
+        
+    Returns:
+        dict: Match analysis with score and explanation
+    """
+    try:
+        # Check if OpenAI is available
+        if not openai:
+            return {
+                "score": 0,
+                "explanation": "OpenAI API key not configured",
+                "error": "OpenAI API key required for grant matching",
+                "requires_api_key": True
+            }
+            
+        system_prompt = """
+        You are an expert grant consultant for nonprofits. Your task is to analyze how well a grant opportunity 
+        matches a nonprofit organization's profile and provide a match score and detailed explanation.
+        
+        Consider the following factors:
+        1. Alignment of focus areas - How well do the organization's focus areas match the grant's focus areas?
+        2. Mission alignment - Does the grant purpose align with the organization's mission?
+        3. Eligibility - Does the organization meet the grant's eligibility requirements?
+        4. Organization history - Does the organization have relevant experience and past programs?
+        5. Grant amount - Is the grant amount appropriate for the organization's size and capacity?
+        
+        Provide the following in your response:
+        1. score: A numeric score from 0-100 indicating the match percentage
+        2. explanation: A detailed explanation of why the grant does or doesn't match the organization
+        3. strengths: Key organizational strengths in relation to this grant
+        4. weaknesses: Areas where the organization may be less competitive
+        5. recommendations: Suggestions for strengthening an application
+        """
+        
+        response = openai.chat.completions.create(
+            model="gpt-4o",  # the newest OpenAI model is "gpt-4o" which was released May 13, 2024
+            messages=[
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": f"Grant: {json.dumps(grant)}\n\nOrganization: {json.dumps(organization)}"}
+            ],
+            response_format={"type": "json_object"}
+        )
+        
+        result = json.loads(response.choices[0].message.content)
+        
+        # Ensure score is within 0-100 range
+        if 'score' in result:
+            result['score'] = max(0, min(100, result['score']))
+        
+        return result
+    
+    except Exception as e:
+        logging.error(f"Error analyzing grant match: {str(e)}")
+        return {
+            "score": 0,
+            "explanation": "An error occurred while analyzing the match",
+            "error": str(e)
+        }
+
+def generate_grant_narrative(grant, organization, case_for_support=""):
+    """
+    Generate a grant narrative based on the grant requirements and organization profile
+    
+    Args:
+        grant (dict): The grant information
+        organization (dict): The organization profile
+        case_for_support (str): Additional case for support text
+        
+    Returns:
+        str: Generated narrative text
+    """
+    try:
+        # Check if OpenAI is available
+        if not openai:
+            return "OpenAI API key not configured. Please provide an API key to use the narrative generation feature."
+            
+        system_prompt = """
+        You are an expert grant writer for nonprofits. Your task is to create a compelling 
+        grant narrative that connects the nonprofit's strengths and mission with the 
+        funder's priorities. Use specific language that aligns with the funder's interests 
+        while authentically representing the organization.
+        
+        Follow these guidelines:
+        1. Begin with a strong, engaging opening that establishes the need
+        2. Clearly state the organization's qualifications to address the need
+        3. Describe the proposed project/program with specific details
+        4. Include measurable outcomes and evaluation methods
+        5. Explain how the project aligns with the funder's priorities
+        6. Use concise, active language without jargon
+        7. Include specific data points and examples from the organization's history
+        8. Address any specific questions or sections required by the grant
+        
+        The tone should be professional but passionate, demonstrating both expertise 
+        and commitment to the mission.
+        """
+        
+        user_content = f"""
+        Organization Information:
+        Name: {organization.get('name')}
+        Mission: {organization.get('mission')}
+        Focus Areas: {', '.join(organization.get('focus_areas', []))}
+        Past Programs: {json.dumps(organization.get('past_programs', []))}
+        Team: {json.dumps(organization.get('team', []))}
+        
+        Grant Information:
+        Title: {grant.get('title')}
+        Funder: {grant.get('funder')}
+        Focus Areas: {', '.join(grant.get('focus_areas', []))}
+        Requirements: {grant.get('eligibility')}
+        Description: {grant.get('description')}
+        
+        Case for Support:
+        {case_for_support}
+        
+        Please write a compelling grant narrative (750-1000 words) that connects the organization's 
+        strengths with the funder's priorities. Include a strong opening, clear description of the 
+        proposed work, explanation of the organization's qualifications, and expected outcomes.
+        """
+        
+        response = openai.chat.completions.create(
+            model="gpt-4o",  # the newest OpenAI model is "gpt-4o" which was released May 13, 2024
+            messages=[
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": user_content}
+            ],
+            temperature=0.7,
+            max_tokens=2000
+        )
+        
+        return response.choices[0].message.content
+    
+    except Exception as e:
+        logging.error(f"Error generating grant narrative: {str(e)}")
+        return "Error generating narrative: " + str(e)
