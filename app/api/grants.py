@@ -271,6 +271,35 @@ def seed_grants():
         logging.error(f"Error seeding grants: {str(e)}")
         return jsonify({"error": "Failed to seed grants"}), 500
 
+@bp.route('/recently-discovered', methods=['GET'])
+def get_recently_discovered():
+    """Get recently discovered grants"""
+    try:
+        # Get query parameters
+        days = request.args.get('days', 7, type=int)
+        limit = request.args.get('limit', 10, type=int)
+        
+        # Get recently discovered grants
+        from datetime import datetime, timedelta
+        start_date = datetime.now() - timedelta(days=days)
+        
+        recent_grants = Grant.query.filter(
+            Grant.is_scraped == True,
+            Grant.created_at >= start_date
+        ).order_by(Grant.created_at.desc()).limit(limit).all()
+        
+        result = [grant.to_dict() for grant in recent_grants]
+        
+        return jsonify({
+            "count": len(result),
+            "grants": result,
+            "period_days": days
+        })
+    
+    except Exception as e:
+        logging.error(f"Error fetching recently discovered grants: {str(e)}")
+        return jsonify({"error": "Failed to fetch recently discovered grants"}), 500
+
 @bp.route('/dashboard', methods=['GET'])
 def get_dashboard_data():
     """Get statistics for the dashboard"""
@@ -315,13 +344,23 @@ def get_dashboard_data():
             "0-49": Grant.query.filter(Grant.match_score < 50).count()
         }
         
+        # Get recently discovered grants (last 7 days)
+        seven_days_ago = datetime.now() - timedelta(days=7)
+        recent_grants = Grant.query.filter(
+            Grant.is_scraped == True,
+            Grant.created_at >= seven_days_ago
+        ).order_by(Grant.created_at.desc()).limit(5).all()
+        
+        recently_discovered = [grant.to_dict() for grant in recent_grants]
+        
         dashboard_data = {
             "status_counts": status_counts,
             "upcoming_deadlines": upcoming,
             "potential_funding": potential_funding,
             "won_funding": won_funding,
             "match_score_distribution": match_ranges,
-            "total_grants": Grant.query.count()
+            "total_grants": Grant.query.count(),
+            "recently_discovered": recently_discovered
         }
         
         return jsonify(dashboard_data)

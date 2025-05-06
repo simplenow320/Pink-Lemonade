@@ -3,6 +3,7 @@ from app.models.scraper import ScraperSource, ScraperHistory
 from app.models.grant import Grant
 from app import db
 from app.services.scraper_service import run_scraping_job
+from app.utils.scheduler import get_next_scheduled_run
 from sqlalchemy.exc import SQLAlchemyError
 import logging
 import json
@@ -132,6 +133,28 @@ def run_scraper():
     except Exception as e:
         logging.error(f"Error running scraper: {str(e)}")
         return jsonify({"error": "Failed to run scraper"}), 500
+
+@bp.route('/schedule', methods=['GET'])
+def get_schedule():
+    """Get information about the scheduled scraping job"""
+    try:
+        next_run = get_next_scheduled_run()
+        
+        # Get the most recent scraping history
+        last_run = ScraperHistory.query.order_by(ScraperHistory.end_time.desc()).first()
+        last_run_info = last_run.to_dict() if last_run else None
+        
+        return jsonify({
+            "next_run": next_run,
+            "frequency": "daily",
+            "time": "Midnight EST (5 AM UTC)",
+            "last_run": last_run_info,
+            "status": "active"
+        })
+    
+    except Exception as e:
+        logging.error(f"Error fetching scraper schedule: {str(e)}")
+        return jsonify({"error": "Failed to fetch scraper schedule"}), 500
 
 @bp.route('/history', methods=['GET'])
 def get_history():

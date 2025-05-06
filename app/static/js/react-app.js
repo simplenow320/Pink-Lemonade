@@ -302,6 +302,54 @@ function Dashboard({ data, hasApiKey }) {
           </div>
         </div>
       </div>
+      
+      <div className="dashboard-section">
+        <div className="section-header">
+          <h2>Recently Discovered Grants</h2>
+          <span className="badge bg-primary">Auto-updated daily</span>
+        </div>
+        <div className="card">
+          <div className="card-body">
+            {data.recently_discovered && data.recently_discovered.length > 0 ? (
+              <table className="table">
+                <thead>
+                  <tr>
+                    <th>Grant</th>
+                    <th>Funder</th>
+                    <th>Amount</th>
+                    <th>Match Score</th>
+                    <th>Discovery Date</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {data.recently_discovered.map(grant => (
+                    <tr key={grant.id}>
+                      <td>{grant.title}</td>
+                      <td>{grant.funder}</td>
+                      <td>{formatCurrency(grant.amount)}</td>
+                      <td>
+                        <div className="match-score-indicator">
+                          <div 
+                            className={`match-score-bar ${
+                              grant.match_score >= 80 ? 'high' : 
+                              grant.match_score >= 50 ? 'medium' : 'low'}`
+                            }
+                            style={{width: `${grant.match_score}%`}}
+                          ></div>
+                          <span className="match-score-value">{grant.match_score}%</span>
+                        </div>
+                      </td>
+                      <td>{formatDate(new Date(grant.created_at))}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            ) : (
+              <p>No grants have been discovered in the last 7 days. Use the Grant Scraper to find more opportunities.</p>
+            )}
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
@@ -551,6 +599,28 @@ function ScraperSettings({ hasApiKey }) {
           {runStatus.message}
         </div>
       )}
+      
+      <div className="card mb-4">
+        <div className="card-header bg-primary text-white">
+          <h2>Automated Scraping Schedule</h2>
+        </div>
+        <div className="card-body">
+          <div className="automation-info">
+            <div className="automation-status">
+              <span className="badge bg-success">Active</span>
+              <h3>Daily Scraping at Midnight EST</h3>
+            </div>
+            <p>The grant scraper automatically runs every day at midnight EST to find new grant opportunities that match your organization's profile.</p>
+            <p>Last run: {history.length > 0 ? formatDate(new Date(history[0].end_time)) : 'Never'}</p>
+            <p>Next run: Tonight at midnight EST</p>
+            <div className="automation-actions">
+              <button className="btn btn-primary" onClick={runScraper} disabled={isRunning}>
+                {isRunning ? 'Running Scraper...' : 'Run Manual Scrape Now'}
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
       
       <div className="card">
         <div className="card-header">
