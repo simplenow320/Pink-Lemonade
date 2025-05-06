@@ -12,6 +12,13 @@ def scraper():
     """Render the scraper page"""
     return render_template('scraper.html')
 
+@bp.route('/grants')
+@bp.route('/organization')
+@bp.route('/dashboard')
+def spa_routes():
+    """Route any SPA paths back to the index"""
+    return render_template('index.html')
+
 @bp.route('/health')
 def health_check():
     """Health check endpoint for monitoring"""
