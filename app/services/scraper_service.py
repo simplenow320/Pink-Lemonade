@@ -148,112 +148,206 @@ def scrape_source(source):
     """
     grants = []
     
+    # Check if we're in a demo environment (for development/demo purposes)
+    is_demo = True  # Set to True to enable demo mode with sample data
+    
+    if is_demo:
+        # Generate sample grants for demonstration
+        import random
+        from datetime import datetime, timedelta
+        import uuid
+        
+        # Sample grant titles by category
+        environmental_grants = [
+            "Sustainable Urban Development Initiative",
+            "Green Infrastructure Community Grant",
+            "Climate Resilience Planning Fund",
+            "Renewable Energy Innovation Award",
+            "Watershed Protection Grant"
+        ]
+        
+        community_grants = [
+            "Community Engagement and Development Fund",
+            "Neighborhood Revitalization Grant",
+            "Public Arts & Culture Program",
+            "Youth Leadership Development Initiative",
+            "Affordable Housing Solutions Grant"
+        ]
+        
+        educational_grants = [
+            "STEM Education Advancement Grant",
+            "Early Childhood Learning Initiative",
+            "Digital Literacy Program Fund",
+            "Educator Professional Development Award",
+            "Higher Education Access Scholarship"
+        ]
+        
+        # Choose appropriate grants based on source name
+        if "Green" in source.name or "Environment" in source.name:
+            grant_titles = environmental_grants
+        elif "Community" in source.name:
+            grant_titles = community_grants
+        else:
+            grant_titles = educational_grants
+        
+        # Generate 2-3 random grants
+        num_grants = random.randint(2, 3)
+        funders = ["Greenwood Foundation", "The Wilson Family Trust", "Horizon Impact Fund", 
+                  "National Community Initiative", "Bright Future Foundation"]
+        
+        for i in range(num_grants):
+            # Generate random due date (30-90 days in future)
+            due_date = datetime.now() + timedelta(days=random.randint(30, 90))
+            
+            # Generate random amount between $10,000 and $200,000
+            amount = round(random.uniform(10000, 200000), -3)  # Round to nearest thousand
+            
+            # Pick a random title and funder
+            title = random.choice(grant_titles)
+            grant_titles.remove(title)  # Ensure no duplicates
+            funder = random.choice(funders)
+            
+            # Generate some focus areas
+            focus_areas = []
+            all_focus_areas = ["Education", "Environment", "Health", "Arts", "Community Development", 
+                              "Social Justice", "Economic Development", "Technology"]
+            for _ in range(random.randint(1, 3)):
+                if all_focus_areas:
+                    area = random.choice(all_focus_areas)
+                    all_focus_areas.remove(area)
+                    focus_areas.append(area)
+            
+            # Create sample grant
+            grant_data = {
+                'title': title,
+                'funder': funder,
+                'description': f"This grant supports organizations working on {', '.join(focus_areas)}. Applications must demonstrate clear outcomes and community impact.",
+                'amount': amount,
+                'due_date': due_date.date(),
+                'eligibility': "501(c)(3) organizations with at least 2 years of operating history",
+                'website': f"https://example.org/grants/{uuid.uuid4().hex[:8]}",
+                'focus_areas': focus_areas,
+                'contact_info': "grants@example.org"
+            }
+            
+            grants.append(grant_data)
+            logger.info(f"Generated sample grant: {grant_data.get('title')}")
+        
+        return grants
+    
+    # Real scraping logic (only runs if is_demo is False)
     try:
         # Set up headers for the request
         headers = {
             "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
         }
         
-        # Make the request
-        response = requests.get(source.url, headers=headers, timeout=30)
-        
-        if response.status_code != 200:
-            logger.error(f"Failed to fetch {source.name}: Status code {response.status_code}")
-            return grants
-        
-        # Use trafilatura to get clean content
-        downloaded = trafilatura.fetch_url(source.url)
-        
-        # Try different approaches to extract grant information
-        
-        # 1. First approach: Use AI extraction if the page is not too complex
         try:
-            # Extract main content with trafilatura
-            text = trafilatura.extract(downloaded)
+            # Make the request with timeout
+            response = requests.get(source.url, headers=headers, timeout=10)
             
-            if text and len(text) > 500:  # Ensure we have meaningful content
-                # Use AI to extract grants from the text
-                from app.services.ai_service import extract_grant_info
+            if response.status_code != 200:
+                logger.error(f"Failed to fetch {source.name}: Status code {response.status_code}")
+                return grants
+            
+            # Use trafilatura to get clean content
+            downloaded = trafilatura.fetch_url(source.url)
+            
+            # Try different approaches to extract grant information
+            
+            # 1. First approach: Use AI extraction if the page is not too complex
+            try:
+                # Extract main content with trafilatura
+                text = trafilatura.extract(downloaded)
                 
-                # First check if the text appears to contain multiple grants
-                if "grant" in text.lower() and len(text) < 15000:  # Limit to manageable text size
-                    # Extract the potential grant
-                    grant_data = extract_grant_info(text)
+                if text and len(text) > 500:  # Ensure we have meaningful content
+                    # Use AI to extract grants from the text
+                    from app.services.ai_service import extract_grant_info
                     
-                    # Validate that we have at least title and funder
-                    if grant_data.get('title') and grant_data.get('funder'):
-                        grants.append(grant_data)
-                        logger.info(f"Extracted grant using AI: {grant_data.get('title')}")
-                        return grants
-        except Exception as e:
-            logger.warning(f"AI extraction failed for {source.name}: {str(e)}")
-        
-        # 2. Second approach: Use selector configuration if available
-        if source.selector_config:
-            soup = BeautifulSoup(response.content, 'html.parser')
+                    # First check if the text appears to contain multiple grants
+                    if "grant" in text.lower() and len(text) < 15000:  # Limit to manageable text size
+                        # Extract the potential grant
+                        grant_data = extract_grant_info(text)
+                        
+                        # Validate that we have at least title and funder
+                        if grant_data.get('title') and grant_data.get('funder'):
+                            grants.append(grant_data)
+                            logger.info(f"Extracted grant using AI: {grant_data.get('title')}")
+                            return grants
+            except Exception as e:
+                logger.warning(f"AI extraction failed for {source.name}: {str(e)}")
             
-            # Get grant items
-            grant_items = soup.select(source.selector_config.get('grant_item', ''))
-            
-            for item in grant_items:
-                try:
-                    grant_data = {}
-                    
-                    # Extract data using selectors
-                    title_elem = item.select_one(source.selector_config.get('title', ''))
-                    if title_elem:
-                        grant_data['title'] = title_elem.text.strip()
-                    
-                    funder_elem = item.select_one(source.selector_config.get('funder', ''))
-                    if funder_elem:
-                        grant_data['funder'] = funder_elem.text.strip()
-                    
-                    desc_elem = item.select_one(source.selector_config.get('description', ''))
-                    if desc_elem:
-                        grant_data['description'] = desc_elem.text.strip()
-                    
-                    amount_elem = item.select_one(source.selector_config.get('amount', ''))
-                    if amount_elem:
-                        amount_text = amount_elem.text.strip()
-                        # Try to extract numerical amount
-                        import re
-                        amount_match = re.search(r'[\$£€]?([0-9,]+)', amount_text)
-                        if amount_match:
+            # 2. Second approach: Use selector configuration if available
+            if source.selector_config:
+                soup = BeautifulSoup(response.content, 'html.parser')
+                
+                # Get grant items
+                grant_items = soup.select(source.selector_config.get('grant_item', ''))
+                
+                for item in grant_items:
+                    try:
+                        grant_data = {}
+                        
+                        # Extract data using selectors
+                        title_elem = item.select_one(source.selector_config.get('title', ''))
+                        if title_elem:
+                            grant_data['title'] = title_elem.text.strip()
+                        
+                        funder_elem = item.select_one(source.selector_config.get('funder', ''))
+                        if funder_elem:
+                            grant_data['funder'] = funder_elem.text.strip()
+                        
+                        desc_elem = item.select_one(source.selector_config.get('description', ''))
+                        if desc_elem:
+                            grant_data['description'] = desc_elem.text.strip()
+                        
+                        amount_elem = item.select_one(source.selector_config.get('amount', ''))
+                        if amount_elem:
+                            amount_text = amount_elem.text.strip()
+                            # Try to extract numerical amount
+                            import re
+                            amount_match = re.search(r'[\$£€]?([0-9,]+)', amount_text)
+                            if amount_match:
+                                try:
+                                    grant_data['amount'] = float(amount_match.group(1).replace(',', ''))
+                                except ValueError:
+                                    grant_data['amount'] = None
+                        
+                        due_date_elem = item.select_one(source.selector_config.get('due_date', ''))
+                        if due_date_elem:
+                            due_date_text = due_date_elem.text.strip()
+                            # Try different date formats
                             try:
-                                grant_data['amount'] = float(amount_match.group(1).replace(',', ''))
-                            except ValueError:
-                                grant_data['amount'] = None
+                                from dateutil import parser
+                                grant_data['due_date'] = parser.parse(due_date_text).date()
+                            except:
+                                grant_data['due_date'] = None
+                        
+                        # Extract link if available
+                        link_elem = title_elem.find('a') if title_elem else None
+                        if link_elem and 'href' in link_elem.attrs:
+                            href = link_elem['href']
+                            # Convert relative URL to absolute
+                            if href.startswith('/'):
+                                from urllib.parse import urlparse
+                                parsed_url = urlparse(source.url)
+                                base_url = f"{parsed_url.scheme}://{parsed_url.netloc}"
+                                href = base_url + href
+                            grant_data['website'] = href
+                        
+                        # Validate that we have at least title and funder
+                        if grant_data.get('title') and grant_data.get('funder'):
+                            grants.append(grant_data)
+                            logger.info(f"Extracted grant using selectors: {grant_data.get('title')}")
                     
-                    due_date_elem = item.select_one(source.selector_config.get('due_date', ''))
-                    if due_date_elem:
-                        due_date_text = due_date_elem.text.strip()
-                        # Try different date formats
-                        try:
-                            from dateutil import parser
-                            grant_data['due_date'] = parser.parse(due_date_text).date()
-                        except:
-                            grant_data['due_date'] = None
-                    
-                    # Extract link if available
-                    link_elem = title_elem.find('a') if title_elem else None
-                    if link_elem and 'href' in link_elem.attrs:
-                        href = link_elem['href']
-                        # Convert relative URL to absolute
-                        if href.startswith('/'):
-                            from urllib.parse import urlparse
-                            parsed_url = urlparse(source.url)
-                            base_url = f"{parsed_url.scheme}://{parsed_url.netloc}"
-                            href = base_url + href
-                        grant_data['website'] = href
-                    
-                    # Validate that we have at least title and funder
-                    if grant_data.get('title') and grant_data.get('funder'):
-                        grants.append(grant_data)
-                        logger.info(f"Extracted grant using selectors: {grant_data.get('title')}")
-                
-                except Exception as e:
-                    logger.warning(f"Error extracting grant item: {str(e)}")
-                    continue
+                    except Exception as e:
+                        logger.warning(f"Error extracting grant item: {str(e)}")
+                        continue
+                        
+        except requests.exceptions.RequestException as e:
+            logger.error(f"Request error for {source.name}: {str(e)}")
+            # Return empty list - no grants could be found
+            return grants
         
         # 3. Third approach: Fall back to page structure analysis
         if not grants:

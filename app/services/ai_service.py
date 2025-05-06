@@ -159,6 +159,24 @@ def analyze_grant_match(grant, organization):
                 "error": "OpenAI API key required for grant matching",
                 "requires_api_key": True
             }
+        
+        # Create a serializable copy of grant data
+        serializable_grant = {}
+        for key, value in grant.items():
+            # Convert date objects to strings
+            if hasattr(value, 'isoformat'):  # Check if it's a date-like object
+                serializable_grant[key] = value.isoformat()
+            else:
+                serializable_grant[key] = value
+        
+        # Create a serializable copy of organization data
+        serializable_org = {}
+        for key, value in organization.items():
+            # Convert date objects to strings
+            if hasattr(value, 'isoformat'):  # Check if it's a date-like object
+                serializable_org[key] = value.isoformat()
+            else:
+                serializable_org[key] = value
             
         system_prompt = """
         You are an expert grant consultant for nonprofits. Your task is to analyze how well a grant opportunity 
@@ -171,7 +189,7 @@ def analyze_grant_match(grant, organization):
         4. Organization history - Does the organization have relevant experience and past programs?
         5. Grant amount - Is the grant amount appropriate for the organization's size and capacity?
         
-        Provide the following in your response:
+        Provide the following in your response as a JSON object:
         1. score: A numeric score from 0-100 indicating the match percentage
         2. explanation: A detailed explanation of why the grant does or doesn't match the organization
         3. strengths: Key organizational strengths in relation to this grant
@@ -179,11 +197,19 @@ def analyze_grant_match(grant, organization):
         5. recommendations: Suggestions for strengthening an application
         """
         
+        user_prompt = f"""
+        Analyze the match between this grant and organization and respond with a JSON object:
+        
+        Grant: {json.dumps(serializable_grant)}
+        
+        Organization: {json.dumps(serializable_org)}
+        """
+        
         response = openai.chat.completions.create(
             model="gpt-4o",  # the newest OpenAI model is "gpt-4o" which was released May 13, 2024
             messages=[
                 {"role": "system", "content": system_prompt},
-                {"role": "user", "content": f"Grant: {json.dumps(grant)}\n\nOrganization: {json.dumps(organization)}"}
+                {"role": "user", "content": user_prompt}
             ],
             response_format={"type": "json_object"}
         )
@@ -220,6 +246,31 @@ def generate_grant_narrative(grant, organization, case_for_support=""):
         # Check if OpenAI is available
         if not openai:
             return "OpenAI API key not configured. Please provide an API key to use the narrative generation feature."
+        
+        # Create serializable copies with date handling
+        serializable_grant = {}
+        for key, value in grant.items():
+            # Convert date objects to strings
+            if hasattr(value, 'isoformat'):
+                serializable_grant[key] = value.isoformat()
+            else:
+                serializable_grant[key] = value
+                
+        serializable_org = {}
+        for key, value in organization.items():
+            # Convert date objects to strings
+            if hasattr(value, 'isoformat'):
+                serializable_org[key] = value.isoformat()
+            else:
+                serializable_org[key] = value
+                
+        # Format due date for display if available
+        due_date_display = ""
+        if grant.get('due_date'):
+            if hasattr(grant['due_date'], 'strftime'):
+                due_date_display = grant['due_date'].strftime('%B %d, %Y')
+            else:
+                due_date_display = str(grant['due_date'])
             
         system_prompt = """
         You are an expert grant writer for nonprofits. Your task is to create a compelling 
@@ -243,18 +294,19 @@ def generate_grant_narrative(grant, organization, case_for_support=""):
         
         user_content = f"""
         Organization Information:
-        Name: {organization.get('name')}
-        Mission: {organization.get('mission')}
-        Focus Areas: {', '.join(organization.get('focus_areas', []))}
-        Past Programs: {json.dumps(organization.get('past_programs', []))}
-        Team: {json.dumps(organization.get('team', []))}
+        Name: {serializable_org.get('name')}
+        Mission: {serializable_org.get('mission')}
+        Focus Areas: {', '.join(serializable_org.get('focus_areas', []))}
+        Past Programs: {json.dumps(serializable_org.get('past_programs', []))}
+        Team: {json.dumps(serializable_org.get('team', []))}
         
         Grant Information:
-        Title: {grant.get('title')}
-        Funder: {grant.get('funder')}
-        Focus Areas: {', '.join(grant.get('focus_areas', []))}
-        Requirements: {grant.get('eligibility')}
-        Description: {grant.get('description')}
+        Title: {serializable_grant.get('title')}
+        Funder: {serializable_grant.get('funder')}
+        Due Date: {due_date_display}
+        Focus Areas: {', '.join(serializable_grant.get('focus_areas', []))}
+        Requirements: {serializable_grant.get('eligibility')}
+        Description: {serializable_grant.get('description')}
         
         Case for Support:
         {case_for_support}
