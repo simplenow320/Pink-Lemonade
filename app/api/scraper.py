@@ -292,3 +292,109 @@ def initialize_sources():
     except Exception as e:
         logging.error(f"Error initializing sources: {str(e)}")
         return jsonify({"error": "Failed to initialize sources"}), 500
+
+@bp.route('/add-foundation-sources', methods=['POST'])
+def add_foundation_sources():
+    """Add specific foundation sources to the scraper"""
+    try:
+        # Define foundation sources
+        foundation_sources = [
+            {
+                "name": "Grand Rapids Community Foundation",
+                "url": "https://www.grfoundation.org/",
+                "selector_config": {
+                    "grant_item": ".grant-item",
+                    "title": ".grant-title",
+                    "funder": "Grand Rapids Community Foundation",
+                    "description": ".grant-description"
+                },
+                "is_active": True
+            },
+            {
+                "name": "Grand Rapids Community Foundation - Scholarships",
+                "url": "https://www.grfoundation.org/apply-for-scholarships",
+                "selector_config": {
+                    "grant_item": ".scholarship-item",
+                    "title": ".scholarship-title",
+                    "funder": "Grand Rapids Community Foundation",
+                    "description": ".scholarship-description"
+                },
+                "is_active": True
+            },
+            {
+                "name": "DeVos Family Foundation",
+                "url": "https://devosfamilyfoundation.org/contact",
+                "selector_config": {
+                    "grant_item": ".grant-opportunity",
+                    "title": ".grant-title",
+                    "funder": "DeVos Family Foundation",
+                    "description": ".grant-description"
+                },
+                "is_active": True
+            },
+            {
+                "name": "ECFA Member Profile",
+                "url": "https://www.ecfa.org/MemberProfile.aspx?ID=35936",
+                "selector_config": {
+                    "grant_item": ".grant-item",
+                    "title": ".grant-title",
+                    "funder": "ECFA Member Organization",
+                    "description": ".grant-description"
+                },
+                "is_active": True
+            },
+            {
+                "name": "W.K. Kellogg Foundation - Michigan",
+                "url": "https://www.wkkf.org/where-we-work/michigan/",
+                "selector_config": {
+                    "grant_item": ".grant-opportunity",
+                    "title": ".grant-title",
+                    "funder": "W.K. Kellogg Foundation",
+                    "description": ".grant-description"
+                },
+                "is_active": True
+            },
+            {
+                "name": "Lilly Endowment",
+                "url": "https://lillyendowment.org/",
+                "selector_config": {
+                    "grant_item": ".grant-item",
+                    "title": ".grant-title",
+                    "funder": "Lilly Endowment",
+                    "description": ".grant-description"
+                },
+                "is_active": True
+            }
+        ]
+        
+        # Add sources to database
+        added_sources = []
+        for source_data in foundation_sources:
+            # Check if this source already exists
+            existing_source = ScraperSource.query.filter_by(url=source_data["url"]).first()
+            if existing_source:
+                continue
+                
+            source = ScraperSource(
+                name=source_data["name"],
+                url=source_data["url"],
+                selector_config=source_data["selector_config"],
+                is_active=source_data["is_active"]
+            )
+            db.session.add(source)
+            added_sources.append(source_data["name"])
+        
+        db.session.commit()
+        
+        return jsonify({
+            "message": f"Added {len(added_sources)} foundation sources",
+            "sources": added_sources
+        }), 201
+    
+    except SQLAlchemyError as e:
+        db.session.rollback()
+        logging.error(f"Database error adding foundation sources: {str(e)}")
+        return jsonify({"error": "Database error occurred"}), 500
+    except Exception as e:
+        logging.error(f"Error adding foundation sources: {str(e)}")
+        return jsonify({"error": "Failed to add foundation sources"}), 500
