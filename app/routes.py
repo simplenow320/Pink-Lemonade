@@ -7,6 +7,11 @@ def index():
     """Render the main application page"""
     return render_template('index.html')
 
+@bp.route('/scraper')
+def scraper():
+    """Render the scraper page"""
+    return render_template('scraper.html')
+
 @bp.route('/health')
 def health_check():
     """Health check endpoint for monitoring"""

@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GrantFlow - Grant Scraper</title>
+    <meta name="description" content="GrantFlow helps nonprofit organizations discover, evaluate, track, and apply for grants that align with their mission.">
+    
+    <!-- Favicon -->
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📊</text></svg>">
+    
+    <!-- Fonts -->
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <!-- Custom Styles -->
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background-color: #f5f8fa;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 40px auto;
+        }
+        .card {
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+            margin-bottom: 20px;
+        }
+        .card-header {
+            background-color: #fff;
+            border-bottom: 1px solid #eaedf2;
+            padding: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .card-body {
+            padding: 20px;
+        }
+        .btn-primary {
+            background-color: #3B82F6;
+            border-color: #3B82F6;
+        }
+        .btn-primary:hover {
+            background-color: #2563EB;
+            border-color: #2563EB;
+        }
+        .badge-success {
+            background-color: #10B981;
+            color: white;
+        }
+        .badge-secondary {
+            background-color: #6B7280;
+            color: white;
+        }
+        .spinner-container {
+            display: none;
+            margin: 20px 0;
+            text-align: center;
+        }
+        #status-message {
+            margin: 20px 0;
+            padding: 15px;
+            border-radius: 4px;
+            display: none;
+        }
+        .badge {
+            padding: 5px 10px;
+            border-radius: 4px;
+            font-weight: 500;
+            font-size: 0.75rem;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        th, td {
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid #eaedf2;
+        }
+        th {
+            font-weight: 600;
+            color: #6B7280;
+        }
+        .nav-bar {
+            background-color: #1F2937;
+            color: white;
+            padding: 15px 0;
+        }
+        .nav-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+        .nav-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin: 0;
+        }
+        .nav-links {
+            display: flex;
+        }
+        .nav-link {
+            color: white;
+            text-decoration: none;
+            margin-left: 20px;
+            opacity: 0.9;
+        }
+        .nav-link:hover {
+            opacity: 1;
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <div class="nav-bar">
+        <div class="nav-container">
+            <h1 class="nav-title">GrantFlow</h1>
+            <div class="nav-links">
+                <a href="/" class="nav-link">Dashboard</a>
+                <a href="/grants" class="nav-link">Grants</a>
+                <a href="/organization" class="nav-link">Organization</a>
+                <a href="/scraper" class="nav-link">Grant Scraper</a>
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <h1 class="mb-4">Grant Scraper</h1>
+        
+        <div id="status-message"></div>
+        
+        <div class="card">
+            <div class="card-header">
+                <h2 class="mb-0">Grant Sources</h2>
+            </div>
+            <div class="card-body">
+                <div id="sources-container">
+                    <div class="text-center">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                        <p class="mt-2">Loading sources...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="card">
+            <div class="card-header">
+                <h2 class="mb-0">Scraper Actions</h2>
+            </div>
+            <div class="card-body">
+                <button id="run-scraper" class="btn btn-primary">Run Scraper Now</button>
+                
+                <div id="spinner-container" class="spinner-container">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Running...</span>
+                    </div>
+                    <p class="mt-2">Running scraper. This may take a few minutes...</p>
+                </div>
+                
+                <div id="history-container" class="mt-4">
+                    <h3>History</h3>
+                    <div id="history-content">
+                        <p>No scraping history available.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // Get elements
+        const sourcesContainer = document.getElementById('sources-container');
+        const historyContainer = document.getElementById('history-content');
+        const runButton = document.getElementById('run-scraper');
+        const spinnerContainer = document.getElementById('spinner-container');
+        const statusMessage = document.getElementById('status-message');
+        
+        // Fetch sources
+        function fetchSources() {
+            fetch('/api/scraper/sources')
+                .then(response => response.json())
+                .then(sources => {
+                    if (sources.length === 0) {
+                        sourcesContainer.innerHTML = '<p>No sources available.</p>';
+                        return;
+                    }
+                    
+                    const table = document.createElement('table');
+                    table.className = 'table';
+                    
+                    const thead = document.createElement('thead');
+                    thead.innerHTML = `
+                        <tr>
+                            <th>Name</th>
+                            <th>URL</th>
+                            <th>Status</th>
+                            <th>Last Scraped</th>
+                        </tr>
+                    `;
+                    
+                    const tbody = document.createElement('tbody');
+                    sources.forEach(source => {
+                        const row = document.createElement('tr');
+                        row.innerHTML = `
+                            <td>${source.name}</td>
+                            <td><a href="${source.url}" target="_blank">${source.url}</a></td>
+                            <td><span class="badge ${source.is_active ? 'badge-success' : 'badge-secondary'}">${source.is_active ? 'Active' : 'Inactive'}</span></td>
+                            <td>${source.last_scraped ? formatDate(new Date(source.last_scraped)) : 'Never'}</td>
+                        `;
+                        tbody.appendChild(row);
+                    });
+                    
+                    table.appendChild(thead);
+                    table.appendChild(tbody);
+                    sourcesContainer.innerHTML = '';
+                    sourcesContainer.appendChild(table);
+                })
+                .catch(error => {
+                    console.error('Error fetching sources:', error);
+                    sourcesContainer.innerHTML = '<p>Error loading sources. Please try again.</p>';
+                });
+        }
+        
+        // Fetch history
+        function fetchHistory() {
+            fetch('/api/scraper/history')
+                .then(response => response.json())
+                .then(history => {
+                    if (history.length === 0) {
+                        historyContainer.innerHTML = '<p>No scraping history available.</p>';
+                        return;
+                    }
+                    
+                    const table = document.createElement('table');
+                    table.className = 'table mt-3';
+                    
+                    const thead = document.createElement('thead');
+                    thead.innerHTML = `
+                        <tr>
+                            <th>Date</th>
+                            <th>Status</th>
+                            <th>Sources Scraped</th>
+                            <th>Grants Found</th>
+                            <th>Grants Added</th>
+                        </tr>
+                    `;
+                    
+                    const tbody = document.createElement('tbody');
+                    history.forEach(record => {
+                        const row = document.createElement('tr');
+                        
+                        let badgeClass = 'badge-secondary';
+                        if (record.status === 'completed') {
+                            badgeClass = 'badge-success';
+                        } else if (record.status === 'failed') {
+                            badgeClass = 'badge-danger';
+                        }
+                        
+                        row.innerHTML = `
+                            <td>${formatDate(new Date(record.start_time))}</td>
+                            <td><span class="badge ${badgeClass}">${record.status}</span></td>
+                            <td>${record.sources_scraped}</td>
+                            <td>${record.grants_found}</td>
+                            <td>${record.grants_added}</td>
+                        `;
+                        tbody.appendChild(row);
+                    });
+                    
+                    table.appendChild(thead);
+                    table.appendChild(tbody);
+                    historyContainer.innerHTML = '';
+                    historyContainer.appendChild(table);
+                })
+                .catch(error => {
+                    console.error('Error fetching history:', error);
+                    historyContainer.innerHTML = '<p>Error loading history. Please try again.</p>';
+                });
+        }
+        
+        // Run scraper
+        function runScraper() {
+            // Disable button and show spinner
+            runButton.disabled = true;
+            spinnerContainer.style.display = 'block';
+            showStatus('Running scraper...', 'info');
+            
+            fetch('/api/scraper/run', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            })
+                .then(response => response.json())
+                .then(data => {
+                    // Re-enable button and hide spinner
+                    runButton.disabled = false;
+                    spinnerContainer.style.display = 'none';
+                    
+                    // Show success message
+                    showStatus(
+                        `Scraping complete! Found ${data.results.grants_found} grants, added ${data.results.grants_added} new grants.`, 
+                        'success'
+                    );
+                    
+                    // Refresh the data
+                    fetchSources();
+                    fetchHistory();
+                })
+                .catch(error => {
+                    console.error('Error running scraper:', error);
+                    
+                    // Re-enable button and hide spinner
+                    runButton.disabled = false;
+                    spinnerContainer.style.display = 'none';
+                    
+                    // Show error message
+                    showStatus('Error running scraper. Please try again.', 'danger');
+                });
+        }
+        
+        // Show status message
+        function showStatus(message, type) {
+            statusMessage.innerHTML = message;
+            statusMessage.className = `alert alert-${type}`;
+            statusMessage.style.display = 'block';
+            
+            // Auto-hide after 5 seconds
+            setTimeout(() => {
+                statusMessage.style.display = 'none';
+            }, 5000);
+        }
+        
+        // Format date helper
+        function formatDate(date) {
+            if (!date || isNaN(date)) return 'Invalid date';
+            
+            const options = { year: 'numeric', month: 'short', day: 'numeric' };
+            return date.toLocaleDateString('en-US', options);
+        }
+        
+        // Add event listener to run button
+        runButton.addEventListener('click', runScraper);
+        
+        // Load data on page load
+        fetchSources();
+        fetchHistory();
+    </script>
+</body>
+</html>
