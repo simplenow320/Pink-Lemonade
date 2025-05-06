@@ -471,10 +471,14 @@ function ScraperSettings({ hasApiKey }) {
   const [sources, setSources] = React.useState([]);
   const [loading, setLoading] = React.useState(true);
   const [history, setHistory] = React.useState([]);
+  const [isRunning, setIsRunning] = React.useState(false);
+  const [runStatus, setRunStatus] = React.useState(null);
   
-  // Fetch scraper sources
-  React.useEffect(() => {
+  // Function to fetch sources and history data
+  const fetchData = () => {
     setLoading(true);
+    
+    // Fetch scraper sources
     fetch('/api/scraper/sources')
       .then(response => response.json())
       .then(data => {
@@ -495,13 +499,54 @@ function ScraperSettings({ hasApiKey }) {
       .catch(error => {
         console.error('Error fetching scraper history:', error);
       });
+  };
+  
+  // Initial data load
+  React.useEffect(() => {
+    fetchData();
   }, []);
+  
+  // Function to run the scraper
+  const runScraper = () => {
+    if (isRunning) return;
+    
+    setIsRunning(true);
+    setRunStatus({ status: 'running', message: 'Scraping job started...' });
+    
+    fetch('/api/scraper/run', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    })
+      .then(response => response.json())
+      .then(data => {
+        setIsRunning(false);
+        setRunStatus({ 
+          status: 'success', 
+          message: `Scraping complete! Found ${data.results.grants_found} grants, added ${data.results.grants_added} new grants.` 
+        });
+        // Refresh the data
+        fetchData();
+      })
+      .catch(error => {
+        console.error('Error running scraper:', error);
+        setIsRunning(false);
+        setRunStatus({ status: 'error', message: 'Error running scraper. Please try again.' });
+      });
+  };
   
   return (
     <div className="container">
       {!hasApiKey && (
         <div className="alert alert-warning">
           <strong>OpenAI API Key Required:</strong> The grant scraper requires an OpenAI API key to extract and analyze grant data. Please add your key in the settings.
+        </div>
+      )}
+      
+      {runStatus && (
+        <div className={`alert ${runStatus.status === 'success' ? 'alert-success' : runStatus.status === 'error' ? 'alert-danger' : 'alert-info'}`}>
+          {runStatus.message}
         </div>
       )}
       
@@ -561,9 +606,20 @@ function ScraperSettings({ hasApiKey }) {
       <div className="card mt-4">
         <div className="card-header">
           <h2>Scraping History</h2>
-          <button className="btn btn-primary">Run Scraper Now</button>
+          <button className="btn btn-primary" onClick={runScraper} disabled={isRunning}>
+            {isRunning ? 'Running...' : 'Run Scraper Now'}
+          </button>
         </div>
         <div className="card-body">
+          {isRunning && (
+            <div className="text-center mb-4">
+              <div className="spinner-border text-primary" role="status">
+                <span className="sr-only">Running...</span>
+              </div>
+              <p className="mt-2">Please wait while the scraper runs. This may take a few minutes.</p>
+            </div>
+          )}
+          
           {history.length > 0 ? (
             <table className="table">
               <thead>
