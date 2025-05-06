@@ -23,12 +23,11 @@ def initialize_scheduler():
         scheduler_running = False
         scheduler_thread.join(timeout=5)
     
-    # Set up twice-monthly scraping (1st and 15th of each month)
+    # Set up daily scraping at midnight EST (5 AM UTC)
     schedule.clear()
     
-    # Schedule scraping jobs for 1st and 15th of each month at 2 AM
-    schedule.every().month.on(1).at("02:00").do(scheduled_scraping_job)
-    schedule.every().month.on(15).at("02:00").do(scheduled_scraping_job)
+    # Schedule scraping job to run every day at midnight EST (5 AM UTC)
+    schedule.every().day.at("05:00").do(scheduled_scraping_job)
     
     # Start the scheduler thread
     scheduler_running = True
@@ -36,7 +35,7 @@ def initialize_scheduler():
     scheduler_thread.daemon = True
     scheduler_thread.start()
     
-    logger.info("Scheduler initialized with scraping jobs on 1st and 15th of each month")
+    logger.info("Scheduler initialized with daily scraping job at midnight EST")
     
     return {
         "status": "success",

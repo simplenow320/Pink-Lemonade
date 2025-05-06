@@ -65,5 +65,10 @@ def create_app(test_config=None):
         # Import and register main routes
         from app import routes
         app.register_blueprint(routes.bp)
+        
+        # Initialize the scheduler for automated scraping
+        if not app.config.get('TESTING', False):
+            from app.utils.scheduler import initialize_scheduler
+            initialize_scheduler()
 
     return app
