@@ -38,8 +38,8 @@ def run_scraping_job():
     }
     
     try:
-        # Get all active scraper sources
-        sources = ScraperSource.query.filter_by(is_active=True).all()
+        # In demo mode, limit to just 2 active scraper sources to avoid timeouts
+        sources = ScraperSource.query.filter_by(is_active=True).limit(2).all()
         
         if not sources:
             logger.warning("No active scraper sources found")
@@ -81,6 +81,11 @@ def run_scraping_job():
                     if existing_grant:
                         logger.info(f"Grant already exists: {grant_data.get('title')}")
                         continue
+                        
+                    # In demo mode, limit the number of grants we process to avoid timeouts
+                    if result["grants_added"] >= 2:  # Only add a maximum of 2 grants per run
+                        logger.info("Limiting grants added in demo mode")
+                        break
                     
                     # Generate a random match score instead of calling OpenAI API
                     # This avoids API errors in the demo environment
@@ -127,8 +132,8 @@ def run_scraping_job():
             source.last_scraped = datetime.now()
             db.session.commit()
             
-            # Be nice to servers - add a random delay between sources
-            time.sleep(random.uniform(2, 5))
+            # In demo mode, use a shorter delay to speed up response time
+            time.sleep(0.5)
     
     except Exception as e:
         logger.error(f"Error running scraping job: {str(e)}")
@@ -190,8 +195,8 @@ def scrape_source(source):
         else:
             grant_titles = educational_grants
         
-        # Generate 2-3 random grants
-        num_grants = random.randint(2, 3)
+        # Generate only 1 grant per source to speed up response
+        num_grants = 1
         funders = ["Greenwood Foundation", "The Wilson Family Trust", "Horizon Impact Fund", 
                   "National Community Initiative", "Bright Future Foundation"]
         
