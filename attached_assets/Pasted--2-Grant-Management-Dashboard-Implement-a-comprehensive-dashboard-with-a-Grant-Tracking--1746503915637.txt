@@ -1,0 +1,84 @@
+### 2. Grant Management Dashboard
+
+```
+Implement a comprehensive dashboard with:
+
+a) Grant Tracking Table:
+   - Status tracking (Not Started, In Progress, Submitted, Won, Declined)
+   - Due date tracking with visual indicators for approaching deadlines
+   - Funding amount and other key metrics
+   - Quick-action buttons for status changes
+
+b) Grant Detail View:
+   - Complete grant information
+   - Notes and collaboration features
+   - Document attachments
+   - Timeline/history of interactions
+   - Application progress tracking
+
+c) Export Functions:
+   - Generate grant reports
+   - Export grant data to CSV/Excel
+   - Create grant application drafts based on organizational data
+```
+
+### 3. Automated Grant Scraping
+
+```
+Implement a scheduled scraping system:
+
+a) Scraper Configuration:
+   - Target 5-7 reliable grant websites including:
+     * grants.gov
+     * philanthropynewsdigest.org
+     * foundationcenter.org
+     * grantwatch.com
+     * instrumentl.com
+   
+b) Filtering Mechanism:
+   - Use organization profile keywords for initial filtering
+   - Apply NLP to determine relevance to the organization
+   
+c) Scheduling:
+   - Run scraping jobs every two weeks
+   - Provide scraping history and statistics
+   - Allow manual triggering of scraping jobs
+   
+d) Results Processing:
+   - Deduplicate against existing grants
+   - Automatically add relevant new grants to dashboard
+   - Send notification of new high-match grants
+```
+
+### 4. AI Grant Narrative Generation
+
+```
+Create an AI-powered narrative generation system:
+
+a) Input Collection:
+   - Organization profile data including:
+     * Mission statement
+     * History
+     * Key accomplishments
+     * Staff information
+     * Program details
+     * Financial information
+   - Case for support with rich text editor
+   - Grant requirements extraction
+
+b) Narrative Generation:
+   - Generate tailored grant narratives that match:
+     * The grantor's priorities and language
+     * The organization's strengths and focus
+     * The specific grant requirements
+     
+c) Editing Capabilities:
+   - Suggest improvements to narratives
+   - Allow customization and editing
+   - Save templates for future use
+   
+d) Export Options:
+   - Download as Word document
+   - Copy formatted text
+   - Save to grant record
+```

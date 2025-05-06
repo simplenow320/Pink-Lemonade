@@ -1,0 +1,632 @@
+## Application Structure
+
+```
+Set up the project with the following structure:
+
+/app
+  /api
+    __init__.py
+    grants.py
+    organization.py
+    scraper.py
+    ai.py
+  /models
+    __init__.py
+    grant.py
+    organization.py
+    scraper.py
+    narrative.py
+  /services
+    __init__.py
+    ai_service.py
+    scraper_service.py
+    narrative_service.py
+  /static
+    /css
+    /js
+    /images
+  /templates
+  /utils
+    __init__.py
+    helpers.py
+    scheduler.py
+  __init__.py
+  config.py
+  routes.py
+/client
+  /src
+    /components
+    /pages
+    /hooks
+    /utils
+    App.js
+    index.js
+  package.json
+.env
+.gitignore
+app.py
+requirements.txt
+README.md
+```
+
+## Sample Organization Profile JSON
+
+```
+Create a seed.json file with this sample organization data:
+
+{
+  "organization": {
+    "name": "Nitrogen Urban Network",
+    "mission": "Empowering urban communities through sustainable development and environmental justice initiatives.",
+    "website": "www.nitrogenurban.org",
+    "location": {
+      "city": "Detroit",
+      "state": "MI",
+      "zip": "48201"
+    },
+    "founding_year": 2010,
+    "team": [
+      {
+        "name": "Sarah Johnson",
+        "title": "Executive Director",
+        "bio": "20 years experience in urban development and community organizing."
+      },
+      {
+        "name": "Marcus Williams",
+        "title": "Programs Director",
+        "bio": "Specializes in environmental justice and community engagement."
+      }
+    ],
+    "focus_areas": [
+      "Urban Agriculture",
+      "Environmental Justice",
+      "Community Development",
+      "Youth Empowerment",
+      "Sustainable Infrastructure"
+    ],
+    "keywords": [
+      "urban farming",
+      "food deserts",
+      "green spaces",
+      "community gardens",
+      "youth programs",
+      "environmental education",
+      "renewable energy",
+      "sustainable housing",
+      "job training",
+      "water conservation"
+    ],
+    "past_programs": [
+      {
+        "name": "Green Alleys Initiative",
+        "year": 2018,
+        "description": "Transformed 15 urban alleys into green spaces with native plants and sustainable drainage.",
+        "impact": "Reduced flooding by 40% and created 5 new community gathering spaces."
+      },
+      {
+        "name": "Youth Urban Farmers",
+        "year": 2019,
+        "description": "Trained 50 youth in urban farming techniques and entrepreneurship.",
+        "impact": "Created 3 community gardens that provide fresh produce to 200+ families."
+      }
+    ],
+    "financials": {
+      "annual_budget": 750000,
+      "funding_sources": [
+        "Foundation grants (60%)",
+        "Government grants (20%)",
+        "Individual donations (15%)",
+        "Program revenue (5%)"
+      ]
+    },
+    "case_for_support": "Nitrogen Urban Network addresses the critical issues of environmental inequality and food insecurity in Detroit's underserved neighborhoods. Our holistic approach combines urban agriculture, sustainable infrastructure development, and youth empowerment to create lasting positive change. Through our programs, we've transformed vacant lots into productive gardens, trained youth in valuable skills, and advocated for policies that support environmental justice. We leverage community expertise alongside technical knowledge to build solutions that are both innovative and culturally responsive. With additional funding, we aim to expand our Green Alleys Initiative to 10 more neighborhoods and develop a new workforce training program in renewable energy installation."
+  }
+}
+```
+
+## Implementation Steps
+
+```
+Follow these steps to build the application:
+
+1. Setup and Configuration:
+   - Initialize Flask application with configuration
+   - Set up React with Tailwind CSS
+   - Configure database and create tables
+   - Set up OpenAI API integration
+
+2. Core Features Implementation:
+   - Build organization profile management
+   - Implement grant discovery and matching system
+   - Create grant management dashboard
+   - Develop scraping system with scheduling
+   - Build narrative generation feature
+
+3. UI/UX Development:
+   - Design and implement responsive layouts
+   - Create interactive components
+   - Implement data visualization
+   - Ensure accessibility compliance
+
+4. Testing and Refinement:
+   - Test all features for functionality
+   - Optimize performance
+   - Fix bugs and issues
+   - Refine UI/UX based on testing
+
+5. Documentation:
+   - Create user documentation
+   - Write developer documentation
+   - Add inline code comments
+```
+
+## Sample API Endpoints
+
+```
+Implement these core API endpoints:
+
+# Organization API
+GET /api/organization - Get organization profile
+PUT /api/organization - Update organization profile
+
+# Grants API
+GET /api/grants - List all grants
+POST /api/grants - Add new grant
+GET /api/grants/<id> - Get grant details
+PUT /api/grants/<id> - Update grant
+DELETE /api/grants/<id> - Delete grant
+POST /api/grants/upload - Upload and process grant
+POST /api/grants/url - Process grant from URL
+GET /api/grants/dashboard - Get dashboard statistics
+
+# Scraper API
+GET /api/scraper/sources - List scraping sources
+POST /api/scraper/run - Manually trigger scraping
+GET /api/scraper/history - Get scraping history
+
+# AI API
+POST /api/ai/match - Match grant to organization
+POST /api/ai/generate-narrative - Generate grant narrative
+```
+
+## OpenAI Integration
+
+```
+Implement OpenAI integration with these functions:
+
+1. Grant Information Extraction:
+   - Function to extract structured grant data from unstructured text
+   - Use GPT-4 with detailed prompting for accuracy
+
+2. Grant-Organization Matching:
+   - Function to calculate match percentage
+   - Generate explanation of why the grant matches
+
+3. Narrative Generation:
+   - Detailed system prompt for generating grant narratives
+   - Include mechanism for iterative improvement
+
+Sample prompt for narrative generation:
+
+```python
+def generate_narrative(grant_info, org_profile, case_for_support):
+    system_prompt = """
+    You are an expert grant writer for nonprofits. Your task is to create a compelling 
+    grant narrative that connects the nonprofit's strengths and mission with the 
+    funder's priorities. Use specific language that aligns with the funder's interests 
+    while authentically representing the organization.
+    
+    Follow these guidelines:
+    1. Begin with a strong, engaging opening that establishes the need
+    2. Clearly state the organization's qualifications to address the need
+    3. Describe the proposed project/program with specific details
+    4. Include measurable outcomes and evaluation methods
+    5. Explain how the project aligns with the funder's priorities
+    6. Use concise, active language without jargon
+    7. Include specific data points and examples from the organization's history
+    8. Address any specific questions or sections required by the grant
+    
+    The tone should be professional but passionate, demonstrating both expertise 
+    and commitment to the mission.
+    """
+    
+    user_prompt = f"""
+    Organization Information:
+    Name: {org_profile['name']}
+    Mission: {org_profile['mission']}
+    Focus Areas: {', '.join(org_profile['focus_areas'])}
+    Past Programs: {json.dumps(org_profile['past_programs'])}
+    Team: {json.dumps(org_profile['team'])}
+    
+    Grant Information:
+    Title: {grant_info['title']}
+    Funder: {grant_info['funder']}
+    Focus Areas: {', '.join(grant_info['focus_areas'])}
+    Requirements: {grant_info['requirements']}
+    
+    Case for Support:
+    {case_for_support}
+    
+    Please write a compelling grant narrative (500-750 words) that connects the organization's 
+    strengths with the funder's priorities. Include a strong opening, clear description of the 
+    proposed work, explanation of the organization's qualifications, and expected outcomes.
+    """
+    
+    # Call OpenAI API
+    response = openai.ChatCompletion.create(
+        model="gpt-4",
+        messages=[
+            {"role": "system", "content": system_prompt},
+            {"role": "user", "content": user_prompt}
+        ],
+        temperature=0.7,
+        max_tokens=1500
+    )
+    
+    return response.choices[0].message.content
+```
+
+## Web Scraping Implementation
+
+```python
+# Create a robust scraping system with rotation of sources and error handling
+
+from bs4 import BeautifulSoup
+import requests
+import time
+import random
+import logging
+from datetime import datetime, timedelta
+import schedule
+
+class GrantScraper:
+    def __init__(self, db):
+        self.db = db
+        self.sources = [
+            {
+                "name": "GrantsGov",
+                "url": "https://www.grants.gov/web/grants/search-grants.html",
+                "parser": self.parse_grants_gov
+            },
+            {
+                "name": "PhilanthropyNewsDigest",
+                "url": "https://philanthropynewsdigest.org/rfps",
+                "parser": self.parse_pnd
+            },
+            # Add more sources
+        ]
+        self.headers = {
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
+        }
+        self.logger = logging.getLogger("grant_scraper")
+    
+    def run_scraping(self):
+        """Run scraping job on all sources"""
+        self.logger.info(f"Starting scraping job at {datetime.now()}")
+        results = []
+        
+        for source in self.sources:
+            try:
+                self.logger.info(f"Scraping {source['name']}")
+                grants = self.scrape_source(source)
+                results.extend(grants)
+                # Be nice to servers
+                time.sleep(random.uniform(2, 5))
+            except Exception as e:
+                self.logger.error(f"Error scraping {source['name']}: {str(e)}")
+        
+        # Process and store results
+        self.process_results(results)
+        return results
+    
+    def scrape_source(self, source):
+        """Scrape a single source"""
+        response = requests.get(source["url"], headers=self.headers)
+        if response.status_code != 200:
+            self.logger.error(f"Failed to fetch {source['name']}: {response.status_code}")
+            return []
+        
+        soup = BeautifulSoup(response.content, "html.parser")
+        return source["parser"](soup)
+    
+    def parse_grants_gov(self, soup):
+        """Parse grants.gov results"""
+        grants = []
+        # Implement specific parsing logic
+        # ...
+        return grants
+    
+    def parse_pnd(self, soup):
+        """Parse Philanthropy News Digest results"""
+        grants = []
+        # Implement specific parsing logic
+        # ...
+        return grants
+    
+    def process_results(self, results):
+        """Process and store grant results"""
+        # Get organization keywords for matching
+        org_keywords = self.get_org_keywords()
+        
+        for grant in results:
+            # Calculate match score
+            match_score = self.calculate_match_score(grant, org_keywords)
+            
+            if match_score > 30:  # Only add if there's some relevance
+                grant["match_score"] = match_score
+                grant["status"] = "New"
+                grant["discovery_date"] = datetime.now().isoformat()
+                
+                # Check if grant already exists
+                if not self.grant_exists(grant):
+                    self.save_grant(grant)
+    
+    def get_org_keywords(self):
+        """Get organization keywords from database"""
+        # Query database for organization profile
+        # ...
+        return ["urban farming", "food justice", "community development"]
+    
+    def calculate_match_score(self, grant, keywords):
+        """Calculate match score between grant and organization"""
+        # Simple keyword matching for demo
+        score = 0
+        grant_text = f"{grant.get('title', '')} {grant.get('description', '')}"
+        
+        for keyword in keywords:
+            if keyword.lower() in grant_text.lower():
+                score += 10
+        
+        return min(score, 100)  # Cap at 100
+    
+    def grant_exists(self, grant):
+        """Check if grant already exists in database"""
+        # Query database
+        # ...
+        return False
+    
+    def save_grant(self, grant):
+        """Save grant to database"""
+        # Insert into database
+        # ...
+        self.logger.info(f"Saved new grant: {grant['title']}")
+
+# Setup scheduler
+def setup_scraping_schedule():
+    scraper = GrantScraper(db)
+    
+    # Schedule to run twice a month (1st and 15th)
+    schedule.every().month.on(1).do(scraper.run_scraping)
+    schedule.every().month.on(15).do(scraper.run_scraping)
+    
+    # For testing, also allow running immediately
+    scraper.run_scraping()
+    
+    while True:
+        schedule.run_pending()
+        time.sleep(60)
+```
+
+## React Component Examples
+
+```jsx
+// Sample Dashboard Component
+
+import React, { useState, useEffect } from 'react';
+import { 
+  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
+  PieChart, Pie, Cell 
+} from 'recharts';
+import { Calendar, Clock, Dollar, Award, FileText } from 'lucide-react';
+
+const Dashboard = () => {
+  const [stats, setStats] = useState({});
+  const [grants, setGrants] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchDashboardData = async () => {
+      try {
+        // Fetch dashboard statistics
+        const statsResponse = await fetch('/api/grants/dashboard');
+        const statsData = await statsResponse.json();
+        
+        // Fetch recent grants
+        const grantsResponse = await fetch('/api/grants?limit=5&sort=deadline');
+        const grantsData = await grantsResponse.json();
+        
+        setStats(statsData);
+        setGrants(grantsData);
+        setLoading(false);
+      } catch (error) {
+        console.error('Error fetching dashboard data:', error);
+        setLoading(false);
+      }
+    };
+
+    fetchDashboardData();
+  }, []);
+
+  if (loading) {
+    return <div className="flex justify-center items-center h-screen">Loading dashboard...</div>;
+  }
+
+  // Format numbers for display
+  const formatCurrency = (amount) => {
+    return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(amount);
+  };
+
+  // Status colors
+  const statusColors = {
+    'Not Started': '#9CA3AF',
+    'In Progress': '#3B82F6',
+    'Submitted': '#F59E0B',
+    'Won': '#10B981',
+    'Declined': '#EF4444'
+  };
+
+  return (
+    <div className="p-6">
+      <h1 className="text-3xl font-bold mb-8">GrantFlow Dashboard</h1>
+      
+      {/* Stats Overview */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+        <div className="bg-white rounded-lg shadow p-6">
+          <div className="flex items-center mb-2">
+            <Dollar className="text-blue-500 mr-2" />
+            <h3 className="text-lg font-semibold">Total Potential</h3>
+          </div>
+          <p className="text-3xl font-bold">{formatCurrency(stats.totalPotential || 0)}</p>
+        </div>
+        
+        <div className="bg-white rounded-lg shadow p-6">
+          <div className="flex items-center mb-2">
+            <Award className="text-green-500 mr-2" />
+            <h3 className="text-lg font-semibold">Won Grants</h3>
+          </div>
+          <p className="text-3xl font-bold">{formatCurrency(stats.totalWon || 0)}</p>
+        </div>
+        
+        <div className="bg-white rounded-lg shadow p-6">
+          <div className="flex items-center mb-2">
+            <FileText className="text-amber-500 mr-2" />
+            <h3 className="text-lg font-semibold">Active Grants</h3>
+          </div>
+          <p className="text-3xl font-bold">{stats.activeCount || 0}</p>
+        </div>
+        
+        <div className="bg-white rounded-lg shadow p-6">
+          <div className="flex items-center mb-2">
+            <Clock className="text-purple-500 mr-2" />
+            <h3 className="text-lg font-semibold">Upcoming Deadlines</h3>
+          </div>
+          <p className="text-3xl font-bold">{stats.upcomingDeadlines || 0}</p>
+        </div>
+      </div>
+      
+      {/* Charts */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
+        <div className="bg-white rounded-lg shadow p-6">
+          <h3 className="text-xl font-semibold mb-4">Grants by Status</h3>
+          <ResponsiveContainer width="100%" height={300}>
+            <PieChart>
+              <Pie
+                data={stats.byStatus || []}
+                cx="50%"
+                cy="50%"
+                labelLine={false}
+                outerRadius={80}
+                fill="#8884d8"
+                dataKey="value"
+                nameKey="name"
+                label={({name, percent}) => `${name}: ${(percent * 100).toFixed(0)}%`}
+              >
+                {stats.byStatus?.map((entry, index) => (
+                  <Cell key={`cell-${index}`} fill={statusColors[entry.name] || '#8884d8'} />
+                ))}
+              </Pie>
+              <Tooltip />
+              <Legend />
+            </PieChart>
+          </ResponsiveContainer>
+        </div>
+        
+        <div className="bg-white rounded-lg shadow p-6">
+          <h3 className="text-xl font-semibold mb-4">Grants by Month</h3>
+          <ResponsiveContainer width="100%" height={300}>
+            <BarChart
+              data={stats.byMonth || []}
+              margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
+            >
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis dataKey="month" />
+              <YAxis />
+              <Tooltip />
+              <Legend />
+              <Bar dataKey="count" fill="#3B82F6" name="Grant Count" />
+              <Bar dataKey="amount" fill="#10B981" name="Amount ($)" />
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
+      </div>
+      
+      {/* Upcoming Deadlines */}
+      <div className="bg-white rounded-lg shadow p-6 mb-8">
+        <h3 className="text-xl font-semibold mb-4">Upcoming Deadlines</h3>
+        <div className="overflow-x-auto">
+          <table className="min-w-full divide-y divide-gray-200">
+            <thead className="bg-gray-50">
+              <tr>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Grant</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Funder</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Amount</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Deadline</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Match Score</th>
+              </tr>
+            </thead>
+            <tbody className="bg-white divide-y divide-gray-200">
+              {grants.map((grant) => (
+                <tr key={grant.id}>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div className="text-sm font-medium text-gray-900">{grant.title}</div>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div className="text-sm text-gray-500">{grant.funder}</div>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div className="text-sm text-gray-500">{formatCurrency(grant.amount)}</div>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div className="text-sm text-gray-500">{new Date(grant.deadline).toLocaleDateString()}</div>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <span 
+                      className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full"
+                      style={{ 
+                        backgroundColor: statusColors[grant.status] + '20',
+                        color: statusColors[grant.status]
+                      }}
+                    >
+                      {grant.status}
+                    </span>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div className="flex items-center">
+                      <div 
+                        className="h-2 rounded-full" 
+                        style={{
+                          width: `${grant.matchScore}%`,
+                          backgroundColor: grant.matchScore > 70 ? '#10B981' : grant.matchScore > 40 ? '#F59E0B' : '#EF4444'
+                        }}
+                      ></div>
+                      <span className="ml-2 text-sm text-gray-500">{grant.matchScore}%</span>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default Dashboard;
+```
+
+## Final Notes for Replit AI
+
+```
+As you develop this application:
+
+1. Focus on core functionality first before adding advanced features
+2. Create modular components that can be tested individually
+3. Ensure the backend APIs are robust and well-documented
+4. Use proper error handling throughout the application
+5. Follow security best practices, especially for API integrations
+6. Make the UI intuitive and user-friendly with helpful feedback
+7. Add sample data for demonstration purposes
+8. Document the code well for future maintenance
+```
