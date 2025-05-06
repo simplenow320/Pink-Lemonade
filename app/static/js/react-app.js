@@ -90,7 +90,9 @@ function App() {
       case 'organization':
         return <OrganizationProfile organization={organization} />;
       case 'scraper':
-        return <ScraperSettings hasApiKey={hasApiKey} />;
+        // Redirect to the standalone scraper page
+        window.location.href = '/scraper';
+        return <LoadingIndicator />;
       default:
         return <Dashboard data={dashboardData} hasApiKey={hasApiKey} />;
     }
@@ -140,7 +142,7 @@ function Sidebar({ currentPage, onNavigate, organization }) {
             </a>
           </li>
           <li className={currentPage === 'scraper' ? 'active' : ''}>
-            <a href="#" onClick={() => onNavigate('scraper')}>
+            <a href="/scraper" target="_blank">
               <span className="icon">🔍</span>
               <span>Grant Scraper</span>
             </a>
