@@ -27,7 +27,7 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen }) => {
       {/* Only show sidebar on desktop - not on mobile */}
       <div className="hidden md:flex md:flex-shrink-0">
         <div className="flex flex-col w-64">
-          <div className="flex flex-col flex-grow pt-5 pb-4 overflow-y-auto bg-white border-r">
+          <div className="flex flex-col flex-grow pt-5 pb-4 overflow-y-auto bg-white border-r shadow-md">
             <SidebarContent 
               navigation={navigation} 
               isCurrentPath={isCurrentPath}
