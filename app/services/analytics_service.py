@@ -41,7 +41,7 @@ def record_status_change(grant_id, new_status, previous_status=None, metadata=No
         analytics.status = new_status
         analytics.previous_status = previous_status
         analytics.amount = grant.amount
-        analytics.metadata = metadata or {}
+        analytics.meta_data = metadata or {}
         
         # Update submitted/decision dates based on status
         if new_status == "Submitted" and not analytics.date_submitted:
@@ -373,7 +373,7 @@ def get_grant_timeline(grant_id):
                 'date': entry.recorded_at.isoformat(),
                 'status': entry.status,
                 'previous_status': entry.previous_status,
-                'metadata': entry.metadata
+                'metadata': entry.meta_data
             })
         
         return {

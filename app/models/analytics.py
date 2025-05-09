@@ -4,11 +4,9 @@ Grant Analytics Model
 This module contains models for tracking grant application outcomes and analytics.
 """
 
-from datetime import datetime
-from sqlalchemy.dialects.postgresql import JSON
-
 from app import db
-
+from sqlalchemy.dialects.postgresql import JSON
+from datetime import datetime
 
 class GrantAnalytics(db.Model):
     """
@@ -16,7 +14,7 @@ class GrantAnalytics(db.Model):
     Used for historical tracking and success rate analysis
     """
     __tablename__ = 'grant_analytics'
-
+    
     id = db.Column(db.Integer, primary_key=True)
     grant_id = db.Column(db.Integer, db.ForeignKey('grants.id', ondelete='CASCADE'), nullable=False)
     status = db.Column(db.String(50), nullable=False)  # Current status snapshot
@@ -25,12 +23,12 @@ class GrantAnalytics(db.Model):
     date_submitted = db.Column(db.Date)  # When the grant was submitted
     date_decision = db.Column(db.Date)  # When a decision was received
     success = db.Column(db.Boolean)  # Whether the grant was successful (won)
-    metadata = db.Column(JSON, default=dict)  # Additional data like reviewers, reasons, etc.
+    meta_data = db.Column(JSON, default=dict)  # Additional data like reviewers, reasons, etc.
     recorded_at = db.Column(db.DateTime, default=datetime.now)
     
-    # Relationships
+    # Relationship with Grant
     grant = db.relationship('Grant', backref=db.backref('analytics', cascade='all, delete-orphan'))
-
+    
     def to_dict(self):
         """Convert analytics entry to dictionary"""
         return {
@@ -42,7 +40,7 @@ class GrantAnalytics(db.Model):
             'date_submitted': self.date_submitted.isoformat() if self.date_submitted else None,
             'date_decision': self.date_decision.isoformat() if self.date_decision else None,
             'success': self.success,
-            'metadata': self.metadata,
+            'meta_data': self.meta_data,
             'recorded_at': self.recorded_at.isoformat() if self.recorded_at else None
         }
 
@@ -52,7 +50,7 @@ class GrantSuccessMetrics(db.Model):
     Model for storing aggregated grant success metrics to avoid recalculation
     """
     __tablename__ = 'grant_success_metrics'
-
+    
     id = db.Column(db.Integer, primary_key=True)
     period = db.Column(db.String(20), nullable=False)  # 'monthly', 'quarterly', 'yearly'
     period_key = db.Column(db.String(20), nullable=False)  # e.g., '2025-05' for monthly, '2025-Q2' for quarterly
@@ -65,7 +63,7 @@ class GrantSuccessMetrics(db.Model):
     avg_response_time = db.Column(db.Integer)  # Average days from submission to decision
     categories = db.Column(JSON, default=dict)  # Success metrics by focus area/category
     last_updated = db.Column(db.DateTime, default=datetime.now, onupdate=datetime.now)
-
+    
     def to_dict(self):
         """Convert metrics to dictionary"""
         return {

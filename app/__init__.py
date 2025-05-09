@@ -50,17 +50,18 @@ def create_app(test_config=None):
 
     with app.app_context():
         # Import models
-        from app.models import grant, organization, scraper, narrative
+        from app.models import grant, organization, scraper, narrative, analytics
         
         # Create all tables in the database
         db.create_all()
         
         # Import and register blueprints
-        from app.api import grants, organization, scraper, ai
+        from app.api import grants, organization, scraper, ai, analytics
         app.register_blueprint(grants.bp)
         app.register_blueprint(organization.bp)
         app.register_blueprint(scraper.bp)
         app.register_blueprint(ai.bp)
+        app.register_blueprint(analytics.bp)
         
         # Import and register main routes
         from app import routes
