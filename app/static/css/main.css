@@ -1,15 +1,15 @@
 /* Main CSS Styles for GrantFlow */
 
 :root {
-  --primary-color: #3B82F6; /* Blue */
-  --primary-dark: #2563EB;
-  --primary-light: #93C5FD;
-  --secondary-color: #10B981; /* Green */
-  --secondary-dark: #059669;
-  --secondary-light: #6EE7B7;
-  --accent-color: #F59E0B; /* Amber */
-  --accent-dark: #D97706;
-  --accent-light: #FCD34D;
+  --primary-color: #F8B049; /* Amber/Orange */
+  --primary-dark: #E89A31;
+  --primary-light: #FFD380;
+  --secondary-color: #FCF0DD; /* Light Cream */
+  --secondary-dark: #F8E4C0;
+  --secondary-light: #FEF9F0;
+  --accent-color: #F9AC45; /* Darker Amber */
+  --accent-dark: #EB9625;
+  --accent-light: #FFD995;
   --gray-50: #F9FAFB;
   --gray-100: #F3F4F6;
   --gray-200: #E5E7EB;
@@ -22,25 +22,100 @@
   --gray-900: #111827;
   --danger: #EF4444;
   --warning: #F59E0B;
-  --success: #10B981;
+  --success: #34D399;
   --info: #3B82F6;
+  --background-cream: #FEF8EF;
 }
 
 /* Global styles */
 body {
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
   color: var(--gray-800);
-  background-color: var(--gray-50);
+  background-color: var(--background-cream);
   margin: 0;
   padding: 0;
   line-height: 1.5;
+  position: relative;
+  overflow-x: hidden;
+}
+
+/* Background shapes */
+body::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: -200px;
+  width: 600px;
+  height: 600px;
+  background-color: var(--primary-light);
+  border-radius: 50%;
+  opacity: 0.15;
+  z-index: -1;
+}
+
+body::after {
+  content: '';
+  position: absolute;
+  bottom: -100px;
+  left: -200px;
+  width: 400px;
+  height: 400px;
+  background-color: var(--accent-light);
+  border-radius: 50%;
+  opacity: 0.1;
+  z-index: -1;
 }
 
 .container {
   width: 100%;
   max-width: 1280px;
   margin: 0 auto;
-  padding: 0 1rem;
+  padding: 0 2rem;
+  position: relative;
+}
+
+/* Hero section with asymmetrical design */
+.hero-section {
+  display: flex;
+  align-items: center;
+  position: relative;
+  padding: 5rem 0 3rem;
+  overflow: hidden;
+}
+
+.hero-content {
+  width: 50%;
+  z-index: 2;
+}
+
+.hero-image {
+  width: 50%;
+  position: relative;
+}
+
+.hero-image::before {
+  content: '';
+  position: absolute;
+  right: -50px;
+  top: -50px;
+  width: 100%;
+  height: 120%;
+  background-color: var(--primary-color);
+  border-radius: 30px 0 0 80px;
+  z-index: -1;
+}
+
+.hero-title {
+  font-size: 3rem;
+  font-weight: 700;
+  line-height: 1.1;
+  margin-bottom: 1.5rem;
+}
+
+.hero-subtitle {
+  font-size: 1.25rem;
+  color: var(--gray-600);
+  margin-bottom: 2rem;
 }
 
 /* Typography */
@@ -92,19 +167,39 @@ a:hover {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  padding: 0.5rem 1rem;
+  padding: 0.625rem 1.25rem;
   font-size: 0.875rem;
-  font-weight: 500;
+  font-weight: 600;
   line-height: 1.25rem;
-  border-radius: 0.375rem;
+  border-radius: 30px;
   border: 1px solid transparent;
   cursor: pointer;
   transition: all 0.2s ease-in-out;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+  position: relative;
+  overflow: hidden;
+  z-index: 1;
+}
+
+.btn::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 0;
+  background-color: rgba(255, 255, 255, 0.1);
+  transition: height 0.2s ease-in-out;
+  z-index: -1;
+}
+
+.btn:hover::after {
+  height: 100%;
 }
 
 .btn:focus {
   outline: none;
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.5);
+  box-shadow: 0 0 0 3px rgba(248, 176, 73, 0.3);
 }
 
 .btn-primary {
@@ -120,12 +215,12 @@ a:hover {
 
 .btn-secondary {
   background-color: var(--secondary-color);
-  color: white;
+  color: var(--gray-800);
 }
 
 .btn-secondary:hover {
   background-color: var(--secondary-dark);
-  color: white;
+  color: var(--gray-900);
   text-decoration: none;
 }
 
@@ -142,24 +237,25 @@ a:hover {
 
 .btn-outline {
   background-color: transparent;
-  border-color: var(--gray-300);
-  color: var(--gray-700);
+  border-color: var(--primary-color);
+  color: var(--primary-color);
 }
 
 .btn-outline:hover {
-  background-color: var(--gray-100);
-  color: var(--gray-900);
+  background-color: var(--primary-color);
+  color: white;
   text-decoration: none;
 }
 
 .btn-sm {
-  padding: 0.25rem 0.5rem;
+  padding: 0.375rem 0.75rem;
   font-size: 0.75rem;
 }
 
 .btn-lg {
-  padding: 0.75rem 1.5rem;
+  padding: 0.875rem 1.75rem;
   font-size: 1rem;
+  font-weight: 700;
 }
 
 /* Form elements */
@@ -203,30 +299,50 @@ a:hover {
 /* Card styles */
 .card {
   background-color: white;
-  border-radius: 0.5rem;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  border-radius: 20px;
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.05);
   overflow: hidden;
-  transition: box-shadow 0.2s ease-in-out;
+  transition: all 0.3s ease-in-out;
+  position: relative;
+  z-index: 1;
+}
+
+.card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 5px;
+  height: 0;
+  background-color: var(--primary-color);
+  transition: height 0.3s ease-in-out;
+  z-index: -1;
 }
 
 .card:hover {
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  transform: translateY(-5px);
+  box-shadow: 0 12px 20px rgba(0, 0, 0, 0.1);
+}
+
+.card:hover::before {
+  height: 100%;
 }
 
 .card-header {
-  padding: 1rem;
+  padding: 1.25rem 1.5rem;
   border-bottom: 1px solid var(--gray-200);
-  background-color: var(--gray-50);
+  background-color: white;
+  font-weight: 600;
 }
 
 .card-body {
-  padding: 1rem;
+  padding: 1.5rem;
 }
 
 .card-footer {
-  padding: 1rem;
+  padding: 1.25rem 1.5rem;
   border-top: 1px solid var(--gray-200);
-  background-color: var(--gray-50);
+  background-color: white;
 }
 
 /* Status indicators */
@@ -379,40 +495,79 @@ a:hover {
 .dashboard-stats {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-  gap: 1rem;
-  margin-bottom: 2rem;
+  gap: 1.5rem;
+  margin-bottom: 3rem;
 }
 
 .stat-card {
-  padding: 1.5rem;
+  padding: 1.75rem;
   background-color: white;
-  border-radius: 0.5rem;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  border-radius: 20px;
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.05);
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+  transition: transform 0.3s ease;
+}
+
+.stat-card:hover {
+  transform: translateY(-5px);
+}
+
+.stat-card::before {
+  content: '';
+  position: absolute;
+  width: 160px;
+  height: 160px;
+  background-color: var(--primary-light);
+  border-radius: 50%;
+  top: -80px;
+  right: -80px;
+  opacity: 0.1;
+  z-index: 0;
+}
+
+.stat-icon {
+  font-size: 2rem;
+  color: var(--primary-color);
+  margin-bottom: 1rem;
+  display: inline-block;
+  position: relative;
 }
 
 .stat-title {
-  font-size: 0.875rem;
-  color: var(--gray-500);
-  margin-bottom: 0.5rem;
+  font-size: 1rem;
+  color: var(--gray-600);
+  margin-bottom: 0.75rem;
+  font-weight: 500;
+  position: relative;
 }
 
 .stat-value {
-  font-size: 1.75rem;
-  font-weight: 600;
+  font-size: 2.25rem;
+  font-weight: 700;
   color: var(--gray-900);
+  position: relative;
+  margin-bottom: 0.5rem;
 }
 
 .stat-change {
   font-size: 0.875rem;
-  margin-top: 0.25rem;
+  margin-top: 0.5rem;
+  display: inline-block;
+  padding: 0.25rem 0.5rem;
+  border-radius: 20px;
+  position: relative;
 }
 
 .stat-change.positive {
   color: var(--success);
+  background-color: rgba(52, 211, 153, 0.1);
 }
 
 .stat-change.negative {
   color: var(--danger);
+  background-color: rgba(239, 68, 68, 0.1);
 }
 
 /* Grant card styles */

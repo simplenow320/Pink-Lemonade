@@ -1,0 +1,288 @@
+COPY AND PASTE IN REPLIT
+
+
+Role:
+You design and document apps from end to end so both average users and technical teams understand what’s built and why.
+
+Example:
+Clario Product Overview
+Tagline
+Turn Convos into Action
+Project Status (as of May 6, 2025)
+Progress: 85% Complete
+Remaining Tasks:
+Finalize onboarding screen testing
+
+
+Fix lingering auth (401) issues
+
+
+Add export download functionality
+
+
+Finish email summary sending
+
+
+Improve error handling for audio issues
+
+
+
+App Description
+Clario is a modern, minimalist coaching and consulting assistant that captures voice conversations, transcribes them using advanced AI, and automatically extracts actionable items. It helps coaches, consultants, and mentors focus on their clients rather than administrative tasks by intelligently organizing discussion points, goals, and action items with personalized outputs based on user preferences.
+
+Summary (6 sentences)
+This flow takes you from signing up all the way through getting a polished, editable report packed with real insight—in your own voice. You start by setting up your profile, integrations, and any custom fields so the AI knows exactly how you talk and what matters most. Recording is as simple as tapping a button, and behind the scenes we stitch your audio into a file, securely upload it, and turn it into a clean transcript. Our AI then reads that transcript, pulls out a thoughtful summary (5–8 sentences), action items, due dates, and your custom-field values, all phrased in the tone you chose at setup. You get to review and tweak every bit of that output before it’s saved, ensuring it truly sounds like you. Finally, you can view the report on screen, export it via email, Word, or PDF, and jump straight into action.
+
+Key Features
+AI-Powered Transcription
+ Converts audio into accurate, formatted text so users can stay focused during sessions.
+
+
+Smart Action Item Extraction
+ Pulls out goals, next steps, and due dates—no more hunting through transcripts.
+
+
+Personalized Client Profiles
+ Stores user preferences to deliver tailored AI outputs per client.
+
+
+External Service Integration
+ Syncs with Google Tasks, Apple Reminders, Microsoft To-Do, or Todoist.
+
+
+
+MVP Specifications
+Audio up to 2 hours, encrypted (AES-256).
+
+
+Uses Deepgram "nova-2" model for transcription.
+
+
+GPT-4o extracts structured data (summary, action items, due dates).
+
+
+Built as a progressive web app with offline support.
+
+
+
+User Flow & Developer Notes (with Annotations)
+1. Sign Up & Profile Setup
+Developer Notes: Firebase email/Google login. Collect name, role, industry, and preferences.
+
+
+Speaker Insight: Welcome users warmly—"Let’s get your profile dialed in." A visible progress bar could reduce drop-off.
+
+
+
+2. Onboarding & Preferences
+Developer Notes: Tour featuring “Clair,” preference toggles, integrations setup.
+
+
+Speaker Insight: A quick demo video builds trust fast. Remind users they can change preferences later.
+
+
+
+3. Ready to Record
+Developer Notes: Buttons for “New Recording” and “Upload Audio.”
+
+
+Speaker Insight: A “Test Mic” button reassures users. Tooltip tips add polish for first-time users.
+
+
+
+4. Capture Your Conversation
+Developer Notes: MediaRecorder API with noise suppression. Supports pause/resume.
+
+
+Speaker Insight: A bold “Recording…” banner keeps users aware. Suggest a nudge if approaching 90 minutes.
+
+
+
+5. Save & Upload Behind the Scenes
+Developer Notes: Firebase upload with fallback option and logging.
+
+
+Speaker Insight: Allow manual re-upload from the conversation screen. Make errors easy to spot and resolve.
+
+
+
+6. Turn Speech into Text
+Developer Notes: Encrypted upload → Deepgram API → cleanup.
+
+
+Speaker Insight: Include a "Transcribing..." spinner. Let power users see the raw transcript if they want.
+
+
+
+7. AI Analyzes & Extracts
+Developer Notes: GPT-4o extracts summary, action items, due dates, and custom fields.
+
+
+Speaker Insight: Match tone using profile info. Track confidence scores to flag weaker results.
+
+
+
+8. Review & Edit (Optional)
+Developer Notes: Inline editor with save/cancel. Rich text support.
+
+
+Speaker Insight: Autosave protects against refresh losses. A “Suggest Rewrite” button adds flexibility.
+
+
+
+9. View AI Output & Export Options
+Developer Notes: Show Summary, Tasks, and Custom Fields. Export via Email, Word, or PDF.
+
+
+Speaker Insight: Audio playback synced with transcript is key. Add a "Copy to Clipboard" button for fast pasting.
+
+
+
+10. Take Action
+Developer Notes: Dashboard updates with new sessions. Sync tasks to external apps.
+
+
+Speaker Insight: Let users share reports via public links. Consider an activity feed showing task history.
+
+
+
+Wireframe Highlights
+Onboarding Screens
+Progress bar with orange-accented visuals.
+
+
+Profile setup and custom field selection.
+
+
+Clair assistant intro with personalized messaging.
+
+
+Main Dashboard
+Dark theme with sidebar navigation.
+
+
+Recording button, folders, client filter, recent sessions.
+
+
+Conversation Detail View
+Side-by-side transcript and action items.
+
+
+Editable summary and custom fields.
+
+
+Audio playback and export options.
+
+
+
+AI Involvement
+Speech-to-Text: Deepgram with formatting.
+
+
+Content Analysis: GPT-4o pulls actionable insights.
+
+
+Personalization: Outputs adapt to each user and client.
+
+
+Proactive Suggestions: Clair AI offers nudges and reminders.
+
+
+Client Profiles: Outputs reflect each relationship’s style and context.
+
+
+
+Next Steps
+Complete authentication fixes
+
+
+Final test of onboarding with user data
+
+
+Build robust error logs for production
+
+
+Add UI polish: animations & transitions
+
+
+Write and publish help docs
+
+
+
+Extra Features to Consider
+Timestamps & Raw Transcript Access
+ Great for transparency and skipping to key moments.
+
+
+AI Confidence Levels
+ Helps users know what to trust or double-check.
+
+
+Sentiment Analysis or Keyword Cloud
+ Adds a visual layer of insight.
+
+
+Version History
+ Compare original AI output with user edits.
+
+
+Collaborator Comments
+ Useful for teams or coaching feedback.
+Application
+Create a detailed report for my new app that includes every item below.
+
+Context
+The audience is twofold
+• An average person who needs a simple snapshot of what the app does and why it matters  
+• A technical stakeholder who needs MVP specs, wireframe details, full user flow, AI integration points, and a clear completion status
+
+Tone
+Keep it casual and conversational. Use simple words and a compelling style. Avoid flowery phrases.
+
+Output
+Present the report in markdown with these sections and bullet lists where indicated:
+
+# App Name  
+What the app is called
+
+# Tagline  
+A short catchy line that sums up its value
+
+# Description  
+A human-focused paragraph that explains what the app does, who it helps, and why someone should use it
+
+# Key Features  
+• Feature one and why it matters  
+• Feature two and the pain point it solves  
+• Feature three and the user benefit
+
+# MVP Specifications  
+• Component one and its purpose  
+• Component two and how it works  
+• Component three and any technical notes
+
+# Wireframe Details  
+Describe each screen or view in technical terms  
+• Screen one with its layout and controls  
+• Screen two with form fields or interactive elements
+
+# User Flow  
+Step by step from opening the app to the final output  
+1. User action or input  
+2. System response  
+3. Next action  
+… until completion
+
+# AI Involvement  
+• Where AI is used and what it produces at each step in the flowchart
+
+# Project Status (as of [CURRENT DATE])  
+Percentage complete: xx%  
+List of remaining tasks to reach production readiness
+
+# Next Steps  
+• Task one  
+• Task two  
+• Task three
+
+
