@@ -1,64 +1,140 @@
-# GrantFlow Frontend
+# GrantFlow Client
 
-This directory contains the React frontend for the GrantFlow application.
+The frontend React application for GrantFlow, a grant management platform for nonprofits.
 
-## Setup
+## Setup & Installation
 
 1. Install dependencies:
    ```bash
    npm install
    ```
 
-2. Run the development server:
+2. Create a .env file from the example:
+   ```bash
+   cp .env.example .env
+   ```
+
+3. Start the development server:
    ```bash
    npm start
    ```
 
-The frontend will be available at [http://localhost:3000](http://localhost:3000)
+## Error Handling
 
-## Project Structure
+GrantFlow uses a robust error handling system:
 
-- `public/` - Static assets
-- `src/` - Source code
-  - `components/` - React components
-  - `hooks/` - Custom React hooks
-  - `utils/` - Utility functions
-  - `App.js` - Main application component
-  - `index.js` - Entry point
+### ApiError Class
 
-## Development Guidelines
-
-- Follow component-based architecture
-- Use React hooks for state management
-- Use the proxy configuration for API calls
-- Follow tailwind configuration for styling
-
-## Available Scripts
-
-- `npm start` - Start development server
-- `npm test` - Run tests
-- `npm run build` - Build for production
-- `npm run eject` - Eject from Create React App
-
-## API Integration
-
-The frontend communicates with the Flask backend using the proxy configuration in `package.json`. This means you can make API calls to endpoints without specifying the full URL:
+Use the `ApiError` class from `utils/api.js` for API-related errors:
 
 ```javascript
-// Instead of:
-fetch('http://localhost:5000/api/grants')
+import { ApiError } from '../utils/api';
 
-// You can use:
-fetch('/api/grants')
+throw new ApiError('User-friendly error message', 404, originalError);
 ```
+
+### ErrorBoundary
+
+Wrap components with `ErrorBoundary` to catch runtime errors:
+
+```jsx
+import ErrorBoundary from '../components/ErrorBoundary';
+
+<ErrorBoundary>
+  <YourComponent />
+</ErrorBoundary>
+```
+
+For a custom fallback UI, use the `fallback` prop:
+
+```jsx
+<ErrorBoundary
+  fallback={(error) => <div>Custom error UI: {error.message}</div>}
+  resetAction={() => navigate('/')}
+  resetButtonText="Go Home"
+>
+  <YourComponent />
+</ErrorBoundary>
+```
+
+### SafeComponent
+
+For a simpler approach, use the `SafeComponent` wrapper:
+
+```jsx
+import SafeComponent from '../components/SafeComponent';
+
+<SafeComponent
+  fallbackTitle="Component Error"
+  resetButtonText="Try Again"
+  onError={(error) => logError(error)}
+  resetAction={() => resetComponentState()}
+>
+  <YourComponent />
+</SafeComponent>
+```
+
+### Notification Context
+
+Use the notification context for displaying toast-style messages:
+
+```jsx
+import { useNotification } from '../context/NotificationContext';
+
+function MyComponent() {
+  const { addSuccess, addError, addWarning, addInfo } = useNotification();
+  
+  const handleAction = () => {
+    try {
+      // Do something
+      addSuccess('Operation completed successfully!');
+    } catch (error) {
+      addError(error.message);
+    }
+  };
+  
+  return (
+    // ...
+  );
+}
+```
+
+## Development Tools
+
+### Linting & Formatting
+
+- Run ESLint:
+  ```bash
+  npm run lint
+  ```
+
+- Fix ESLint issues:
+  ```bash
+  npm run lint:fix
+  ```
+
+- Format code with Prettier:
+  ```bash
+  npm run format
+  ```
+
+### Testing
+
+- Run tests:
+  ```bash
+  npm test
+  ```
+
+- Run tests with coverage:
+  ```bash
+  npm run test:coverage
+  ```
 
 ## Environment Variables
 
-Create a `.env.local` file in this directory to set environment variables for the React application. For example:
+The application uses the following environment variables:
 
-```
-REACT_APP_API_URL=http://localhost:5000
-REACT_APP_VERSION=1.0.0
-```
+- `REACT_APP_API_URL`: The base URL for API calls (defaults to '/api' if not set)
+- `REACT_APP_ENABLE_DEBUG_TOOLS`: Enable debug tools (boolean, defaults to false)
 
-These variables must be prefixed with `REACT_APP_` to be accessible in the React application.
+These can be set in the `.env` file in the project root.

@@ -7,13 +7,16 @@ import GrantDetailPage from './pages/GrantDetailPage';
 import ProfilePage from './pages/ProfilePage';
 import NarrativePage from './pages/NarrativePage';
 import ScraperPage from './pages/ScraperPage';
-import { initializeOrganization } from './utils/api';
+import { initializeOrganization, ApiError } from './utils/api';
+import { useNotification } from './context/NotificationContext';
+import ErrorBoundary from './components/ErrorBoundary';
 import './App.css';
 
 function App() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const { addError } = useNotification();
   
   // Initialize app data on first load
   useEffect(() => {
@@ -24,14 +27,21 @@ function App() {
         console.log('Organization initialization result:', result);
       } catch (err) {
         console.error('Error initializing application:', err);
-        setError('Failed to initialize application. Please reload the page.');
+        
+        // Use the error message from ApiError if available
+        const errorMessage = err instanceof ApiError
+          ? err.message
+          : 'Failed to initialize application. Please reload the page.';
+          
+        setError(errorMessage);
+        addError(errorMessage);
       } finally {
         setLoading(false);
       }
     };
     
     initialize();
-  }, []);
+  }, [addError]);
   
   // Show loading screen while initializing
   if (loading) {
@@ -75,12 +85,36 @@ function App() {
       <div className="flex-1 overflow-auto">
         <div className="py-6 px-4 sm:px-6 lg:px-8">
           <Routes>
-            <Route path="/" element={<DashboardPage />} />
-            <Route path="/grants" element={<GrantsPage />} />
-            <Route path="/grants/:id" element={<GrantDetailPage />} />
-            <Route path="/organization" element={<ProfilePage />} />
-            <Route path="/narratives/:grantId" element={<NarrativePage />} />
-            <Route path="/scraper" element={<ScraperPage />} />
+            <Route path="/" element={
+              <ErrorBoundary>
+                <DashboardPage />
+              </ErrorBoundary>
+            } />
+            <Route path="/grants" element={
+              <ErrorBoundary>
+                <GrantsPage />
+              </ErrorBoundary>
+            } />
+            <Route path="/grants/:id" element={
+              <ErrorBoundary>
+                <GrantDetailPage />
+              </ErrorBoundary>
+            } />
+            <Route path="/organization" element={
+              <ErrorBoundary>
+                <ProfilePage />
+              </ErrorBoundary>
+            } />
+            <Route path="/narratives/:grantId" element={
+              <ErrorBoundary>
+                <NarrativePage />
+              </ErrorBoundary>
+            } />
+            <Route path="/scraper" element={
+              <ErrorBoundary>
+                <ScraperPage />
+              </ErrorBoundary>
+            } />
           </Routes>
         </div>
       </div>
