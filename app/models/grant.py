@@ -1,6 +1,10 @@
 from app import db
 from sqlalchemy.dialects.sqlite import JSON
 from datetime import datetime
+import logging
+
+# Set up logger
+logger = logging.getLogger(__name__)
 
 class Grant(db.Model):
     """Model for grant opportunities"""
@@ -25,9 +29,12 @@ class Grant(db.Model):
     updated_at = db.Column(db.DateTime, default=datetime.now, onupdate=datetime.now)
     is_scraped = db.Column(db.Boolean, default=False)
     source_id = db.Column(db.Integer, db.ForeignKey('scraper_sources.id', ondelete='SET NULL'), nullable=True)
+    date_submitted = db.Column(db.Date)  # When the grant was submitted
+    date_decision = db.Column(db.Date)  # When a decision was received
     
     # Relationships
     narrative = db.relationship('Narrative', back_populates='grant', uselist=False, cascade="all, delete-orphan")
+    # Analytics relationship defined in analytics.py to avoid circular imports
     
     def to_dict(self):
         """Convert grant to dictionary"""
@@ -50,5 +57,49 @@ class Grant(db.Model):
             'updated_at': self.updated_at.isoformat() if self.updated_at else None,
             'is_scraped': self.is_scraped,
             'source_id': self.source_id,
-            'has_narrative': self.narrative is not None
+            'has_narrative': self.narrative is not None,
+            'date_submitted': self.date_submitted.isoformat() if self.date_submitted else None,
+            'date_decision': self.date_decision.isoformat() if self.date_decision else None
         }
+    
+    def update_status(self, new_status, metadata=None):
+        """
+        Update grant status and record the change for analytics
+        
+        Args:
+            new_status (str): New status value
+            metadata (dict, optional): Additional metadata
+            
+        Returns:
+            bool: Success of the operation
+        """
+        try:
+            # Import here to avoid circular imports
+            from app.services.analytics_service import record_status_change
+            
+            # Store the previous status
+            previous_status = self.status
+            
+            # Update the status
+            self.status = new_status
+            
+            # Update submission and decision dates if applicable
+            if new_status == "Submitted" and not self.date_submitted:
+                self.date_submitted = datetime.now().date()
+            
+            if new_status in ["Won", "Declined"] and not self.date_decision:
+                self.date_decision = datetime.now().date()
+            
+            # Record status change for analytics
+            result = record_status_change(
+                self.id, 
+                new_status, 
+                previous_status,
+                metadata
+            )
+            
+            return result["success"]
+            
+        except Exception as e:
+            logger.error(f"Error updating grant status: {str(e)}")
+            return False
