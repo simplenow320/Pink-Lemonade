@@ -19,12 +19,21 @@ var/
 *.egg-info/
 .installed.cfg
 *.egg
+venv/
+.env.local
+.python-version
+.pytest_cache
+__pycache__
+requirements.lock
+poetry.lock
 
 # Flask
 instance/
 .webassets-cache
 .env
 grantflow.db
+*.sqlite3
+*.db
 
 # Node.js
 node_modules/
@@ -34,6 +43,10 @@ yarn-error.log
 
 # React build
 client/build/
+client/.env.local
+client/.env.development.local
+client/.env.test.local
+client/.env.production.local
 
 # VS Code
 .vscode/
@@ -54,3 +67,25 @@ Desktop.ini
 
 # Log files
 *.log
+logs/
+
+# Environment and secrets
+.env
+.env.*
+!.env.example
+secrets/
+*.pem
+*.key
+credentials.json
+
+# Replit specific
+.replit.backup
+.config/
+.cache/
+.upm/
+
+# Backup files
+*~
+*.bak
+*.swp
+*.old
