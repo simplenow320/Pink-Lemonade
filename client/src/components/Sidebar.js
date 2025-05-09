@@ -24,26 +24,7 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen }) => {
 
   return (
     <>
-      {/* Mobile sidebar backdrop */}
-      {sidebarOpen && (
-        <div 
-          className="fixed inset-0 z-40 bg-gray-600 bg-opacity-75 md:hidden"
-          onClick={() => setSidebarOpen(false)}
-        ></div>
-      )}
-      
-      {/* Sidebar for mobile */}
-      <div className={`fixed inset-y-0 left-0 z-50 w-64 bg-white shadow-lg transform transition-transform duration-300 ease-in-out md:hidden ${
-        sidebarOpen ? 'translate-x-0' : '-translate-x-full'
-      }`}>
-        <SidebarContent 
-          navigation={navigation} 
-          isCurrentPath={isCurrentPath}
-          closeSidebar={() => setSidebarOpen(false)}
-        />
-      </div>
-      
-      {/* Sidebar for desktop */}
+      {/* Only show sidebar on desktop - not on mobile */}
       <div className="hidden md:flex md:flex-shrink-0">
         <div className="flex flex-col w-64">
           <div className="flex flex-col flex-grow pt-5 pb-4 overflow-y-auto bg-white border-r">
@@ -51,25 +32,6 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen }) => {
               navigation={navigation} 
               isCurrentPath={isCurrentPath}
             />
-          </div>
-        </div>
-      </div>
-      
-      {/* Mobile header with menu button */}
-      <div className="md:hidden bg-white w-full shadow-sm fixed top-0 left-0 z-30 px-4 py-2 flex items-center">
-        <button
-          type="button"
-          className="text-gray-600 hover:text-gray-900 focus:outline-none"
-          onClick={() => setSidebarOpen(true)}
-        >
-          <span className="sr-only">Open sidebar</span>
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-          </svg>
-        </button>
-        <div className="ml-4 flex-1 flex justify-between items-center">
-          <div className="flex-shrink-0 flex items-center">
-            <span className="text-xl font-bold text-primary">GrantFlow</span>
           </div>
         </div>
       </div>

@@ -26,6 +26,20 @@ module.exports = {
         card: '0 1px 3px rgba(0, 0, 0, 0.1), 0 1px 2px rgba(0, 0, 0, 0.06)',
         'card-hover': '0 4px 6px rgba(0, 0, 0, 0.1), 0 2px 4px rgba(0, 0, 0, 0.06)',
       },
+      keyframes: {
+        fadeDown: {
+          '0%': { opacity: 0, transform: 'translateY(-10px)' },
+          '100%': { opacity: 1, transform: 'translateY(0)' },
+        },
+        slideIn: {
+          '0%': { opacity: 0, transform: 'translateX(-10px)' },
+          '100%': { opacity: 1, transform: 'translateX(0)' },
+        }
+      },
+      animation: {
+        fadeDown: 'fadeDown 0.2s ease-out',
+        slideIn: 'slideIn 0.3s ease-out forwards',
+      }
     },
   },
   plugins: [

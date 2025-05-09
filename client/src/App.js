@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Routes, Route } from 'react-router-dom';
 import Sidebar from './components/Sidebar';
+import MobileNavbar from './components/MobileNavbar';
 import DashboardPage from './pages/DashboardPage';
 import GrantsPage from './pages/GrantsPage';
 import GrantDetailPage from './pages/GrantDetailPage';
@@ -80,12 +81,15 @@ function App() {
 
   return (
     <div className="flex h-screen overflow-hidden bg-gray-50">
-      {/* Sidebar */}
+      {/* Mobile Navbar - visible only on small screens */}
+      <MobileNavbar />
+      
+      {/* Sidebar - hidden on small screens */}
       <Sidebar sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen} />
       
       {/* Main Content */}
       <div className="flex-1 overflow-auto">
-        <div className="py-6 px-4 sm:px-6 lg:px-8">
+        <div className="md:py-6 md:px-4 sm:px-6 lg:px-8 mt-16 md:mt-0">
           <Routes>
             <Route path="/" element={
               <ErrorBoundary>
