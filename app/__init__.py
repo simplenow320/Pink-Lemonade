@@ -60,12 +60,13 @@ def create_app(test_config=None):
         run_migrations()
         
         # Import and register blueprints
-        from app.api import grants, organization, scraper, ai, analytics
+        from app.api import grants, organization, scraper, ai, analytics, writing_assistant
         app.register_blueprint(grants.bp)
         app.register_blueprint(organization.bp)
         app.register_blueprint(scraper.bp)
         app.register_blueprint(ai.bp)
         app.register_blueprint(analytics.bp)
+        app.register_blueprint(writing_assistant.bp)
         
         # Import and register main routes
         from app import routes

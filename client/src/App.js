@@ -7,6 +7,8 @@ import GrantDetailPage from './pages/GrantDetailPage';
 import ProfilePage from './pages/ProfilePage';
 import NarrativePage from './pages/NarrativePage';
 import ScraperPage from './pages/ScraperPage';
+import AnalyticsPage from './pages/AnalyticsPage';
+import WritingAssistantPage from './pages/WritingAssistantPage';
 import { initializeOrganization, ApiError } from './utils/api';
 import { useNotification } from './context/NotificationContext';
 import ErrorBoundary from './components/ErrorBoundary';
@@ -113,6 +115,21 @@ function App() {
             <Route path="/scraper" element={
               <ErrorBoundary>
                 <ScraperPage />
+              </ErrorBoundary>
+            } />
+            <Route path="/analytics" element={
+              <ErrorBoundary>
+                <AnalyticsPage />
+              </ErrorBoundary>
+            } />
+            <Route path="/writing-assistant" element={
+              <ErrorBoundary>
+                <WritingAssistantPage />
+              </ErrorBoundary>
+            } />
+            <Route path="/writing-assistant/:grantId" element={
+              <ErrorBoundary>
+                <WritingAssistantPage />
               </ErrorBoundary>
             } />
           </Routes>
