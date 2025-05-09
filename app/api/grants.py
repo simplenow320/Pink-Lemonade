@@ -1,22 +1,49 @@
-from flask import Blueprint, request, jsonify
+from flask import Blueprint, request, jsonify, Response
 from app.models.grant import Grant
 from app import db
 from app.utils.helpers import parse_grant_data
-from sqlalchemy.exc import SQLAlchemyError
+from app.api import log_request, log_response
+from sqlalchemy.exc import SQLAlchemyError, NoResultFound, DataError
+from sqlalchemy.orm.exc import MultipleResultsFound
 import logging
 import json
 from datetime import datetime
+from typing import Dict, List, Any, Optional, Tuple, Union
 
 bp = Blueprint('grants', __name__, url_prefix='/api/grants')
 
 @bp.route('', methods=['GET'])
-def get_grants():
-    """Get all grants with optional filtering"""
+def get_grants() -> Union[Response, Tuple[Response, int]]:
+    """
+    Get all grants with optional filtering.
+    
+    Query Parameters:
+        status (str, optional): Filter grants by status.
+        sort_by (str, optional): Field to sort by. Default: 'due_date'.
+        sort_dir (str, optional): Sort direction ('asc' or 'desc'). Default: 'asc'.
+        
+    Returns:
+        Response: JSON response with list of grants.
+        
+    Error Codes:
+        500: Server error occurred during request processing.
+    """
+    endpoint = f"{request.method} {request.path}"
+    log_request(request.method, endpoint, dict(request.args))
+    
     try:
         # Get query parameters for filtering
         status = request.args.get('status')
         sort_by = request.args.get('sort_by', 'due_date')
         sort_dir = request.args.get('sort_dir', 'asc')
+        
+        # Validate sort_by parameter
+        if not hasattr(Grant, sort_by):
+            log_response(endpoint, 400, f"Invalid sort_by parameter: {sort_by}")
+            return jsonify({
+                "error": f"Invalid sort_by parameter: {sort_by}",
+                "valid_fields": [c.name for c in Grant.__table__.columns]
+            }), 400
         
         # Start with a base query
         query = Grant.query
@@ -26,7 +53,14 @@ def get_grants():
             query = query.filter(Grant.status == status)
         
         # Apply sorting
-        if sort_dir == 'asc':
+        if sort_dir.lower() not in ['asc', 'desc']:
+            log_response(endpoint, 400, f"Invalid sort_dir parameter: {sort_dir}")
+            return jsonify({
+                "error": f"Invalid sort_dir parameter: {sort_dir}",
+                "valid_values": ['asc', 'desc']
+            }), 400
+            
+        if sort_dir.lower() == 'asc':
             query = query.order_by(getattr(Grant, sort_by))
         else:
             query = query.order_by(getattr(Grant, sort_by).desc())
@@ -36,17 +70,84 @@ def get_grants():
         
         # Convert to dictionary format
         result = [grant.to_dict() for grant in grants]
+        
+        log_response(endpoint, 200)
         return jsonify(result)
     
+    except DataError as e:
+        db.session.rollback()
+        error_msg = f"Database query error: {str(e)}"
+        logging.error(error_msg)
+        log_response(endpoint, 400, error_msg)
+        return jsonify({"error": error_msg}), 400
+        
+    except SQLAlchemyError as e:
+        db.session.rollback()
+        error_msg = f"Database error fetching grants: {str(e)}"
+        logging.error(error_msg)
+        log_response(endpoint, 500, error_msg)
+        return jsonify({"error": "A database error occurred while fetching grants"}), 500
+        
     except Exception as e:
-        logging.error(f"Error fetching grants: {str(e)}")
+        error_msg = f"Error fetching grants: {str(e)}"
+        logging.error(error_msg)
+        log_response(endpoint, 500, error_msg)
         return jsonify({"error": "Failed to fetch grants"}), 500
 
 @bp.route('', methods=['POST'])
-def add_grant():
-    """Add a new grant"""
+def add_grant() -> Union[Response, Tuple[Response, int]]:
+    """
+    Add a new grant to the database.
+    
+    Request Body:
+        title (str): The title of the grant. Required.
+        funder (str): The organization providing the grant. Required.
+        description (str, optional): Detailed description of the grant.
+        amount (float, optional): The grant amount.
+        due_date (str, optional): The due date in ISO format (YYYY-MM-DD).
+        eligibility (str, optional): Eligibility criteria for the grant.
+        website (str, optional): Website URL with more information.
+        status (str, optional): Current application status. Default: 'Not Started'.
+        match_score (float, optional): AI-calculated match score. Default: 0.
+        notes (str, optional): Additional notes about the grant.
+        focus_areas (list, optional): List of focus areas for the grant.
+        contact_info (str, optional): Contact information for the grant.
+        is_scraped (bool, optional): Whether the grant was scraped. Default: False.
+        
+    Returns:
+        Response: JSON response with the newly created grant data.
+        
+    Error Codes:
+        400: Invalid request data.
+        500: Server error occurred during request processing.
+    """
+    endpoint = f"{request.method} {request.path}"
+    log_request(request.method, endpoint, request.json)
+    
     try:
         data = request.json
+        
+        # Validate required fields
+        if not data:
+            log_response(endpoint, 400, "No data provided")
+            return jsonify({"error": "No data provided"}), 400
+            
+        if not data.get('title'):
+            log_response(endpoint, 400, "Title is required")
+            return jsonify({"error": "Title is required"}), 400
+            
+        if not data.get('funder'):
+            log_response(endpoint, 400, "Funder is required")
+            return jsonify({"error": "Funder is required"}), 400
+        
+        # Handle date conversion if provided
+        due_date = None
+        if data.get('due_date'):
+            try:
+                due_date = datetime.strptime(data['due_date'], '%Y-%m-%d').date()
+            except ValueError:
+                log_response(endpoint, 400, "Invalid date format. Use YYYY-MM-DD")
+                return jsonify({"error": "Invalid date format. Use YYYY-MM-DD"}), 400
         
         # Create new grant object
         new_grant = Grant(
@@ -54,11 +155,12 @@ def add_grant():
             funder=data.get('funder'),
             description=data.get('description'),
             amount=data.get('amount'),
-            due_date=data.get('due_date'),
+            due_date=due_date,
             eligibility=data.get('eligibility'),
             website=data.get('website'),
             status=data.get('status', 'Not Started'),
             match_score=data.get('match_score', 0),
+            match_explanation=data.get('match_explanation', ''),
             notes=data.get('notes', ''),
             focus_areas=data.get('focus_areas', []),
             contact_info=data.get('contact_info', ''),
@@ -69,14 +171,29 @@ def add_grant():
         db.session.add(new_grant)
         db.session.commit()
         
+        log_response(endpoint, 201)
         return jsonify(new_grant.to_dict()), 201
     
+    except DataError as e:
+        db.session.rollback()
+        error_msg = f"Database field error: {str(e)}"
+        logging.error(error_msg)
+        log_response(endpoint, 400, error_msg)
+        return jsonify({"error": "Invalid data format"}), 400
+        
     except SQLAlchemyError as e:
         db.session.rollback()
-        logging.error(f"Database error adding grant: {str(e)}")
-        return jsonify({"error": "Database error occurred"}), 500
+        error_msg = f"Database error adding grant: {str(e)}"
+        logging.error(error_msg)
+        log_response(endpoint, 500, error_msg)
+        return jsonify({"error": "A database error occurred while adding the grant"}), 500
+        
     except Exception as e:
-        logging.error(f"Error adding grant: {str(e)}")
+        if hasattr(db, 'session') and db.session:
+            db.session.rollback()
+        error_msg = f"Error adding grant: {str(e)}"
+        logging.error(error_msg)
+        log_response(endpoint, 500, error_msg)
         return jsonify({"error": "Failed to add grant"}), 500
 
 @bp.route('/<int:id>', methods=['GET'])
