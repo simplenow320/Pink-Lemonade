@@ -1,6 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import axios from 'axios';
+import { 
+  getGrant, 
+  getWritingAssistantSections, 
+  generateWritingSection, 
+  improveWritingSection, 
+  generateSectionOutline 
+} from '../utils/api';
 import { useNotification } from '../context/NotificationContext';
 
 const WritingAssistantPage = () => {
@@ -24,15 +30,15 @@ const WritingAssistantPage = () => {
   useEffect(() => {
     const fetchSectionTypes = async () => {
       try {
-        const response = await axios.get('/api/writing-assistant/sections');
-        if (response.data.success) {
-          setSectionTypes(response.data.sections);
+        const data = await getWritingAssistantSections();
+        if (data.success) {
+          setSectionTypes(data.sections);
         } else {
           addError('Failed to fetch section types');
         }
       } catch (error) {
         console.error('Error fetching section types:', error);
-        addError('Failed to fetch section types: ' + (error.response?.data?.error || error.message));
+        addError('Failed to fetch section types: ' + error.message);
       }
     };
 
@@ -44,15 +50,11 @@ const WritingAssistantPage = () => {
     if (grantId) {
       const fetchGrantInfo = async () => {
         try {
-          const response = await axios.get(`/api/grants/${grantId}`);
-          if (response.data.success) {
-            setGrantInfo(response.data.grant);
-          } else {
-            addError('Failed to fetch grant information');
-          }
+          const data = await getGrant(grantId);
+          setGrantInfo(data);
         } catch (error) {
           console.error('Error fetching grant:', error);
-          addError('Failed to fetch grant: ' + (error.response?.data?.error || error.message));
+          addError('Failed to fetch grant: ' + error.message);
         }
       };
 

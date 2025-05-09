@@ -311,3 +311,44 @@ export const updateAnalyticsMetrics = async () => {
   const response = await api.post('/analytics/update-metrics');
   return response.data;
 };
+
+// Writing Assistant APIs
+export const getWritingAssistantSections = async () => {
+  const response = await api.get('/writing-assistant/sections');
+  return response.data;
+};
+
+export const generateWritingSection = async (sectionType, grantId, additionalInputs = {}) => {
+  const data = {
+    section_type: sectionType,
+    grant_id: grantId
+  };
+  
+  if (Object.keys(additionalInputs).length > 0) {
+    data.additional_inputs = additionalInputs;
+  }
+  
+  const response = await api.post('/writing-assistant/generate', data);
+  return response.data;
+};
+
+export const improveWritingSection = async (sectionType, content, feedback) => {
+  const data = {
+    section_type: sectionType,
+    content,
+    feedback
+  };
+  
+  const response = await api.post('/writing-assistant/improve', data);
+  return response.data;
+};
+
+export const generateSectionOutline = async (sectionType, grantId) => {
+  const data = {
+    section_type: sectionType,
+    grant_id: grantId
+  };
+  
+  const response = await api.post('/writing-assistant/outline', data);
+  return response.data;
+};

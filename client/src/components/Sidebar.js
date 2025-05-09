@@ -10,7 +10,8 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen }) => {
     { name: 'Grants', href: '/grants', icon: 'file-text' },
     { name: 'Organization Profile', href: '/organization', icon: 'users' },
     { name: 'Grant Scraper', href: '/scraper', icon: 'search' },
-    { name: 'Analytics', href: '/analytics', icon: 'chart-bar' }
+    { name: 'Analytics', href: '/analytics', icon: 'chart-bar' },
+    { name: 'Writing Assistant', href: '/writing-assistant', icon: 'pencil' }
   ];
   
   // Check if the current path matches the nav item
@@ -155,6 +156,8 @@ const getIconPath = (icon) => {
       return "M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z";
     case 'chart-bar':
       return "M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z";
+    case 'pencil':
+      return "M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z";
     default:
       return "M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z";
   }
