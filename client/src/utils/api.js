@@ -269,3 +269,45 @@ export const initializeOrganization = async () => {
     throw error;
   }
 };
+
+// Analytics APIs
+export const getAnalyticsSuccessMetrics = async (period = 'all', limit = null, includeCategories = true) => {
+  let url = '/analytics/success-metrics';
+  
+  // Add query parameters
+  const params = new URLSearchParams();
+  params.append('period', period);
+  if (limit) params.append('limit', limit);
+  params.append('include_categories', includeCategories.toString());
+  
+  url += `?${params.toString()}`;
+  
+  const response = await api.get(url);
+  return response.data;
+};
+
+export const getAnalyticsTrends = async (metric = 'success_rate', period = 'monthly', months = 12) => {
+  const url = `/analytics/trends?metric=${metric}&period=${period}&months=${months}`;
+  const response = await api.get(url);
+  return response.data;
+};
+
+export const getAnalyticsCategoryComparison = async () => {
+  const response = await api.get('/analytics/category-comparison');
+  return response.data;
+};
+
+export const getAnalyticsGrantTimeline = async (grantId) => {
+  const response = await api.get(`/analytics/grant-timeline/${grantId}`);
+  return response.data;
+};
+
+export const getAnalyticsOverview = async () => {
+  const response = await api.get('/analytics/overview');
+  return response.data;
+};
+
+export const updateAnalyticsMetrics = async () => {
+  const response = await api.post('/analytics/update-metrics');
+  return response.data;
+};

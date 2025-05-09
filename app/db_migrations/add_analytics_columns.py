@@ -25,7 +25,8 @@ def run_migration():
             WHERE table_name = 'grants' 
             AND column_name = 'date_submitted'
         """))
-        date_submitted_exists = result.scalar() > 0
+        count = result.scalar()
+        date_submitted_exists = count is not None and count > 0
         
         # Check for date_decision column
         result = conn.execute(text("""
@@ -34,7 +35,8 @@ def run_migration():
             WHERE table_name = 'grants' 
             AND column_name = 'date_decision'
         """))
-        date_decision_exists = result.scalar() > 0
+        count = result.scalar()
+        date_decision_exists = count is not None and count > 0
         
         # Add date_submitted column if it doesn't exist
         if not date_submitted_exists:

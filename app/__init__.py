@@ -55,6 +55,10 @@ def create_app(test_config=None):
         # Create all tables in the database
         db.create_all()
         
+        # Run database migrations
+        from app.db_migrations.run_migrations import run_migrations
+        run_migrations()
+        
         # Import and register blueprints
         from app.api import grants, organization, scraper, ai, analytics
         app.register_blueprint(grants.bp)
