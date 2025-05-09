@@ -1,6 +1,60 @@
 import axios from 'axios';
 
-const API_BASE_URL = '/api';
+// Use environment variable for API base URL, with fallback to relative path for local development
+const API_BASE_URL = process.env.REACT_APP_API_URL || '/api';
+
+/**
+ * Custom error class for API errors that includes user-friendly messages
+ */
+export class ApiError extends Error {
+  constructor(message, status, originalError = null) {
+    super(message);
+    this.name = 'ApiError';
+    this.status = status;
+    this.originalError = originalError;
+  }
+}
+
+/**
+ * Transforms an error response into a user-friendly message
+ * @param {Error} error - The error object from Axios
+ * @returns {string} A user-friendly error message
+ */
+export const getUserFriendlyErrorMessage = (error) => {
+  // If it's already an ApiError, just return its message
+  if (error instanceof ApiError) {
+    return error.message;
+  }
+
+  // Handle axios error responses
+  if (error.response) {
+    const { status } = error.response;
+    
+    // Handle specific HTTP status codes
+    switch (status) {
+      case 400:
+        return 'Invalid request. Please check your input and try again.';
+      case 401:
+        return 'Authentication required. Please log in again.';
+      case 403:
+        return 'You do not have permission to perform this action.';
+      case 404:
+        return 'The requested resource was not found.';
+      case 500:
+        return 'A server error occurred. Our team has been notified.';
+      default:
+        return `An error occurred (Status: ${status}). Please try again later.`;
+    }
+  }
+
+  // Handle network errors
+  if (error.request && !error.response) {
+    return 'Unable to connect to the server. Please check your internet connection.';
+  }
+
+  // Handle other errors
+  return 'An unexpected error occurred. Please try again later.';
+};
 
 // Create axios instance
 const api = axios.create({
@@ -8,14 +62,28 @@ const api = axios.create({
   headers: {
     'Content-Type': 'application/json',
   },
+  // Add reasonable timeouts
+  timeout: 30000, // 30 seconds
 });
 
-// Handle errors
+// Handle errors with improved logging and error transformation
 api.interceptors.response.use(
   (response) => response,
   (error) => {
-    console.error('API Error:', error);
-    return Promise.reject(error);
+    // Create a more structured log
+    console.error('API Error:', {
+      url: error.config?.url,
+      method: error.config?.method,
+      status: error.response?.status,
+      data: error.response?.data,
+      message: error.message,
+    });
+
+    // Transform to ApiError with user-friendly message
+    const userMessage = getUserFriendlyErrorMessage(error);
+    const status = error.response?.status || 0;
+    
+    return Promise.reject(new ApiError(userMessage, status, error));
   }
 );
 
@@ -67,13 +135,30 @@ export const uploadGrantFile = async (file) => {
   const formData = new FormData();
   formData.append('file', file);
   
-  const response = await axios.post('/api/grants/upload', formData, {
-    headers: {
-      'Content-Type': 'multipart/form-data',
-    },
-  });
-  
-  return response.data;
+  try {
+    const response = await axios.post(`${API_BASE_URL}/grants/upload`, formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+      timeout: 60000, // 60 seconds for file uploads
+    });
+    
+    return response.data;
+  } catch (error) {
+    // Create a more structured log
+    console.error('File Upload Error:', {
+      fileName: file.name,
+      fileSize: file.size,
+      fileType: file.type,
+      error: error.message,
+    });
+
+    // Transform to ApiError with user-friendly message
+    const userMessage = getUserFriendlyErrorMessage(error);
+    const status = error.response?.status || 0;
+    
+    throw new ApiError(userMessage, status, error);
+  }
 };
 
 export const processGrantUrl = async (url) => {
