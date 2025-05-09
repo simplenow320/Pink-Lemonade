@@ -216,23 +216,52 @@ function Dashboard({ data, hasApiKey }) {
         </div>
       )}
       
+      <div className="welcome-hero">
+        <div className="hero-content">
+          <h1 className="hero-title">Discover & Manage Grants Efficiently</h1>
+          <p className="hero-subtitle">
+            GrantFlow helps you find the perfect funding opportunities for your nonprofit organization with AI-powered matching and automated discovery.
+          </p>
+          <div className="hero-actions">
+            <a href="#" className="btn btn-primary">Discover Grants</a>
+            <a href="#" className="btn btn-outline">Learn More</a>
+          </div>
+        </div>
+        <div className="hero-image">
+          <div className="hero-image-container">
+            <svg width="400" height="300" viewBox="0 0 400 300" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <rect width="400" height="300" rx="20" fill="#FFFFFF"/>
+              <circle cx="200" cy="150" r="80" fill="#FFD380"/>
+              <path d="M260 150C260 183.137 233.137 210 200 210C166.863 210 140 183.137 140 150C140 116.863 166.863 90 200 90C233.137 90 260 116.863 260 150Z" fill="#F8B049"/>
+              <rect x="180" y="130" width="120" height="20" rx="10" fill="#FFFFFF"/>
+              <rect x="200" y="160" width="80" height="20" rx="10" fill="#FFFFFF"/>
+              <path d="M140 180C140 146.863 166.863 120 200 120" stroke="#FFFFFF" strokeWidth="8" strokeLinecap="round"/>
+            </svg>
+          </div>
+        </div>
+      </div>
+      
       <div className="dashboard-stats">
         <div className="stat-card">
+          <div className="stat-icon">📊</div>
           <div className="stat-title">Total Grants</div>
           <div className="stat-value">{data.total_grants || 0}</div>
         </div>
         
         <div className="stat-card">
+          <div className="stat-icon">💰</div>
           <div className="stat-title">Potential Funding</div>
           <div className="stat-value">{formatCurrency(data.potential_funding || 0)}</div>
         </div>
         
         <div className="stat-card">
+          <div className="stat-icon">🏆</div>
           <div className="stat-title">Won Funding</div>
           <div className="stat-value">{formatCurrency(data.won_funding || 0)}</div>
         </div>
         
         <div className="stat-card">
+          <div className="stat-icon">✏️</div>
           <div className="stat-title">Active Applications</div>
           <div className="stat-value">
             {(data.status_counts && (data.status_counts['Not Started'] + data.status_counts['In Progress'])) || 0}
