@@ -81,11 +81,11 @@ function App() {
 
   return (
     <div className="flex h-screen overflow-hidden bg-gray-50">
-      {/* Mobile Navbar - visible only on small screens */}
+      {/* Mobile Navbar - temporarily shown on all screens */}
       <MobileNavbar />
       
-      {/* Sidebar - hidden on small screens */}
-      <Sidebar sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen} />
+      {/* Sidebar temporarily hidden on all screens */}
+      {/* <Sidebar sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen} /> */}
       
       {/* Main Content */}
       <div className="flex-1 overflow-auto">

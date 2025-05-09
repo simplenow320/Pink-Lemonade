@@ -30,7 +30,7 @@ const MobileNavbar = () => {
   };
 
   return (
-    <nav className="bg-white shadow-md w-full fixed top-0 left-0 z-50 md:hidden">
+    <nav className="bg-white shadow-md w-full fixed top-0 left-0 z-50">
       <div className="px-4 py-3 flex justify-between items-center">
         <Link to="/" className="text-xl font-extrabold tracking-tight text-orange-500">
           <span className="inline-block transform -rotate-3">Grant</span>
