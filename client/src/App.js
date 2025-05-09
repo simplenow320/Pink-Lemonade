@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Routes, Route } from 'react-router-dom';
-import Sidebar from './components/Sidebar';
-import BottomNav from './components/BottomNav';
+import TopNavbar from './components/TopNavbar';
 import DashboardPage from './pages/DashboardPage';
 import GrantsPage from './pages/GrantsPage';
 import GrantDetailPage from './pages/GrantDetailPage';
@@ -16,7 +15,6 @@ import ErrorBoundary from './components/ErrorBoundary';
 import './App.css';
 
 function App() {
-  const [sidebarOpen, setSidebarOpen] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const { addError } = useNotification();
@@ -80,15 +78,12 @@ function App() {
   }
 
   return (
-    <div className="flex h-screen overflow-hidden bg-gray-50">
-      {/* Sidebar - hidden on mobile */}
-      <Sidebar sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen} />
-      
-      {/* Bottom Navigation - visible only on mobile */}
-      <BottomNav />
+    <div className="flex flex-col h-screen overflow-hidden bg-gray-50">
+      {/* Top Navigation Bar */}
+      <TopNavbar />
       
       {/* Main Content */}
-      <div className="flex-1 overflow-auto pb-16 md:pb-0">
+      <div className="flex-1 overflow-auto mt-16">
         <div className="py-4 px-4 sm:px-6 lg:px-8">
           <Routes>
             <Route path="/" element={
