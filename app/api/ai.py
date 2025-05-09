@@ -1,4 +1,4 @@
-from flask import Blueprint, request, jsonify
+from flask import Blueprint, request, jsonify, Response
 from app.models.organization import Organization
 from app.models.grant import Grant
 from app.models.narrative import Narrative
@@ -10,56 +10,128 @@ from app.services.ai_service import (
     extract_grant_info_from_url,
     openai
 )
-from sqlalchemy.exc import SQLAlchemyError
+from app.api import log_request, log_response
+from sqlalchemy.exc import SQLAlchemyError, NoResultFound, IntegrityError
 import logging
 import os
 from datetime import datetime
+from typing import Dict, Any, Union, Tuple
 
 bp = Blueprint('ai', __name__, url_prefix='/api/ai')
 
 @bp.route('/status', methods=['GET'])
-def get_api_status():
-    """Get the status of the OpenAI API configuration"""
+def get_api_status() -> Response:
+    """
+    Get the status of the OpenAI API configuration.
+    
+    Returns:
+        Response: JSON response with API configuration status.
+        - api_key_configured: Whether the API key is properly configured.
+        - message: Description of the API key status.
+    """
+    endpoint = f"{request.method} {request.path}"
+    log_request(request.method, endpoint)
+    
+    is_configured = openai is not None
+    message = "OpenAI API key is properly configured" if is_configured else "OpenAI API key is not configured"
+    
+    log_response(endpoint, 200)
     return jsonify({
-        "api_key_configured": openai is not None,
-        "message": "OpenAI API key is properly configured" if openai else "OpenAI API key is not configured"
+        "api_key_configured": is_configured,
+        "message": message
     })
 
 @bp.route('/match', methods=['POST'])
-def match_grant():
-    """Match a grant to the organization profile"""
+def match_grant() -> Union[Response, Tuple[Response, int]]:
+    """
+    Match a grant to the organization profile using AI analysis.
+    
+    Request Body:
+        grant_id (int): The ID of the grant to match. Required.
+        
+    Returns:
+        Response: JSON response with match results including:
+            - match_score: Score from 0-100 indicating match quality
+            - match_explanation: Text explanation of the match score
+            
+    Error Codes:
+        400: Invalid request data (missing grant_id).
+        404: Grant or organization profile not found.
+        500: Server error during processing.
+    """
+    endpoint = f"{request.method} {request.path}"
+    log_request(request.method, endpoint, request.json)
+    
     try:
         data = request.json
+        
+        if not data:
+            log_response(endpoint, 400, "No data provided")
+            return jsonify({"error": "No data provided"}), 400
+            
         grant_id = data.get('grant_id')
         
         if not grant_id:
+            log_response(endpoint, 400, "Grant ID is required")
             return jsonify({"error": "Grant ID is required"}), 400
         
         # Get the grant and organization data
         grant = Grant.query.get(grant_id)
         if grant is None:
+            log_response(endpoint, 404, f"Grant not found with ID: {grant_id}")
             return jsonify({"error": "Grant not found"}), 404
         
         org = Organization.query.first()
         if org is None:
+            log_response(endpoint, 404, "Organization profile not found")
             return jsonify({"error": "Organization profile not found"}), 404
+        
+        # Verify OpenAI API is configured
+        if openai is None:
+            log_response(endpoint, 500, "OpenAI API is not configured")
+            return jsonify({
+                "error": "OpenAI API is not configured. Please set up the OPENAI_API_KEY environment variable."
+            }), 500
         
         # Call the AI service to analyze the match
         match_result = analyze_grant_match(grant.to_dict(), org.to_dict())
         
         # Update the grant with the match score
-        grant.match_score = match_result['score']
-        grant.match_explanation = match_result['explanation']
+        if 'match_score' in match_result:
+            grant.match_score = match_result['match_score']
+        elif 'score' in match_result:  # Handle both key formats
+            grant.match_score = match_result['score']
+            
+        if 'match_explanation' in match_result:
+            grant.match_explanation = match_result['match_explanation']
+        elif 'explanation' in match_result:  # Handle both key formats
+            grant.match_explanation = match_result['explanation']
+            
         db.session.commit()
         
+        log_response(endpoint, 200)
         return jsonify(match_result)
     
     except SQLAlchemyError as e:
         db.session.rollback()
-        logging.error(f"Database error matching grant: {str(e)}")
-        return jsonify({"error": "Database error occurred"}), 500
+        error_msg = f"Database error matching grant: {str(e)}"
+        logging.error(error_msg)
+        log_response(endpoint, 500, error_msg)
+        return jsonify({"error": "Database error occurred while matching grant"}), 500
+        
+    except ConnectionError as e:
+        error_msg = f"Connection error to OpenAI API: {str(e)}"
+        logging.error(error_msg)
+        log_response(endpoint, 502, error_msg)
+        return jsonify({"error": "Could not connect to AI service"}), 502
+        
     except Exception as e:
-        logging.error(f"Error matching grant: {str(e)}")
+        # Ensure any transaction is rolled back
+        if hasattr(db, 'session') and db.session:
+            db.session.rollback()
+        error_msg = f"Error matching grant: {str(e)}"
+        logging.error(error_msg)
+        log_response(endpoint, 500, error_msg)
         return jsonify({"error": "Failed to match grant"}), 500
 
 @bp.route('/generate-narrative', methods=['POST'])
@@ -160,39 +232,131 @@ def update_narrative(narrative_id):
         return jsonify({"error": "Failed to update narrative"}), 500
 
 @bp.route('/extract-from-text', methods=['POST'])
-def extract_from_text():
-    """Extract grant information from text"""
+def extract_from_text() -> Union[Response, Tuple[Response, int]]:
+    """
+    Extract structured grant information from provided text using AI.
+    
+    Request Body:
+        text (str): Text content containing grant information. Required.
+        
+    Returns:
+        Response: JSON response with extracted grant information including:
+            - title: Grant title
+            - funder: Organization providing the grant
+            - description: Grant description
+            - amount: Grant amount
+            - due_date: Application deadline
+            - eligibility: Eligibility criteria
+            - focus_areas: List of focus areas
+            - contact_info: Contact information
+            
+    Error Codes:
+        400: Invalid request data (missing text).
+        500: Server error during processing.
+        502: Error connecting to AI service.
+    """
+    endpoint = f"{request.method} {request.path}"
+    log_request(request.method, endpoint, request.json)
+    
     try:
         data = request.json
+        
+        if not data:
+            log_response(endpoint, 400, "No data provided")
+            return jsonify({"error": "No data provided"}), 400
+            
         text = data.get('text')
         
         if not text:
+            log_response(endpoint, 400, "Text is required")
             return jsonify({"error": "Text is required"}), 400
+        
+        # Verify OpenAI API is configured
+        if openai is None:
+            log_response(endpoint, 500, "OpenAI API is not configured")
+            return jsonify({
+                "error": "OpenAI API is not configured. Please set up the OPENAI_API_KEY environment variable."
+            }), 500
         
         # Call the AI service to extract information
         grant_info = extract_grant_info(text)
         
+        log_response(endpoint, 200)
         return jsonify(grant_info)
     
+    except ConnectionError as e:
+        error_msg = f"Connection error to OpenAI API: {str(e)}"
+        logging.error(error_msg)
+        log_response(endpoint, 502, error_msg)
+        return jsonify({"error": "Could not connect to AI service"}), 502
+        
     except Exception as e:
-        logging.error(f"Error extracting grant info: {str(e)}")
+        error_msg = f"Error extracting grant info: {str(e)}"
+        logging.error(error_msg)
+        log_response(endpoint, 500, error_msg)
         return jsonify({"error": "Failed to extract grant information"}), 500
 
 @bp.route('/extract-from-url', methods=['POST'])
-def extract_from_url():
-    """Extract grant information from a URL"""
+def extract_from_url() -> Union[Response, Tuple[Response, int]]:
+    """
+    Extract structured grant information from a website URL using AI.
+    
+    Request Body:
+        url (str): Website URL containing grant information. Required.
+        
+    Returns:
+        Response: JSON response with extracted grant information including:
+            - title: Grant title
+            - funder: Organization providing the grant
+            - description: Grant description
+            - amount: Grant amount
+            - due_date: Application deadline
+            - eligibility: Eligibility criteria
+            - focus_areas: List of focus areas
+            - contact_info: Contact information
+            
+    Error Codes:
+        400: Invalid request data (missing URL).
+        500: Server error during processing.
+        502: Error connecting to AI service or website.
+    """
+    endpoint = f"{request.method} {request.path}"
+    log_request(request.method, endpoint, request.json)
+    
     try:
         data = request.json
+        
+        if not data:
+            log_response(endpoint, 400, "No data provided")
+            return jsonify({"error": "No data provided"}), 400
+            
         url = data.get('url')
         
         if not url:
+            log_response(endpoint, 400, "URL is required")
             return jsonify({"error": "URL is required"}), 400
+        
+        # Verify OpenAI API is configured
+        if openai is None:
+            log_response(endpoint, 500, "OpenAI API is not configured")
+            return jsonify({
+                "error": "OpenAI API is not configured. Please set up the OPENAI_API_KEY environment variable."
+            }), 500
         
         # Call the AI service to extract information from URL
         grant_info = extract_grant_info_from_url(url)
         
+        log_response(endpoint, 200)
         return jsonify(grant_info)
     
+    except ConnectionError as e:
+        error_msg = f"Connection error: {str(e)}"
+        logging.error(error_msg)
+        log_response(endpoint, 502, error_msg)
+        return jsonify({"error": "Could not connect to the specified URL or AI service"}), 502
+        
     except Exception as e:
-        logging.error(f"Error extracting grant info from URL: {str(e)}")
+        error_msg = f"Error extracting grant info from URL: {str(e)}"
+        logging.error(error_msg)
+        log_response(endpoint, 500, error_msg)
         return jsonify({"error": "Failed to extract grant information from URL"}), 500
