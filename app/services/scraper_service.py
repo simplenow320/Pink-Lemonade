@@ -41,12 +41,22 @@ def scrape_grants(url_list):
         
         # Create system prompt for the AI
         system_prompt = """You are an AI grant scraper. Here is a list of website URLs. For each site find any grant postings. Return a JSON array with objects containing:
-1. url
-2. title
-3. summary
-4. due_date in YYYY-MM-DD
-5. amount as a number
-6. eligibility_criteria"""
+1. url: Direct URL to the grant information page
+2. title: Full name of the grant program
+3. summary: Detailed description of what the grant funds
+4. due_date: Application deadline in YYYY-MM-DD format
+5. amount: Funding amount as a number
+6. eligibility_criteria: Who can apply for this grant
+7. focus_areas: Array of focus areas or categories this grant supports
+8. contact_info: Comprehensive contact information including:
+   - contact_name: Name of the contact person
+   - contact_email: Email address for inquiries 
+   - contact_phone: Phone number for inquiries
+   - contact_position: Title/position of the contact person
+9. application_process: Description of how to apply
+10. grant_duration: Period the grant covers (if specified)
+
+Be thorough in extracting all available contact information."""
         
         # Call OpenAI API
         response = client.chat.completions.create(

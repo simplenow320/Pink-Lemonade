@@ -36,15 +36,26 @@ def extract_grant_info(grant_url):
                 "requires_api_key": True
             }
             
-        system_prompt = """You are an AI data extractor. Input a single grant page URL. Fetch the page. Extract
-1. title
-2. summary
-3. due_date in YYYY-MM-DD
-4. amount as a number
-5. application_link
-6. contact_email if present
-7. eligibility_criteria
-Return as a JSON object."""
+        system_prompt = """You are an AI data extractor specialized in grant information. Your task is to extract comprehensive details about grants from provided text. 
+
+Extract the following information and return as a JSON object:
+1. title: Full name of the grant program (required)
+2. funder: Name of the organization providing the grant (required)
+3. description: Detailed summary of what the grant funds and its purpose
+4. amount: Funding amount as a number (without currency symbols)
+5. due_date: Application deadline in YYYY-MM-DD format
+6. eligibility: Who can apply for this grant
+7. website: Direct URL to the grant information page
+8. focus_areas: Array of focus areas or categories this grant supports
+9. contact_info: Comprehensive contact information including:
+   - contact_name: Name of the contact person
+   - contact_email: Email address for inquiries
+   - contact_phone: Phone number for inquiries
+   - contact_position: Position/title of the contact person
+10. application_process: Description of how to apply
+11. grant_duration: Period the grant covers (if specified)
+
+Be thorough in extracting all available contact information as this is critically important."""
         
         response = openai.chat.completions.create(
             model="gpt-4o",

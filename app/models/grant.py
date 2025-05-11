@@ -24,7 +24,7 @@ class Grant(db.Model):
     match_explanation = db.Column(db.Text)
     notes = db.Column(db.Text)
     focus_areas = db.Column(JSON, default=list)
-    contact_info = db.Column(db.Text)
+    contact_info = db.Column(JSON, default=dict)  # Structured contact info (name, email, phone, position)
     created_at = db.Column(db.DateTime, default=datetime.now)
     updated_at = db.Column(db.DateTime, default=datetime.now, onupdate=datetime.now)
     is_scraped = db.Column(db.Boolean, default=False)
