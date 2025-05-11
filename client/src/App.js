@@ -5,6 +5,7 @@ import { useNotification } from './context/NotificationContext';
 import ErrorBoundary from './components/ErrorBoundary';
 import './App.css';
 
+// CHANGING THIS TO BREAK THE APP INTENTIONALLY
 // Modern layout
 import ModernLayout from './components/layout/ModernLayout';
 
