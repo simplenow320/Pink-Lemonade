@@ -26,21 +26,21 @@ def get_sources():
 def add_source():
     """Add a new scraper source/funder"""
     try:
-        data = request.json
+        data = request.json or {}
         
-        new_source = ScraperSource(
-            name=data.get('name'),
-            url=data.get('url'),
-            location=data.get('location'),
-            phone=data.get('phone'),
-            contact_email=data.get('contact_email'),
-            contact_name=data.get('contact_name'),
-            match_score=data.get('match_score', 0),
-            best_fit_initiatives=data.get('best_fit_initiatives', []),
-            grant_programs=data.get('grant_programs', []),
-            selector_config=data.get('selector_config', {}),
-            is_active=data.get('is_active', True)
-        )
+        # Create source object
+        new_source = ScraperSource()
+        new_source.name = data.get('name', '')
+        new_source.url = data.get('url', '')
+        new_source.location = data.get('location')
+        new_source.phone = data.get('phone')
+        new_source.contact_email = data.get('contact_email')
+        new_source.contact_name = data.get('contact_name')
+        new_source.match_score = data.get('match_score', 0)
+        new_source.best_fit_initiatives = data.get('best_fit_initiatives', [])
+        new_source.grant_programs = data.get('grant_programs', [])
+        new_source.selector_config = data.get('selector_config', {})
+        new_source.is_active = data.get('is_active', True)
         
         db.session.add(new_source)
         db.session.commit()

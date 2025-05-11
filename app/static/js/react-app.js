@@ -76,6 +76,25 @@ function App() {
     setPage(pageName);
   };
 
+  // Fetch funders data when viewing funders page
+  const [funders, setFunders] = React.useState([]);
+  
+  React.useEffect(() => {
+    if (page === 'funders') {
+      setLoading(true);
+      fetch('/api/scraper/sources')
+        .then(response => response.json())
+        .then(data => {
+          setFunders(data);
+          setLoading(false);
+        })
+        .catch(error => {
+          console.error('Error fetching funders:', error);
+          setLoading(false);
+        });
+    }
+  }, [page]);
+
   // Render current page based on state
   const renderPage = () => {
     if (loading) {
@@ -89,6 +108,8 @@ function App() {
         return <GrantsList grants={grants} hasApiKey={hasApiKey} />;
       case 'organization':
         return <OrganizationProfile organization={organization} />;
+      case 'funders':
+        return <FundersManagement funders={funders} setFunders={setFunders} />;
       case 'scraper':
         // Redirect to the standalone scraper page
         window.location.href = '/scraper';
@@ -178,6 +199,12 @@ function TopNavbar({ currentPage, onNavigate, organization }) {
                 <span>Organization</span>
               </a>
             </li>
+            <li className={currentPage === 'funders' ? 'active' : ''}>
+              <a href="#" onClick={(e) => { e.preventDefault(); onNavigate('funders'); }}>
+                <span className="icon">💰</span>
+                <span>Funders</span>
+              </a>
+            </li>
             <li className={currentPage === 'scraper' ? 'active' : ''}>
               <a href="/scraper" target="_blank" rel="noopener noreferrer">
                 <span className="icon">🔍</span>
@@ -217,6 +244,12 @@ function TopNavbar({ currentPage, onNavigate, organization }) {
             <a href="#" onClick={(e) => { e.preventDefault(); onNavigate('organization'); setIsMenuOpen(false); }}>
               <span className="icon">🏢</span>
               <span>Organization</span>
+            </a>
+          </li>
+          <li className={currentPage === 'funders' ? 'active' : ''}>
+            <a href="#" onClick={(e) => { e.preventDefault(); onNavigate('funders'); setIsMenuOpen(false); }}>
+              <span className="icon">💰</span>
+              <span>Funders</span>
             </a>
           </li>
           <li className={currentPage === 'scraper' ? 'active' : ''}>
@@ -1042,6 +1075,514 @@ function formatDate(date) {
   
   const options = { year: 'numeric', month: 'short', day: 'numeric' };
   return date.toLocaleDateString(undefined, options);
+}
+
+// Funders Management Component
+function FundersManagement({ funders, setFunders }) {
+  const [showAddForm, setShowAddForm] = React.useState(false);
+  const [editingFunder, setEditingFunder] = React.useState(null);
+  const [loading, setLoading] = React.useState(false);
+  const [formData, setFormData] = React.useState({
+    name: '',
+    url: '',
+    location: '',
+    phone: '',
+    contact_email: '',
+    contact_name: '',
+    match_score: 3,
+    best_fit_initiatives: [],
+    grant_programs: [],
+    is_active: true
+  });
+  const [initiatives, setInitiatives] = React.useState([
+    'Urban Church Planting',
+    'Mental Health and the Church',
+    'Pastors Thriving Together',
+    'AI, The Church, and Urban Communities'
+  ]);
+  const [message, setMessage] = React.useState({ text: '', type: '' });
+
+  // Reset form when add/edit mode changes
+  React.useEffect(() => {
+    if (editingFunder) {
+      setFormData({
+        name: editingFunder.name || '',
+        url: editingFunder.url || '',
+        location: editingFunder.location || '',
+        phone: editingFunder.phone || '',
+        contact_email: editingFunder.contact_email || '',
+        contact_name: editingFunder.contact_name || '',
+        match_score: editingFunder.match_score || 3,
+        best_fit_initiatives: editingFunder.best_fit_initiatives || [],
+        grant_programs: editingFunder.grant_programs || [],
+        is_active: editingFunder.is_active !== false
+      });
+    } else {
+      resetForm();
+    }
+  }, [editingFunder, showAddForm]);
+
+  // Reset form to defaults
+  const resetForm = () => {
+    setFormData({
+      name: '',
+      url: '',
+      location: '',
+      phone: '',
+      contact_email: '',
+      contact_name: '',
+      match_score: 3,
+      best_fit_initiatives: [],
+      grant_programs: [],
+      is_active: true
+    });
+  };
+
+  // Handle form input changes
+  const handleChange = (e) => {
+    const { name, value, type, checked } = e.target;
+    setFormData({
+      ...formData,
+      [name]: type === 'checkbox' ? checked : value
+    });
+  };
+
+  // Handle multi-select changes for initiatives
+  const handleInitiativeChange = (initiative) => {
+    if (formData.best_fit_initiatives.includes(initiative)) {
+      setFormData({
+        ...formData,
+        best_fit_initiatives: formData.best_fit_initiatives.filter(i => i !== initiative)
+      });
+    } else {
+      setFormData({
+        ...formData,
+        best_fit_initiatives: [...formData.best_fit_initiatives, initiative]
+      });
+    }
+  };
+
+  // Handle grant program input
+  const handleAddProgram = () => {
+    const programInput = document.getElementById('program-input');
+    if (programInput && programInput.value.trim()) {
+      setFormData({
+        ...formData,
+        grant_programs: [...formData.grant_programs, programInput.value.trim()]
+      });
+      programInput.value = '';
+    }
+  };
+
+  const handleRemoveProgram = (program) => {
+    setFormData({
+      ...formData,
+      grant_programs: formData.grant_programs.filter(p => p !== program)
+    });
+  };
+
+  // Submit form to add or update funder
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    setLoading(true);
+    
+    // Validate form
+    if (!formData.name || !formData.url) {
+      setMessage({ text: 'Name and URL are required', type: 'error' });
+      setLoading(false);
+      return;
+    }
+
+    // Determine if adding or updating
+    const isUpdating = !!editingFunder;
+    const url = isUpdating 
+      ? `/api/scraper/sources/${editingFunder.id}` 
+      : '/api/scraper/sources';
+    const method = isUpdating ? 'PUT' : 'POST';
+
+    fetch(url, {
+      method,
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(formData)
+    })
+      .then(response => {
+        if (!response.ok) {
+          throw new Error('Failed to save funder');
+        }
+        return response.json();
+      })
+      .then(data => {
+        // Update local state
+        if (isUpdating) {
+          setFunders(funders.map(f => f.id === editingFunder.id ? data : f));
+        } else {
+          setFunders([...funders, data]);
+        }
+        
+        // Show success message
+        setMessage({ 
+          text: `Funder ${isUpdating ? 'updated' : 'added'} successfully`, 
+          type: 'success' 
+        });
+        
+        // Reset form
+        setShowAddForm(false);
+        setEditingFunder(null);
+        resetForm();
+      })
+      .catch(error => {
+        console.error('Error saving funder:', error);
+        setMessage({ text: error.message, type: 'error' });
+      })
+      .finally(() => {
+        setLoading(false);
+      });
+  };
+
+  // Delete a funder
+  const handleDelete = (funder) => {
+    if (!window.confirm(`Are you sure you want to delete ${funder.name}?`)) {
+      return;
+    }
+
+    setLoading(true);
+    fetch(`/api/scraper/sources/${funder.id}`, {
+      method: 'DELETE'
+    })
+      .then(response => {
+        if (!response.ok) {
+          throw new Error('Failed to delete funder');
+        }
+        return response.json();
+      })
+      .then(() => {
+        setFunders(funders.filter(f => f.id !== funder.id));
+        setMessage({ text: 'Funder deleted successfully', type: 'success' });
+      })
+      .catch(error => {
+        console.error('Error deleting funder:', error);
+        setMessage({ text: error.message, type: 'error' });
+      })
+      .finally(() => {
+        setLoading(false);
+      });
+  };
+
+  // Clear message after 5 seconds
+  React.useEffect(() => {
+    if (message.text) {
+      const timer = setTimeout(() => {
+        setMessage({ text: '', type: '' });
+      }, 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [message]);
+
+  return (
+    <div className="page-container funders-page">
+      <h1>Manage Funders</h1>
+      
+      {/* Message display */}
+      {message.text && (
+        <div className={`alert ${message.type === 'error' ? 'alert-danger' : 'alert-success'}`}>
+          {message.text}
+        </div>
+      )}
+      
+      {/* Add/Edit Form Toggle Button */}
+      {!showAddForm && !editingFunder && (
+        <button 
+          className="btn btn-primary mb-4" 
+          onClick={() => setShowAddForm(true)}
+        >
+          Add New Funder
+        </button>
+      )}
+      
+      {/* Add/Edit Form */}
+      {(showAddForm || editingFunder) && (
+        <div className="card mb-4">
+          <div className="card-header">
+            <h3>{editingFunder ? 'Edit Funder' : 'Add New Funder'}</h3>
+          </div>
+          <div className="card-body">
+            <form onSubmit={handleSubmit}>
+              <div className="form-row">
+                <div className="form-group col-md-6">
+                  <label htmlFor="name">Funder Name*</label>
+                  <input
+                    type="text"
+                    className="form-control"
+                    id="name"
+                    name="name"
+                    value={formData.name}
+                    onChange={handleChange}
+                    required
+                  />
+                </div>
+                <div className="form-group col-md-6">
+                  <label htmlFor="url">Website URL*</label>
+                  <input
+                    type="url"
+                    className="form-control"
+                    id="url"
+                    name="url"
+                    value={formData.url}
+                    onChange={handleChange}
+                    required
+                  />
+                </div>
+              </div>
+              
+              <div className="form-row">
+                <div className="form-group col-md-6">
+                  <label htmlFor="location">Location</label>
+                  <input
+                    type="text"
+                    className="form-control"
+                    id="location"
+                    name="location"
+                    value={formData.location}
+                    onChange={handleChange}
+                  />
+                </div>
+                <div className="form-group col-md-6">
+                  <label htmlFor="phone">Phone Number</label>
+                  <input
+                    type="tel"
+                    className="form-control"
+                    id="phone"
+                    name="phone"
+                    value={formData.phone}
+                    onChange={handleChange}
+                  />
+                </div>
+              </div>
+              
+              <div className="form-row">
+                <div className="form-group col-md-6">
+                  <label htmlFor="contact_name">Contact Person</label>
+                  <input
+                    type="text"
+                    className="form-control"
+                    id="contact_name"
+                    name="contact_name"
+                    value={formData.contact_name}
+                    onChange={handleChange}
+                  />
+                </div>
+                <div className="form-group col-md-6">
+                  <label htmlFor="contact_email">Contact Email</label>
+                  <input
+                    type="email"
+                    className="form-control"
+                    id="contact_email"
+                    name="contact_email"
+                    value={formData.contact_email}
+                    onChange={handleChange}
+                  />
+                </div>
+              </div>
+              
+              <div className="form-group">
+                <label htmlFor="match_score">Match Score (1-5)</label>
+                <input
+                  type="range"
+                  className="form-control-range"
+                  id="match_score"
+                  name="match_score"
+                  min="1"
+                  max="5"
+                  value={formData.match_score}
+                  onChange={handleChange}
+                />
+                <div className="d-flex justify-content-between">
+                  <span>Low Match</span>
+                  <span>Current: {formData.match_score}</span>
+                  <span>High Match</span>
+                </div>
+              </div>
+              
+              <div className="form-group">
+                <label>Best Fit Initiatives</label>
+                <div className="initiative-checkboxes">
+                  {initiatives.map(initiative => (
+                    <div className="form-check" key={initiative}>
+                      <input
+                        type="checkbox"
+                        className="form-check-input"
+                        id={`initiative-${initiative}`}
+                        checked={formData.best_fit_initiatives.includes(initiative)}
+                        onChange={() => handleInitiativeChange(initiative)}
+                      />
+                      <label className="form-check-label" htmlFor={`initiative-${initiative}`}>
+                        {initiative}
+                      </label>
+                    </div>
+                  ))}
+                </div>
+              </div>
+              
+              <div className="form-group">
+                <label>Grant Programs</label>
+                <div className="input-group mb-2">
+                  <input
+                    type="text"
+                    className="form-control"
+                    id="program-input"
+                    placeholder="Enter grant program name"
+                  />
+                  <div className="input-group-append">
+                    <button
+                      type="button"
+                      className="btn btn-outline-secondary"
+                      onClick={handleAddProgram}
+                    >
+                      Add
+                    </button>
+                  </div>
+                </div>
+                
+                <div className="grant-programs-list">
+                  {formData.grant_programs.map(program => (
+                    <div key={program} className="badge badge-secondary program-badge">
+                      {program}
+                      <button
+                        type="button"
+                        className="close ml-1"
+                        onClick={() => handleRemoveProgram(program)}
+                      >
+                        &times;
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+              
+              <div className="form-group form-check">
+                <input
+                  type="checkbox"
+                  className="form-check-input"
+                  id="is_active"
+                  name="is_active"
+                  checked={formData.is_active}
+                  onChange={handleChange}
+                />
+                <label className="form-check-label" htmlFor="is_active">Active</label>
+              </div>
+              
+              <div className="form-actions">
+                <button
+                  type="submit"
+                  className="btn btn-primary"
+                  disabled={loading}
+                >
+                  {loading ? 'Saving...' : (editingFunder ? 'Update Funder' : 'Add Funder')}
+                </button>
+                <button
+                  type="button"
+                  className="btn btn-secondary ml-2"
+                  onClick={() => {
+                    setShowAddForm(false);
+                    setEditingFunder(null);
+                  }}
+                >
+                  Cancel
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+      
+      {/* Funders List */}
+      <div className="card">
+        <div className="card-header">
+          <h3>All Funders ({funders.length})</h3>
+        </div>
+        <div className="card-body">
+          {funders.length > 0 ? (
+            <div className="table-responsive">
+              <table className="table table-hover">
+                <thead>
+                  <tr>
+                    <th>Name</th>
+                    <th>Website</th>
+                    <th>Location</th>
+                    <th>Contact</th>
+                    <th>Match Score</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {funders.map(funder => (
+                    <tr key={funder.id} className={funder.is_active ? '' : 'text-muted'}>
+                      <td>{funder.name}</td>
+                      <td>
+                        <a href={funder.url} target="_blank" rel="noopener noreferrer">
+                          {new URL(funder.url).hostname}
+                        </a>
+                      </td>
+                      <td>{funder.location || 'N/A'}</td>
+                      <td>
+                        {funder.contact_name ? (
+                          <div>
+                            <div>{funder.contact_name}</div>
+                            {funder.contact_email && (
+                              <a href={`mailto:${funder.contact_email}`} className="small">
+                                {funder.contact_email}
+                              </a>
+                            )}
+                          </div>
+                        ) : (
+                          'N/A'
+                        )}
+                      </td>
+                      <td>
+                        <div className="star-rating">
+                          {[1, 2, 3, 4, 5].map(star => (
+                            <span key={star} className={star <= funder.match_score ? 'star filled' : 'star'}>
+                              ★
+                            </span>
+                          ))}
+                        </div>
+                      </td>
+                      <td>
+                        <span className={`badge ${funder.is_active ? 'badge-success' : 'badge-secondary'}`}>
+                          {funder.is_active ? 'Active' : 'Inactive'}
+                        </span>
+                      </td>
+                      <td>
+                        <div className="btn-group">
+                          <button
+                            className="btn btn-sm btn-outline-primary"
+                            onClick={() => setEditingFunder(funder)}
+                          >
+                            Edit
+                          </button>
+                          <button
+                            className="btn btn-sm btn-outline-danger"
+                            onClick={() => handleDelete(funder)}
+                          >
+                            Delete
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          ) : (
+            <div className="empty-state">
+              <p>No funders have been added yet.</p>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
 }
 
 // Render the React application
