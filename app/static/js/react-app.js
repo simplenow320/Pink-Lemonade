@@ -400,22 +400,16 @@ function Dashboard({ data, hasApiKey }) {
           <h2>Grants by Status</h2>
           <div className="card">
             <div className="card-body">
-              <div className="status-chart">
-                {/* Status chart would go here - simplified for now */}
-                <div className="status-bars">
-                  {data.status_counts && Object.entries(data.status_counts).map(([status, count]) => (
-                    <div key={status} className="status-bar-container">
-                      <div className="status-bar-label">{status}</div>
-                      <div className="status-bar">
-                        <div 
-                          className={`status-bar-fill status-${status.toLowerCase().replace(/\s+/g, '-')}`}
-                          style={{width: `${(count / data.total_grants) * 100}%`}}
-                        ></div>
-                      </div>
-                      <div className="status-bar-value">{count}</div>
-                    </div>
-                  ))}
-                </div>
+              <div className="grants-by-status">
+                {data.status_counts && Object.entries(data.status_counts).map(([status, count]) => (
+                  <div 
+                    key={status} 
+                    className={`status-item status-${status.toLowerCase().replace(/\s+/g, '-')}`}
+                  >
+                    <div className="status-label">{status}</div>
+                    <div className="status-value">{count}</div>
+                  </div>
+                ))}
               </div>
             </div>
           </div>

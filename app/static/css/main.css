@@ -437,6 +437,67 @@ a:hover {
   padding: 1.5rem;
 }
 
+/* Grants by Status Card Styling */
+.grants-by-status {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.status-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem 1rem;
+  background-color: var(--gray-50);
+  border-radius: 8px;
+  transition: all 0.2s ease;
+}
+
+.status-item:hover {
+  background-color: var(--gray-100);
+}
+
+.status-label {
+  font-weight: 600;
+  color: var(--gray-800);
+}
+
+.status-value {
+  font-weight: 700;
+  font-size: 1.25rem;
+  color: var(--gray-900);
+  background-color: white;
+  min-width: 2.5rem;
+  height: 2.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+}
+
+/* Status-specific colors */
+.status-declined .status-label {
+  color: var(--danger);
+}
+
+.status-in-progress .status-label {
+  color: var(--primary-color);
+}
+
+.status-not-started .status-label {
+  color: var(--gray-600);
+}
+
+.status-submitted .status-label {
+  color: var(--accent-color);
+}
+
+.status-won .status-label {
+  color: var(--success);
+}
+
 .card-footer {
   padding: 1.25rem 1.5rem;
   border-top: 1px solid var(--gray-200);
@@ -1368,10 +1429,12 @@ a:hover {
 /* New full width main content (without sidebar) */
 .main-content-full {
   flex: 1;
-  padding: 1rem;
+  padding: 1.5rem;
   width: 100%;
   max-width: 100%;
   margin-top: 70px; /* Give room for the fixed navbar */
+  box-sizing: border-box;
+  overflow-x: hidden;
 }
 
 /* Top Navigation Bar - Fully Responsive */
