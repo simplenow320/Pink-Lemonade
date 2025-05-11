@@ -71,7 +71,7 @@ def scrape_source(source):
     grants = []
     
     # If this is a mock/demo source, generate sample grants
-    if source.is_demo:
+    if hasattr(source, 'is_demo') and source.is_demo:
         logger.info(f"Generating sample grants for demo source: {source.name}")
         
         # Generate 1-3 sample grants
@@ -154,17 +154,15 @@ def scrape_source(source):
         # If we didn't get a result from direct URL extraction, try other methods
         if not grants:
             try:
-                # Use trafilatura to get clean content
-                downloaded = trafilatura.fetch_url(source.url)
-                if downloaded:
-                    # Extract main content 
-                    text = trafilatura.extract(downloaded)
-                    
-                    if text and len(text) > 500:  # Ensure we have meaningful content
-                        # Use AI to extract grants from the text
-                        if "grant" in text.lower() or "fund" in text.lower():
-                            logger.info(f"Found potential grant content on {source.name}, extracting information...")
-                            
+                # Use our extract_main_content utility with retry logic
+                text = extract_main_content(source.url)
+                
+                if text and len(text) > 500:  # Ensure we have meaningful content
+                    # Use AI to extract grants from the text
+                    if "grant" in text.lower() or "fund" in text.lower() or "nonprofit" in text.lower():
+                        logger.info(f"Found potential grant content on {source.name}, extracting information...")
+                        
+                        try:
                             grant_data = extract_grant_info(text)
                             
                             # Ensure the funder name is set correctly if not detected
@@ -179,8 +177,10 @@ def scrape_source(source):
                             if grant_data.get('title') and grant_data.get('funder'):
                                 grants.append(grant_data)
                                 logger.info(f"Extracted grant using AI: {grant_data.get('title')}")
+                        except Exception as ai_extract_error:
+                            logger.warning(f"AI extraction error for {source.name}: {str(ai_extract_error)}")
             except Exception as e:
-                logger.warning(f"AI extraction failed for {source.name}: {str(e)}")
+                logger.warning(f"Content extraction failed for {source.name}: {str(e)}")
         
         # If still no grants found, try HTML parsing approaches
         if not grants:
@@ -371,26 +371,65 @@ def run_scraping_job(include_web_search=True):
                 logger.error(f"Error during internet-wide grant discovery: {str(e)}")
                 # Continue with regular scraping even if internet search fails
         
-        # Next, process foundation sources
-        for source in sources:
-            logger.info(f"Scraping source: {source.name}")
-            
+        # Next, process foundation sources in parallel
+        logger.info(f"Scraping {len(sources)} foundation sources in parallel")
+        
+        # Define a worker function for parallel processing
+        def scrape_source_worker(source):
+            logger.info(f"Starting scrape for source: {source.name}")
             try:
                 # Scrape the source
                 source_grants = scrape_source(source)
+                logger.info(f"Completed scrape for {source.name}, found {len(source_grants)} grants")
                 
-                # Update the last_scraped timestamp for the source
-                source.last_scraped = datetime.now()
-                db.session.commit()
-                
-                result["sources_scraped"] += 1
-                result["grants_found"] += len(source_grants)
-                
-                # Add source grants to the discovered grants for unified processing
-                discovered_grants.extend(source_grants)
-            
+                # Return the result for this source
+                return {
+                    "source": source,
+                    "grants": source_grants,
+                    "success": True,
+                    "error": None
+                }
             except Exception as e:
                 logger.error(f"Error scraping source {source.name}: {str(e)}")
+                return {
+                    "source": source,
+                    "grants": [],
+                    "success": False, 
+                    "error": str(e)
+                }
+        
+        # Use ThreadPoolExecutor for parallel processing
+        # Use min(len(sources), 5) to avoid creating too many threads
+        max_workers = min(len(sources), 5)
+        source_results = []
+        
+        with ThreadPoolExecutor(max_workers=max_workers) as executor:
+            # Submit all scraping tasks
+            future_to_source = {executor.submit(scrape_source_worker, source): source for source in sources}
+            
+            # Process results as they complete
+            for future in as_completed(future_to_source):
+                source_result = future.result()
+                source_results.append(source_result)
+                
+                if source_result["success"]:
+                    # Update the last_scraped timestamp for the source
+                    source = source_result["source"]
+                    source.last_scraped = datetime.now()
+                    
+                    # Add to discovered grants
+                    discovered_grants.extend(source_result["grants"])
+                    
+                    # Update counters
+                    result["sources_scraped"] += 1
+                    result["grants_found"] += len(source_result["grants"])
+        
+        # Commit all timestamp updates at once
+        try:
+            db.session.commit()
+        except SQLAlchemyError as e:
+            logger.error(f"Error updating source timestamps: {str(e)}")
+            db.session.rollback()
         
         # Process all discovered grants (both from web search and foundation sources)
         logger.info(f"Processing {len(discovered_grants)} total grants discovered")
