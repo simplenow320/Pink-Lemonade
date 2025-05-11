@@ -55,15 +55,11 @@ class ScraperHistory(db.Model):
     sources_scraped = db.Column(db.Integer, default=0)
     grants_found = db.Column(db.Integer, default=0)
     grants_added = db.Column(db.Integer, default=0)
-    web_search_performed = db.Column(db.Boolean, default=False)
-    web_search_status = db.Column(db.String(50), default=None)  # in_progress, completed, failed
     status = db.Column(db.String(50), default="pending")  # pending, in_progress, completed, completed_with_errors, failed
     error_message = db.Column(db.Text)
     
     # Search reporting columns
-    sites_searched = db.Column(db.Integer, default=0)  # Alias for sites_searched_estimate
     sites_searched_estimate = db.Column(db.Integer, default=0)
-    queries_attempted = db.Column(db.Integer, default=0)  # Alias for total_queries_attempted
     total_queries_attempted = db.Column(db.Integer, default=0)
     successful_queries = db.Column(db.Integer, default=0)
     search_keywords_used = db.Column(JSON, default=list)
