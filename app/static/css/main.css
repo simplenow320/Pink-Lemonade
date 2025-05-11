@@ -529,18 +529,11 @@ a:hover {
   opacity: 0.1;
 }
 
-.hero-flex {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  position: relative;
-  z-index: 1;
-}
-
-.hero-content {
+.hero-content-centered {
   width: 100%;
+  max-width: 800px;
+  margin: 0 auto;
   padding: 0 1rem;
-  margin-bottom: 2rem;
   text-align: center;
   position: relative;
   z-index: 1;
@@ -567,62 +560,24 @@ a:hover {
   gap: 1rem;
 }
 
-.hero-image {
-  width: 100%;
-  max-width: 400px;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  position: relative;
-}
-
-.hero-image-container {
-  position: relative;
-  z-index: 1;
-}
-
 /* Responsive styles for hero section */
 @media (min-width: 768px) {
-  .hero-flex {
-    flex-direction: row;
-    align-items: center;
-    justify-content: space-between;
+  .hero-title {
+    font-size: 3rem;
   }
   
-  .hero-content {
-    width: 50%;
-    text-align: left;
-    padding-right: 2rem;
-    margin-bottom: 0;
-  }
-  
-  .hero-actions {
-    justify-content: flex-start;
-  }
-  
-  .hero-image {
-    width: 50%;
+  .hero-subtitle {
+    font-size: 1.25rem;
+    max-width: 80%;
+    margin-left: auto;
+    margin-right: auto;
   }
 }
 
-.hero-image-container::before {
-  content: '';
-  position: absolute;
-  right: -30px;
-  top: -30px;
-  width: calc(100% + 60px);
-  height: calc(100% + 60px);
-  background-color: var(--primary-color);
-  border-radius: 30px;
-  z-index: -1;
-}
-
-.hero-image img {
-  border-radius: 20px;
-  max-width: 100%;
-  height: auto;
-  position: relative;
-  z-index: 1;
+/* Additional hero enhancements */
+.welcome-hero {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  border-radius: 0 0 30px 30px;
 }
 
 /* Dashboard specific styles */
