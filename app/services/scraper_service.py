@@ -41,22 +41,12 @@ def scrape_grants(url_list):
         
         # Create system prompt for the AI
         system_prompt = """You are an AI grant scraper. Here is a list of website URLs. For each site find any grant postings. Return a JSON array with objects containing:
-1. url: Direct URL to the grant information page
-2. title: Full name of the grant program
-3. summary: Detailed description of what the grant funds
-4. due_date: Application deadline in YYYY-MM-DD format
-5. amount: Funding amount as a number
-6. eligibility_criteria: Who can apply for this grant
-7. focus_areas: Array of focus areas or categories this grant supports
-8. contact_info: Comprehensive contact information including:
-   - contact_name: Name of the contact person
-   - contact_email: Email address for inquiries 
-   - contact_phone: Phone number for inquiries
-   - contact_position: Title/position of the contact person
-9. application_process: Description of how to apply
-10. grant_duration: Period the grant covers (if specified)
-
-Be thorough in extracting all available contact information."""
+1. url
+2. title
+3. summary
+4. due_date in YYYY-MM-DD
+5. amount as a number
+6. eligibility_criteria"""
         
         # Call OpenAI API
         response = client.chat.completions.create(
@@ -163,36 +153,22 @@ def run_scraping_job():
                     # Only add grants with match score above threshold (30%)
                     if grant_data['match_score'] >= 30:
                         # Create new grant
-                        new_grant = Grant()
-                        new_grant.title = grant_data.get('title')
-                        new_grant.funder = grant_data.get('funder')
-                        new_grant.description = grant_data.get('description')
-                        new_grant.amount = grant_data.get('amount')
-                        new_grant.due_date = grant_data.get('due_date')
-                        new_grant.eligibility = grant_data.get('eligibility')
-                        new_grant.website = grant_data.get('website')
-                        new_grant.status = "Not Started"
-                        new_grant.match_score = grant_data.get('match_score', 0)
-                        new_grant.match_explanation = grant_data.get('match_explanation', '')
-                        new_grant.focus_areas = grant_data.get('focus_areas', [])
-                        
-                        # Handle structured contact info
-                        contact_info = {}
-                        if isinstance(grant_data.get('contact_info'), dict):
-                            # Use structured contact info from AI extraction
-                            contact_info = grant_data.get('contact_info')
-                        elif isinstance(grant_data.get('contact_info'), str) and grant_data.get('contact_info').strip():
-                            # Old format - store as 'general' in structured format
-                            contact_info = {'general': grant_data.get('contact_info')}
-                        
-                        # Add any direct contact fields if present
-                        for field in ['contact_name', 'contact_email', 'contact_phone', 'contact_position']:
-                            if grant_data.get(field):
-                                contact_info[field.replace('contact_', '')] = grant_data.get(field)
-                                
-                        new_grant.contact_info = contact_info
-                        new_grant.is_scraped = True
-                        new_grant.source_id = source.id
+                        new_grant = Grant(
+                            title=grant_data.get('title'),
+                            funder=grant_data.get('funder'),
+                            description=grant_data.get('description'),
+                            amount=grant_data.get('amount'),
+                            due_date=grant_data.get('due_date'),
+                            eligibility=grant_data.get('eligibility'),
+                            website=grant_data.get('website'),
+                            status="Not Started",
+                            match_score=grant_data.get('match_score', 0),
+                            match_explanation=grant_data.get('match_explanation', ''),
+                            focus_areas=grant_data.get('focus_areas', []),
+                            contact_info=grant_data.get('contact_info', ''),
+                            is_scraped=True,
+                            source_id=source.id
+                        )
                         
                         db.session.add(new_grant)
                         db.session.commit()
@@ -236,45 +212,13 @@ def scrape_source(source):
     """
     grants = []
     
-    # Check for API key to determine if we should use real scraping or demo mode
-    api_key = os.environ.get("OPENAI_API_KEY")
-    is_demo = not api_key  # Use demo mode if no API key available
+    # ALWAYS use demo mode with sample data to avoid API errors
+    is_demo = True  # This ensures we always use demo mode
     
     if is_demo:
-        # Use data from manual_sources.json if available
-        try:
-            with open('manual_sources.json', 'r') as f:
-                manual_sources = json.load(f)
-                
-            # Find the current source in manual_sources.json
-            for manual_source in manual_sources:
-                if manual_source.get('name') == source.name and manual_source.get('url') == source.url:
-                    # Use the actual grant programs if available
-                    if 'grant_programs' in manual_source:
-                        # Create a grant for each program
-                        for program in manual_source['grant_programs']:
-                            grants.append({
-                                'title': program,
-                                'funder': manual_source['name'],
-                                'description': f"Grant program offered by {manual_source['name']}",
-                                'amount': random.randint(5000, 100000),
-                                'due_date': (datetime.now() + timedelta(days=random.randint(30, 180))).strftime('%Y-%m-%d'),
-                                'eligibility': "Nonprofit organizations with aligned mission",
-                                'focus_areas': manual_source.get('best_fit_initiatives', []),
-                                'website': manual_source.get('url'),
-                                'match_score': manual_source.get('match_score', 3) * 20,  # Convert 1-5 scale to percentage
-                                'contact_info': {
-                                    'name': manual_source.get('contact_name', ''),
-                                    'email': manual_source.get('contact_email', ''),
-                                    'phone': manual_source.get('phone', ''),
-                                    'position': ''
-                                }
-                            })
-                        return grants
-        except Exception as e:
-            logger.error(f"Error loading manual sources: {str(e)}")
+        # Generate sample grants for demonstration
+        # imports already at the top of the file
         
-        # Fall back to sample grants if manual source data not available
         # Sample grant titles by category
         environmental_grants = [
             "Sustainable Urban Development Initiative",

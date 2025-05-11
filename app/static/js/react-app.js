@@ -1,263 +1,279 @@
-// React components for GrantFlow application - Modern UI with Top Navigation
-// Helper utility function for date formatting
-function formatDate(date) {
-  const options = { year: 'numeric', month: 'short', day: 'numeric' };
-  return date.toLocaleDateString(undefined, options);
-}
+// React components for GrantFlow application
 
-// Main application component
+// Root component for the GrantFlow application
 function App() {
-  const [currentPage, setCurrentPage] = React.useState('dashboard');
-  const [apiKey, setApiKey] = React.useState(null);
-  const [apiKeyChecked, setApiKeyChecked] = React.useState(false);
-  const [grants, setGrants] = React.useState([]);
+  const [page, setPage] = React.useState('dashboard');
+  const [loading, setLoading] = React.useState(false);
   const [organization, setOrganization] = React.useState(null);
-  const [dashboardData, setDashboardData] = React.useState({
-    upcoming: [],
-    recent: [],
-    status: {},
-    matchStats: {}
-  });
-  const [isLoading, setIsLoading] = React.useState(true);
-  
-  // Check if API key is available and load all data
+  const [grants, setGrants] = React.useState([]);
+  const [dashboardData, setDashboardData] = React.useState(null);
+  const [hasApiKey, setHasApiKey] = React.useState(false);
+
+  // Check if API key is configured
   React.useEffect(() => {
-    setIsLoading(true);
-    
-    // Parallel data fetching with Promise.all
-    Promise.all([
-      // Check API key status
-      fetch('/api/ai/status')
-        .then(response => response.json())
-        .catch(error => {
-          console.error('Error checking API status:', error);
-          return { api_key_configured: false };
-        }),
-        
-      // Load organization profile
-      fetch('/api/organization')
-        .then(response => response.json())
-        .catch(error => {
-          console.error('Error fetching organization:', error);
-          return null;
-        }),
-        
-      // Load grants
+    fetch('/api/ai/status')
+      .then(response => response.json())
+      .then(data => {
+        setHasApiKey(data.api_key_configured);
+      })
+      .catch(error => {
+        console.error('Error checking API status:', error);
+        setHasApiKey(false);
+      });
+  }, []);
+
+  // Fetch organization data
+  React.useEffect(() => {
+    setLoading(true);
+    fetch('/api/organization')
+      .then(response => response.json())
+      .then(data => {
+        setOrganization(data);
+        setLoading(false);
+      })
+      .catch(error => {
+        console.error('Error fetching organization:', error);
+        setLoading(false);
+      });
+  }, []);
+
+  // Fetch grants data when viewing grants list
+  React.useEffect(() => {
+    if (page === 'grants') {
+      setLoading(true);
       fetch('/api/grants')
         .then(response => response.json())
+        .then(data => {
+          setGrants(data);
+          setLoading(false);
+        })
         .catch(error => {
           console.error('Error fetching grants:', error);
-          return [];
-        }),
-        
-      // Load dashboard data
+          setLoading(false);
+        });
+    }
+  }, [page]);
+
+  // Fetch dashboard data when viewing dashboard
+  React.useEffect(() => {
+    if (page === 'dashboard') {
+      setLoading(true);
       fetch('/api/grants/dashboard')
         .then(response => response.json())
+        .then(data => {
+          setDashboardData(data);
+          setLoading(false);
+        })
         .catch(error => {
           console.error('Error fetching dashboard data:', error);
-          return {};
-        })
-    ])
-    .then(([apiStatus, orgData, grantsData, dashData]) => {
-      // Set API key status
-      setApiKey(apiStatus.api_key_configured);
-      setApiKeyChecked(true);
-      
-      // Set organization data
-      setOrganization(orgData);
-      
-      // Set grants data
-      setGrants(grantsData);
-      
-      // Format and set dashboard data
-      console.log('Dashboard data:', dashData);
-      setDashboardData({
-        upcoming: dashData.upcoming_deadlines || [],
-        recent: dashData.recently_discovered || [],
-        status: {
-          active: dashData.total_grants || 0,
-          potential_funding: dashData.potential_funding || 0,
-          success_rate: Math.round((dashData.won_funding / (dashData.potential_funding || 1)) * 100) || 0
-        },
-        matchStats: dashData.match_score_distribution || {}
-      });
-      
-      setIsLoading(false);
-    });
-  }, []);
-  
-  // Handle navigation
-  const handleNavigate = (page) => {
-    setCurrentPage(page);
-    // Scroll to top when navigating
-    window.scrollTo(0, 0);
+          setLoading(false);
+        });
+    }
+  }, [page]);
+
+  // Handle page navigation
+  const navigateTo = (pageName) => {
+    setPage(pageName);
   };
-  
-  if (isLoading) {
-    return (
-      <div className="app-container loading-container">
-        <div className="spinner-container">
-          <div className="spinner"></div>
-          <p>Loading GrantFlow...</p>
-        </div>
-      </div>
-    );
-  }
-  
+
+  // Render current page based on state
+  const renderPage = () => {
+    if (loading) {
+      return <LoadingIndicator />;
+    }
+
+    switch(page) {
+      case 'dashboard':
+        return <Dashboard data={dashboardData} hasApiKey={hasApiKey} onNavigate={navigateTo} />;
+      case 'grants':
+        return <GrantsList grants={grants} hasApiKey={hasApiKey} />;
+      case 'organization':
+        return <OrganizationProfile organization={organization} />;
+      case 'scraper':
+        // Redirect to the standalone scraper page
+        window.location.href = '/scraper';
+        return <LoadingIndicator />;
+      default:
+        return <Dashboard data={dashboardData} hasApiKey={hasApiKey} onNavigate={navigateTo} />;
+    }
+  };
+
   return (
     <div className="app-container">
       <TopNavbar 
-        currentPage={currentPage} 
-        onNavigate={handleNavigate} 
+        currentPage={page} 
+        onNavigate={navigateTo} 
         organization={organization}
       />
-      
-      <div className="content-container">
-        {currentPage === 'dashboard' && (
-          <Dashboard data={dashboardData} hasApiKey={apiKey} onNavigate={handleNavigate} />
-        )}
-        
-        {currentPage === 'grants' && (
-          <GrantsList grants={grants} hasApiKey={apiKey} />
-        )}
-        
-        {currentPage === 'organization' && (
-          <OrganizationProfile organization={organization} />
-        )}
-        
-        {currentPage === 'scraper' && (
-          <ScraperSettings hasApiKey={apiKey} />
-        )}
-      </div>
+      <main className="main-content-full">
+        <Header page={page} organization={organization} />
+        {renderPage()}
+      </main>
     </div>
   );
 }
 
-// Top navigation bar component - Modern, mobile-first design
+// TopNavbar component for navigation (replaces Sidebar)
 function TopNavbar({ currentPage, onNavigate, organization }) {
-  const [mobileMenuOpen, setMobileMenuOpen] = React.useState(false);
-  const [scrolled, setScrolled] = React.useState(false);
+  const [isMenuOpen, setIsMenuOpen] = React.useState(false);
   
-  // Handle scroll effect for glass-like navbar on scroll
+  // Add event listener to close menu when clicking outside
   React.useEffect(() => {
-    const handleScroll = () => {
-      if (window.scrollY > 10) {
-        setScrolled(true);
-      } else {
-        setScrolled(false);
+    const closeMenu = (e) => {
+      // Check if menu is open and click is outside the mobile-nav
+      if (isMenuOpen && !e.target.closest('.mobile-nav') && !e.target.closest('.mobile-menu-button')) {
+        setIsMenuOpen(false);
       }
     };
     
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
+    // Add event listener when menu is open
+    if (isMenuOpen) {
+      document.addEventListener('click', closeMenu);
+    }
+    
+    // Cleanup event listener on component unmount or menu close
+    return () => {
+      document.removeEventListener('click', closeMenu);
+    };
+  }, [isMenuOpen]);
   
-  // Navigation items with icons
-  const navItems = [
-    { name: 'Dashboard', id: 'dashboard', icon: 'M4 5a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H5a1 1 0 01-1-1V5zm10 0a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1V5zm-10 10a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H5a1 1 0 01-1-1v-4zm10 0a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1v-4z' },
-    { name: 'Grants', id: 'grants', icon: 'M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z' },
-    { name: 'Organization', id: 'organization', icon: 'M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z' },
-    { name: 'Discover', id: 'scraper', icon: 'M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z' }
-  ];
-  
+  // Prevent body scrolling when mobile menu is open
+  React.useEffect(() => {
+    if (isMenuOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [isMenuOpen]);
+
   return (
-    <header className={`top-navbar ${scrolled ? 'scrolled' : ''}`}>
+    <header className="top-navbar">
       <div className="navbar-container">
-        {/* Logo */}
         <div className="navbar-logo">
-          <h1>
-            <span className="text-primary">Grant</span>
-            <span className="text-primary-dark">Flow</span>
-          </h1>
+          <h1>GrantFlow</h1>
         </div>
         
         {/* Desktop navigation */}
         <nav className="desktop-nav">
           <ul>
-            {navItems.map((item) => (
-              <li key={item.id} className={currentPage === item.id ? 'active' : ''}>
-                <a href="#" onClick={(e) => { 
-                  e.preventDefault(); 
-                  onNavigate(item.id); 
-                }}>
-                  <svg className="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d={item.icon}></path>
-                  </svg>
-                  {item.name}
-                </a>
-              </li>
-            ))}
+            <li className={currentPage === 'dashboard' ? 'active' : ''}>
+              <a href="#" onClick={(e) => { e.preventDefault(); onNavigate('dashboard'); }}>
+                <span className="icon">📊</span>
+                <span>Dashboard</span>
+              </a>
+            </li>
+            <li className={currentPage === 'grants' ? 'active' : ''}>
+              <a href="#" onClick={(e) => { e.preventDefault(); onNavigate('grants'); }}>
+                <span className="icon">📝</span>
+                <span>Grants</span>
+              </a>
+            </li>
+            <li className={currentPage === 'organization' ? 'active' : ''}>
+              <a href="#" onClick={(e) => { e.preventDefault(); onNavigate('organization'); }}>
+                <span className="icon">🏢</span>
+                <span>Organization</span>
+              </a>
+            </li>
+            <li className={currentPage === 'scraper' ? 'active' : ''}>
+              <a href="/scraper" target="_blank" rel="noopener noreferrer">
+                <span className="icon">🔍</span>
+                <span>Grant Scraper</span>
+              </a>
+            </li>
           </ul>
         </nav>
         
-        {/* Organization name on desktop */}
-        <div className="user-info desktop-only">
-          {organization && organization.name ? organization.name : 'My Organization'}
-        </div>
-        
-        {/* Mobile menu button */}
+        {/* Mobile menu button with ARIA attributes for accessibility */}
         <button 
-          className="mobile-menu-button"
-          onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-          aria-expanded={mobileMenuOpen}
-          aria-label="Toggle navigation menu"
+          className="mobile-menu-button" 
+          onClick={() => setIsMenuOpen(!isMenuOpen)}
+          aria-expanded={isMenuOpen}
+          aria-label={isMenuOpen ? "Close menu" : "Open menu"}
         >
-          <div className={`hamburger ${mobileMenuOpen ? 'active' : ''}`}>
-            <span></span>
-            <span></span>
-            <span></span>
-          </div>
+          <span className="icon">{isMenuOpen ? '✕' : '☰'}</span>
         </button>
       </div>
       
-      {/* Mobile menu */}
-      <div className={`mobile-nav ${mobileMenuOpen ? 'active' : ''}`}>
-        <ul className="mobile-nav-links">
-          <li>
-            <div className="mobile-user-info">
-              {/* Adding organization name in mobile menu */}
-              {organization && organization.name ? organization.name : 'My Organization'}
-            </div>
+      {/* Mobile navigation - Using 'active' class for animation */}
+      <nav className={`mobile-nav ${isMenuOpen ? 'active' : ''}`}>
+        <ul>
+          <li className={currentPage === 'dashboard' ? 'active' : ''}>
+            <a href="#" onClick={(e) => { e.preventDefault(); onNavigate('dashboard'); setIsMenuOpen(false); }}>
+              <span className="icon">📊</span>
+              <span>Dashboard</span>
+            </a>
           </li>
-          {navItems.map((item) => (
-            <li key={item.id} className={currentPage === item.id ? 'active' : ''}>
-              <a href="#" onClick={(e) => { 
-                e.preventDefault(); 
-                onNavigate(item.id); 
-                setMobileMenuOpen(false);
-              }}>
-                <svg className="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d={item.icon}></path>
-                </svg>
-                {item.name}
-              </a>
+          <li className={currentPage === 'grants' ? 'active' : ''}>
+            <a href="#" onClick={(e) => { e.preventDefault(); onNavigate('grants'); setIsMenuOpen(false); }}>
+              <span className="icon">📝</span>
+              <span>Grants</span>
+            </a>
+          </li>
+          <li className={currentPage === 'organization' ? 'active' : ''}>
+            <a href="#" onClick={(e) => { e.preventDefault(); onNavigate('organization'); setIsMenuOpen(false); }}>
+              <span className="icon">🏢</span>
+              <span>Organization</span>
+            </a>
+          </li>
+          <li className={currentPage === 'scraper' ? 'active' : ''}>
+            <a href="/scraper" target="_blank" rel="noopener noreferrer">
+              <span className="icon">🔍</span>
+              <span>Grant Scraper</span>
+            </a>
+          </li>
+          {/* Adding organization name in mobile menu */}
+          {organization && (
+            <li className="organization-info">
+              <div className="organization-name">
+                {organization.name || "Your Organization"}
+              </div>
             </li>
-          ))}
+          )}
         </ul>
-      </div>
+      </nav>
       
       {/* Overlay when mobile menu is open */}
-      <div 
-        className={`mobile-nav-overlay ${mobileMenuOpen ? 'active' : ''}`}
-        onClick={() => setMobileMenuOpen(false)}
-      ></div>
+      {isMenuOpen && (
+        <div 
+          className="mobile-menu-overlay" 
+          onClick={() => setIsMenuOpen(false)}
+          aria-hidden="true"
+        />
+      )}
     </header>
   );
 }
 
-// Header component
+// Header component for current page
 function Header({ page, organization }) {
+  const getPageTitle = () => {
+    switch(page) {
+      case 'dashboard': return 'Dashboard';
+      case 'grants': return 'Grant Management';
+      case 'organization': return 'Organization Profile';
+      case 'scraper': return 'Grant Scraper';
+      default: return 'Dashboard';
+    }
+  };
+  
   return (
-    <div className="container">
-      <div className="header">
-        <h1>{page}</h1>
-        {organization && organization.name && (
-          <div className="organization-name">
-            {organization.name}
-          </div>
-        )}
+    <header className="page-header">
+      <div className="container">
+        <h1>{getPageTitle()}</h1>
+        <div className="header-actions">
+          {page === 'grants' && (
+            <button className="btn btn-primary">Add Grant</button>
+          )}
+          {page === 'organization' && (
+            <button className="btn btn-primary">Edit Profile</button>
+          )}
+        </div>
       </div>
-    </div>
+    </header>
   );
 }
 
@@ -266,170 +282,188 @@ function LoadingIndicator() {
   return (
     <div className="loading-container">
       <div className="spinner"></div>
+      <p>Loading...</p>
     </div>
   );
 }
 
 // Dashboard component
 function Dashboard({ data, hasApiKey, onNavigate }) {
-  console.log("Dashboard rendering with data:", data);
+  if (!data) {
+    return (
+      <div className="container">
+        <div className="card">
+          <div className="card-body">
+            <h2>Welcome to GrantFlow</h2>
+            <p>Loading dashboard data...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
   
   return (
     <div className="dashboard-container">
-      <h1 className="dashboard-title">Dashboard</h1>
+      {!hasApiKey && (
+        <div className="container">
+          <div className="alert alert-warning">
+            <strong>OpenAI API Key Required:</strong> To enable AI-powered features like grant matching and narrative generation, please add your OpenAI API key in the settings.
+          </div>
+        </div>
+      )}
       
-      <div className="dashboard-summary">
-        <div className="summary-card">
-          <div className="summary-icon">📝</div>
-          <div className="summary-content">
-            <h3>Active Grants</h3>
-            <div className="summary-value">{data.status && data.status.active ? data.status.active : 18}</div>
-          </div>
-        </div>
-        
-        <div className="summary-card">
-          <div className="summary-icon">💰</div>
-          <div className="summary-content">
-            <h3>Potential Funding</h3>
-            <div className="summary-value">${data.status && data.status.potential_funding ? data.status.potential_funding.toLocaleString() : "1,434,000"}</div>
-          </div>
-        </div>
-        
-        <div className="summary-card">
-          <div className="summary-icon">🏆</div>
-          <div className="summary-content">
-            <h3>Success Rate</h3>
-            <div className="summary-value">{data.status && data.status.success_rate ? data.status.success_rate : 0}%</div>
-          </div>
-        </div>
-        
-        <div className="summary-card">
-          <div className="summary-icon">⏰</div>
-          <div className="summary-content">
-            <h3>Upcoming Deadlines</h3>
-            <div className="summary-value">{data.upcoming ? data.upcoming.length : 1}</div>
+      <div className="welcome-hero">
+        <div className="container">
+          <div className="hero-content-centered">
+            <h1 className="hero-title">Discover & Manage<br />Grants Efficiently</h1>
+            <p className="hero-subtitle">
+              GrantFlow helps you find the perfect funding opportunities for your nonprofit organization with AI-powered matching and automated discovery.
+            </p>
+            <div className="hero-actions">
+              <a href="#" onClick={(e) => { e.preventDefault(); onNavigate('grants'); }} className="btn btn-primary">Discover Grants</a>
+              <a href="#" onClick={(e) => { e.preventDefault(); onNavigate('scraper'); }} className="btn btn-outline">Learn More</a>
+            </div>
           </div>
         </div>
       </div>
       
-      <div className="dashboard-sections">
-        <div className="dashboard-section">
-          <div className="section-header">
-            <h2>Upcoming Deadlines</h2>
+      <div className="container">
+        <div className="dashboard-stats">
+          <div className="stat-card">
+            <div className="stat-icon">📊</div>
+            <div className="stat-title">Total Grants</div>
+            <div className="stat-value">{data.total_grants || 0}</div>
           </div>
           
+          <div className="stat-card">
+            <div className="stat-icon">💰</div>
+            <div className="stat-title">Potential Funding</div>
+            <div className="stat-value">{formatCurrency(data.potential_funding || 0)}</div>
+          </div>
+          
+          <div className="stat-card">
+            <div className="stat-icon">🏆</div>
+            <div className="stat-title">Won Funding</div>
+            <div className="stat-value">{formatCurrency(data.won_funding || 0)}</div>
+          </div>
+          
+          <div className="stat-card">
+            <div className="stat-icon">✏️</div>
+            <div className="stat-title">Active Applications</div>
+            <div className="stat-value">
+              {(data.status_counts && (data.status_counts['Not Started'] + data.status_counts['In Progress'])) || 0}
+            </div>
+          </div>
+        </div>
+        
+        <div className="dashboard-section">
+          <h2>Upcoming Deadlines</h2>
           <div className="card">
             <div className="card-body">
-              {data.upcoming && data.upcoming.length > 0 ? (
-                <table className="table">
-                  <thead>
-                    <tr>
-                      <th>Grant</th>
-                      <th>Due Date</th>
-                      <th>Status</th>
-                      <th>Match</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {data.upcoming.map(grant => (
-                      <tr key={grant.id}>
-                        <td>{grant.title}</td>
-                        <td>{formatDate(new Date(grant.due_date))}</td>
-                        <td>
-                          <span className={`badge status-${grant.status.toLowerCase().replace(/\s+/g, '-')}`}>
-                            {grant.status}
-                          </span>
-                        </td>
-                        <td>
-                          <div className="match-score">
-                            <div className="progress-bar">
-                              <div 
-                                className={`progress-bar-fill ${grant.match_score >= 80 ? 'high' : grant.match_score >= 50 ? 'medium' : 'low'}`}
-                                style={{width: `${grant.match_score}%`}}
-                              ></div>
-                            </div>
-                            <span className={`match-score-value ${grant.match_score >= 80 ? 'match-high' : grant.match_score >= 50 ? 'match-medium' : 'match-low'}`}>
-                              {grant.match_score}%
-                            </span>
-                          </div>
-                        </td>
+              {data.upcoming_deadlines && data.upcoming_deadlines.length > 0 ? (
+                <div className="table-responsive">
+                  <table className="table">
+                    <thead>
+                      <tr>
+                        <th>Grant</th>
+                        <th>Funder</th>
+                        <th>Amount</th>
+                        <th>Due Date</th>
+                        <th>Status</th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
-              ) : (
-                <div className="empty-state">
-                  <p>No upcoming deadlines.</p>
+                    </thead>
+                    <tbody>
+                      {data.upcoming_deadlines.map(grant => (
+                        <tr key={grant.id}>
+                          <td>{grant.title}</td>
+                          <td>{grant.funder}</td>
+                          <td>{formatCurrency(grant.amount)}</td>
+                          <td>{formatDate(new Date(grant.due_date))}</td>
+                          <td>
+                            <span className={`badge status-${grant.status.toLowerCase().replace(/\s+/g, '-')}`}>
+                              {grant.status}
+                            </span>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
                 </div>
+              ) : (
+                <p>No upcoming deadlines</p>
               )}
             </div>
           </div>
         </div>
         
         <div className="dashboard-section">
-          <div className="section-header">
-            <h2>Recently Added</h2>
-          </div>
-          
+          <h2>Grants by Status</h2>
           <div className="card">
             <div className="card-body">
-              {data.recent && data.recent.length > 0 ? (
-                <table className="table">
-                  <thead>
-                    <tr>
-                      <th>Grant</th>
-                      <th>Funder</th>
-                      <th>Amount</th>
-                      <th>Match</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {data.recent.map(grant => (
-                      <tr key={grant.id}>
-                        <td>{grant.title}</td>
-                        <td>{grant.funder}</td>
-                        <td>${grant.amount ? grant.amount.toLocaleString() : 0}</td>
-                        <td>
-                          <div className="match-score">
-                            <div className="progress-bar">
+              <div className="grants-by-status">
+                {data.status_counts && Object.entries(data.status_counts).map(([status, count]) => (
+                  <div 
+                    key={status} 
+                    className={`status-item status-${status.toLowerCase().replace(/\s+/g, '-')}`}
+                  >
+                    <div className="status-label">{status}</div>
+                    <div className="status-value">{count}</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <div className="dashboard-section">
+          <div className="section-header">
+            <h2>Recently Discovered Grants</h2>
+            <span className="badge bg-primary">Auto-updated daily</span>
+          </div>
+          <div className="card">
+            <div className="card-body">
+              {data.recently_discovered && data.recently_discovered.length > 0 ? (
+                <div className="table-responsive">
+                  <table className="table">
+                    <thead>
+                      <tr>
+                        <th>Grant</th>
+                        <th>Funder</th>
+                        <th>Amount</th>
+                        <th>Match Score</th>
+                        <th>Discovery Date</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {data.recently_discovered.map(grant => (
+                        <tr key={grant.id}>
+                          <td>{grant.title}</td>
+                          <td>{grant.funder}</td>
+                          <td>{formatCurrency(grant.amount)}</td>
+                          <td>
+                            <div className="match-score-indicator">
                               <div 
-                                className={`progress-bar-fill ${grant.match_score >= 80 ? 'high' : grant.match_score >= 50 ? 'medium' : 'low'}`}
+                                className={`match-score-bar ${
+                                  grant.match_score >= 80 ? 'high' : 
+                                  grant.match_score >= 50 ? 'medium' : 'low'}`
+                                }
                                 style={{width: `${grant.match_score}%`}}
                               ></div>
+                              <span className="match-score-value">{grant.match_score}%</span>
                             </div>
-                            <span className={`match-score-value ${grant.match_score >= 80 ? 'match-high' : grant.match_score >= 50 ? 'match-medium' : 'match-low'}`}>
-                              {grant.match_score}%
-                            </span>
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              ) : (
-                <div className="empty-state">
-                  <p>No recently added grants.</p>
+                          </td>
+                          <td>{formatDate(new Date(grant.created_at))}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
                 </div>
+              ) : (
+                <p>No grants have been discovered in the last 7 days. Use the Grant Scraper to find more opportunities.</p>
               )}
             </div>
           </div>
         </div>
-      </div>
-      
-      <div className="dashboard-actions">
-        <button 
-          className="btn btn-primary" 
-          onClick={() => onNavigate('grants')}
-        >
-          View All Grants
-        </button>
-        
-        <button 
-          className="btn btn-secondary" 
-          onClick={() => onNavigate('scraper')}
-        >
-          Discover Grants
-        </button>
       </div>
     </div>
   );
@@ -501,26 +535,38 @@ function GrantsList({ grants, hasApiKey }) {
         funder: 'Unknown'
       });
       
-      // Reload the page
+      // Refresh grants list
       window.location.reload();
     })
     .catch(error => {
-      console.error('Error adding grant:', error);
+      // Hide loading indicator
       document.getElementById('loading-overlay').style.display = 'none';
-      alert('Error adding grant. Please try again.');
+      
+      // Show error message
+      console.error('Error adding grant:', error);
+      alert('Failed to add grant. Please try again.');
     });
   };
   
-  return (
-    <div>
-      <Header page="Grants" />
-      
-      {!hasApiKey && (
-        <div className="container mb-4">
-          <div className="alert alert-warning">
-            <strong>OpenAI API Key Required</strong>
-            <p>To use AI-powered features like grant matching and narrative generation, please add your OpenAI API key in the settings.</p>
+  if (!grants || grants.length === 0) {
+    return (
+      <div className="container">
+        <div className="card">
+          <div className="card-body">
+            <h2>No Grants Found</h2>
+            <p>No grant data is available. Add your first grant to get started.</p>
+            <button className="btn btn-primary">Add Grant</button>
           </div>
+        </div>
+      </div>
+    );
+  }
+  
+  return (
+    <div className="container">
+      {!hasApiKey && (
+        <div className="alert alert-warning">
+          <strong>OpenAI API Key Required:</strong> To enable AI-powered features like grant matching and narrative generation, please add your OpenAI API key in the settings.
         </div>
       )}
       
@@ -619,48 +665,40 @@ function GrantsList({ grants, hasApiKey }) {
               ></textarea>
             </div>
 
-            <div className="form-row">
-              <div className="form-group mb-3">
-                <label htmlFor="funder">Funder</label>
-                <input 
-                  type="text" 
-                  className="form-control" 
-                  id="funder" 
-                  name="funder" 
-                  placeholder="Funding Organization"
-                  value={formData.funder}
-                  onChange={handleInputChange}
-                />
+            <div className="row">
+              <div className="col-md-6">
+                <div className="form-group mb-3">
+                  <label htmlFor="dueDate">Due Date</label>
+                  <input 
+                    type="date" 
+                    className="form-control" 
+                    id="dueDate" 
+                    name="due_date"
+                    value={formData.due_date}
+                    onChange={handleInputChange}
+                  />
+                </div>
               </div>
-
-              <div className="form-group mb-3">
-                <label htmlFor="amount">Amount</label>
-                <input 
-                  type="number" 
-                  className="form-control" 
-                  id="amount" 
-                  name="amount" 
-                  placeholder="Grant Amount"
-                  value={formData.amount}
-                  onChange={handleInputChange}
-                />
-              </div>
-
-              <div className="form-group mb-3">
-                <label htmlFor="due_date">Due Date</label>
-                <input 
-                  type="date" 
-                  className="form-control" 
-                  id="due_date" 
-                  name="due_date"
-                  value={formData.due_date}
-                  onChange={handleInputChange}
-                />
+              <div className="col-md-6">
+                <div className="form-group mb-3">
+                  <label htmlFor="amount">Amount</label>
+                  <input 
+                    type="number" 
+                    className="form-control" 
+                    id="amount" 
+                    name="amount" 
+                    placeholder="Grant Amount"
+                    step="0.01" 
+                    min="0"
+                    value={formData.amount}
+                    onChange={handleInputChange}
+                  />
+                </div>
               </div>
             </div>
 
             <div className="form-group mb-3">
-              <label htmlFor="eligibility">Eligibility</label>
+              <label htmlFor="eligibility">Eligibility Criteria</label>
               <textarea 
                 className="form-control" 
                 id="eligibility" 
@@ -704,7 +742,8 @@ function OrganizationProfile({ organization }) {
       <div className="container">
         <div className="card">
           <div className="card-body">
-            <LoadingIndicator />
+            <h2>Organization Profile</h2>
+            <p>Loading organization data...</p>
           </div>
         </div>
       </div>
@@ -712,79 +751,46 @@ function OrganizationProfile({ organization }) {
   }
   
   return (
-    <div>
-      <Header page="Organization Profile" />
-      
-      <div className="profile-container">
-        <div className="profile-section">
-          <div className="profile-header">
-            <h2>Organization Details</h2>
-          </div>
-          
-          <div className="profile-field">
-            <div className="profile-label">Organization Name</div>
-            <div className="profile-value">{organization.name || 'Not provided'}</div>
-          </div>
-          
-          <div className="profile-field">
-            <div className="profile-label">Mission Statement</div>
-            <div className="profile-value">{organization.mission || 'No mission statement provided.'}</div>
-          </div>
-          
-          <div className="profile-field">
-            <div className="profile-label">Website</div>
-            <div className="profile-value">
-              {organization.website ? (
-                <a href={organization.website} target="_blank" rel="noopener noreferrer">{organization.website}</a>
-              ) : (
-                'No website provided.'
-              )}
+    <div className="container">
+      <div className="card">
+        <div className="card-header">
+          <h2>Organization Details</h2>
+          <button className="btn btn-primary">Edit Profile</button>
+        </div>
+        <div className="card-body">
+          <div className="profile-section">
+            <h3>Basic Information</h3>
+            <div className="profile-field">
+              <div className="profile-label">Name</div>
+              <div className="profile-value">{organization.name}</div>
+            </div>
+            <div className="profile-field">
+              <div className="profile-label">Website</div>
+              <div className="profile-value">
+                {organization.website ? (
+                  <a href={organization.website} target="_blank" rel="noopener noreferrer">
+                    {organization.website}
+                  </a>
+                ) : (
+                  'Not provided'
+                )}
+              </div>
+            </div>
+            <div className="profile-field">
+              <div className="profile-label">Founded</div>
+              <div className="profile-value">{organization.founding_year || 'Not provided'}</div>
             </div>
           </div>
           
-          <div className="profile-field">
-            <div className="profile-label">Year Founded</div>
-            <div className="profile-value">{organization.year_founded || 'Not provided'}</div>
+          <div className="profile-section">
+            <h3>Mission</h3>
+            <div className="profile-value mission-statement">
+              {organization.mission || 'No mission statement provided.'}
+            </div>
           </div>
           
-          <div className="profile-field">
-            <div className="profile-label">Tax ID / EIN</div>
-            <div className="profile-value">{organization.tax_id || 'Not provided'}</div>
-          </div>
-        </div>
-        
-        <div className="profile-section">
-          <div className="profile-header">
-            <h2>Contact Information</h2>
-          </div>
-          
-          <div className="profile-field">
-            <div className="profile-label">Contact Name</div>
-            <div className="profile-value">{organization.contact_name || 'Not provided'}</div>
-          </div>
-          
-          <div className="profile-field">
-            <div className="profile-label">Email</div>
-            <div className="profile-value">{organization.contact_email || 'Not provided'}</div>
-          </div>
-          
-          <div className="profile-field">
-            <div className="profile-label">Phone</div>
-            <div className="profile-value">{organization.contact_phone || 'Not provided'}</div>
-          </div>
-          
-          <div className="profile-field">
-            <div className="profile-label">Address</div>
-            <div className="profile-value">{organization.address || 'Not provided'}</div>
-          </div>
-        </div>
-        
-        <div className="profile-section">
-          <div className="profile-header">
-            <h2>Focus Areas</h2>
-          </div>
-          
-          <div className="profile-field">
+          <div className="profile-section">
+            <h3>Focus Areas</h3>
             <div className="profile-value">
               {organization.focus_areas && organization.focus_areas.length > 0 ? (
                 <div className="focus-areas">
@@ -858,157 +864,181 @@ function ScraperSettings({ hasApiKey }) {
     })
       .then(response => response.json())
       .then(data => {
+        setIsRunning(false);
         setRunStatus({ 
           status: 'success', 
-          message: `Scraping completed! Found ${data.grants_added} new grants.` 
+          message: `Scraping complete! Found ${data.results.grants_found} grants, added ${data.results.grants_added} new grants.` 
         });
-        
-        // Refresh data
+        // Refresh the data
         fetchData();
-        
-        // Reset running state after a delay
-        setTimeout(() => {
-          setIsRunning(false);
-        }, 2000);
       })
       .catch(error => {
         console.error('Error running scraper:', error);
-        setRunStatus({ status: 'error', message: 'Error running scraper. Please try again.' });
         setIsRunning(false);
+        setRunStatus({ status: 'error', message: 'Error running scraper. Please try again.' });
       });
   };
   
   return (
-    <div>
-      <Header page="Discover Grants" />
-      
+    <div className="container">
       {!hasApiKey && (
-        <div className="container mb-4">
-          <div className="alert alert-warning">
-            <strong>OpenAI API Key Required</strong>
-            <p>
-              The grant scraper uses OpenAI to extract structured grant information from funding sources.
-              Please add your OpenAI API key in the settings to enable this feature.
-            </p>
-          </div>
+        <div className="alert alert-warning">
+          <strong>OpenAI API Key Required:</strong> The grant scraper requires an OpenAI API key to extract and analyze grant data. Please add your key in the settings.
         </div>
       )}
       
-      <div className="scraper-actions">
-        <button 
-          className={`btn ${isRunning ? 'btn-secondary' : 'btn-primary'}`}
-          onClick={runScraper}
-          disabled={isRunning || !hasApiKey}
-        >
-          {isRunning ? 'Scraping...' : 'Run Scraper Now'}
-        </button>
-        
-        {runStatus && (
-          <div className={`scraper-status ${runStatus.status}`}>
-            {runStatus.message}
+      {runStatus && (
+        <div className={`alert ${runStatus.status === 'success' ? 'alert-success' : runStatus.status === 'error' ? 'alert-danger' : 'alert-info'}`}>
+          {runStatus.message}
+        </div>
+      )}
+      
+      <div className="card mb-4">
+        <div className="card-header bg-primary text-white">
+          <h2>Automated Scraping Schedule</h2>
+        </div>
+        <div className="card-body">
+          <div className="automation-info">
+            <div className="automation-status">
+              <span className="badge bg-success">Active</span>
+              <h3>Daily Scraping at Midnight EST</h3>
+            </div>
+            <p>The grant scraper automatically runs every day at midnight EST to find new grant opportunities that match your organization's profile.</p>
+            <p>Last run: {history.length > 0 ? formatDate(new Date(history[0].end_time)) : 'Never'}</p>
+            <p>Next run: Tonight at midnight EST</p>
+            <div className="automation-actions">
+              <button className="btn btn-primary" onClick={runScraper} disabled={isRunning}>
+                {isRunning ? 'Running Scraper...' : 'Run Manual Scrape Now'}
+              </button>
+            </div>
           </div>
-        )}
+        </div>
       </div>
       
-      <div className="scraper-sections">
-        <div className="scraper-section">
-          <div className="section-header">
-            <h2>Scraper Sources</h2>
-            <p>These sources are checked regularly for new grant opportunities.</p>
-          </div>
-          
+      <div className="card">
+        <div className="card-header">
+          <h2>Grant Sources</h2>
+          <button className="btn btn-primary">Add Source</button>
+        </div>
+        <div className="card-body">
           {loading ? (
             <LoadingIndicator />
+          ) : sources.length > 0 ? (
+            <table className="table">
+              <thead>
+                <tr>
+                  <th>Name</th>
+                  <th>URL</th>
+                  <th>Status</th>
+                  <th>Last Scraped</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {sources.map(source => (
+                  <tr key={source.id}>
+                    <td>{source.name}</td>
+                    <td>
+                      <a href={source.url} target="_blank" rel="noopener noreferrer">
+                        {source.url}
+                      </a>
+                    </td>
+                    <td>
+                      <span className={`badge ${source.is_active ? 'badge-success' : 'badge-secondary'}`}>
+                        {source.is_active ? 'Active' : 'Inactive'}
+                      </span>
+                    </td>
+                    <td>{source.last_scraped ? formatDate(new Date(source.last_scraped)) : 'Never'}</td>
+                    <td>
+                      <div className="actions">
+                        <button className="btn btn-sm btn-outline">Edit</button>
+                        <button className="btn btn-sm btn-outline">Delete</button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           ) : (
-            <div className="card">
-              <div className="card-body">
-                <table className="table">
-                  <thead>
-                    <tr>
-                      <th>Name</th>
-                      <th>URL</th>
-                      <th>Last Checked</th>
-                      <th>Status</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {sources.map(source => (
-                      <tr key={source.id}>
-                        <td>{source.name}</td>
-                        <td>
-                          <a href={source.url} target="_blank" rel="noopener noreferrer">
-                            {source.url}
-                          </a>
-                        </td>
-                        <td>{source.last_run ? formatDate(new Date(source.last_run)) : 'Never'}</td>
-                        <td>
-                          <span className={`badge ${source.active ? 'badge-success' : 'badge-danger'}`}>
-                            {source.active ? 'Active' : 'Inactive'}
-                          </span>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+            <div className="empty-state">
+              <p>No grant sources have been added yet.</p>
+              <p>Add your first source to start discovering grant opportunities.</p>
             </div>
           )}
         </div>
-        
-        <div className="scraper-section">
-          <div className="section-header">
-            <h2>Scraping History</h2>
-            <p>Recent scraping jobs and results.</p>
-          </div>
-          
-          <div className="card">
-            <div className="card-body">
-              {history.length > 0 ? (
-                <table className="table">
-                  <thead>
-                    <tr>
-                      <th>Date</th>
-                      <th>Sources Checked</th>
-                      <th>Grants Found</th>
-                      <th>Status</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {history.map(item => (
-                      <tr key={item.id}>
-                        <td>{formatDate(new Date(item.run_date))}</td>
-                        <td>{item.sources_checked}</td>
-                        <td>{item.grants_found}</td>
-                        <td>
-                          <span className={`badge ${item.status === 'success' ? 'badge-success' : 'badge-danger'}`}>
-                            {item.status}
-                          </span>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              ) : (
-                <div className="empty-state">
-                  <p>No scraping history available.</p>
-                </div>
-              )}
+      </div>
+      
+      <div className="card mt-4">
+        <div className="card-header">
+          <h2>Scraping History</h2>
+          <button className="btn btn-primary" onClick={runScraper} disabled={isRunning}>
+            {isRunning ? 'Running...' : 'Run Scraper Now'}
+          </button>
+        </div>
+        <div className="card-body">
+          {isRunning && (
+            <div className="text-center mb-4">
+              <div className="spinner-border text-primary" role="status">
+                <span className="sr-only">Running...</span>
+              </div>
+              <p className="mt-2">Please wait while the scraper runs. This may take a few minutes.</p>
             </div>
-          </div>
+          )}
+          
+          {history.length > 0 ? (
+            <table className="table">
+              <thead>
+                <tr>
+                  <th>Date</th>
+                  <th>Status</th>
+                  <th>Sources Scraped</th>
+                  <th>Grants Found</th>
+                  <th>Grants Added</th>
+                </tr>
+              </thead>
+              <tbody>
+                {history.map(record => (
+                  <tr key={record.id}>
+                    <td>{formatDate(new Date(record.start_time))}</td>
+                    <td>
+                      <span className={`badge ${record.status === 'completed' ? 'badge-success' : record.status === 'failed' ? 'badge-danger' : 'badge-info'}`}>
+                        {record.status}
+                      </span>
+                    </td>
+                    <td>{record.sources_scraped}</td>
+                    <td>{record.grants_found}</td>
+                    <td>{record.grants_added}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          ) : (
+            <div className="empty-state">
+              <p>No scraping jobs have been run yet.</p>
+            </div>
+          )}
         </div>
       </div>
     </div>
   );
 }
 
-// Utility functions
+// Helper function to format currency
 function formatCurrency(amount) {
-  if (!amount) return '$0';
-  return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(amount);
+  if (amount === null || amount === undefined) return 'N/A';
+  
+  return new Intl.NumberFormat('en-US', {
+    style: 'currency',
+    currency: 'USD',
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0
+  }).format(amount);
 }
 
+// Helper function to format dates
 function formatDate(date) {
-  if (!date || isNaN(date)) return 'No date';
+  if (!date) return 'N/A';
+  if (!(date instanceof Date) || isNaN(date)) return 'Invalid date';
   
   const options = { year: 'numeric', month: 'short', day: 'numeric' };
   return date.toLocaleDateString(undefined, options);

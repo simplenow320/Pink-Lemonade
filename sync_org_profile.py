@@ -33,17 +33,18 @@ def sync_profile():
         org = Organization.query.first()
         if org is None:
             # Create new organization
-            org = Organization()
-            org.name = org_data.get('name', '')
-            org.mission = org_data.get('mission', '')
-            org.website = org_data.get('website', '')
-            org.focus_areas = org_data.get('focus_areas', [])
-            org.keywords = org_data.get('keywords', [])
-            org.location = {
-                'city': '',
-                'state': '',
-                'zip': ''
-            }
+            org = Organization(
+                name=org_data.get('name', ''),
+                mission=org_data.get('mission', ''),
+                website=org_data.get('website', ''),
+                focus_areas=org_data.get('focus_areas', []),
+                keywords=org_data.get('keywords', []),
+                location={
+                    'city': '',
+                    'state': '',
+                    'zip': ''
+                }
+            )
             db.session.add(org)
             logger.info("Created new organization profile")
         else:

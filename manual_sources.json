@@ -2,185 +2,125 @@
   {
     "name": "Lilly Endowment",
     "url": "https://lillyendowment.org",
-    "match_score": 5,
-    "best_fit_initiatives": ["Pastors Thriving Together", "Urban Church Planting"],
-    "grant_programs": ["Thriving Congregations Initiative", "Clergy Renewal & National Preaching Initiatives"],
-    "region": "National"
+    "location": "National",
+    "phone": "(317) 924-5471",
+    "contact_email": "info@lillyendowment.org",
+    "contact_name": "Grant Inquiry Department"
   },
   {
     "name": "The Maclellan Foundation",
     "url": "https://maclellan.net",
-    "match_score": 5,
-    "best_fit_initiatives": ["Pastors Thriving Together", "Urban Church Planting"],
-    "grant_programs": ["Bridge Builder Fund (capacity-building/project grants via partner invitation)"],
-    "region": "National"
+    "location": "National",
+    "phone": "(423) 756-0206",
+    "contact_email": "contact@maclellan.net",
+    "contact_name": "Grants Manager"
   },
   {
     "name": "Mustard Seed Foundation",
     "url": "https://msfdn.org/granting",
-    "match_score": 4,
-    "best_fit_initiatives": ["AI, The Church, and Urban Communities", "Mental Health and the Church"],
-    "grant_programs": ["Church-Based Matching Grants (up to 50% of project cost)"],
-    "region": "National"
+    "location": "National"
   },
   {
     "name": "We Raise Foundation",
     "url": "https://weraise.org",
-    "match_score": 5,
-    "best_fit_initiatives": ["AI, The Church, and Urban Communities", "Mental Health and the Church"],
-    "grant_programs": ["GrantsPlus (program grants + capacity coaching)", "Emerging Leader Grants"],
-    "region": "National"
+    "location": "National"
   },
   {
     "name": "Trinity Church Wall Street Philanthropies",
     "url": "https://trinitywallstreet.org/grants",
-    "match_score": 4,
-    "best_fit_initiatives": ["Pastors Thriving Together", "Mental Health and the Church", "AI, The Church, and Urban Communities"],
-    "grant_programs": ["Leadership Development Grants", "Neighborhood Support Grants"],
-    "region": "National"
+    "location": "National"
   },
   {
     "name": "J.W. Couch Foundation",
     "url": "https://jwcouchfoundation.org",
-    "match_score": 4,
-    "best_fit_initiatives": ["Mental Health and the Church", "AI, The Church, and Urban Communities"],
-    "grant_programs": ["Project-specific program grants (wellness, education, tech)"],
-    "region": "National"
+    "location": "National"
   },
   {
     "name": "Arthur M. Blank Family Foundation",
     "url": "https://blankfoundation.org",
-    "match_score": 5,
-    "best_fit_initiatives": ["Mental Health and the Church", "AI, The Church, and Urban Communities"],
-    "grant_programs": ["Mental Health & Well-Being grants", "Neighborhood Revitalization grants"],
-    "region": "Atlanta, GA"
+    "location": "Atlanta, GA",
+    "phone": "(404) 367-2100",
+    "contact_email": "info@blankfoundation.org",
+    "contact_name": "Program Director"
   },
   {
     "name": "Chick-fil-A True Inspiration Awards",
     "url": "https://www.chick-fil-a.com/true-inspiration-awards",
-    "match_score": 5,
-    "best_fit_initiatives": ["AI, The Church, and Urban Communities"],
-    "grant_programs": ["True Inspiration Awards ($30K–$350K; nomination required)"],
-    "region": "Atlanta, GA"
+    "location": "Atlanta, GA"
   },
   {
-    "name": "Community Foundation for Greater Atlanta (TogetherATL)",
+    "name": "Community Foundation for Greater Atlanta",
     "url": "https://cfgreateratlanta.org/grant-opportunities/",
-    "match_score": 5,
-    "best_fit_initiatives": ["Mental Health and the Church", "AI, The Church, and Urban Communities"],
-    "grant_programs": ["TogetherATL Issue Grants (Health; Economic Mobility)", "Operating Support"],
-    "region": "Atlanta, GA"
+    "location": "Atlanta, GA"
   },
   {
-    "name": "Catholic Campaign for Human Development – Atlanta",
+    "name": "Catholic Campaign for Human Development \u2013 Atlanta",
     "url": "https://archatl.com/CCHD",
-    "match_score": 4,
-    "best_fit_initiatives": ["AI, The Church, and Urban Communities", "Mental Health and the Church"],
-    "grant_programs": ["Local CCHD Grants (up to $10K)", "National CCHD Grants ($25K–$75K)"],
-    "region": "Atlanta, GA"
+    "location": "Atlanta, GA"
   },
   {
-    "name": "The Kresge Foundation (Detroit Program)",
+    "name": "The Kresge Foundation",
     "url": "https://kresge.org",
-    "match_score": 5,
-    "best_fit_initiatives": ["AI, The Church, and Urban Communities", "Mental Health and the Church"],
-    "grant_programs": ["Detroit Program Grants (Program; Planning; Operating Support)", "KIP:D micro-grants"],
-    "region": "Detroit, MI"
+    "location": "Detroit, MI"
   },
   {
     "name": "Community Foundation for Southeast Michigan",
     "url": "https://cfsem.org",
-    "match_score": 5,
-    "best_fit_initiatives": ["Mental Health and the Church", "AI, The Church, and Urban Communities"],
-    "grant_programs": ["Field-of-Interest & Donor-Advised Grants (Health; Workforce)", "Open RFPs"],
-    "region": "Detroit, MI"
+    "location": "Detroit, MI"
   },
   {
     "name": "Skillman Foundation",
     "url": "https://www.skillman.org",
-    "match_score": 5,
-    "best_fit_initiatives": ["AI, The Church, and Urban Communities", "Mental Health and the Church"],
-    "grant_programs": ["President's Discretionary Fund", "Strategic Youth-Education Grants"],
-    "region": "Detroit, MI"
+    "location": "Detroit, MI"
   },
   {
     "name": "Rocket Community Fund",
     "url": "https://rocketcommunityfund.org",
-    "match_score": 5,
-    "best_fit_initiatives": ["AI, The Church, and Urban Communities"],
-    "grant_programs": ["Digital Skills Detroit Partnerships", "Strategic Program Grants"],
-    "region": "Detroit, MI"
+    "location": "Detroit, MI"
   },
   {
-    "name": "Doug & Maria DeVos Foundation / UCLC",
+    "name": "Doug & Maria DeVos Foundation",
     "url": "https://dmdevosfoundation.org",
-    "match_score": 5,
-    "best_fit_initiatives": ["Pastors Thriving Together", "AI, The Church, and Urban Communities"],
-    "grant_programs": ["UCLC Leadership Cohort Grants", "Pilot Project Mini-Grants"],
-    "region": "Grand Rapids, MI"
+    "location": "Grand Rapids, MI"
   },
   {
     "name": "Grand Rapids Community Foundation",
     "url": "https://www.grfoundation.org",
-    "match_score": 5,
-    "best_fit_initiatives": ["Mental Health and the Church", "AI, The Church, and Urban Communities"],
-    "grant_programs": ["Fund for Community Good", "Field-of-Interest & Capacity Grants"],
-    "region": "Grand Rapids, MI"
+    "location": "Grand Rapids, MI"
   },
   {
     "name": "Steelcase Foundation",
     "url": "https://www.steelcasefoundation.org",
-    "match_score": 4,
-    "best_fit_initiatives": ["Mental Health and the Church", "AI, The Church, and Urban Communities"],
-    "grant_programs": ["Rapid Response & Emerging Needs Grants", "Systemic Change Grants"],
-    "region": "Grand Rapids, MI"
+    "location": "Grand Rapids, MI"
   },
   {
     "name": "Community Christian Ministries Foundation",
     "url": "https://ccmfoundation.org",
-    "match_score": 4,
-    "best_fit_initiatives": ["Mental Health and the Church", "AI, The Church, and Urban Communities"],
-    "grant_programs": ["Small Project Grants ($400–$5K)", "Matching Grants"],
-    "region": "Grand Rapids, MI"
+    "location": "Grand Rapids, MI"
   },
   {
     "name": "Nina Mason Pulliam Charitable Trust",
     "url": "https://www.ninapulliamtrust.org",
-    "match_score": 5,
-    "best_fit_initiatives": ["Mental Health and the Church", "AI, The Church, and Urban Communities"],
-    "grant_programs": ["Program Grants ($50K–$200K; multi-year)"],
-    "region": "Indianapolis, IN"
+    "location": "Indianapolis, IN"
   },
   {
     "name": "Central Indiana Community Foundation",
     "url": "https://www.cicf.org",
-    "match_score": 5,
-    "best_fit_initiatives": ["AI, The Church, and Urban Communities", "Mental Health and the Church"],
-    "grant_programs": ["Community Project Grants ($10K–$50K)", "Elevation Grants"],
-    "region": "Indianapolis, IN"
+    "location": "Indianapolis, IN"
   },
   {
     "name": "The Duke Endowment",
     "url": "https://www.dukeendowment.org",
-    "match_score": 5,
-    "best_fit_initiatives": ["Mental Health and the Church", "Pastors Thriving Together"],
-    "grant_programs": ["Health Care Program Grants", "Clergy Health & Wellness Initiatives"],
-    "region": "Charlotte, NC"
+    "location": "Charlotte, NC"
   },
   {
     "name": "Truist Foundation",
     "url": "https://www.truist.com/purpose/truist-foundation",
-    "match_score": 5,
-    "best_fit_initiatives": ["AI, The Church, and Urban Communities"],
-    "grant_programs": ["Workforce Development Grants", "Inspire Awards Challenge Grants"],
-    "region": "Charlotte, NC"
+    "location": "Charlotte, NC"
   },
   {
-    "name": "Foundation For The Carolinas (FFTC)",
+    "name": "Foundation For The Carolinas",
     "url": "https://www.fftc.org",
-    "match_score": 4,
-    "best_fit_initiatives": ["Mental Health and the Church", "AI, The Church, and Urban Communities"],
-    "grant_programs": ["Charlotte-Mecklenburg Community Grants ($5K–$30K)", "Donor-Advised Funds"],
-    "region": "Charlotte, NC"
+    "location": "Charlotte, NC"
   }
 ]

@@ -13,7 +13,7 @@
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
     
     <!-- Styles -->
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}?v={{ now }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
     
     <!-- Add root div for React app -->
     <div id="root"></div>
@@ -27,7 +27,7 @@
     <script src="https://unpkg.com/babel-standalone@6/babel.min.js"></script>
     
     <!-- Include React components -->
-    <script src="{{ url_for('static', filename='js/react-app.js') }}?v={{ now }}" type="text/babel"></script>
+    <script src="{{ url_for('static', filename='js/react-app.js') }}" type="text/babel"></script>
 </head>
 <body>
     <noscript>
