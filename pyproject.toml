@@ -16,6 +16,7 @@ dependencies = [
     "requests>=2.32.3",
     "beautifulsoup4>=4.13.4",
     "schedule>=1.2.2",
+    "apscheduler>=3.10.0",
 ]
 
 [tool.poetry]

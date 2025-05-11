@@ -1,1 +1,68 @@
-{}
+{
+  "name": "Nitrogen Network",
+  "mission": "Equip urban churches and communities to holistically flourish.",
+  "vision": "Transform underserved neighborhoods by empowering leaders, strengthening well-being, and closing the technology gap.",
+  "focus_areas": [
+    "Urban ministry leadership",
+    "Pastoral mentoring & training",
+    "Church-based mental health support",
+    "Community mental health hubs",
+    "AI training & digital literacy",
+    "Technology workforce development",
+    "Faith-based innovation",
+    "Church planting & expansion",
+    "Cross-generational community engagement",
+    "Holistic community transformation"
+  ],
+  "funding_priorities": [
+    "Pastors Thriving Together",
+    "Mental Health and the Church",
+    "AI, The Church, and Urban Communities",
+    "Urban Church Planting"
+  ],
+  "geographic_focus": [
+    "Grand Rapids, MI",
+    "Detroit, MI",
+    "Atlanta, GA",
+    "Indianapolis, IN",
+    "Charlotte, NC"
+  ],
+  "core_values": [
+    "Holistic Care: Integrating spiritual support, mental health resources, and practical technology.",
+    "Human-Centered: Designing culturally sensitive, accessible programs.",
+    "Ethical AI: Keeping the human in the loop and promoting responsible innovation.",
+    "Equity & Inclusion: Building local capacity to ensure lasting community transformation."
+  ],
+  "target_audiences": [
+    "Urban Pastors & Church Leaders",
+    "Youth (ages 14\u201318)",
+    "Community Adults (everyday residents)",
+    "Business & Organizational Leaders"
+  ],
+  "strategic_goals": [
+    "Pastors Thriving Together: 100 pastors trained by 2026.",
+    "Mental Health & the Church: Launch in 20 new congregations yearly.",
+    "AI in the City: Train 500 participants annually across all three audiences.",
+    "Urban Church Planting: Plant 10 new churches per year through local partnerships."
+  ],
+  "legal_status": "501(c)(3) faith-based nonprofit",
+  "keywords": [
+    "equip",
+    "urban ministry leadership",
+    "ai training & digital literacy",
+    "technology workforce development",
+    "pastors thriving together",
+    "urban church planting",
+    "mental health and the church",
+    "cross-generational community engagement",
+    "faith-based innovation",
+    "pastoral mentoring & training",
+    "transform",
+    "church planting & expansion",
+    "holistic community transformation",
+    "church-based mental health support",
+    "the church",
+    "community mental health hubs",
+    "and urban communities"
+  ]
+}

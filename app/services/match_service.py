@@ -32,10 +32,38 @@ def match_grants(grants, org_profile):
                 grant["score"] = 0
                 grant["reason"] = "AI matching unavailable - API key not configured."
             return grants
-            
+        
+        # 1. Load manual_sources.json if it exists
+        manual_sources = []
+        try:
+            if os.path.exists('manual_sources.json'):
+                with open('manual_sources.json', 'r') as f:
+                    manual_sources = json.load(f)
+        except Exception as e:
+            logging.error(f"Error loading manual sources: {str(e)}")
+        
+        # 2. Add any manual sources to grants_list if not already present
+        grants_list = list(grants)  # Create a copy of grants list
+        
+        # Create a set of existing grant names for quick lookup
+        existing_grant_names = {grant.get('name', '') for grant in grants_list}
+        
+        # Add manual sources that aren't already in grants_list
+        for source in manual_sources:
+            if source.get('name') and source.get('name') not in existing_grant_names:
+                # Convert source to a grant-like object
+                new_grant = {
+                    'name': source.get('name', ''),
+                    'title': source.get('name', ''),
+                    'url': source.get('url', ''),
+                    'source': 'manual',
+                    'is_manual_source': True
+                }
+                grants_list.append(new_grant)
+                
         # Create a serializable copy of grants and org_profile
         serializable_grants = []
-        for grant in grants:
+        for grant in grants_list:
             # Convert date objects to strings
             serializable_grant = {}
             for key, value in grant.items():
@@ -53,17 +81,17 @@ def match_grants(grants, org_profile):
             else:
                 serializable_org[key] = value
                 
-        # Prepare data for AI
+        # 3. Prepare data for AI
         data = {
             "grants": serializable_grants,
             "org_profile": serializable_org
         }
         
         # System prompt for OpenAI
-        system_prompt = """You are an AI grant matcher. Input two JSON items:
-1. grants: an array of grants with title, summary, due_date, amount, eligibility_criteria
-2. org_profile: an object with mission, focus_areas, funding_priorities
-Score each grant 1 to 5 for fit with the profile. Return a JSON array sorted by score descending. Each item must include the grant data, score, and a one-sentence reason."""
+        system_prompt = """You are an AI grant matcher. Input:
+1. grants: an array of grant objects (including manual sources)
+2. org_profile: {mission, focus_areas, funding_priorities}
+Score each grant 1 to 5 for fit and return a JSON array sorted by score desc. Each item includes the grant data, score, and a one-sentence reason."""
         
         # Make API call to OpenAI
         response = openai.chat.completions.create(
@@ -75,7 +103,7 @@ Score each grant 1 to 5 for fit with the profile. Return a JSON array sorted by 
             response_format={"type": "json_object"}
         )
         
-        # Parse response
+        # 4. Parse response and return sorted list
         result = json.loads(response.choices[0].message.content)
         
         # Get the array from the result

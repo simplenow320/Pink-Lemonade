@@ -1,0 +1,173 @@
+{
+  "org_profile": {
+    "name": "Nitrogen Network",
+    "mission": "Equip urban churches and communities to holistically flourish.",
+    "vision": "Transform underserved neighborhoods by empowering leaders, strengthening well-being, and closing the technology gap.",
+    "focus_areas": [
+      "Urban ministry leadership",
+      "Pastoral mentoring & training",
+      "Church-based mental health support",
+      "Community mental health hubs",
+      "AI training & digital literacy",
+      "Technology workforce development",
+      "Faith-based innovation",
+      "Church planting & expansion",
+      "Cross-generational community engagement",
+      "Holistic community transformation"
+    ],
+    "funding_priorities": [
+      "Pastors Thriving Together",
+      "Mental Health and the Church",
+      "AI, The Church, and Urban Communities",
+      "Urban Church Planting"
+    ],
+    "geographic_focus": [
+      "Grand Rapids, MI",
+      "Detroit, MI",
+      "Atlanta, GA",
+      "Indianapolis, IN",
+      "Charlotte, NC"
+    ],
+    "core_values": [
+      "Holistic Care: Integrating spiritual support, mental health resources, and practical technology.",
+      "Human-Centered: Designing culturally sensitive, accessible programs.",
+      "Ethical AI: Keeping the human in the loop and promoting responsible innovation.",
+      "Equity & Inclusion: Building local capacity to ensure lasting community transformation."
+    ],
+    "target_audiences": [
+      "Urban Pastors & Church Leaders",
+      "Youth (ages 14\u201318)",
+      "Community Adults (everyday residents)",
+      "Business & Organizational Leaders"
+    ],
+    "strategic_goals": [
+      "Pastors Thriving Together: 100 pastors trained by 2026.",
+      "Mental Health & the Church: Launch in 20 new congregations yearly.",
+      "AI in the City: Train 500 participants annually across all three audiences.",
+      "Urban Church Planting: Plant 10 new churches per year through local partnerships."
+    ],
+    "legal_status": "501(c)(3) faith-based nonprofit"
+  },
+  "manual_funders": [
+    {
+      "name": "Lilly Endowment",
+      "url": "https://lillyendowment.org",
+      "location": "National"
+    },
+    {
+      "name": "The Maclellan Foundation",
+      "url": "https://maclellan.net",
+      "location": "National"
+    },
+    {
+      "name": "Mustard Seed Foundation",
+      "url": "https://msfdn.org/granting",
+      "location": "National"
+    },
+    {
+      "name": "We Raise Foundation",
+      "url": "https://weraise.org",
+      "location": "National"
+    },
+    {
+      "name": "Trinity Church Wall Street Philanthropies",
+      "url": "https://trinitywallstreet.org/grants",
+      "location": "National"
+    },
+    {
+      "name": "J.W. Couch Foundation",
+      "url": "https://jwcouchfoundation.org",
+      "location": "National"
+    },
+    {
+      "name": "Arthur M. Blank Family Foundation",
+      "url": "https://blankfoundation.org",
+      "location": "Atlanta, GA"
+    },
+    {
+      "name": "Chick-fil-A True Inspiration Awards",
+      "url": "https://www.chick-fil-a.com/true-inspiration-awards",
+      "location": "Atlanta, GA"
+    },
+    {
+      "name": "Community Foundation for Greater Atlanta",
+      "url": "https://cfgreateratlanta.org/grant-opportunities/",
+      "location": "Atlanta, GA"
+    },
+    {
+      "name": "Catholic Campaign for Human Development \u2013 Atlanta",
+      "url": "https://archatl.com/CCHD",
+      "location": "Atlanta, GA"
+    },
+    {
+      "name": "The Kresge Foundation",
+      "url": "https://kresge.org",
+      "location": "Detroit, MI"
+    },
+    {
+      "name": "Community Foundation for Southeast Michigan",
+      "url": "https://cfsem.org",
+      "location": "Detroit, MI"
+    },
+    {
+      "name": "Skillman Foundation",
+      "url": "https://www.skillman.org",
+      "location": "Detroit, MI"
+    },
+    {
+      "name": "Rocket Community Fund",
+      "url": "https://rocketcommunityfund.org",
+      "location": "Detroit, MI"
+    },
+    {
+      "name": "Doug & Maria DeVos Foundation",
+      "url": "https://dmdevosfoundation.org",
+      "location": "Grand Rapids, MI"
+    },
+    {
+      "name": "Grand Rapids Community Foundation",
+      "url": "https://www.grfoundation.org",
+      "location": "Grand Rapids, MI"
+    },
+    {
+      "name": "Steelcase Foundation",
+      "url": "https://www.steelcasefoundation.org",
+      "location": "Grand Rapids, MI"
+    },
+    {
+      "name": "Community Christian Ministries Foundation",
+      "url": "https://ccmfoundation.org",
+      "location": "Grand Rapids, MI"
+    },
+    {
+      "name": "Lilly Endowment",
+      "url": "https://lillyendowment.org",
+      "location": "Indianapolis, IN"
+    },
+    {
+      "name": "Nina Mason Pulliam Charitable Trust",
+      "url": "https://www.ninapulliamtrust.org",
+      "location": "Indianapolis, IN"
+    },
+    {
+      "name": "Central Indiana Community Foundation",
+      "url": "https://www.cicf.org",
+      "location": "Indianapolis, IN"
+    },
+    {
+      "name": "The Duke Endowment",
+      "url": "https://www.dukeendowment.org",
+      "location": "Charlotte, NC"
+    },
+    {
+      "name": "Truist Foundation",
+      "url": "https://www.truist.com/purpose/truist-foundation",
+      "location": "Charlotte, NC"
+    },
+    {
+      "name": "Foundation For The Carolinas",
+      "url": "https://www.fftc.org",
+      "location": "Charlotte, NC"
+    }
+  ]
+}

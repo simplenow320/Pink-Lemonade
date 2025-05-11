@@ -1,1 +1,117 @@
-[]
+[
+  {
+    "name": "Lilly Endowment",
+    "url": "https://lillyendowment.org",
+    "location": "National"
+  },
+  {
+    "name": "The Maclellan Foundation",
+    "url": "https://maclellan.net",
+    "location": "National"
+  },
+  {
+    "name": "Mustard Seed Foundation",
+    "url": "https://msfdn.org/granting",
+    "location": "National"
+  },
+  {
+    "name": "We Raise Foundation",
+    "url": "https://weraise.org",
+    "location": "National"
+  },
+  {
+    "name": "Trinity Church Wall Street Philanthropies",
+    "url": "https://trinitywallstreet.org/grants",
+    "location": "National"
+  },
+  {
+    "name": "J.W. Couch Foundation",
+    "url": "https://jwcouchfoundation.org",
+    "location": "National"
+  },
+  {
+    "name": "Arthur M. Blank Family Foundation",
+    "url": "https://blankfoundation.org",
+    "location": "Atlanta, GA"
+  },
+  {
+    "name": "Chick-fil-A True Inspiration Awards",
+    "url": "https://www.chick-fil-a.com/true-inspiration-awards",
+    "location": "Atlanta, GA"
+  },
+  {
+    "name": "Community Foundation for Greater Atlanta",
+    "url": "https://cfgreateratlanta.org/grant-opportunities/",
+    "location": "Atlanta, GA"
+  },
+  {
+    "name": "Catholic Campaign for Human Development \u2013 Atlanta",
+    "url": "https://archatl.com/CCHD",
+    "location": "Atlanta, GA"
+  },
+  {
+    "name": "The Kresge Foundation",
+    "url": "https://kresge.org",
+    "location": "Detroit, MI"
+  },
+  {
+    "name": "Community Foundation for Southeast Michigan",
+    "url": "https://cfsem.org",
+    "location": "Detroit, MI"
+  },
+  {
+    "name": "Skillman Foundation",
+    "url": "https://www.skillman.org",
+    "location": "Detroit, MI"
+  },
+  {
+    "name": "Rocket Community Fund",
+    "url": "https://rocketcommunityfund.org",
+    "location": "Detroit, MI"
+  },
+  {
+    "name": "Doug & Maria DeVos Foundation",
+    "url": "https://dmdevosfoundation.org",
+    "location": "Grand Rapids, MI"
+  },
+  {
+    "name": "Grand Rapids Community Foundation",
+    "url": "https://www.grfoundation.org",
+    "location": "Grand Rapids, MI"
+  },
+  {
+    "name": "Steelcase Foundation",
+    "url": "https://www.steelcasefoundation.org",
+    "location": "Grand Rapids, MI"
+  },
+  {
+    "name": "Community Christian Ministries Foundation",
+    "url": "https://ccmfoundation.org",
+    "location": "Grand Rapids, MI"
+  },
+  {
+    "name": "Nina Mason Pulliam Charitable Trust",
+    "url": "https://www.ninapulliamtrust.org",
+    "location": "Indianapolis, IN"
+  },
+  {
+    "name": "Central Indiana Community Foundation",
+    "url": "https://www.cicf.org",
+    "location": "Indianapolis, IN"
+  },
+  {
+    "name": "The Duke Endowment",
+    "url": "https://www.dukeendowment.org",
+    "location": "Charlotte, NC"
+  },
+  {
+    "name": "Truist Foundation",
+    "url": "https://www.truist.com/purpose/truist-foundation",
+    "location": "Charlotte, NC"
+  },
+  {
+    "name": "Foundation For The Carolinas",
+    "url": "https://www.fftc.org",
+    "location": "Charlotte, NC"
+  }
+]
