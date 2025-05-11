@@ -5,7 +5,10 @@
     "location": "National",
     "phone": "(317) 924-5471",
     "contact_email": "info@lillyendowment.org",
-    "contact_name": "Grant Inquiry Department"
+    "contact_name": "Grant Inquiry Department",
+    "match_score": 5,
+    "best_fit_initiatives": ["Pastors Thriving Together", "Urban Church Planting"],
+    "grant_programs": ["Thriving Congregations Initiative", "Clergy Renewal & National Preaching Initiatives"]
   },
   {
     "name": "The Maclellan Foundation",
@@ -13,27 +16,54 @@
     "location": "National",
     "phone": "(423) 756-0206",
     "contact_email": "contact@maclellan.net",
-    "contact_name": "Grants Manager"
+    "contact_name": "Grants Manager",
+    "match_score": 5,
+    "best_fit_initiatives": ["Pastors Thriving Together", "Urban Church Planting"],
+    "grant_programs": ["Bridge Builder Fund (capacity-building/project grants via partner invitation)"]
   },
   {
     "name": "Mustard Seed Foundation",
     "url": "https://msfdn.org/granting",
-    "location": "National"
+    "location": "National",
+    "phone": "(703) 524-5620",
+    "contact_email": "info@msfdn.org",
+    "contact_name": "Grants Coordinator",
+    "match_score": 4,
+    "best_fit_initiatives": ["AI, The Church, and Urban Communities", "Mental Health and the Church"],
+    "grant_programs": ["Church-Based Matching Grants (up to 50% of project cost)"]
   },
   {
     "name": "We Raise Foundation",
     "url": "https://weraise.org",
-    "location": "National"
+    "location": "National",
+    "phone": "(800) 762-6748",
+    "contact_email": "info@weraise.org",
+    "contact_name": "Program Officer",
+    "match_score": 5,
+    "best_fit_initiatives": ["AI, The Church, and Urban Communities", "Mental Health and the Church"],
+    "grant_programs": ["GrantsPlus (program grants + capacity coaching)", "Emerging Leader Grants"]
   },
   {
     "name": "Trinity Church Wall Street Philanthropies",
     "url": "https://trinitywallstreet.org/grants",
-    "location": "National"
+    "location": "National",
+    "phone": "(212) 602-0800",
+    "contact_email": "grants@trinitywallstreet.org",
+    "contact_name": "Grants Administration",
+    "match_score": 4,
+    "best_fit_initiatives": ["Pastors Thriving Together", "Mental Health and the Church", "AI, The Church, and Urban Communities"],
+    "grant_programs": ["Leadership Development Grants", "Neighborhood Support Grants"]
   },
   {
     "name": "J.W. Couch Foundation",
     "url": "https://jwcouchfoundation.org",
-    "location": "National"
+    "location": "National",
+    "phone": "(919) 968-3569",
+    "contact_email": "grants@jwcouchfoundation.org",
+    "contact_name": "Foundation Director",
+    "match_score": 4,
+    "best_fit_initiatives": ["Mental Health and the Church", "AI, The Church, and Urban Communities"],
+    "grant_programs": ["Project-specific program grants (wellness, education, tech)"]
   },
   {
     "name": "Arthur M. Blank Family Foundation",
@@ -41,86 +71,185 @@
     "location": "Atlanta, GA",
     "phone": "(404) 367-2100",
     "contact_email": "info@blankfoundation.org",
-    "contact_name": "Program Director"
+    "contact_name": "Program Director",
+    "match_score": 5,
+    "best_fit_initiatives": ["Mental Health and the Church", "AI, The Church, and Urban Communities"],
+    "grant_programs": ["Mental Health & Well-Being grants", "Neighborhood Revitalization grants"]
   },
   {
     "name": "Chick-fil-A True Inspiration Awards",
     "url": "https://www.chick-fil-a.com/true-inspiration-awards",
-    "location": "Atlanta, GA"
+    "location": "Atlanta, GA",
+    "phone": "(866) 232-2040",
+    "contact_email": "inspirationawards@chick-fil-a.com",
+    "contact_name": "Community Relations",
+    "match_score": 5,
+    "best_fit_initiatives": ["AI, The Church, and Urban Communities"],
+    "grant_programs": ["True Inspiration Awards ($30K–$350K; nomination required)"]
   },
   {
     "name": "Community Foundation for Greater Atlanta",
     "url": "https://cfgreateratlanta.org/grant-opportunities/",
-    "location": "Atlanta, GA"
+    "location": "Atlanta, GA",
+    "phone": "(404) 688-5525",
+    "contact_email": "info@cfgreateratlanta.org",
+    "contact_name": "Grants Manager",
+    "match_score": 5,
+    "best_fit_initiatives": ["Mental Health and the Church", "AI, The Church, and Urban Communities"],
+    "grant_programs": ["TogetherATL Issue Grants (Health; Economic Mobility)", "Operating Support"]
   },
   {
     "name": "Catholic Campaign for Human Development \u2013 Atlanta",
     "url": "https://archatl.com/CCHD",
-    "location": "Atlanta, GA"
+    "location": "Atlanta, GA",
+    "phone": "(404) 920-7896",
+    "contact_email": "cchd@archatl.com",
+    "contact_name": "CCHD Coordinator",
+    "match_score": 4,
+    "best_fit_initiatives": ["AI, The Church, and Urban Communities", "Mental Health and the Church"],
+    "grant_programs": ["Local CCHD Grants (up to $10K)", "National CCHD Grants ($25K–$75K)"]
   },
   {
     "name": "The Kresge Foundation",
     "url": "https://kresge.org",
-    "location": "Detroit, MI"
+    "location": "Detroit, MI",
+    "phone": "(248) 643-9630",
+    "contact_email": "info@kresge.org",
+    "contact_name": "Detroit Program Officer",
+    "match_score": 5,
+    "best_fit_initiatives": ["AI, The Church, and Urban Communities", "Mental Health and the Church"],
+    "grant_programs": ["Detroit Program Grants (Program; Planning; Operating Support)", "KIP:D micro-grants"]
   },
   {
     "name": "Community Foundation for Southeast Michigan",
     "url": "https://cfsem.org",
-    "location": "Detroit, MI"
+    "location": "Detroit, MI",
+    "phone": "(313) 961-6675",
+    "contact_email": "grantinfo@cfsem.org",
+    "contact_name": "Program Officer",
+    "match_score": 5,
+    "best_fit_initiatives": ["Mental Health and the Church", "AI, The Church, and Urban Communities"],
+    "grant_programs": ["Field-of-Interest & Donor-Advised Grants (Health; Workforce)", "Open RFPs"]
   },
   {
     "name": "Skillman Foundation",
     "url": "https://www.skillman.org",
-    "location": "Detroit, MI"
+    "location": "Detroit, MI",
+    "phone": "(313) 393-1185",
+    "contact_email": "info@skillman.org",
+    "contact_name": "Program Officer",
+    "match_score": 5,
+    "best_fit_initiatives": ["AI, The Church, and Urban Communities", "Mental Health and the Church"],
+    "grant_programs": ["President's Discretionary Fund", "Strategic Youth-Education Grants"]
   },
   {
     "name": "Rocket Community Fund",
     "url": "https://rocketcommunityfund.org",
-    "location": "Detroit, MI"
+    "location": "Detroit, MI",
+    "phone": "(313) 373-7500",
+    "contact_email": "info@rocketcommunityfund.org",
+    "contact_name": "Community Investments Team",
+    "match_score": 5,
+    "best_fit_initiatives": ["AI, The Church, and Urban Communities"],
+    "grant_programs": ["Digital Skills Detroit Partnerships", "Strategic Program Grants"]
   },
   {
     "name": "Doug & Maria DeVos Foundation",
     "url": "https://dmdevosfoundation.org",
-    "location": "Grand Rapids, MI"
+    "location": "Grand Rapids, MI",
+    "phone": "(616) 643-4700",
+    "contact_email": "info@dmdevosfoundation.org",
+    "contact_name": "Program Director",
+    "match_score": 5,
+    "best_fit_initiatives": ["Pastors Thriving Together", "AI, The Church, and Urban Communities"],
+    "grant_programs": ["UCLC Leadership Cohort Grants", "Pilot Project Mini-Grants"]
   },
   {
     "name": "Grand Rapids Community Foundation",
     "url": "https://www.grfoundation.org",
-    "location": "Grand Rapids, MI"
+    "location": "Grand Rapids, MI",
+    "phone": "(616) 454-1751",
+    "contact_email": "info@grfoundation.org",
+    "contact_name": "Program Officer",
+    "match_score": 5,
+    "best_fit_initiatives": ["Mental Health and the Church", "AI, The Church, and Urban Communities"],
+    "grant_programs": ["Fund for Community Good", "Field-of-Interest & Capacity Grants"]
   },
   {
     "name": "Steelcase Foundation",
     "url": "https://www.steelcasefoundation.org",
-    "location": "Grand Rapids, MI"
+    "location": "Grand Rapids, MI",
+    "phone": "(616) 246-4695",
+    "contact_email": "foundation@steelcase.com",
+    "contact_name": "Grants Manager",
+    "match_score": 4,
+    "best_fit_initiatives": ["Mental Health and the Church", "AI, The Church, and Urban Communities"],
+    "grant_programs": ["Rapid Response & Emerging Needs Grants", "Systemic Change Grants"]
   },
   {
     "name": "Community Christian Ministries Foundation",
     "url": "https://ccmfoundation.org",
-    "location": "Grand Rapids, MI"
+    "location": "Grand Rapids, MI",
+    "phone": "(616) 224-0764",
+    "contact_email": "grants@ccmfoundation.org",
+    "contact_name": "Executive Director",
+    "match_score": 4,
+    "best_fit_initiatives": ["Mental Health and the Church", "AI, The Church, and Urban Communities"],
+    "grant_programs": ["Small Project Grants ($400–$5K)", "Matching Grants"]
   },
   {
     "name": "Nina Mason Pulliam Charitable Trust",
     "url": "https://www.ninapulliamtrust.org",
-    "location": "Indianapolis, IN"
+    "location": "Indianapolis, IN",
+    "phone": "(317) 231-6075",
+    "contact_email": "info@ninapulliamtrust.org",
+    "contact_name": "Indianapolis Program Officer",
+    "match_score": 5,
+    "best_fit_initiatives": ["Mental Health and the Church", "AI, The Church, and Urban Communities"],
+    "grant_programs": ["Program Grants ($50K–$200K; multi-year)"]
   },
   {
     "name": "Central Indiana Community Foundation",
     "url": "https://www.cicf.org",
-    "location": "Indianapolis, IN"
+    "location": "Indianapolis, IN",
+    "phone": "(317) 634-2423",
+    "contact_email": "grants@cicf.org",
+    "contact_name": "Community Investment Officer",
+    "match_score": 5,
+    "best_fit_initiatives": ["AI, The Church, and Urban Communities", "Mental Health and the Church"],
+    "grant_programs": ["Community Project Grants ($10K–$50K)", "Elevation Grants"]
   },
   {
     "name": "The Duke Endowment",
     "url": "https://www.dukeendowment.org",
-    "location": "Charlotte, NC"
+    "location": "Charlotte, NC",
+    "phone": "(704) 376-0291",
+    "contact_email": "info@dukeendowment.org",
+    "contact_name": "Program Officer, Rural Church",
+    "match_score": 5,
+    "best_fit_initiatives": ["Mental Health and the Church", "Pastors Thriving Together"],
+    "grant_programs": ["Health Care Program Grants", "Clergy Health & Wellness Initiatives"]
   },
   {
     "name": "Truist Foundation",
     "url": "https://www.truist.com/purpose/truist-foundation",
-    "location": "Charlotte, NC"
+    "location": "Charlotte, NC",
+    "phone": "(336) 733-3301",
+    "contact_email": "truistfoundation@truist.com",
+    "contact_name": "Grants Administrator",
+    "match_score": 5,
+    "best_fit_initiatives": ["AI, The Church, and Urban Communities"],
+    "grant_programs": ["Workforce Development Grants", "Inspire Awards Challenge Grants"]
   },
   {
     "name": "Foundation For The Carolinas",
     "url": "https://www.fftc.org",
-    "location": "Charlotte, NC"
+    "location": "Charlotte, NC",
+    "phone": "(704) 973-4500",
+    "contact_email": "info@fftc.org",
+    "contact_name": "Community Programs Officer",
+    "match_score": 4,
+    "best_fit_initiatives": ["Mental Health and the Church", "AI, The Church, and Urban Communities"],
+    "grant_programs": ["Charlotte-Mecklenburg Community Grants ($5K–$30K)", "Donor-Advised Funds"]
   }
 ]
