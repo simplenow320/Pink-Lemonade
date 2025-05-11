@@ -902,7 +902,11 @@ a:hover {
 .hero-actions {
   display: flex;
   justify-content: center;
+  flex-wrap: wrap;
   gap: 1rem;
+  max-width: 100%;
+  padding: 0 1rem;
+  box-sizing: border-box;
 }
 
 /* Responsive styles for hero section */
