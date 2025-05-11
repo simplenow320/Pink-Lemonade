@@ -209,9 +209,16 @@ function Header({ page, organization }) {
   
   return (
     <header className="page-header">
-      <h1>{getPageTitle()}</h1>
-      <div className="header-actions">
-        {/* Add action buttons as needed */}
+      <div className="container">
+        <h1>{getPageTitle()}</h1>
+        <div className="header-actions">
+          {page === 'grants' && (
+            <button className="btn btn-primary">Add Grant</button>
+          )}
+          {page === 'organization' && (
+            <button className="btn btn-primary">Edit Profile</button>
+          )}
+        </div>
       </div>
     </header>
   );
@@ -243,173 +250,185 @@ function Dashboard({ data, hasApiKey }) {
   }
   
   return (
-    <div className="container">
+    <div className="dashboard-container">
       {!hasApiKey && (
-        <div className="alert alert-warning">
-          <strong>OpenAI API Key Required:</strong> To enable AI-powered features like grant matching and narrative generation, please add your OpenAI API key in the settings.
+        <div className="container">
+          <div className="alert alert-warning">
+            <strong>OpenAI API Key Required:</strong> To enable AI-powered features like grant matching and narrative generation, please add your OpenAI API key in the settings.
+          </div>
         </div>
       )}
       
       <div className="welcome-hero">
-        <div className="hero-content">
-          <h1 className="hero-title">Discover & Manage Grants Efficiently</h1>
-          <p className="hero-subtitle">
-            GrantFlow helps you find the perfect funding opportunities for your nonprofit organization with AI-powered matching and automated discovery.
-          </p>
-          <div className="hero-actions">
-            <a href="#" className="btn btn-primary">Discover Grants</a>
-            <a href="#" className="btn btn-outline">Learn More</a>
-          </div>
-        </div>
-        <div className="hero-image">
-          <div className="hero-image-container">
-            <svg width="400" height="300" viewBox="0 0 400 300" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <rect width="400" height="300" rx="20" fill="#FFFFFF"/>
-              <circle cx="200" cy="150" r="80" fill="#FFD380"/>
-              <path d="M260 150C260 183.137 233.137 210 200 210C166.863 210 140 183.137 140 150C140 116.863 166.863 90 200 90C233.137 90 260 116.863 260 150Z" fill="#F8B049"/>
-              <rect x="180" y="130" width="120" height="20" rx="10" fill="#FFFFFF"/>
-              <rect x="200" y="160" width="80" height="20" rx="10" fill="#FFFFFF"/>
-              <path d="M140 180C140 146.863 166.863 120 200 120" stroke="#FFFFFF" strokeWidth="8" strokeLinecap="round"/>
-            </svg>
-          </div>
-        </div>
-      </div>
-      
-      <div className="dashboard-stats">
-        <div className="stat-card">
-          <div className="stat-icon">📊</div>
-          <div className="stat-title">Total Grants</div>
-          <div className="stat-value">{data.total_grants || 0}</div>
-        </div>
-        
-        <div className="stat-card">
-          <div className="stat-icon">💰</div>
-          <div className="stat-title">Potential Funding</div>
-          <div className="stat-value">{formatCurrency(data.potential_funding || 0)}</div>
-        </div>
-        
-        <div className="stat-card">
-          <div className="stat-icon">🏆</div>
-          <div className="stat-title">Won Funding</div>
-          <div className="stat-value">{formatCurrency(data.won_funding || 0)}</div>
-        </div>
-        
-        <div className="stat-card">
-          <div className="stat-icon">✏️</div>
-          <div className="stat-title">Active Applications</div>
-          <div className="stat-value">
-            {(data.status_counts && (data.status_counts['Not Started'] + data.status_counts['In Progress'])) || 0}
-          </div>
-        </div>
-      </div>
-      
-      <div className="dashboard-section">
-        <h2>Upcoming Deadlines</h2>
-        <div className="card">
-          <div className="card-body">
-            {data.upcoming_deadlines && data.upcoming_deadlines.length > 0 ? (
-              <table className="table">
-                <thead>
-                  <tr>
-                    <th>Grant</th>
-                    <th>Funder</th>
-                    <th>Amount</th>
-                    <th>Due Date</th>
-                    <th>Status</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {data.upcoming_deadlines.map(grant => (
-                    <tr key={grant.id}>
-                      <td>{grant.title}</td>
-                      <td>{grant.funder}</td>
-                      <td>{formatCurrency(grant.amount)}</td>
-                      <td>{formatDate(new Date(grant.due_date))}</td>
-                      <td>
-                        <span className={`badge status-${grant.status.toLowerCase().replace(/\s+/g, '-')}`}>
-                          {grant.status}
-                        </span>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            ) : (
-              <p>No upcoming deadlines</p>
-            )}
-          </div>
-        </div>
-      </div>
-      
-      <div className="dashboard-section">
-        <h2>Grants by Status</h2>
-        <div className="card">
-          <div className="card-body">
-            <div className="status-chart">
-              {/* Status chart would go here - simplified for now */}
-              <div className="status-bars">
-                {data.status_counts && Object.entries(data.status_counts).map(([status, count]) => (
-                  <div key={status} className="status-bar-container">
-                    <div className="status-bar-label">{status}</div>
-                    <div className="status-bar">
-                      <div 
-                        className={`status-bar-fill status-${status.toLowerCase().replace(/\s+/g, '-')}`}
-                        style={{width: `${(count / data.total_grants) * 100}%`}}
-                      ></div>
-                    </div>
-                    <div className="status-bar-value">{count}</div>
-                  </div>
-                ))}
+        <div className="container">
+          <div className="hero-flex">
+            <div className="hero-content">
+              <h1 className="hero-title">Discover & Manage<br />Grants Efficiently</h1>
+              <p className="hero-subtitle">
+                GrantFlow helps you find the perfect funding opportunities for your nonprofit organization with AI-powered matching and automated discovery.
+              </p>
+              <div className="hero-actions">
+                <a href="#" className="btn btn-primary">Discover Grants</a>
+                <a href="#" className="btn btn-outline">Learn More</a>
+              </div>
+            </div>
+            <div className="hero-image">
+              <div className="hero-image-container">
+                <svg width="400" height="300" viewBox="0 0 400 300" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <rect width="400" height="300" rx="20" fill="#FFFFFF"/>
+                  <circle cx="200" cy="150" r="80" fill="#FFD380"/>
+                  <path d="M260 150C260 183.137 233.137 210 200 210C166.863 210 140 183.137 140 150C140 116.863 166.863 90 200 90C233.137 90 260 116.863 260 150Z" fill="#F8B049"/>
+                  <rect x="180" y="130" width="120" height="20" rx="10" fill="#FFFFFF"/>
+                  <rect x="200" y="160" width="80" height="20" rx="10" fill="#FFFFFF"/>
+                  <path d="M140 180C140 146.863 166.863 120 200 120" stroke="#FFFFFF" strokeWidth="8" strokeLinecap="round"/>
+                </svg>
               </div>
             </div>
           </div>
         </div>
       </div>
       
-      <div className="dashboard-section">
-        <div className="section-header">
-          <h2>Recently Discovered Grants</h2>
-          <span className="badge bg-primary">Auto-updated daily</span>
+      <div className="container">
+        <div className="dashboard-stats">
+          <div className="stat-card">
+            <div className="stat-icon">📊</div>
+            <div className="stat-title">Total Grants</div>
+            <div className="stat-value">{data.total_grants || 0}</div>
+          </div>
+          
+          <div className="stat-card">
+            <div className="stat-icon">💰</div>
+            <div className="stat-title">Potential Funding</div>
+            <div className="stat-value">{formatCurrency(data.potential_funding || 0)}</div>
+          </div>
+          
+          <div className="stat-card">
+            <div className="stat-icon">🏆</div>
+            <div className="stat-title">Won Funding</div>
+            <div className="stat-value">{formatCurrency(data.won_funding || 0)}</div>
+          </div>
+          
+          <div className="stat-card">
+            <div className="stat-icon">✏️</div>
+            <div className="stat-title">Active Applications</div>
+            <div className="stat-value">
+              {(data.status_counts && (data.status_counts['Not Started'] + data.status_counts['In Progress'])) || 0}
+            </div>
+          </div>
         </div>
-        <div className="card">
-          <div className="card-body">
-            {data.recently_discovered && data.recently_discovered.length > 0 ? (
-              <table className="table">
-                <thead>
-                  <tr>
-                    <th>Grant</th>
-                    <th>Funder</th>
-                    <th>Amount</th>
-                    <th>Match Score</th>
-                    <th>Discovery Date</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {data.recently_discovered.map(grant => (
-                    <tr key={grant.id}>
-                      <td>{grant.title}</td>
-                      <td>{grant.funder}</td>
-                      <td>{formatCurrency(grant.amount)}</td>
-                      <td>
-                        <div className="match-score-indicator">
-                          <div 
-                            className={`match-score-bar ${
-                              grant.match_score >= 80 ? 'high' : 
-                              grant.match_score >= 50 ? 'medium' : 'low'}`
-                            }
-                            style={{width: `${grant.match_score}%`}}
-                          ></div>
-                          <span className="match-score-value">{grant.match_score}%</span>
-                        </div>
-                      </td>
-                      <td>{formatDate(new Date(grant.created_at))}</td>
-                    </tr>
+        
+        <div className="dashboard-section">
+          <h2>Upcoming Deadlines</h2>
+          <div className="card">
+            <div className="card-body">
+              {data.upcoming_deadlines && data.upcoming_deadlines.length > 0 ? (
+                <div className="table-responsive">
+                  <table className="table">
+                    <thead>
+                      <tr>
+                        <th>Grant</th>
+                        <th>Funder</th>
+                        <th>Amount</th>
+                        <th>Due Date</th>
+                        <th>Status</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {data.upcoming_deadlines.map(grant => (
+                        <tr key={grant.id}>
+                          <td>{grant.title}</td>
+                          <td>{grant.funder}</td>
+                          <td>{formatCurrency(grant.amount)}</td>
+                          <td>{formatDate(new Date(grant.due_date))}</td>
+                          <td>
+                            <span className={`badge status-${grant.status.toLowerCase().replace(/\s+/g, '-')}`}>
+                              {grant.status}
+                            </span>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              ) : (
+                <p>No upcoming deadlines</p>
+              )}
+            </div>
+          </div>
+        </div>
+        
+        <div className="dashboard-section">
+          <h2>Grants by Status</h2>
+          <div className="card">
+            <div className="card-body">
+              <div className="status-chart">
+                {/* Status chart would go here - simplified for now */}
+                <div className="status-bars">
+                  {data.status_counts && Object.entries(data.status_counts).map(([status, count]) => (
+                    <div key={status} className="status-bar-container">
+                      <div className="status-bar-label">{status}</div>
+                      <div className="status-bar">
+                        <div 
+                          className={`status-bar-fill status-${status.toLowerCase().replace(/\s+/g, '-')}`}
+                          style={{width: `${(count / data.total_grants) * 100}%`}}
+                        ></div>
+                      </div>
+                      <div className="status-bar-value">{count}</div>
+                    </div>
                   ))}
-                </tbody>
-              </table>
-            ) : (
-              <p>No grants have been discovered in the last 7 days. Use the Grant Scraper to find more opportunities.</p>
-            )}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <div className="dashboard-section">
+          <div className="section-header">
+            <h2>Recently Discovered Grants</h2>
+            <span className="badge bg-primary">Auto-updated daily</span>
+          </div>
+          <div className="card">
+            <div className="card-body">
+              {data.recently_discovered && data.recently_discovered.length > 0 ? (
+                <div className="table-responsive">
+                  <table className="table">
+                    <thead>
+                      <tr>
+                        <th>Grant</th>
+                        <th>Funder</th>
+                        <th>Amount</th>
+                        <th>Match Score</th>
+                        <th>Discovery Date</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {data.recently_discovered.map(grant => (
+                        <tr key={grant.id}>
+                          <td>{grant.title}</td>
+                          <td>{grant.funder}</td>
+                          <td>{formatCurrency(grant.amount)}</td>
+                          <td>
+                            <div className="match-score-indicator">
+                              <div 
+                                className={`match-score-bar ${
+                                  grant.match_score >= 80 ? 'high' : 
+                                  grant.match_score >= 50 ? 'medium' : 'low'}`
+                                }
+                                style={{width: `${grant.match_score}%`}}
+                              ></div>
+                              <span className="match-score-value">{grant.match_score}%</span>
+                            </div>
+                          </td>
+                          <td>{formatDate(new Date(grant.created_at))}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              ) : (
+                <p>No grants have been discovered in the last 7 days. Use the Grant Scraper to find more opportunities.</p>
+              )}
+            </div>
           </div>
         </div>
       </div>
