@@ -16,6 +16,7 @@ import uuid
 from bs4 import BeautifulSoup
 import trafilatura
 from sqlalchemy.exc import SQLAlchemyError
+from concurrent.futures import ThreadPoolExecutor, as_completed
 
 from app import db
 from app.models.scraper import ScraperSource, ScraperHistory
@@ -23,6 +24,7 @@ from app.models.grant import Grant
 from app.models.organization import Organization
 from app.services.ai_service import extract_grant_info, analyze_grant_match, extract_grant_info_from_url
 from app.services.discovery_service import discover_grants
+from app.utils.http_utils import fetch_url, extract_main_content, with_retry
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -115,16 +117,19 @@ def scrape_source(source):
     
     # Real scraping logic
     try:
-        # Set up headers for the request
-        headers = {
-            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
-        }
-        
-        # Make the request with timeout
-        response = requests.get(source.url, headers=headers, timeout=15)
-        
-        if response.status_code != 200:
-            logger.error(f"Failed to fetch {source.name}: Status code {response.status_code}")
+        try:
+            # Use our fetch_url utility with automatic retries and rate limiting
+            response = fetch_url(source.url, timeout=20)
+            
+            if response.status_code != 200:
+                logger.error(f"Failed to fetch {source.name}: Status code {response.status_code}")
+                return grants
+                
+        except requests.exceptions.RequestException as e:
+            logger.error(f"Network error when scraping {source.name}: {str(e)}")
+            return grants
+        except Exception as e:
+            logger.error(f"Unexpected error when scraping {source.name}: {str(e)}")
             return grants
         
         # Use direct URL extraction as the most reliable method
