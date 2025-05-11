@@ -20,6 +20,55 @@
     "AI, The Church, and Urban Communities",
     "Urban Church Planting"
   ],
+  "programs": {
+    "Pastors Thriving Together": {
+      "description": "A six-month leadership journey pairing urban pastors with experienced mentors in Michigan, Charlotte, and Atlanta.",
+      "components": [
+        "Peer networks",
+        "One-on-one coaching",
+        "Training in resource management, fundraising, and community collaboration"
+      ],
+      "outcome": "Sustainable, multiplying ministries led by connected, well-equipped pastors."
+    },
+    "Mental Health and the Church": {
+      "description": "In partnership with Restored Counseling Group, training church leaders to recognize, refer, and support mental health needs.",
+      "components": [
+        "Mental health first-aid workshops",
+        "Stigma reduction",
+        "Referral networks",
+        "Ongoing coaching"
+      ],
+      "outcome": "Churches serve as trusted, culturally sensitive hubs for compassionate community care."
+    },
+    "AI, The Church, and Urban Communities": {
+      "description": "Hands-on AI skills training to close the digital divide and spur local innovation.",
+      "tracks": {
+        "Youth": {
+          "focus": "Interactive AI foundations, game/app development, team-based community projects.",
+          "outcome": "Designed an AI-integrated app addressing a local challenge."
+        },
+        "Community Adults": {
+          "focus": "Everyday AI use (planning, budgeting, communication), small-business/nonprofit app builds.",
+          "outcome": "Personal AI action plan and a functional community-oriented AI app."
+        },
+        "Business Leaders": {
+          "focus": "Identify AI use cases, build AI fluency, apply the MOST framework to strategy, co-develop a business solution app.",
+          "outcome": "Working AI tool or roadmap enhancing organizational operations."
+        }
+      }
+    },
+    "Urban Church Planting": {
+      "description": "A five-step process to launch and sustain new urban congregations.",
+      "components": [
+        "Community assessment",
+        "Leadership training",
+        "Funding strategy",
+        "Launch support",
+        "Ongoing multiplication"
+      ],
+      "outcome": "35 churches launched in Michigan; 45 more planned by 2028 in Atlanta and Charlotte."
+    }
+  },
   "geographic_focus": [
     "Grand Rapids, MI",
     "Detroit, MI",
@@ -64,5 +113,97 @@
     "the church",
     "community mental health hubs",
     "and urban communities"
-  ]
+  ],
+  "foundation_matches": {
+    "national": [
+      {
+        "name": "Lilly Endowment",
+        "website": "https://lillyendowment.org",
+        "match_score": 5,
+        "best_fit_initiatives": ["Pastors Thriving Together", "Urban Church Planting"],
+        "grant_programs": ["Thriving Congregations Initiative", "Clergy Renewal & National Preaching Initiatives"]
+      },
+      {
+        "name": "The Maclellan Foundation",
+        "website": "https://maclellan.net",
+        "match_score": 5,
+        "best_fit_initiatives": ["Pastors Thriving Together", "Urban Church Planting"],
+        "grant_programs": ["Bridge Builder Fund (capacity-building/project grants via partner invitation)"]
+      },
+      {
+        "name": "Mustard Seed Foundation",
+        "website": "https://msfdn.org/granting",
+        "match_score": 4,
+        "best_fit_initiatives": ["AI, The Church, and Urban Communities", "Mental Health and the Church"],
+        "grant_programs": ["Church-Based Matching Grants (up to 50% of project cost)"]
+      },
+      {
+        "name": "We Raise Foundation",
+        "website": "https://weraise.org",
+        "match_score": 5,
+        "best_fit_initiatives": ["AI, The Church, and Urban Communities", "Mental Health and the Church"],
+        "grant_programs": ["GrantsPlus (program grants + capacity coaching)", "Emerging Leader Grants"]
+      },
+      {
+        "name": "Trinity Church Wall Street Philanthropies",
+        "website": "https://trinitywallstreet.org/grants",
+        "match_score": 4,
+        "best_fit_initiatives": ["Pastors Thriving Together", "Mental Health and the Church", "AI, The Church, and Urban Communities"],
+        "grant_programs": ["Leadership Development Grants", "Neighborhood Support Grants"]
+      },
+      {
+        "name": "J.W. Couch Foundation",
+        "website": "https://jwcouchfoundation.org",
+        "match_score": 4,
+        "best_fit_initiatives": ["Mental Health and the Church", "AI, The Church, and Urban Communities"],
+        "grant_programs": ["Project-specific program grants (wellness, education, tech)"]
+      }
+    ],
+    "Atlanta, GA": [
+      {
+        "name": "Arthur M. Blank Family Foundation",
+        "website": "https://blankfoundation.org",
+        "match_score": 5,
+        "best_fit_initiatives": ["Mental Health and the Church", "AI, The Church, and Urban Communities"],
+        "grant_programs": ["Mental Health & Well-Being grants", "Neighborhood Revitalization grants"]
+      },
+      {
+        "name": "Chick-fil-A True Inspiration Awards",
+        "website": "https://www.chick-fil-a.com/true-inspiration-awards",
+        "match_score": 5,
+        "best_fit_initiatives": ["AI, The Church, and Urban Communities"],
+        "grant_programs": ["True Inspiration Awards ($30K–$350K; nomination required)"]
+      },
+      {
+        "name": "Community Foundation for Greater Atlanta",
+        "website": "https://cfgreateratlanta.org/grant-opportunities/",
+        "match_score": 5,
+        "best_fit_initiatives": ["Mental Health and the Church", "AI, The Church, and Urban Communities"],
+        "grant_programs": ["TogetherATL Issue Grants (Health; Economic Mobility)", "Operating Support"]
+      }
+    ],
+    "Detroit, MI": [
+      {
+        "name": "The Kresge Foundation",
+        "website": "https://kresge.org",
+        "match_score": 5,
+        "best_fit_initiatives": ["AI, The Church, and Urban Communities", "Mental Health and the Church"],
+        "grant_programs": ["Detroit Program Grants (Program; Planning; Operating Support)", "KIP:D micro-grants"]
+      },
+      {
+        "name": "Community Foundation for Southeast Michigan",
+        "website": "https://cfsem.org",
+        "match_score": 5,
+        "best_fit_initiatives": ["Mental Health and the Church", "AI, The Church, and Urban Communities"],
+        "grant_programs": ["Field-of-Interest & Donor-Advised Grants (Health; Workforce)", "Open RFPs"]
+      },
+      {
+        "name": "Skillman Foundation",
+        "website": "https://www.skillman.org",
+        "match_score": 5,
+        "best_fit_initiatives": ["AI, The Church, and Urban Communities", "Mental Health and the Church"],
+        "grant_programs": ["President's Discretionary Fund", "Strategic Youth-Education Grants"]
+      }
+    ]
+  }
 }
