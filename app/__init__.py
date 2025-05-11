@@ -60,7 +60,7 @@ def create_app(test_config=None):
         run_migrations()
         
         # Import and register blueprints
-        from app.api import grants, organization, scraper, ai, analytics, writing_assistant, profile
+        from app.api import grants, organization, scraper, ai, analytics, writing_assistant, profile, admin
         app.register_blueprint(grants.bp)
         app.register_blueprint(organization.bp)
         app.register_blueprint(scraper.bp)
@@ -68,6 +68,7 @@ def create_app(test_config=None):
         app.register_blueprint(analytics.bp)
         app.register_blueprint(writing_assistant.bp)
         app.register_blueprint(profile.bp)
+        app.register_blueprint(admin.bp)  # Register the admin blueprint for data clearing
         
         # Import and register main routes
         from app import routes

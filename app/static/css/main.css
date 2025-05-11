@@ -169,7 +169,7 @@ a:hover {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  padding: 0.625rem 1.25rem;
+  padding: 0.625rem 1rem; /* Reduced horizontal padding from 1.25rem to 1rem */
   font-size: 0.875rem;
   font-weight: 600;
   line-height: 1.25rem;
@@ -178,6 +178,8 @@ a:hover {
   cursor: pointer;
   transition: all 0.2s ease-in-out;
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+  max-width: 100%; /* Ensure buttons don't overflow their container */
+  box-sizing: border-box; /* Include padding in width calculation */
   position: relative;
   overflow: hidden;
   z-index: 1;
@@ -706,15 +708,19 @@ a:hover {
   .hero-actions {
     flex-direction: column;
     gap: 0.75rem;
-    width: 90%;
+    width: 85%; /* Reduced from 90% to ensure buttons don't overflow */
     margin: 0 auto;
-    max-width: 300px;
+    max-width: 280px; /* Reduced from 300px */
+    padding: 0 0.25rem; /* Added extra padding control */
   }
   
   .hero-actions .btn {
     width: 100%;
     font-size: 0.85rem;
-    padding: 0.5rem 1rem;
+    padding: 0.5rem 0.75rem; /* Reduced horizontal padding from 1rem to 0.75rem */
+    white-space: nowrap; /* Prevent text from wrapping */
+    overflow: hidden; /* Hide any overflow */
+    text-overflow: ellipsis; /* Add ellipsis for overflow text */
   }
   
   /* Grants filter controls mobile optimization */
@@ -914,9 +920,9 @@ a:hover {
   flex-wrap: wrap;
   gap: 1rem;
   width: 100%;
-  max-width: 500px;
+  max-width: 450px; /* Reduced from 500px to ensure buttons fit properly */
   margin: 0 auto;
-  padding: 0 1rem;
+  padding: 0 0.5rem; /* Reduced padding from 1rem to 0.5rem */
   box-sizing: border-box;
 }
 
