@@ -355,7 +355,7 @@ const GrantDetail = () => {
                   />
                 </div>
                 <div>
-                  <label htmlFor="contact_info" className="block text-sm font-medium text-gray-700">Contact Information</label>
+                  <label htmlFor="contact_info" className="block text-sm font-medium text-gray-700">General Contact Information</label>
                   <input
                     type="text"
                     name="contact_info"
@@ -365,6 +365,89 @@ const GrantDetail = () => {
                     onChange={handleInputChange}
                   />
                 </div>
+                
+                {/* Enhanced Contact Information */}
+                <div className="md:col-span-2 border-t border-gray-200 pt-4 mt-2">
+                  <h4 className="text-sm font-medium text-gray-800 mb-3">Enhanced Contact Details</h4>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div>
+                      <label htmlFor="contact_name" className="block text-sm font-medium text-gray-700">Contact Name</label>
+                      <input
+                        type="text"
+                        name="contact_name"
+                        id="contact_name"
+                        className="mt-1 focus:ring-primary focus:border-primary block w-full shadow-sm sm:text-sm border-gray-300 rounded-md"
+                        value={editForm.contact_name}
+                        onChange={handleInputChange}
+                      />
+                    </div>
+                    <div>
+                      <label htmlFor="contact_email" className="block text-sm font-medium text-gray-700">Contact Email</label>
+                      <input
+                        type="email"
+                        name="contact_email"
+                        id="contact_email"
+                        className="mt-1 focus:ring-primary focus:border-primary block w-full shadow-sm sm:text-sm border-gray-300 rounded-md"
+                        value={editForm.contact_email}
+                        onChange={handleInputChange}
+                      />
+                    </div>
+                    <div>
+                      <label htmlFor="contact_phone" className="block text-sm font-medium text-gray-700">Contact Phone</label>
+                      <input
+                        type="tel"
+                        name="contact_phone"
+                        id="contact_phone"
+                        className="mt-1 focus:ring-primary focus:border-primary block w-full shadow-sm sm:text-sm border-gray-300 rounded-md"
+                        value={editForm.contact_phone}
+                        onChange={handleInputChange}
+                      />
+                    </div>
+                  </div>
+                </div>
+                
+                {/* Application Information */}
+                <div className="md:col-span-2 border-t border-gray-200 pt-4">
+                  <h4 className="text-sm font-medium text-gray-800 mb-3">Application Details</h4>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label htmlFor="submission_url" className="block text-sm font-medium text-gray-700">Submission URL</label>
+                      <input
+                        type="url"
+                        name="submission_url"
+                        id="submission_url"
+                        className="mt-1 focus:ring-primary focus:border-primary block w-full shadow-sm sm:text-sm border-gray-300 rounded-md"
+                        value={editForm.submission_url}
+                        onChange={handleInputChange}
+                      />
+                    </div>
+                    <div>
+                      <label htmlFor="grant_cycle" className="block text-sm font-medium text-gray-700">Grant Cycle</label>
+                      <input
+                        type="text"
+                        name="grant_cycle"
+                        id="grant_cycle"
+                        className="mt-1 focus:ring-primary focus:border-primary block w-full shadow-sm sm:text-sm border-gray-300 rounded-md"
+                        value={editForm.grant_cycle}
+                        onChange={handleInputChange}
+                        placeholder="e.g., Annual, Quarterly, etc."
+                      />
+                    </div>
+                    <div className="md:col-span-2">
+                      <label htmlFor="application_process" className="block text-sm font-medium text-gray-700">Application Process</label>
+                      <textarea
+                        id="application_process"
+                        name="application_process"
+                        rows={2}
+                        className="mt-1 shadow-sm focus:ring-primary focus:border-primary block w-full sm:text-sm border-gray-300 rounded-md"
+                        value={editForm.application_process}
+                        onChange={handleInputChange}
+                        placeholder="Describe the steps to apply for this grant"
+                      />
+                    </div>
+                  </div>
+                </div>
+                
                 <div className="md:col-span-2">
                   <label htmlFor="notes" className="block text-sm font-medium text-gray-700">Notes</label>
                   <textarea
