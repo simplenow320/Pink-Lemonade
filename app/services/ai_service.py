@@ -46,27 +46,16 @@ def extract_grant_info(grant_url):
 7. eligibility_criteria
 Return as a JSON object."""
         
-        user_prompt = grant_url
-        
         response = openai.chat.completions.create(
-            model="gpt-4o",  # the newest OpenAI model is "gpt-4o" which was released May 13, 2024
+            model="gpt-4o",
             messages=[
                 {"role": "system", "content": system_prompt},
-                {"role": "user", "content": user_prompt}
+                {"role": "user", "content": grant_url}
             ],
             response_format={"type": "json_object"}
         )
         
         result = json.loads(response.choices[0].message.content)
-        
-        # Process the due date to ensure it's valid
-        if result.get('due_date'):
-            try:
-                due_date = datetime.strptime(result['due_date'], '%Y-%m-%d').date()
-                result['due_date'] = due_date
-            except ValueError:
-                # If date parsing fails, keep as string for frontend handling
-                pass
         
         return result
     
