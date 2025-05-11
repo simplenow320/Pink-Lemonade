@@ -5,7 +5,12 @@ bp = Blueprint('main', __name__)
 
 @bp.route('/')
 def index():
-    """Render the main application page"""
+    """Render the modern application page"""
+    return render_template('modern.html', now=int(time.time()))
+
+@bp.route('/classic')
+def classic_index():
+    """Render the classic application page"""
     return render_template('index.html', now=int(time.time()))
 
 @bp.route('/scraper')
