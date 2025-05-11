@@ -748,6 +748,109 @@ function GrantsList({ grants, hasApiKey }) {
         </div>
       </div>
     </div>
+    
+    {/* Grant Details Modal */}
+    {showModal && selectedGrant && (
+      <div className="modal-overlay">
+        <div className="modal">
+          <div className="modal-header">
+            <h2>{selectedGrant.title}</h2>
+            <button onClick={closeModal} className="close-btn">&times;</button>
+          </div>
+          <div className="modal-body">
+            <div className="modal-section">
+              <h3>Overview</h3>
+              <div className="detail-row">
+                <strong>Funder:</strong> {selectedGrant.funder}
+              </div>
+              <div className="detail-row">
+                <strong>Amount:</strong> {formatCurrency(selectedGrant.amount)}
+              </div>
+              <div className="detail-row">
+                <strong>Due Date:</strong> {formatDate(new Date(selectedGrant.due_date))}
+              </div>
+              <div className="detail-row">
+                <strong>Status:</strong> 
+                <span className={`badge status-${selectedGrant.status.toLowerCase().replace(/\s+/g, '-')}`}>
+                  {selectedGrant.status}
+                </span>
+              </div>
+              <div className="detail-row">
+                <strong>Match Score:</strong> {selectedGrant.match_score}%
+              </div>
+            </div>
+            
+            <div className="modal-section">
+              <h3>Description</h3>
+              <p>{selectedGrant.description || 'No description available.'}</p>
+            </div>
+            
+            <div className="modal-section">
+              <h3>Eligibility</h3>
+              <p>{selectedGrant.eligibility || 'No eligibility information available.'}</p>
+            </div>
+            
+            <div className="modal-section">
+              <h3>Contact Information</h3>
+              {selectedGrant.contact_info && Object.keys(selectedGrant.contact_info).length > 0 ? (
+                <div>
+                  {selectedGrant.contact_info.name && (
+                    <div className="detail-row">
+                      <strong>Contact Name:</strong> {selectedGrant.contact_info.name}
+                    </div>
+                  )}
+                  {selectedGrant.contact_info.email && (
+                    <div className="detail-row">
+                      <strong>Email:</strong> <a href={`mailto:${selectedGrant.contact_info.email}`}>{selectedGrant.contact_info.email}</a>
+                    </div>
+                  )}
+                  {selectedGrant.contact_info.phone && (
+                    <div className="detail-row">
+                      <strong>Phone:</strong> <a href={`tel:${selectedGrant.contact_info.phone}`}>{selectedGrant.contact_info.phone}</a>
+                    </div>
+                  )}
+                  {selectedGrant.contact_info.position && (
+                    <div className="detail-row">
+                      <strong>Position:</strong> {selectedGrant.contact_info.position}
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <p>No contact information available.</p>
+              )}
+            </div>
+            
+            {selectedGrant.website && (
+              <div className="modal-section">
+                <h3>Website</h3>
+                <a href={selectedGrant.website} target="_blank" rel="noopener noreferrer" className="btn btn-primary">
+                  Visit Grant Website
+                </a>
+              </div>
+            )}
+            
+            {selectedGrant.match_explanation && (
+              <div className="modal-section">
+                <h3>Match Analysis</h3>
+                <p>{selectedGrant.match_explanation}</p>
+              </div>
+            )}
+            
+            {selectedGrant.notes && (
+              <div className="modal-section">
+                <h3>Notes</h3>
+                <p>{selectedGrant.notes}</p>
+              </div>
+            )}
+          </div>
+          
+          <div className="modal-footer">
+            <button onClick={closeModal} className="btn btn-secondary">Close</button>
+            <button className="btn btn-primary">Generate Narrative</button>
+          </div>
+        </div>
+      </div>
+    )}
   );
 }
 
