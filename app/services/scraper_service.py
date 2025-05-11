@@ -163,22 +163,36 @@ def run_scraping_job():
                     # Only add grants with match score above threshold (30%)
                     if grant_data['match_score'] >= 30:
                         # Create new grant
-                        new_grant = Grant(
-                            title=grant_data.get('title'),
-                            funder=grant_data.get('funder'),
-                            description=grant_data.get('description'),
-                            amount=grant_data.get('amount'),
-                            due_date=grant_data.get('due_date'),
-                            eligibility=grant_data.get('eligibility'),
-                            website=grant_data.get('website'),
-                            status="Not Started",
-                            match_score=grant_data.get('match_score', 0),
-                            match_explanation=grant_data.get('match_explanation', ''),
-                            focus_areas=grant_data.get('focus_areas', []),
-                            contact_info=grant_data.get('contact_info', ''),
-                            is_scraped=True,
-                            source_id=source.id
-                        )
+                        new_grant = Grant()
+                        new_grant.title = grant_data.get('title')
+                        new_grant.funder = grant_data.get('funder')
+                        new_grant.description = grant_data.get('description')
+                        new_grant.amount = grant_data.get('amount')
+                        new_grant.due_date = grant_data.get('due_date')
+                        new_grant.eligibility = grant_data.get('eligibility')
+                        new_grant.website = grant_data.get('website')
+                        new_grant.status = "Not Started"
+                        new_grant.match_score = grant_data.get('match_score', 0)
+                        new_grant.match_explanation = grant_data.get('match_explanation', '')
+                        new_grant.focus_areas = grant_data.get('focus_areas', [])
+                        
+                        # Handle structured contact info
+                        contact_info = {}
+                        if isinstance(grant_data.get('contact_info'), dict):
+                            # Use structured contact info from AI extraction
+                            contact_info = grant_data.get('contact_info')
+                        elif isinstance(grant_data.get('contact_info'), str) and grant_data.get('contact_info').strip():
+                            # Old format - store as 'general' in structured format
+                            contact_info = {'general': grant_data.get('contact_info')}
+                        
+                        # Add any direct contact fields if present
+                        for field in ['contact_name', 'contact_email', 'contact_phone', 'contact_position']:
+                            if grant_data.get(field):
+                                contact_info[field.replace('contact_', '')] = grant_data.get(field)
+                                
+                        new_grant.contact_info = contact_info
+                        new_grant.is_scraped = True
+                        new_grant.source_id = source.id
                         
                         db.session.add(new_grant)
                         db.session.commit()
