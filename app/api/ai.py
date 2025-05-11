@@ -1,4 +1,4 @@
-from flask import Blueprint, request, jsonify, Response
+from flask import Blueprint, request, jsonify, Response, abort, current_app as app
 from app.models.organization import Organization
 from app.models.grant import Grant
 from app.models.narrative import Narrative
@@ -32,14 +32,18 @@ def get_api_status() -> Response:
     endpoint = f"{request.method} {request.path}"
     log_request(request.method, endpoint)
     
-    is_configured = openai is not None
-    message = "OpenAI API key is properly configured" if is_configured else "OpenAI API key is not configured"
-    
-    log_response(endpoint, 200)
-    return jsonify({
-        "api_key_configured": is_configured,
-        "message": message
-    })
+    try:
+        is_configured = openai is not None
+        message = "OpenAI API key is properly configured" if is_configured else "OpenAI API key is not configured"
+        
+        log_response(endpoint, 200)
+        return jsonify({
+            "api_key_configured": is_configured,
+            "message": message
+        })
+    except Exception as e:
+        app.logger.error(str(e))
+        abort(500, description="Server error: " + str(e))
 
 @bp.route('/match', methods=['POST'])
 def match_grant() -> Union[Response, Tuple[Response, int]]:
