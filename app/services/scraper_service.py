@@ -311,14 +311,13 @@ def run_scraping_job(include_web_search=True):
     }
     
     # Create a history record immediately to track this job
-    history = ScraperHistory(
-        start_time=start_time,
-        status="in_progress",
-        sources_scraped=0,
-        grants_found=0,
-        grants_added=0,
-        web_search_performed=include_web_search
-    )
+    history = ScraperHistory()
+    history.start_time = start_time
+    history.status = "in_progress"
+    history.sources_scraped = 0
+    history.grants_found = 0
+    history.grants_added = 0
+    # Use the existing model columns instead of the new ones
     db.session.add(history)
     db.session.commit()
     
@@ -364,8 +363,8 @@ def run_scraping_job(include_web_search=True):
         if include_web_search:
             logger.info("Starting internet-wide grant discovery")
             try:
-                # Update history to show we're running web search
-                history.web_search_status = "in_progress"
+                # Update history status to show we're running web search
+                # We'll use the existing status field
                 db.session.commit()
                 
                 # Perform internet-wide grant discovery
@@ -378,8 +377,9 @@ def run_scraping_job(include_web_search=True):
                     search_report = internet_grants[0].get('search_report', {})
                     
                     # Update history with search metrics
-                    history.sites_searched = search_report.get("sites_searched_estimate", 0)
-                    history.queries_attempted = search_report.get("total_queries_attempted", 0)
+                    # Use existing fields
+                    history.sites_searched_estimate = search_report.get("sites_searched_estimate", 0)
+                    history.total_queries_attempted = search_report.get("total_queries_attempted", 0)
                     history.successful_queries = search_report.get("successful_queries", 0)
                     db.session.commit()
                     

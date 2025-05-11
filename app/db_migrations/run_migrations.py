@@ -19,6 +19,7 @@ MIGRATIONS = [
     'app.db_migrations.fix_search_columns',
     'app.db_migrations.add_funder_contact_columns',
     'app.db_migrations.add_grant_contact_details',
+    # Temporarily removed 'app.db_migrations.add_scraper_history_columns',
 ]
 
 def run_migrations():
