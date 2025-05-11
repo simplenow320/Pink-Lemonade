@@ -254,7 +254,14 @@ def discover_grants(org_profile: Dict[str, Any], limit: int = 5) -> List[Dict[st
                         'eligibility': grant.get('eligibility', ''),
                         'discovery_method': 'web-search',
                         'discovery_date': datetime.now().strftime('%Y-%m-%d'),
-                        'search_query': query  # Store the query that found this grant
+                        'search_query': query,  # Store the query that found this grant
+                        'contact_info': grant.get('contact_info', ''),
+                        'contact_name': grant.get('contact_name', ''),
+                        'contact_email': grant.get('contact_email', ''),
+                        'contact_phone': grant.get('contact_phone', ''),
+                        'submission_url': grant.get('submission_url', ''),
+                        'application_process': grant.get('application_process', ''),
+                        'grant_cycle': grant.get('grant_cycle', '')
                     }
                     
                     # Set a default due date if none is provided
@@ -373,7 +380,14 @@ def discover_grants_for_focus_area(focus_area: str, limit: int = 3) -> List[Dict
                     'focus_areas': grant.get('focus_areas', []),
                     'eligibility': grant.get('eligibility', ''),
                     'discovery_method': 'focused-search',
-                    'discovery_date': datetime.now().strftime('%Y-%m-%d')
+                    'discovery_date': datetime.now().strftime('%Y-%m-%d'),
+                    'contact_info': grant.get('contact_info', ''),
+                    'contact_name': grant.get('contact_name', ''),
+                    'contact_email': grant.get('contact_email', ''),
+                    'contact_phone': grant.get('contact_phone', ''),
+                    'submission_url': grant.get('submission_url', ''),
+                    'application_process': grant.get('application_process', ''),
+                    'grant_cycle': grant.get('grant_cycle', '')
                 }
                 
                 # Set a default due date if none is provided

@@ -512,6 +512,15 @@ def run_scraping_job(include_web_search=True):
                     new_grant.match_explanation = grant_data.get('match_explanation', '')
                     new_grant.focus_areas = grant_data.get('focus_areas', [])
                     new_grant.contact_info = grant_data.get('contact_info', '')
+                    
+                    # Add enhanced contact and application details
+                    new_grant.contact_name = grant_data.get('contact_name', '')
+                    new_grant.contact_email = grant_data.get('contact_email', '')
+                    new_grant.contact_phone = grant_data.get('contact_phone', '')
+                    new_grant.submission_url = grant_data.get('submission_url', '')
+                    new_grant.application_process = grant_data.get('application_process', '')
+                    new_grant.grant_cycle = grant_data.get('grant_cycle', '')
+                    
                     new_grant.is_scraped = True
                     new_grant.source_id = source_id
                     
