@@ -447,9 +447,15 @@ function initScrapeButton() {
  * Update the grants table with new data
  * @param {Array} grants - Array of grant objects
  */
+// Store all grants for filtering
+let allGrants = [];
+
 function updateGrantsTable(grants) {
   const grantsTableBody = document.querySelector('#grants-table tbody');
   if (!grantsTableBody) return;
+  
+  // Update stored grants
+  allGrants = [...grants];
   
   // Clear existing rows
   grantsTableBody.innerHTML = '';
@@ -491,6 +497,200 @@ function updateGrantsTable(grants) {
   formatDates();
   initStatusBadges();
   initMatchScores();
+  
+  // Initialize filter controls if they don't exist yet
+  initGrantFilters();
+}
+
+/**
+ * Initialize grant filter controls
+ */
+function initGrantFilters() {
+  const grantsTable = document.querySelector('#grants-table');
+  if (!grantsTable) return;
+  
+  // Check if filters already exist
+  if (document.querySelector('#grants-filters')) return;
+  
+  // Create filter controls container
+  const filtersContainer = document.createElement('div');
+  filtersContainer.id = 'grants-filters';
+  filtersContainer.className = 'grants-filters mb-4';
+  
+  // Create filter controls HTML
+  filtersContainer.innerHTML = `
+    <div class="card">
+      <div class="card-header">
+        <h4>Filter Grants</h4>
+      </div>
+      <div class="card-body">
+        <div class="row">
+          <div class="col-md-3">
+            <div class="form-group mb-3">
+              <label for="filterStatus">Status</label>
+              <select class="form-control" id="filterStatus">
+                <option value="">All Statuses</option>
+                <option value="Not Started">Not Started</option>
+                <option value="In Progress">In Progress</option>
+                <option value="Submitted">Submitted</option>
+                <option value="Approved">Approved</option>
+                <option value="Rejected">Rejected</option>
+              </select>
+            </div>
+          </div>
+          <div class="col-md-3">
+            <div class="form-group mb-3">
+              <label for="filterMin">Min Amount</label>
+              <input type="number" class="form-control" id="filterMin" placeholder="Minimum Amount" min="0">
+            </div>
+          </div>
+          <div class="col-md-3">
+            <div class="form-group mb-3">
+              <label for="filterMax">Max Amount</label>
+              <input type="number" class="form-control" id="filterMax" placeholder="Maximum Amount" min="0">
+            </div>
+          </div>
+          <div class="col-md-3">
+            <div class="form-group mb-3">
+              <label for="filterDate">Due Date Before</label>
+              <input type="date" class="form-control" id="filterDate">
+            </div>
+          </div>
+        </div>
+        <button class="btn btn-primary" id="applyFilters">Apply Filters</button>
+        <button class="btn btn-outline-secondary" id="resetFilters">Reset</button>
+      </div>
+    </div>
+  `;
+  
+  // Insert filters before the table
+  grantsTable.parentNode.insertBefore(filtersContainer, grantsTable);
+  
+  // Add event listener to apply filters button
+  document.querySelector('#applyFilters').addEventListener('click', applyGrantFilters);
+  
+  // Add event listener to reset filters button
+  document.querySelector('#resetFilters').addEventListener('click', resetGrantFilters);
+}
+
+/**
+ * Apply filters to the grants table
+ */
+function applyGrantFilters() {
+  // Get filter values
+  const statusFilter = document.querySelector('#filterStatus').value;
+  const minAmountFilter = parseFloat(document.querySelector('#filterMin').value) || 0;
+  const maxAmountFilter = parseFloat(document.querySelector('#filterMax').value) || Infinity;
+  const dateFilter = document.querySelector('#filterDate').value;
+  
+  // Filter grants
+  const filteredGrants = allGrants.filter(grant => {
+    // Filter by status
+    if (statusFilter && grant.status !== statusFilter) {
+      return false;
+    }
+    
+    // Filter by amount range
+    const amount = parseFloat(grant.amount) || 0;
+    if (amount < minAmountFilter || amount > maxAmountFilter) {
+      return false;
+    }
+    
+    // Filter by due date
+    if (dateFilter && grant.due_date) {
+      const dueDate = new Date(grant.due_date);
+      const filterDate = new Date(dateFilter);
+      if (dueDate > filterDate) {
+        return false;
+      }
+    }
+    
+    return true;
+  });
+  
+  // Update table with filtered grants
+  const grantsTableBody = document.querySelector('#grants-table tbody');
+  if (!grantsTableBody) return;
+  
+  // Clear existing rows
+  grantsTableBody.innerHTML = '';
+  
+  // Add filtered rows
+  filteredGrants.forEach(grant => {
+    const row = document.createElement('tr');
+    
+    // Create grant row (adjust based on your actual HTML structure)
+    row.innerHTML = `
+      <td>
+        <input type="checkbox" class="grant-checkbox" value="${grant.id}" />
+      </td>
+      <td>${grant.title}</td>
+      <td>${grant.funder}</td>
+      <td>
+        <span data-date="${grant.due_date}">${formatDate(new Date(grant.due_date))}</span>
+      </td>
+      <td>
+        <span data-status="${grant.status}" class="status-badge">${grant.status}</span>
+      </td>
+      <td>
+        <span data-match-score="${grant.match_score}" class="match-score">
+          <div class="progress-bar">
+            <div class="progress-bar-fill" style="width: ${grant.match_score}%"></div>
+          </div>
+          ${grant.match_score}%
+        </span>
+      </td>
+      <td>
+        <button class="btn btn-sm btn-outline view-grant" data-grant-id="${grant.id}">View</button>
+      </td>
+    `;
+    
+    grantsTableBody.appendChild(row);
+  });
+  
+  // Re-initialize UI components for the new elements
+  formatDates();
+  initStatusBadges();
+  initMatchScores();
+  
+  // Show filter summary
+  showFilterSummary(filteredGrants.length, allGrants.length);
+}
+
+/**
+ * Reset grant filters and show all grants
+ */
+function resetGrantFilters() {
+  // Reset filter inputs
+  document.querySelector('#filterStatus').value = '';
+  document.querySelector('#filterMin').value = '';
+  document.querySelector('#filterMax').value = '';
+  document.querySelector('#filterDate').value = '';
+  
+  // Show all grants
+  updateGrantsTable(allGrants);
+}
+
+/**
+ * Show summary of applied filters
+ * @param {number} filteredCount - Number of grants after filtering
+ * @param {number} totalCount - Total number of grants
+ */
+function showFilterSummary(filteredCount, totalCount) {
+  // Create or update filter summary element
+  let summaryEl = document.querySelector('#filter-summary');
+  
+  if (!summaryEl) {
+    summaryEl = document.createElement('div');
+    summaryEl.id = 'filter-summary';
+    summaryEl.className = 'alert alert-info mt-2';
+    
+    const grantsTable = document.querySelector('#grants-table');
+    grantsTable.parentNode.insertBefore(summaryEl, grantsTable);
+  }
+  
+  // Update summary text
+  summaryEl.textContent = `Showing ${filteredCount} of ${totalCount} grants`;
 }
 
 /**
