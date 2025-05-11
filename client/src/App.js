@@ -14,6 +14,9 @@ import { useNotification } from './context/NotificationContext';
 import ErrorBoundary from './components/ErrorBoundary';
 import './App.css';
 
+// Remove the BottomNav component since we don't need it
+// The TopNavbar is responsive and handles both desktop and mobile views
+
 function App() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -77,14 +80,16 @@ function App() {
     );
   }
 
+  // Use a simpler layout with just the TopNavbar and content area
+  // No more sidebar, just a clean top navigation menu
   return (
-    <div className="flex flex-col h-screen overflow-hidden bg-gray-50">
+    <div className="min-h-screen bg-gray-50">
       {/* Top Navigation Bar */}
       <TopNavbar />
       
-      {/* Main Content */}
-      <div className="flex-1 overflow-auto pt-16">
-        <div className="container mx-auto py-6 px-4 sm:px-6 lg:px-8 max-w-7xl">
+      {/* Main Content - full width without sidebar */}
+      <main className="pt-16 pb-8 px-4">
+        <div className="container mx-auto max-w-7xl">
           <Routes>
             <Route path="/" element={
               <ErrorBoundary>
@@ -133,7 +138,7 @@ function App() {
             } />
           </Routes>
         </div>
-      </div>
+      </main>
     </div>
   );
 }
