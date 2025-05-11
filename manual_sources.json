@@ -372,5 +372,71 @@
     "match_score": 5,
     "best_fit_initiatives": ["AI, The Church, and Urban Communities"],
     "grant_programs": ["Inclusive Generative AI Initiative Grants", "Responsible AI Development"]
+  },
+  {
+    "name": "National Christian Foundation (NCF)",
+    "url": "https://www.ncfgiving.com",
+    "location": "National",
+    "phone": "(800) 681-6223",
+    "contact_email": "info@ncfgiving.com",
+    "contact_name": "Grants Director",
+    "match_score": 5,
+    "best_fit_initiatives": ["Pastors Thriving Together", "Urban Church Planting", "Mental Health and the Church"],
+    "grant_programs": ["Donor-Advised Funds for Christian Ministries"]
+  },
+  {
+    "name": "WinShape Foundation",
+    "url": "https://winshape.org",
+    "location": "National",
+    "phone": "(706) 368-6801",
+    "contact_email": "info@winshape.org",
+    "contact_name": "Foundation Director",
+    "match_score": 5,
+    "best_fit_initiatives": ["Pastors Thriving Together", "Mental Health and the Church"],
+    "grant_programs": ["Leadership Development", "Marriage Enrichment Programs"]
+  },
+  {
+    "name": "LCMS Foundation",
+    "url": "https://www.lcmsfoundation.org",
+    "location": "National",
+    "phone": "(800) 325-7912",
+    "contact_email": "info@lcmsfoundation.org",
+    "contact_name": "Grants Administrator",
+    "match_score": 4,
+    "best_fit_initiatives": ["Pastors Thriving Together", "Urban Church Planting"],
+    "grant_programs": ["LCMS Ministry Support", "Congregational Funding Initiatives"]
+  },
+  {
+    "name": "Baptist Healing Trust",
+    "url": "https://healingtrust.org",
+    "location": "Tennessee",
+    "phone": "(615) 284-8271",
+    "contact_email": "contact@healingtrust.org",
+    "contact_name": "Program Officer",
+    "match_score": 5,
+    "best_fit_initiatives": ["Mental Health and the Church", "Urban Church Planting"],
+    "grant_programs": ["Healthcare Access Programs", "Faith-Based Community Services"]
+  },
+  {
+    "name": "Christian Funders' Forum (UK)",
+    "url": "https://christianfundersforum.org",
+    "location": "United Kingdom",
+    "phone": "+44 20 7840 5800",
+    "contact_email": "info@christianfundersforum.org",
+    "contact_name": "Forum Director",
+    "match_score": 4,
+    "best_fit_initiatives": ["Pastors Thriving Together", "Urban Church Planting"],
+    "grant_programs": ["Christian Mission Initiatives", "Collaborative Grant Programs"]
+  },
+  {
+    "name": "Joseph Rank Trust (UK)",
+    "url": "https://www.ranktrust.org",
+    "location": "United Kingdom",
+    "phone": "+44 20 7834 7200",
+    "contact_email": "info@ranktrust.org",
+    "contact_name": "Trust Secretary",
+    "match_score": 4,
+    "best_fit_initiatives": ["Mental Health and the Church", "Pastors Thriving Together"],
+    "grant_programs": ["Practical Needs Programs", "Christian Educational Initiatives"]
   }
 ]
