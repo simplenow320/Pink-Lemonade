@@ -236,13 +236,45 @@ def scrape_source(source):
     """
     grants = []
     
-    # ALWAYS use demo mode with sample data to avoid API errors
-    is_demo = True  # This ensures we always use demo mode
+    # Check for API key to determine if we should use real scraping or demo mode
+    api_key = os.environ.get("OPENAI_API_KEY")
+    is_demo = not api_key  # Use demo mode if no API key available
     
     if is_demo:
-        # Generate sample grants for demonstration
-        # imports already at the top of the file
+        # Use data from manual_sources.json if available
+        try:
+            with open('manual_sources.json', 'r') as f:
+                manual_sources = json.load(f)
+                
+            # Find the current source in manual_sources.json
+            for manual_source in manual_sources:
+                if manual_source.get('name') == source.name and manual_source.get('url') == source.url:
+                    # Use the actual grant programs if available
+                    if 'grant_programs' in manual_source:
+                        # Create a grant for each program
+                        for program in manual_source['grant_programs']:
+                            grants.append({
+                                'title': program,
+                                'funder': manual_source['name'],
+                                'description': f"Grant program offered by {manual_source['name']}",
+                                'amount': random.randint(5000, 100000),
+                                'due_date': (datetime.now() + timedelta(days=random.randint(30, 180))).strftime('%Y-%m-%d'),
+                                'eligibility': "Nonprofit organizations with aligned mission",
+                                'focus_areas': manual_source.get('best_fit_initiatives', []),
+                                'website': manual_source.get('url'),
+                                'match_score': manual_source.get('match_score', 3) * 20,  # Convert 1-5 scale to percentage
+                                'contact_info': {
+                                    'name': manual_source.get('contact_name', ''),
+                                    'email': manual_source.get('contact_email', ''),
+                                    'phone': manual_source.get('phone', ''),
+                                    'position': ''
+                                }
+                            })
+                        return grants
+        except Exception as e:
+            logger.error(f"Error loading manual sources: {str(e)}")
         
+        # Fall back to sample grants if manual source data not available
         # Sample grant titles by category
         environmental_grants = [
             "Sustainable Urban Development Initiative",
