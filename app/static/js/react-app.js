@@ -48,7 +48,7 @@ function App() {
       });
       
     // Load dashboard data
-    fetch('/api/dashboard')
+    fetch('/api/grants/dashboard')
       .then(response => response.json())
       .then(data => {
         setDashboardData(data);
