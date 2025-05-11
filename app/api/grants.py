@@ -633,7 +633,6 @@ def get_dashboard_data():
             # Get the latest scraper history with search data
             from app.models.scraper import ScraperHistory
             latest_history = ScraperHistory.query.filter(
-                ScraperHistory.search_keywords_used.isnot(None),
                 ScraperHistory.total_queries_attempted > 0
             ).order_by(ScraperHistory.start_time.desc()).first()
             
@@ -645,6 +644,8 @@ def get_dashboard_data():
                 
                 search_metrics = {
                     "sites_searched": latest_history.sites_searched_estimate,
+                    "queries_attempted": latest_history.total_queries_attempted,
+                    "successful_queries": latest_history.successful_queries,
                     "search_success_rate": round((latest_history.successful_queries / latest_history.total_queries_attempted * 100), 1) 
                                        if latest_history.total_queries_attempted > 0 else 0,
                     "discovered_grants_count": search_discovered_count,

@@ -74,16 +74,11 @@ class ScraperHistory(db.Model):
             'sources_scraped': self.sources_scraped,
             'grants_found': self.grants_found,
             'grants_added': self.grants_added,
-            'web_search_performed': self.web_search_performed,
-            'web_search_status': self.web_search_status,
             'status': self.status,
             'error_message': self.error_message,
-            'sites_searched': self.sites_searched,
-            'queries_attempted': self.queries_attempted,
-            'successful_queries': self.successful_queries,
             'search_report': {
-                'sites_searched_estimate': self.sites_searched_estimate,
-                'total_queries_attempted': self.total_queries_attempted,
+                'sites_searched': self.sites_searched_estimate,
+                'queries_attempted': self.total_queries_attempted,
                 'successful_queries': self.successful_queries,
                 'search_keywords_used': self.search_keywords_used,
                 'success_rate': f"{(self.successful_queries / self.total_queries_attempted * 100):.1f}%" if self.total_queries_attempted > 0 else "0%"

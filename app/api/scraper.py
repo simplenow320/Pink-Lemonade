@@ -191,7 +191,6 @@ def get_search_metrics():
     try:
         # Get the latest scraper history with search data
         latest_history = ScraperHistory.query.filter(
-            ScraperHistory.search_keywords_used.isnot(None),
             ScraperHistory.total_queries_attempted > 0
         ).order_by(ScraperHistory.start_time.desc()).first()
         
