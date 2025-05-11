@@ -8,6 +8,9 @@ document.addEventListener('DOMContentLoaded', function() {
   
   // Initialize API event listeners
   initApiEventListeners();
+  
+  // Load profile data if on profile page
+  loadProfile();
 });
 
 /**
@@ -818,6 +821,141 @@ function createReportChart(canvas, chartData) {
           max: 100
         }
       }
+    }
+  });
+}
+
+/**
+ * Load profile data from API and populate form fields
+ */
+function loadProfile() {
+  // Check if we're on the profile page
+  const missionField = document.querySelector('#mission');
+  const focusAreasField = document.querySelector('#focusAreas');
+  const prioritiesField = document.querySelector('#priorities');
+  
+  if (!missionField && !focusAreasField && !prioritiesField) {
+    // Not on profile page, exit function
+    return;
+  }
+  
+  // Show loading state if there's a form container
+  const formContainer = document.querySelector('#profile-form-container');
+  if (formContainer) {
+    showLoading(formContainer, 'Loading profile...');
+  }
+  
+  // Fetch profile data from API
+  fetch('/api/profile')
+    .then(response => {
+      if (!response.ok) {
+        throw new Error('Failed to load profile');
+      }
+      return response.json();
+    })
+    .then(data => {
+      // Populate form fields
+      if (missionField) {
+        missionField.value = data.mission || '';
+      }
+      
+      if (focusAreasField) {
+        // Handle focus areas (could be textarea with comma-separated values)
+        if (Array.isArray(data.focus_areas)) {
+          focusAreasField.value = data.focus_areas.join(', ');
+        } else {
+          focusAreasField.value = data.focus_areas || '';
+        }
+      }
+      
+      if (prioritiesField) {
+        // Handle priorities (could be textarea with comma-separated values)
+        if (Array.isArray(data.funding_priorities)) {
+          prioritiesField.value = data.funding_priorities.join(', ');
+        } else {
+          prioritiesField.value = data.funding_priorities || '';
+        }
+      }
+    })
+    .catch(error => {
+      console.error('Error loading profile:', error);
+      showAlert('Failed to load profile: ' + error.message, 'danger');
+    })
+    .finally(() => {
+      // Hide loading state
+      if (formContainer) {
+        hideLoading(formContainer);
+      }
+    });
+    
+  // Set up form submission handler
+  const profileForm = document.querySelector('#profile-form');
+  if (profileForm) {
+    profileForm.addEventListener('submit', saveProfile);
+  }
+}
+
+/**
+ * Save profile data to API
+ * @param {Event} event - Form submit event
+ */
+function saveProfile(event) {
+  // Prevent default form submission
+  event.preventDefault();
+  
+  // Get form fields
+  const missionField = document.querySelector('#mission');
+  const focusAreasField = document.querySelector('#focusAreas');
+  const prioritiesField = document.querySelector('#priorities');
+  
+  if (!missionField && !focusAreasField && !prioritiesField) {
+    console.error('Profile form fields not found');
+    return;
+  }
+  
+  // Prepare data
+  const profileData = {
+    mission: missionField ? missionField.value : '',
+    focus_areas: focusAreasField ? 
+      focusAreasField.value.split(',').map(item => item.trim()).filter(item => item) : 
+      [],
+    funding_priorities: prioritiesField ? 
+      prioritiesField.value.split(',').map(item => item.trim()).filter(item => item) : 
+      []
+  };
+  
+  // Show loading state
+  const submitButton = event.target.querySelector('button[type="submit"]');
+  if (submitButton) {
+    showLoading(submitButton, 'Saving...');
+  }
+  
+  // Send data to API
+  fetch('/api/profile', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify(profileData)
+  })
+  .then(response => {
+    if (!response.ok) {
+      throw new Error('Failed to save profile');
+    }
+    return response.json();
+  })
+  .then(data => {
+    // Show success message
+    showAlert('Profile saved successfully!', 'success');
+  })
+  .catch(error => {
+    console.error('Error saving profile:', error);
+    showAlert('Failed to save profile: ' + error.message, 'danger');
+  })
+  .finally(() => {
+    // Hide loading state
+    if (submitButton) {
+      hideLoading(submitButton);
     }
   });
 }
