@@ -144,11 +144,26 @@ def run_scraping_job():
                         logger.info(f"Grant already exists: {grant_data.get('title')}")
                         continue
                     
-                    # Generate a random match score instead of calling OpenAI API
-                    # This avoids API errors in the demo environment
-                    match_score = random.randint(50, 95)
-                    grant_data['match_score'] = match_score
-                    grant_data['match_explanation'] = f"The grant aligns with {match_score}% of your organization's focus areas and requirements."
+                    # Use OpenAI API to get a real match score based on organization profile
+                    try:
+                        # Add organization data to grant for match analysis
+                        match_result = analyze_grant_match(grant_data, org_data)
+                        grant_data['match_score'] = match_result.get('match_score', 50)
+                        grant_data['match_explanation'] = match_result.get('match_explanation', 
+                                                          f"The grant aligns with {grant_data['match_score']}% of your organization's focus areas and requirements.")
+                    except Exception as e:
+                        logger.warning(f"Error getting match score: {str(e)}")
+                        # Fallback to estimating match based on keyword overlap
+                        org_keywords_set = set([k.lower() for k in org_keywords])
+                        grant_keywords = set([grant_data.get('title', '').lower(), 
+                                            grant_data.get('funder', '').lower()])
+                        if 'focus_areas' in grant_data and isinstance(grant_data['focus_areas'], list):
+                            grant_keywords.update([area.lower() for area in grant_data['focus_areas']])
+                        
+                        overlap = org_keywords_set.intersection(grant_keywords)
+                        match_score = min(95, max(30, len(overlap) * 10))
+                        grant_data['match_score'] = match_score
+                        grant_data['match_explanation'] = f"Based on keyword matching, this grant has {len(overlap)} keyword overlaps with your organization's profile."
                     
                     # Only add grants with match score above threshold (30%)
                     if grant_data['match_score'] >= 30:
@@ -212,8 +227,8 @@ def scrape_source(source):
     """
     grants = []
     
-    # ALWAYS use demo mode with sample data to avoid API errors
-    is_demo = True  # This ensures we always use demo mode
+    # Use real scraping mode to pull data from actual foundations
+    is_demo = False  # Real mode
     
     if is_demo:
         # Generate sample grants for demonstration
