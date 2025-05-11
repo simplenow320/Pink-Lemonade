@@ -193,7 +193,8 @@ def analyze_grant_match(grant, organization):
             response_format={"type": "json_object"}
         )
         
-        result = json.loads(response.choices[0].message.content)
+        content = response.choices[0].message.content
+        result = json.loads(content if content else "{}")
         
         # Ensure score is within 0-100 range
         if 'score' in result:
