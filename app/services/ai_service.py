@@ -55,7 +55,8 @@ Return as a JSON object."""
             response_format={"type": "json_object"}
         )
         
-        result = json.loads(response.choices[0].message.content)
+        content = response.choices[0].message.content
+        result = json.loads(content if content else "{}")
         
         return result
     

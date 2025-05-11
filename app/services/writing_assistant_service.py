@@ -347,6 +347,56 @@ def _construct_section_prompt(section_type, grant_info, org_info, inputs=None):
     
     return prompt
 
+def generate_narrative(grant, org_profile, section):
+    """
+    Generate a narrative section for a grant proposal
+    
+    Args:
+        grant (dict): The grant information
+        org_profile (dict): The organization profile
+        section (str): The name of the section to write
+        
+    Returns:
+        str: Generated narrative section
+    """
+    try:
+        # Check if OpenAI client is available
+        if not openai_client:
+            logger.error("OpenAI API key not configured")
+            return "OpenAI API key not configured. Please provide an API key to use this feature."
+        
+        # System prompt for OpenAI
+        system_prompt = """You are a grant writing assistant. Input:
+1. grant: an object with title, summary, due_date, amount, eligibility_criteria
+2. org_profile: an object with mission, focus_areas, funding_priorities
+3. section: the name of the section to write, for example 'Need Statement'
+Write a clear, persuasive section of about 200 words in a friendly and professional tone. Return plain text."""
+        
+        # Prepare data for API call
+        data = {
+            "grant": grant,
+            "org_profile": org_profile,
+            "section": section
+        }
+        
+        # Make API call to OpenAI
+        response = openai_client.chat.completions.create(
+            model="gpt-4o",
+            messages=[
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": str(data)}
+            ],
+            temperature=0.7,
+            max_tokens=800
+        )
+        
+        # Return the generated text
+        return response.choices[0].message.content
+        
+    except Exception as e:
+        logger.error(f"Error generating narrative section: {str(e)}")
+        return f"Error generating narrative section: {str(e)}"
+
 def _get_section_writing_tips(section_type):
     """
     Get writing tips for a specific section type
