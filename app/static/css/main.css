@@ -708,10 +708,11 @@ a:hover {
   .hero-actions {
     flex-direction: column;
     gap: 0.75rem;
-    width: 85%; /* Reduced from 90% to ensure buttons don't overflow */
+    width: 80%; /* Further reduced to prevent overflow */
     margin: 0 auto;
-    max-width: 280px; /* Reduced from 300px */
-    padding: 0 0.25rem; /* Added extra padding control */
+    max-width: 260px; /* Further reduced for safety */
+    padding: 0; /* Removed padding completely */
+    overflow: visible; /* Ensure content doesn't get clipped */
   }
   
   .hero-actions .btn {
@@ -920,10 +921,11 @@ a:hover {
   flex-wrap: wrap;
   gap: 1rem;
   width: 100%;
-  max-width: 450px; /* Reduced from 500px to ensure buttons fit properly */
+  max-width: 380px; /* Significantly reduced from 450px */
   margin: 0 auto;
-  padding: 0 0.5rem; /* Reduced padding from 1rem to 0.5rem */
+  padding: 0; /* Removed padding completely */
   box-sizing: border-box;
+  overflow: visible; /* Ensure content doesn't get clipped */
 }
 
 /* Responsive styles for hero section */
