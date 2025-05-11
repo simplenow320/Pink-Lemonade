@@ -5,6 +5,9 @@ document.addEventListener('DOMContentLoaded', function() {
   
   // Initialize UI components if not using React
   initializeComponents();
+  
+  // Initialize API event listeners
+  initApiEventListeners();
 });
 
 /**
@@ -379,4 +382,442 @@ function showAlert(message, type = 'info', duration = 5000) {
   }
   
   return alert;
+}
+
+/**
+ * Initialize API event listeners
+ */
+function initApiEventListeners() {
+  // Initialize scrape button
+  initScrapeButton();
+  
+  // Initialize match button
+  initMatchButton();
+  
+  // Initialize write button
+  initWriteButton();
+  
+  // Initialize report button
+  initReportButton();
+}
+
+/**
+ * Initialize the scrape button functionality
+ */
+function initScrapeButton() {
+  const scrapeButton = document.querySelector('#scrape-button');
+  if (!scrapeButton) return;
+  
+  scrapeButton.addEventListener('click', function(event) {
+    event.preventDefault();
+    
+    // Show loading state
+    showLoading(scrapeButton, 'Scraping...');
+    
+    // Call the scrape API
+    fetch('/api/scraper/scrape')
+      .then(response => {
+        if (!response.ok) {
+          throw new Error('Failed to scrape grants');
+        }
+        return response.json();
+      })
+      .then(data => {
+        // Update grants table
+        updateGrantsTable(data);
+        
+        // Show success message
+        showAlert(`Successfully scraped ${data.length} grants`, 'success');
+      })
+      .catch(error => {
+        console.error('Error scraping grants:', error);
+        showAlert('Failed to scrape grants: ' + error.message, 'danger');
+      })
+      .finally(() => {
+        // Hide loading state
+        hideLoading(scrapeButton);
+      });
+  });
+}
+
+/**
+ * Update the grants table with new data
+ * @param {Array} grants - Array of grant objects
+ */
+function updateGrantsTable(grants) {
+  const grantsTableBody = document.querySelector('#grants-table tbody');
+  if (!grantsTableBody) return;
+  
+  // Clear existing rows
+  grantsTableBody.innerHTML = '';
+  
+  // Add new rows
+  grants.forEach(grant => {
+    const row = document.createElement('tr');
+    
+    // Create grant row (adjust based on your actual HTML structure)
+    row.innerHTML = `
+      <td>
+        <input type="checkbox" class="grant-checkbox" value="${grant.id}" />
+      </td>
+      <td>${grant.title}</td>
+      <td>${grant.funder}</td>
+      <td>
+        <span data-date="${grant.due_date}">${formatDate(new Date(grant.due_date))}</span>
+      </td>
+      <td>
+        <span data-status="${grant.status}" class="status-badge">${grant.status}</span>
+      </td>
+      <td>
+        <span data-match-score="${grant.match_score}" class="match-score">
+          <div class="progress-bar">
+            <div class="progress-bar-fill" style="width: ${grant.match_score}%"></div>
+          </div>
+          ${grant.match_score}%
+        </span>
+      </td>
+      <td>
+        <button class="btn btn-sm btn-outline view-grant" data-grant-id="${grant.id}">View</button>
+      </td>
+    `;
+    
+    grantsTableBody.appendChild(row);
+  });
+  
+  // Re-initialize UI components for the new elements
+  formatDates();
+  initStatusBadges();
+  initMatchScores();
+}
+
+/**
+ * Initialize the match button functionality
+ */
+function initMatchButton() {
+  const matchButton = document.querySelector('#match-button');
+  if (!matchButton) return;
+  
+  matchButton.addEventListener('click', function(event) {
+    event.preventDefault();
+    
+    // Get selected grants
+    const selectedGrants = getSelectedGrants();
+    if (selectedGrants.length === 0) {
+      showAlert('Please select at least one grant to match', 'warning');
+      return;
+    }
+    
+    // Show loading state
+    showLoading(matchButton, 'Matching...');
+    
+    // Process each selected grant
+    const matchPromises = selectedGrants.map(grantId => {
+      return fetch('/api/grants/match', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ grant_id: grantId })
+      })
+      .then(response => {
+        if (!response.ok) {
+          throw new Error(`Failed to match grant ${grantId}`);
+        }
+        return response.json();
+      });
+    });
+    
+    // Wait for all matches to complete
+    Promise.all(matchPromises)
+      .then(results => {
+        // Update match table or display
+        updateMatchResults(results);
+        
+        // Show success message
+        showAlert(`Successfully matched ${results.length} grants`, 'success');
+      })
+      .catch(error => {
+        console.error('Error matching grants:', error);
+        showAlert('Failed to match grants: ' + error.message, 'danger');
+      })
+      .finally(() => {
+        // Hide loading state
+        hideLoading(matchButton);
+      });
+  });
+}
+
+/**
+ * Get selected grant IDs from checkboxes
+ * @returns {Array} Array of selected grant IDs
+ */
+function getSelectedGrants() {
+  const checkboxes = document.querySelectorAll('.grant-checkbox:checked');
+  return Array.from(checkboxes).map(checkbox => checkbox.value);
+}
+
+/**
+ * Update match results in the UI
+ * @param {Array} results - Array of match results
+ */
+function updateMatchResults(results) {
+  const matchTableBody = document.querySelector('#match-table tbody');
+  if (!matchTableBody) return;
+  
+  // Clear existing rows
+  matchTableBody.innerHTML = '';
+  
+  // Add new rows
+  results.forEach(result => {
+    const row = document.createElement('tr');
+    
+    // Create match row (adjust based on your actual HTML structure)
+    row.innerHTML = `
+      <td>${result.grant_title || 'Unknown'}</td>
+      <td>
+        <span data-match-score="${result.match_score}" class="match-score">
+          <div class="progress-bar">
+            <div class="progress-bar-fill" style="width: ${result.match_score}%"></div>
+          </div>
+          ${result.match_score}%
+        </span>
+      </td>
+      <td>${result.match_explanation || ''}</td>
+    `;
+    
+    matchTableBody.appendChild(row);
+  });
+  
+  // Re-initialize UI components for the new elements
+  initMatchScores();
+}
+
+/**
+ * Initialize the write button functionality
+ */
+function initWriteButton() {
+  const writeButton = document.querySelector('#write-button');
+  if (!writeButton) return;
+  
+  writeButton.addEventListener('click', function(event) {
+    event.preventDefault();
+    
+    // Get selected grant
+    const selectedGrants = getSelectedGrants();
+    if (selectedGrants.length !== 1) {
+      showAlert('Please select exactly one grant to generate a narrative', 'warning');
+      return;
+    }
+    
+    const grantId = selectedGrants[0];
+    
+    // Get selected section type
+    const sectionTypeSelect = document.querySelector('#section-type-select');
+    const sectionType = sectionTypeSelect ? sectionTypeSelect.value : 'overview';
+    
+    // Show loading state
+    showLoading(writeButton, 'Generating narrative...');
+    
+    // Call the write API
+    fetch('/api/grants/write', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        grant_id: grantId,
+        section_type: sectionType
+      })
+    })
+    .then(response => {
+      if (!response.ok) {
+        throw new Error('Failed to generate narrative');
+      }
+      return response.json();
+    })
+    .then(data => {
+      // Display the narrative
+      displayNarrative(data);
+      
+      // Show success message
+      showAlert('Successfully generated narrative', 'success');
+    })
+    .catch(error => {
+      console.error('Error generating narrative:', error);
+      showAlert('Failed to generate narrative: ' + error.message, 'danger');
+    })
+    .finally(() => {
+      // Hide loading state
+      hideLoading(writeButton);
+    });
+  });
+}
+
+/**
+ * Display the generated narrative
+ * @param {Object} data - Narrative data
+ */
+function displayNarrative(data) {
+  const narrativeContainer = document.querySelector('#narrative-container');
+  if (!narrativeContainer) return;
+  
+  // Update narrative content
+  narrativeContainer.innerHTML = '';
+  
+  // Create title
+  const title = document.createElement('h3');
+  title.textContent = data.section_title || 'Generated Narrative';
+  narrativeContainer.appendChild(title);
+  
+  // Create content
+  const content = document.createElement('div');
+  content.className = 'narrative-content';
+  content.innerHTML = data.content || '';
+  narrativeContainer.appendChild(content);
+  
+  // Create metadata if available
+  if (data.tips && data.tips.length > 0) {
+    const tipsTitle = document.createElement('h4');
+    tipsTitle.textContent = 'Writing Tips';
+    narrativeContainer.appendChild(tipsTitle);
+    
+    const tipsList = document.createElement('ul');
+    tipsList.className = 'tips-list';
+    
+    data.tips.forEach(tip => {
+      const tipItem = document.createElement('li');
+      tipItem.textContent = tip;
+      tipsList.appendChild(tipItem);
+    });
+    
+    narrativeContainer.appendChild(tipsList);
+  }
+  
+  // Show the container
+  narrativeContainer.style.display = 'block';
+}
+
+/**
+ * Initialize the report button functionality
+ */
+function initReportButton() {
+  const reportButton = document.querySelector('#report-button');
+  if (!reportButton) return;
+  
+  reportButton.addEventListener('click', function(event) {
+    event.preventDefault();
+    
+    // Show loading state
+    showLoading(reportButton, 'Generating report...');
+    
+    // Call the report API
+    fetch('/api/analytics/report')
+      .then(response => {
+        if (!response.ok) {
+          throw new Error('Failed to generate report');
+        }
+        return response.json();
+      })
+      .then(data => {
+        // Display the report
+        displayReport(data);
+        
+        // Show success message
+        showAlert('Successfully generated analytics report', 'success');
+      })
+      .catch(error => {
+        console.error('Error generating report:', error);
+        showAlert('Failed to generate report: ' + error.message, 'danger');
+      })
+      .finally(() => {
+        // Hide loading state
+        hideLoading(reportButton);
+      });
+  });
+}
+
+/**
+ * Display the generated report
+ * @param {Object} data - Report data
+ */
+function displayReport(data) {
+  const reportContainer = document.querySelector('#report-container');
+  if (!reportContainer) return;
+  
+  // Clear existing content
+  reportContainer.innerHTML = '';
+  
+  // Add summary text
+  if (data.summary_text) {
+    const summary = document.createElement('div');
+    summary.className = 'report-summary';
+    summary.textContent = data.summary_text;
+    reportContainer.appendChild(summary);
+  }
+  
+  // Add chart if chart_data is available
+  if (data.chart_data && data.chart_data.length > 0) {
+    const chartContainer = document.createElement('div');
+    chartContainer.className = 'chart-container';
+    reportContainer.appendChild(chartContainer);
+    
+    // Create canvas for chart
+    const canvas = document.createElement('canvas');
+    canvas.id = 'report-chart';
+    chartContainer.appendChild(canvas);
+    
+    // Create chart
+    if (typeof Chart !== 'undefined') {
+      createReportChart(canvas, data.chart_data);
+    } else {
+      console.warn('Chart.js is not available');
+    }
+  }
+  
+  // Add chart image if base64 is available
+  if (data.chart_image_base64) {
+    const img = document.createElement('img');
+    img.src = `data:image/png;base64,${data.chart_image_base64}`;
+    img.alt = 'Analytics Report Chart';
+    img.className = 'report-chart-image';
+    reportContainer.appendChild(img);
+  }
+  
+  // Show the container
+  reportContainer.style.display = 'block';
+}
+
+/**
+ * Create a chart using Chart.js
+ * @param {HTMLCanvasElement} canvas - Canvas element
+ * @param {Array} chartData - Chart data
+ */
+function createReportChart(canvas, chartData) {
+  // Extract labels and data
+  const labels = chartData.map(item => item.focus_area);
+  const data = chartData.map(item => item.success_rate);
+  
+  // Create chart
+  new Chart(canvas, {
+    type: 'bar',
+    data: {
+      labels: labels,
+      datasets: [{
+        label: 'Success Rate (%)',
+        data: data,
+        backgroundColor: 'rgba(54, 162, 235, 0.5)',
+        borderColor: 'rgba(54, 162, 235, 1)',
+        borderWidth: 1
+      }]
+    },
+    options: {
+      responsive: true,
+      scales: {
+        y: {
+          beginAtZero: true,
+          max: 100
+        }
+      }
+    }
+  });
 }
