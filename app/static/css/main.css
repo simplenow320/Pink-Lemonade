@@ -641,6 +641,50 @@ a:hover {
   font-size: 1rem;
 }
 
+/* Content Container */
+.content-container {
+  width: 100%;
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 1rem;
+}
+
+@media (min-width: 768px) {
+  .content-container {
+    padding: 1.5rem;
+  }
+}
+
+/* Loading Container */
+.loading-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  padding-top: 0;
+}
+
+.spinner-container {
+  text-align: center;
+  padding: 2rem;
+}
+
+.spinner {
+  display: inline-block;
+  width: 3rem;
+  height: 3rem;
+  border-radius: 50%;
+  border: 4px solid var(--gray-200);
+  border-top-color: var(--primary-color);
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
 /* Modal Styles */
 .modal-overlay {
   position: fixed;

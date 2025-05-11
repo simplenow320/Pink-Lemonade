@@ -1,4 +1,4 @@
-// React components for GrantFlow application
+// React components for GrantFlow application - Modern UI with Top Navigation
 
 // Main application component
 function App() {
@@ -13,65 +13,91 @@ function App() {
     status: {},
     matchStats: {}
   });
+  const [isLoading, setIsLoading] = React.useState(true);
   
-  // Check if API key is available
+  // Check if API key is available and load all data
   React.useEffect(() => {
-    fetch('/api/ai/status')
-      .then(response => response.json())
-      .then(data => {
-        setApiKey(data.api_key_configured);
-        setApiKeyChecked(true);
-      })
-      .catch(error => {
-        console.error('Error checking API status:', error);
-        setApiKeyChecked(true);
+    setIsLoading(true);
+    
+    // Parallel data fetching with Promise.all
+    Promise.all([
+      // Check API key status
+      fetch('/api/ai/status')
+        .then(response => response.json())
+        .catch(error => {
+          console.error('Error checking API status:', error);
+          return { api_key_configured: false };
+        }),
+        
+      // Load organization profile
+      fetch('/api/organization')
+        .then(response => response.json())
+        .catch(error => {
+          console.error('Error fetching organization:', error);
+          return null;
+        }),
+        
+      // Load grants
+      fetch('/api/grants')
+        .then(response => response.json())
+        .catch(error => {
+          console.error('Error fetching grants:', error);
+          return [];
+        }),
+        
+      // Load dashboard data
+      fetch('/api/grants/dashboard')
+        .then(response => response.json())
+        .catch(error => {
+          console.error('Error fetching dashboard data:', error);
+          return {};
+        })
+    ])
+    .then(([apiStatus, orgData, grantsData, dashData]) => {
+      // Set API key status
+      setApiKey(apiStatus.api_key_configured);
+      setApiKeyChecked(true);
+      
+      // Set organization data
+      setOrganization(orgData);
+      
+      // Set grants data
+      setGrants(grantsData);
+      
+      // Format and set dashboard data
+      console.log('Dashboard data:', dashData);
+      setDashboardData({
+        upcoming: dashData.upcoming_deadlines || [],
+        recent: dashData.recently_discovered || [],
+        status: {
+          active: dashData.total_grants || 0,
+          potential_funding: dashData.potential_funding || 0,
+          success_rate: Math.round((dashData.won_funding / (dashData.potential_funding || 1)) * 100) || 0
+        },
+        matchStats: dashData.match_score_distribution || {}
       });
       
-    // Load organization profile
-    fetch('/api/organization')
-      .then(response => response.json())
-      .then(data => {
-        setOrganization(data);
-      })
-      .catch(error => {
-        console.error('Error fetching organization:', error);
-      });
-      
-    // Load grants
-    fetch('/api/grants')
-      .then(response => response.json())
-      .then(data => {
-        setGrants(data);
-      })
-      .catch(error => {
-        console.error('Error fetching grants:', error);
-      });
-      
-    // Load dashboard data
-    fetch('/api/grants/dashboard')
-      .then(response => response.json())
-      .then(data => {
-        console.log('Dashboard data:', data);
-        setDashboardData({
-          upcoming: data.upcoming_deadlines || [],
-          recent: data.recently_discovered || [],
-          status: {
-            active: data.total_grants || 0,
-            potential_funding: data.potential_funding || 0,
-            success_rate: Math.round((data.won_funding / (data.potential_funding || 1)) * 100) || 0
-          },
-          matchStats: data.match_score_distribution || {}
-        });
-      })
-      .catch(error => {
-        console.error('Error fetching dashboard data:', error);
-      });
+      setIsLoading(false);
+    });
   }, []);
   
   // Handle navigation
   const handleNavigate = (page) => {
     setCurrentPage(page);
+    // Scroll to top when navigating
+    window.scrollTo(0, 0);
   };
+  
+  if (isLoading) {
+    return (
+      <div className="app-container loading-container">
+        <div className="spinner-container">
+          <div className="spinner"></div>
+          <p>Loading GrantFlow...</p>
+        </div>
+      </div>
+    );
+  }
   
   return (
     <div className="app-container">
@@ -81,25 +107,22 @@ function App() {
         organization={organization}
       />
       
-      {currentPage === 'dashboard' && (
-        <Dashboard data={dashboardData} hasApiKey={apiKey} onNavigate={handleNavigate} />
-      )}
-      
-      {currentPage === 'grants' && (
-        <GrantsList grants={grants} hasApiKey={apiKey} />
-      )}
-      
-      {currentPage === 'organization' && (
-        <OrganizationProfile organization={organization} />
-      )}
-      
-      {currentPage === 'scraper' && (
-        <ScraperSettings hasApiKey={apiKey} />
-      )}
-      
-      {/* Loading indicator */}
-      <div id="loading-overlay" style={{display: 'none'}}>
-        <div className="spinner"></div>
+      <div className="content-container">
+        {currentPage === 'dashboard' && (
+          <Dashboard data={dashboardData} hasApiKey={apiKey} onNavigate={handleNavigate} />
+        )}
+        
+        {currentPage === 'grants' && (
+          <GrantsList grants={grants} hasApiKey={apiKey} />
+        )}
+        
+        {currentPage === 'organization' && (
+          <OrganizationProfile organization={organization} />
+        )}
+        
+        {currentPage === 'scraper' && (
+          <ScraperSettings hasApiKey={apiKey} />
+        )}
       </div>
     </div>
   );
