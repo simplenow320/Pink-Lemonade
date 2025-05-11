@@ -5,6 +5,7 @@ Tests for the Organization API endpoints.
 import json
 import pytest
 from app.models.organization import Organization
+from app import db
 
 
 def test_get_organization_success(client, db_organization):
