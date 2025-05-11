@@ -15,6 +15,7 @@ logger = logging.getLogger(__name__)
 # List of migration modules to run, in order
 MIGRATIONS = [
     'app.db_migrations.add_analytics_columns',
+    'app.db_migrations.add_search_columns',
 ]
 
 def run_migrations():

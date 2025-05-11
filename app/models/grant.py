@@ -61,7 +61,9 @@ class Grant(db.Model):
             'source_id': self.source_id,
             'has_narrative': self.narrative is not None,
             'date_submitted': self.date_submitted.isoformat() if self.date_submitted else None,
-            'date_decision': self.date_decision.isoformat() if self.date_decision else None
+            'date_decision': self.date_decision.isoformat() if self.date_decision else None,
+            'search_query': self.search_query,
+            'discovery_method': self.discovery_method
         }
     
     def update_status(self, new_status, metadata=None):

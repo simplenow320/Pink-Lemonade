@@ -445,33 +445,35 @@ def run_scraping_job(include_web_search=True):
                         # Create a special "Internet Search" source if it doesn't exist
                         web_source = ScraperSource.query.filter_by(name="Internet Search").first()
                         if not web_source:
-                            web_source = ScraperSource(
-                                name="Internet Search",
-                                url="https://grantflow.app/web-discovery",
-                                is_active=True,
-                                last_scraped=datetime.now()
-                            )
+                            web_source = ScraperSource()
+                            web_source.name = "Internet Search"
+                            web_source.url = "https://grantflow.app/web-discovery"
+                            web_source.is_active = True
+                            web_source.last_scraped = datetime.now()
                             db.session.add(web_source)
                             db.session.commit()
                         source_id = web_source.id
                     
                     # Create new grant
-                    new_grant = Grant(
-                        title=grant_data.get('title'),
-                        funder=grant_data.get('funder'),
-                        description=grant_data.get('description', ''),
-                        amount=grant_data.get('amount'),
-                        due_date=grant_data.get('due_date'),
-                        eligibility=grant_data.get('eligibility', ''),
-                        website=grant_data.get('website', ''),
-                        status="Not Started",
-                        match_score=grant_data.get('match_score', 0),
-                        match_explanation=grant_data.get('match_explanation', ''),
-                        focus_areas=grant_data.get('focus_areas', []),
-                        contact_info=grant_data.get('contact_info', ''),
-                        is_scraped=True,
-                        source_id=source_id
-                    )
+                    new_grant = Grant()
+                    new_grant.title = grant_data.get('title')
+                    new_grant.funder = grant_data.get('funder')
+                    new_grant.description = grant_data.get('description', '')
+                    new_grant.amount = grant_data.get('amount')
+                    new_grant.due_date = grant_data.get('due_date')
+                    new_grant.eligibility = grant_data.get('eligibility', '')
+                    new_grant.website = grant_data.get('website', '')
+                    new_grant.status = "Not Started"
+                    new_grant.match_score = grant_data.get('match_score', 0)
+                    new_grant.match_explanation = grant_data.get('match_explanation', '')
+                    new_grant.focus_areas = grant_data.get('focus_areas', [])
+                    new_grant.contact_info = grant_data.get('contact_info', '')
+                    new_grant.is_scraped = True
+                    new_grant.source_id = source_id
+                    
+                    # Add the new search-related fields
+                    new_grant.search_query = grant_data.get('search_query', '')
+                    new_grant.discovery_method = grant_data.get('discovery_method', 'manual')
                     
                     db.session.add(new_grant)
                     db.session.commit()
