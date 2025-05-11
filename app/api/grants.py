@@ -261,6 +261,68 @@ def update_grant(id):
         logging.error(f"Error updating grant {id}: {str(e)}")
         return jsonify({"error": "Failed to update grant"}), 500
 
+@bp.route('/<int:id>/status', methods=['PUT'])
+def update_grant_status(id):
+    """
+    Update the status of a specific grant
+    
+    Request Body:
+        status (str): New status value (In Progress, Submitted, Approved, Rejected)
+        
+    Returns:
+        Response: JSON response with the updated grant data
+        
+    Error Codes:
+        400: Invalid status value
+        404: Grant not found
+        500: Server error during processing
+    """
+    endpoint = f"PUT /api/grants/{id}/status"
+    log_request("PUT", endpoint, request.json)
+    
+    try:
+        # Get the grant
+        grant = Grant.query.get(id)
+        if grant is None:
+            log_response(endpoint, 404, "Grant not found")
+            return jsonify({"error": "Grant not found"}), 404
+        
+        # Get data from request
+        data = request.json
+        if not data or 'status' not in data:
+            log_response(endpoint, 400, "Status is required")
+            return jsonify({"error": "Status is required"}), 400
+        
+        # Validate status
+        valid_statuses = ["Not Started", "In Progress", "Submitted", "Approved", "Rejected"]
+        if data['status'] not in valid_statuses:
+            log_response(endpoint, 400, f"Invalid status. Must be one of: {', '.join(valid_statuses)}")
+            return jsonify({"error": f"Invalid status. Must be one of: {', '.join(valid_statuses)}"}), 400
+        
+        # Update the status using the model's method to ensure proper analytics tracking
+        success = grant.update_status(data['status'])
+        if not success:
+            log_response(endpoint, 500, "Failed to update grant status")
+            return jsonify({"error": "Failed to update grant status"}), 500
+        
+        # Commit the changes
+        db.session.commit()
+        
+        log_response(endpoint, 200)
+        return jsonify(grant.to_dict())
+    
+    except SQLAlchemyError as e:
+        db.session.rollback()
+        error_msg = f"Database error updating grant status for {id}: {str(e)}"
+        logging.error(error_msg)
+        log_response(endpoint, 500, error_msg)
+        return jsonify({"error": "Database error occurred"}), 500
+    except Exception as e:
+        error_msg = f"Error updating grant status for {id}: {str(e)}"
+        logging.error(error_msg)
+        log_response(endpoint, 500, error_msg)
+        return jsonify({"error": "Failed to update grant status"}), 500
+
 @bp.route('/<int:id>', methods=['DELETE'])
 def delete_grant(id):
     """Delete a specific grant"""
