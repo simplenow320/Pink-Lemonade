@@ -1,25 +1,8 @@
 {
   "name": "Nitrogen Network",
+  "legal_status": "501(c)(3) faith-based nonprofit",
   "mission": "Equip urban churches and communities to holistically flourish.",
   "vision": "Transform underserved neighborhoods by empowering leaders, strengthening well-being, and closing the technology gap.",
-  "focus_areas": [
-    "Urban ministry leadership",
-    "Pastoral mentoring & training",
-    "Church-based mental health support",
-    "Community mental health hubs",
-    "AI training & digital literacy",
-    "Technology workforce development",
-    "Faith-based innovation",
-    "Church planting & expansion",
-    "Cross-generational community engagement",
-    "Holistic community transformation"
-  ],
-  "funding_priorities": [
-    "Pastors Thriving Together",
-    "Mental Health and the Church",
-    "AI, The Church, and Urban Communities",
-    "Urban Church Planting"
-  ],
   "geographic_focus": [
     "Grand Rapids, MI",
     "Detroit, MI",
@@ -35,9 +18,87 @@
   ],
   "target_audiences": [
     "Urban Pastors & Church Leaders",
-    "Youth (ages 14\u201318)",
+    "Youth (ages 14-18)",
     "Community Adults (everyday residents)",
     "Business & Organizational Leaders"
+  ],
+  "key_programs": [
+    {
+      "name": "Pastors Thriving Together",
+      "description": "A six-month leadership journey pairing urban pastors with experienced mentors in Michigan, Charlotte, and Atlanta.",
+      "components": [
+        "Peer networks",
+        "One-on-one coaching",
+        "Training in resource management, fundraising, and community collaboration"
+      ],
+      "outcome": "Sustainable, multiplying ministries led by connected, well-equipped pastors."
+    },
+    {
+      "name": "Mental Health and the Church",
+      "description": "In partnership with Restored Counseling Group, training church leaders to recognize, refer, and support mental health needs.",
+      "components": [
+        "Mental health first-aid workshops",
+        "Stigma reduction",
+        "Referral networks",
+        "Ongoing coaching"
+      ],
+      "outcome": "Churches serve as trusted, culturally sensitive hubs for compassionate community care."
+    },
+    {
+      "name": "AI, The Church, and Urban Communities",
+      "description": "Hands-on AI skills training to close the digital divide and spur local innovation.",
+      "participants": [
+        "Youth",
+        "Community adults",
+        "Business leaders"
+      ],
+      "tracks": [
+        {
+          "name": "Youth",
+          "focus": [
+            "Interactive AI foundations",
+            "Game/app development",
+            "Team-based community projects"
+          ],
+          "outcome": "Designed an AI-integrated app addressing a local challenge."
+        },
+        {
+          "name": "Community Adults",
+          "focus": [
+            "Everyday AI use (planning, budgeting, communication)",
+            "Small-business/nonprofit app builds"
+          ],
+          "outcome": "Personal AI action plan and a functional community-oriented AI app."
+        },
+        {
+          "name": "Business Leaders",
+          "focus": [
+            "Identify AI use cases",
+            "Build AI fluency",
+            "Apply the MOST framework to strategy",
+            "Co-develop a business solution app"
+          ],
+          "outcome": "Working AI tool or roadmap enhancing organizational operations."
+        }
+      ]
+    },
+    {
+      "name": "Urban Church Planting",
+      "description": "A five-step process to launch and sustain new urban congregations.",
+      "components": [
+        "Community assessment",
+        "Leadership training",
+        "Funding strategy",
+        "Launch support",
+        "Ongoing multiplication"
+      ],
+      "outcome": "35 churches launched in Michigan; 45 more planned by 2028 in Atlanta and Charlotte."
+    }
+  ],
+  "proven_impact": [
+    "After-school programs, food pantries, and job-skills workshops that boost community engagement.",
+    "Digital-literacy gains leading to new career pathways.",
+    "Strong peer networks reducing pastoral isolation and increasing ministry sustainability."
   ],
   "strategic_goals": [
     "Pastors Thriving Together: 100 pastors trained by 2026.",
@@ -45,24 +106,16 @@
     "AI in the City: Train 500 participants annually across all three audiences.",
     "Urban Church Planting: Plant 10 new churches per year through local partnerships."
   ],
-  "legal_status": "501(c)(3) faith-based nonprofit",
   "keywords": [
-    "equip",
-    "urban ministry leadership",
-    "ai training & digital literacy",
-    "technology workforce development",
-    "pastors thriving together",
-    "urban church planting",
-    "mental health and the church",
-    "cross-generational community engagement",
-    "faith-based innovation",
-    "pastoral mentoring & training",
-    "transform",
-    "church planting & expansion",
-    "holistic community transformation",
-    "church-based mental health support",
-    "the church",
-    "community mental health hubs",
-    "and urban communities"
+    "Urban ministry leadership",
+    "Pastoral mentoring & training",
+    "Church-based mental health support",
+    "Community mental health hubs",
+    "AI training & digital literacy",
+    "Technology workforce development",
+    "Faith-based innovation",
+    "Church planting & expansion",
+    "Cross-generational community engagement",
+    "Holistic community transformation"
   ]
 }
