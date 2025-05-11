@@ -424,6 +424,83 @@ function Dashboard({ data, hasApiKey }) {
 
 // Grants list component
 function GrantsList({ grants, hasApiKey }) {
+  const [formData, setFormData] = React.useState({
+    title: '',
+    description: '',
+    due_date: '',
+    amount: '',
+    eligibility: '',
+    status: 'Not Started',
+    funder: 'Unknown'
+  });
+  
+  // Handle form input changes
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setFormData({
+      ...formData,
+      [name]: value
+    });
+  };
+  
+  // Handle form submission
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    
+    // Validate form
+    if (!formData.title) {
+      alert('Please enter a grant title');
+      return;
+    }
+    
+    // Show loading indicator
+    document.getElementById('loading-overlay').style.display = 'flex';
+    
+    // Send form data to API
+    fetch('/api/grants', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(formData)
+    })
+    .then(response => {
+      if (!response.ok) {
+        throw new Error('Network response was not ok');
+      }
+      return response.json();
+    })
+    .then(data => {
+      // Hide loading indicator
+      document.getElementById('loading-overlay').style.display = 'none';
+      
+      // Show success message
+      alert('Grant added successfully!');
+      
+      // Clear form
+      setFormData({
+        title: '',
+        description: '',
+        due_date: '',
+        amount: '',
+        eligibility: '',
+        status: 'Not Started',
+        funder: 'Unknown'
+      });
+      
+      // Refresh grants list
+      window.location.reload();
+    })
+    .catch(error => {
+      // Hide loading indicator
+      document.getElementById('loading-overlay').style.display = 'none';
+      
+      // Show error message
+      console.error('Error adding grant:', error);
+      alert('Failed to add grant. Please try again.');
+    });
+  };
+  
   if (!grants || grants.length === 0) {
     return (
       <div className="container">
@@ -504,6 +581,107 @@ function GrantsList({ grants, hasApiKey }) {
               </tbody>
             </table>
           </div>
+        </div>
+      </div>
+
+      {/* Add Grant Form */}
+      <div className="card mt-4">
+        <div className="card-header">
+          <h3>Add New Grant</h3>
+        </div>
+        <div className="card-body">
+          <form id="grantForm" onSubmit={handleSubmit}>
+            <div className="form-group mb-3">
+              <label htmlFor="title">Title</label>
+              <input 
+                type="text" 
+                className="form-control" 
+                id="title" 
+                name="title" 
+                placeholder="Grant Title" 
+                required 
+                value={formData.title}
+                onChange={handleInputChange}
+              />
+            </div>
+
+            <div className="form-group mb-3">
+              <label htmlFor="summary">Summary</label>
+              <textarea 
+                className="form-control" 
+                id="summary" 
+                name="description" 
+                rows="3" 
+                placeholder="Grant Summary"
+                value={formData.description}
+                onChange={handleInputChange}
+              ></textarea>
+            </div>
+
+            <div className="row">
+              <div className="col-md-6">
+                <div className="form-group mb-3">
+                  <label htmlFor="dueDate">Due Date</label>
+                  <input 
+                    type="date" 
+                    className="form-control" 
+                    id="dueDate" 
+                    name="due_date"
+                    value={formData.due_date}
+                    onChange={handleInputChange}
+                  />
+                </div>
+              </div>
+              <div className="col-md-6">
+                <div className="form-group mb-3">
+                  <label htmlFor="amount">Amount</label>
+                  <input 
+                    type="number" 
+                    className="form-control" 
+                    id="amount" 
+                    name="amount" 
+                    placeholder="Grant Amount"
+                    step="0.01" 
+                    min="0"
+                    value={formData.amount}
+                    onChange={handleInputChange}
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div className="form-group mb-3">
+              <label htmlFor="eligibility">Eligibility Criteria</label>
+              <textarea 
+                className="form-control" 
+                id="eligibility" 
+                name="eligibility" 
+                rows="3" 
+                placeholder="Eligibility Requirements"
+                value={formData.eligibility}
+                onChange={handleInputChange}
+              ></textarea>
+            </div>
+
+            <div className="form-group mb-3">
+              <label htmlFor="status">Status</label>
+              <select 
+                className="form-control" 
+                id="status" 
+                name="status"
+                value={formData.status}
+                onChange={handleInputChange}
+              >
+                <option value="Not Started">Not Started</option>
+                <option value="In Progress">In Progress</option>
+                <option value="Submitted">Submitted</option>
+                <option value="Approved">Approved</option>
+                <option value="Rejected">Rejected</option>
+              </select>
+            </div>
+
+            <button type="submit" className="btn btn-primary">Save Grant</button>
+          </form>
         </div>
       </div>
     </div>
