@@ -51,7 +51,17 @@ function App() {
     fetch('/api/grants/dashboard')
       .then(response => response.json())
       .then(data => {
-        setDashboardData(data);
+        console.log('Dashboard data:', data);
+        setDashboardData({
+          upcoming: data.upcoming_deadlines || [],
+          recent: data.recently_discovered || [],
+          status: {
+            active: data.total_grants || 0,
+            potential_funding: data.potential_funding || 0,
+            success_rate: Math.round((data.won_funding / (data.potential_funding || 1)) * 100) || 0
+          },
+          matchStats: data.match_score_distribution || {}
+        });
       })
       .catch(error => {
         console.error('Error fetching dashboard data:', error);

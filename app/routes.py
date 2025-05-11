@@ -1,3 +1,4 @@
+import time
 from flask import Blueprint, render_template, redirect, url_for, jsonify, current_app
 
 bp = Blueprint('main', __name__)
@@ -5,19 +6,19 @@ bp = Blueprint('main', __name__)
 @bp.route('/')
 def index():
     """Render the main application page"""
-    return render_template('index.html')
+    return render_template('index.html', now=int(time.time()))
 
 @bp.route('/scraper')
 def scraper():
     """Render the scraper page"""
-    return render_template('scraper.html')
+    return render_template('scraper.html', now=int(time.time()))
 
 @bp.route('/grants')
 @bp.route('/organization')
 @bp.route('/dashboard')
 def spa_routes():
     """Route any SPA paths back to the index"""
-    return render_template('index.html')
+    return render_template('index.html', now=int(time.time()))
 
 @bp.route('/health')
 def health_check():
