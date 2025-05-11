@@ -71,55 +71,100 @@ def clear_mock_data():
             from app.models.narrative import Narrative
             from app.models.scraper import ScraperSource, ScraperHistory
             from app.models.analytics import GrantAnalytics, GrantSuccessMetrics
+            from flask import current_app
             
-            with db.session() as session:
+            # Use app context to ensure proper database session
+            with current_app.app_context():
                 # Delete all grants and related information
-                session.query(Grant).delete()
+                db.session.query(Grant).delete()
                 
                 # Delete all organization profile data
-                session.query(Organization).delete()
+                db.session.query(Organization).delete()
                 
                 # Delete all narratives
-                session.query(Narrative).delete()
+                db.session.query(Narrative).delete()
                 
                 # Delete all scraper sources and history
-                session.query(ScraperSource).delete()
-                session.query(ScraperHistory).delete()
+                db.session.query(ScraperSource).delete()
+                db.session.query(ScraperHistory).delete()
                 
                 # Delete all analytics data
-                session.query(GrantAnalytics).delete()
-                session.query(GrantSuccessMetrics).delete()
+                db.session.query(GrantAnalytics).delete()
+                db.session.query(GrantSuccessMetrics).delete()
                 
                 # Commit all changes
-                session.commit()
+                db.session.commit()
                 
-            logger.info("Database tables cleared successfully")
+            logger.info("Database tables cleared successfully - ALL FOUNDATION AND USER DATA ERASED")
         except Exception as db_error:
             logger.error(f"Error clearing database tables: {str(db_error)}")
         
         # PART 4: Look for and remove any other files that might contain foundation or grant info
         data_files = [
-            'seed.json',
+            'seed.json',  # Contains foundation sample data
             'foundation_data.json', 
             'discovered_grants.json',
             'user_profile.json',
-            'scraped_grants.json'
+            'scraped_grants.json',
+            'org_profile.json',
+            'grants_data.json',
+            'grant_matches.json',
+            'grant_stats.json'
         ]
         
-        for file in data_files:
-            if os.path.exists(file):
-                try:
-                    # If it's likely a JSON file, reset with empty structure
-                    with open(file, 'w') as f:
-                        if file.endswith('_profile.json'):
-                            json.dump({}, f)  # Empty object for profile
-                        else:
-                            json.dump([], f)  # Empty array for other data
-                    logger.info(f"Cleared additional file: {file}")
-                except Exception as file_error:
-                    logger.error(f"Error clearing file {file}: {str(file_error)}")
+        # Search in root directory and common subdirectories
+        search_dirs = ['.', 'data', 'app/data', 'instance', 'static/data']
         
-        logger.info("Mock data and all foundation/user information cleared successfully")
+        for search_dir in search_dirs:
+            if os.path.exists(search_dir):
+                for file in data_files:
+                    full_path = os.path.join(search_dir, file)
+                    if os.path.exists(full_path):
+                        try:
+                            # If it's likely a JSON file, reset with empty structure
+                            with open(full_path, 'w') as f:
+                                if 'profile' in file.lower():
+                                    json.dump({}, f)  # Empty object for profile files
+                                else:
+                                    json.dump([], f)  # Empty array for other data files
+                                    
+                            logger.info(f"IMPORTANT: Cleared foundation/user data in file: {full_path}")
+                        except Exception as file_error:
+                            logger.error(f"Error clearing file {full_path}: {str(file_error)}")
+        
+        # PART 5: Specifically handle the seed.json file in root which contains foundation data
+        if os.path.exists('./seed.json'):
+            try:
+                # Completely empty the seed file to remove all test foundation data
+                with open('./seed.json', 'w') as f:
+                    json.dump([], f)
+                logger.info("CRITICAL: Successfully erased all foundation data from seed.json")
+            except Exception as seed_error:
+                logger.error(f"Error clearing seed.json: {str(seed_error)}")
+        
+        # PART 6: Clear AI-generated content and analysis
+        ai_files = [
+            'grant_matches.json',
+            'grant_analysis.json',
+            'ai_narratives.json',
+            'match_results.json',
+            'openai_cache.json'
+        ]
+        
+        for search_dir in search_dirs:
+            if os.path.exists(search_dir):
+                for file in ai_files:
+                    full_path = os.path.join(search_dir, file)
+                    if os.path.exists(full_path):
+                        try:
+                            # Empty all AI-related files
+                            with open(full_path, 'w') as f:
+                                json.dump([], f)
+                            logger.info(f"Cleared AI-generated content from: {full_path}")
+                        except Exception as ai_error:
+                            logger.error(f"Error clearing AI file {full_path}: {str(ai_error)}")
+                
+        logger.info("COMPLETE: Mock data and ALL foundation/user information has been COMPLETELY ERASED")
         return "Mock data cleared"
         
     except Exception as e:
