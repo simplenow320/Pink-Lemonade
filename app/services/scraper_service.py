@@ -3,6 +3,7 @@ import logging
 import requests
 import time
 import random
+import json
 from datetime import datetime, timedelta
 import uuid
 from bs4 import BeautifulSoup
@@ -13,10 +14,71 @@ from app.models.grant import Grant
 from app.models.organization import Organization
 from app.services.ai_service import extract_grant_info, analyze_grant_match
 from sqlalchemy.exc import SQLAlchemyError
+from openai import OpenAI
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
+
+def scrape_grants(url_list):
+    """
+    Scrape grants from a list of URLs using OpenAI
+    
+    Args:
+        url_list (list): List of URLs to scrape
+        
+    Returns:
+        list: List of grant dictionaries
+    """
+    grants = []
+    
+    try:
+        # Initialize OpenAI client
+        client = OpenAI(api_key=os.environ.get("OPENAI_API_KEY"))
+        
+        # Format URLs as text
+        urls_text = "\n".join(url_list)
+        
+        # Create system prompt for the AI
+        system_prompt = """You are an AI grant scraper. Here is a list of website URLs. For each site find any grant postings. Return a JSON array with objects containing:
+1. url
+2. title
+3. summary
+4. due_date in YYYY-MM-DD
+5. amount as a number
+6. eligibility_criteria"""
+        
+        # Call OpenAI API
+        response = client.chat.completions.create(
+            model="gpt-4o",
+            messages=[
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": urls_text}
+            ],
+            response_format={"type": "json_object"}
+        )
+        
+        # Extract and parse the response
+        content = response.choices[0].message.content
+        result = json.loads(content)
+        
+        # The response should be a JSON object with an array property,
+        # but the exact property name might vary, so we look for the first array
+        for key, value in result.items():
+            if isinstance(value, list) and len(value) > 0:
+                grants = value
+                break
+        
+        # If we didn't find an array, the whole result might be an array
+        if not grants and isinstance(result, list):
+            grants = result
+            
+        logger.info(f"Scraped {len(grants)} grants from {len(url_list)} URLs")
+        
+    except Exception as e:
+        logger.error(f"Error scraping grants with OpenAI: {str(e)}")
+    
+    return grants
 
 def run_scraping_job():
     """
