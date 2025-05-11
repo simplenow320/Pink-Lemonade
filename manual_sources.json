@@ -438,5 +438,115 @@
     "match_score": 4,
     "best_fit_initiatives": ["Mental Health and the Church", "Pastors Thriving Together"],
     "grant_programs": ["Practical Needs Programs", "Christian Educational Initiatives"]
+  },
+  {
+    "name": "Grants.gov",
+    "url": "https://www.grants.gov",
+    "location": "National",
+    "phone": "(800) 518-4726",
+    "contact_email": "support@grants.gov",
+    "contact_name": "Grant Support",
+    "match_score": 5,
+    "best_fit_initiatives": ["AI, The Church, and Urban Communities", "Mental Health and the Church"],
+    "grant_programs": ["Federal Grant Opportunities"]
+  },
+  {
+    "name": "GrantWatch",
+    "url": "https://www.grantwatch.com",
+    "location": "National",
+    "phone": "(561) 249-4129",
+    "contact_email": "support@grantwatch.com",
+    "contact_name": "Grant Specialist",
+    "match_score": 5,
+    "best_fit_initiatives": ["Mental Health and the Church", "AI, The Church, and Urban Communities"],
+    "grant_programs": ["Nonprofit Grants", "Faith-Based Organization Grants"]
+  },
+  {
+    "name": "Foundation Directory Online (Candid)",
+    "url": "https://fconline.foundationcenter.org",
+    "location": "National",
+    "phone": "(212) 620-4230",
+    "contact_email": "support@candid.org",
+    "contact_name": "Customer Support",
+    "match_score": 5,
+    "best_fit_initiatives": ["Mental Health and the Church", "Pastors Thriving Together"],
+    "grant_programs": ["U.S. and Global Grantmaker Directory"]
+  },
+  {
+    "name": "GrantStation",
+    "url": "https://grantstation.com",
+    "location": "National",
+    "phone": "(877) 784-7268",
+    "contact_email": "support@grantstation.com",
+    "contact_name": "Member Services",
+    "match_score": 5,
+    "best_fit_initiatives": ["Urban Church Planting", "AI, The Church, and Urban Communities"],
+    "grant_programs": ["Foundation Grants", "Corporate Giving Programs"]
+  },
+  {
+    "name": "FundsforNGOs",
+    "url": "https://www2.fundsforngos.org",
+    "location": "International",
+    "phone": "",
+    "contact_email": "info@fundsforngos.org",
+    "contact_name": "Support Team",
+    "match_score": 4,
+    "best_fit_initiatives": ["Urban Church Planting", "Mental Health and the Church"],
+    "grant_programs": ["International NGO Funding", "Capacity Building Grants"]
+  },
+  {
+    "name": "Foundation List",
+    "url": "https://www.foundationlist.org",
+    "location": "National",
+    "phone": "",
+    "contact_email": "info@foundationlist.org",
+    "contact_name": "Support Team",
+    "match_score": 4,
+    "best_fit_initiatives": ["Pastors Thriving Together", "Mental Health and the Church"],
+    "grant_programs": ["Foundation Directory", "Nonprofit Jobs"]
+  },
+  {
+    "name": "Instrumentl",
+    "url": "https://www.instrumentl.com",
+    "location": "National",
+    "phone": "(415) 802-4792",
+    "contact_email": "support@instrumentl.com",
+    "contact_name": "Customer Success",
+    "match_score": 5,
+    "best_fit_initiatives": ["AI, The Church, and Urban Communities", "Mental Health and the Church"],
+    "grant_programs": ["Grant Discovery Platform", "Funding Match Service"]
+  },
+  {
+    "name": "GrantList.org",
+    "url": "https://www.grantlist.org",
+    "location": "National",
+    "phone": "",
+    "contact_email": "support@grantlist.org",
+    "contact_name": "Support Team",
+    "match_score": 4,
+    "best_fit_initiatives": ["Urban Church Planting", "AI, The Church, and Urban Communities"],
+    "grant_programs": ["Current and Historical Grants Database"]
+  },
+  {
+    "name": "USGrants.org",
+    "url": "https://www.usgrants.org",
+    "location": "National",
+    "phone": "",
+    "contact_email": "info@usgrants.org",
+    "contact_name": "Information Services",
+    "match_score": 4,
+    "best_fit_initiatives": ["Mental Health and the Church", "Urban Church Planting"],
+    "grant_programs": ["Federal Grant Information", "Application Assistance"]
+  },
+  {
+    "name": "CD Publications",
+    "url": "https://www.cdpublications.com",
+    "location": "National",
+    "phone": "(301) 588-6380",
+    "contact_email": "customer@cdpublications.com",
+    "contact_name": "Customer Service",
+    "match_score": 4,
+    "best_fit_initiatives": ["Mental Health and the Church", "Urban Church Planting"],
+    "grant_programs": ["Community Health Grants", "Education Funding", "Social Services Support"]
   }
 ]
