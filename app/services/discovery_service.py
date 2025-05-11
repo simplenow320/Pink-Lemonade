@@ -129,9 +129,6 @@ def discover_grants(org_profile: Dict[str, Any], limit: int = 5) -> List[Dict[st
     selected_keywords = thrive_ai_keywords[:10]
     search_queries.extend(selected_keywords)
     
-    # Track all selected keywords for reporting
-    all_keywords.extend(selected_keywords)
-    
     # Add focus area-based queries
     for area in focus_areas[:3]:  # Limit to first 3 focus areas to keep queries manageable
         search_queries.append(f"grant funding for {area} nonprofit organizations")
@@ -157,7 +154,7 @@ def discover_grants(org_profile: Dict[str, Any], limit: int = 5) -> List[Dict[st
     all_keywords = search_queries.copy()
     
     # Limit the number of queries to prevent too many API calls
-    search_queries = search_queries[:7]  # Increased from 5 to 7 for better coverage
+    search_queries = search_queries[:10]  # Increased to 10 for more comprehensive coverage
     
     search_report["search_keywords_used"] = all_keywords
     search_report["total_queries_attempted"] = len(search_queries)
