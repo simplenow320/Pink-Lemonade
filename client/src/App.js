@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Routes, Route } from 'react-router-dom';
-import TopNavbar from './components/TopNavbar';
+import MainLayout from './components/layout/MainLayout';
 import DashboardPage from './pages/DashboardPage';
 import GrantsPage from './pages/GrantsPage';
 import GrantDetailPage from './pages/GrantDetailPage';
@@ -13,9 +13,6 @@ import { initializeOrganization, ApiError } from './utils/api';
 import { useNotification } from './context/NotificationContext';
 import ErrorBoundary from './components/ErrorBoundary';
 import './App.css';
-
-// Remove the BottomNav component since we don't need it
-// The TopNavbar is responsive and handles both desktop and mobile views
 
 function App() {
   const [loading, setLoading] = useState(true);
@@ -80,66 +77,57 @@ function App() {
     );
   }
 
-  // Use a simpler layout with just the TopNavbar and content area
-  // No more sidebar, just a clean top navigation menu
+  // Use our completely new modern layout - no sidebar at all, all navigation in the top menu bar
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Top Navigation Bar */}
-      <TopNavbar />
-      
-      {/* Main Content - full width without sidebar */}
-      <main className="pt-16 pb-8 px-4">
-        <div className="container mx-auto max-w-7xl">
-          <Routes>
-            <Route path="/" element={
-              <ErrorBoundary>
-                <DashboardPage />
-              </ErrorBoundary>
-            } />
-            <Route path="/grants" element={
-              <ErrorBoundary>
-                <GrantsPage />
-              </ErrorBoundary>
-            } />
-            <Route path="/grants/:id" element={
-              <ErrorBoundary>
-                <GrantDetailPage />
-              </ErrorBoundary>
-            } />
-            <Route path="/organization" element={
-              <ErrorBoundary>
-                <ProfilePage />
-              </ErrorBoundary>
-            } />
-            <Route path="/narratives/:grantId" element={
-              <ErrorBoundary>
-                <NarrativePage />
-              </ErrorBoundary>
-            } />
-            <Route path="/scraper" element={
-              <ErrorBoundary>
-                <ScraperPage />
-              </ErrorBoundary>
-            } />
-            <Route path="/analytics" element={
-              <ErrorBoundary>
-                <AnalyticsPage />
-              </ErrorBoundary>
-            } />
-            <Route path="/writing-assistant" element={
-              <ErrorBoundary>
-                <WritingAssistantPage />
-              </ErrorBoundary>
-            } />
-            <Route path="/writing-assistant/:grantId" element={
-              <ErrorBoundary>
-                <WritingAssistantPage />
-              </ErrorBoundary>
-            } />
-          </Routes>
-        </div>
-      </main>
-    </div>
+    <MainLayout>
+      <Routes>
+        <Route path="/" element={
+          <ErrorBoundary>
+            <DashboardPage />
+          </ErrorBoundary>
+        } />
+        <Route path="/grants" element={
+          <ErrorBoundary>
+            <GrantsPage />
+          </ErrorBoundary>
+        } />
+        <Route path="/grants/:id" element={
+          <ErrorBoundary>
+            <GrantDetailPage />
+          </ErrorBoundary>
+        } />
+        <Route path="/organization" element={
+          <ErrorBoundary>
+            <ProfilePage />
+          </ErrorBoundary>
+        } />
+        <Route path="/narratives/:grantId" element={
+          <ErrorBoundary>
+            <NarrativePage />
+          </ErrorBoundary>
+        } />
+        <Route path="/scraper" element={
+          <ErrorBoundary>
+            <ScraperPage />
+          </ErrorBoundary>
+        } />
+        <Route path="/analytics" element={
+          <ErrorBoundary>
+            <AnalyticsPage />
+          </ErrorBoundary>
+        } />
+        <Route path="/writing-assistant" element={
+          <ErrorBoundary>
+            <WritingAssistantPage />
+          </ErrorBoundary>
+        } />
+        <Route path="/writing-assistant/:grantId" element={
+          <ErrorBoundary>
+            <WritingAssistantPage />
+          </ErrorBoundary>
+        } />
+      </Routes>
+    </MainLayout>
   );
 }
 
