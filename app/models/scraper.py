@@ -76,6 +76,10 @@ class ScraperHistory(db.Model):
             'grants_added': self.grants_added,
             'status': self.status,
             'error_message': self.error_message,
+            # Add direct properties for dashboard compatibility
+            'sites_searched': self.sites_searched_estimate,
+            'queries_attempted': self.total_queries_attempted,
+            'successful_queries': self.successful_queries,
             'search_report': {
                 'sites_searched': self.sites_searched_estimate,
                 'queries_attempted': self.total_queries_attempted,

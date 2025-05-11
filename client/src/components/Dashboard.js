@@ -118,15 +118,15 @@ const Dashboard = () => {
   const checkScraperStatus = async () => {
     try {
       const statusData = await getScraperHistory(1);
-      if (statusData && statusData.history && statusData.history.length > 0) {
-        const latestJob = statusData.history[0];
+      if (statusData && statusData.length > 0) {
+        const latestJob = statusData[0];
         
         const isRunning = latestJob.status === 'in_progress';
         setScraperStatus({
           isRunning,
-          sites: latestJob.sites_searched || 0,
-          queries: latestJob.queries_attempted || 0,
-          successful: latestJob.successful_queries || 0,
+          sites: (latestJob.search_report && latestJob.search_report.sites_searched) || 0,
+          queries: (latestJob.search_report && latestJob.search_report.queries_attempted) || 0,
+          successful: (latestJob.search_report && latestJob.search_report.successful_queries) || 0,
           grants: latestJob.grants_found || 0,
           message: latestJob.error_message || ''
         });
