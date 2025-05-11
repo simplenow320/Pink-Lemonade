@@ -84,7 +84,7 @@ function App() {
 
     switch(page) {
       case 'dashboard':
-        return <Dashboard data={dashboardData} hasApiKey={hasApiKey} />;
+        return <Dashboard data={dashboardData} hasApiKey={hasApiKey} onNavigate={navigateTo} />;
       case 'grants':
         return <GrantsList grants={grants} hasApiKey={hasApiKey} />;
       case 'organization':
@@ -94,7 +94,7 @@ function App() {
         window.location.href = '/scraper';
         return <LoadingIndicator />;
       default:
-        return <Dashboard data={dashboardData} hasApiKey={hasApiKey} />;
+        return <Dashboard data={dashboardData} hasApiKey={hasApiKey} onNavigate={navigateTo} />;
     }
   };
 
@@ -288,7 +288,7 @@ function LoadingIndicator() {
 }
 
 // Dashboard component
-function Dashboard({ data, hasApiKey }) {
+function Dashboard({ data, hasApiKey, onNavigate }) {
   if (!data) {
     return (
       <div className="container">
@@ -320,8 +320,8 @@ function Dashboard({ data, hasApiKey }) {
               GrantFlow helps you find the perfect funding opportunities for your nonprofit organization with AI-powered matching and automated discovery.
             </p>
             <div className="hero-actions">
-              <a href="#" className="btn btn-primary">Discover Grants</a>
-              <a href="#" className="btn btn-outline">Learn More</a>
+              <a href="#" onClick={(e) => { e.preventDefault(); onNavigate('grants'); }} className="btn btn-primary">Discover Grants</a>
+              <a href="#" onClick={(e) => { e.preventDefault(); onNavigate('scraper'); }} className="btn btn-outline">Learn More</a>
             </div>
           </div>
         </div>
