@@ -64,12 +64,21 @@ def sync_manual_sources():
             # Create a name that includes the location
             name = f"{source['name']} ({location})"
             
-            new_source = ScraperSource(
-                name=name,
-                url=source['url'],
-                selector_config={},  # Empty selector config for manual sources
-                is_active=True
-            )
+            # Create a selector config that includes contact information
+            selector_config = {
+                "contact_info": {
+                    "phone": source.get('phone', ''),
+                    "email": source.get('contact_email', ''),
+                    "name": source.get('contact_name', '')
+                }
+            }
+            
+            # Create a new ScraperSource object and set its attributes directly
+            new_source = ScraperSource()
+            new_source.name = name
+            new_source.url = source['url']
+            new_source.selector_config = selector_config
+            new_source.is_active = True
             
             db.session.add(new_source)
             logger.info(f"Added new source: {name} ({source['url']})")

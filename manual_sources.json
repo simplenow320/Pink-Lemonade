@@ -2,12 +2,18 @@
   {
     "name": "Lilly Endowment",
     "url": "https://lillyendowment.org",
-    "location": "National"
+    "location": "National",
+    "phone": "(317) 924-5471",
+    "contact_email": "info@lillyendowment.org",
+    "contact_name": "Grant Inquiry Department"
   },
   {
     "name": "The Maclellan Foundation",
     "url": "https://maclellan.net",
-    "location": "National"
+    "location": "National",
+    "phone": "(423) 756-0206",
+    "contact_email": "contact@maclellan.net",
+    "contact_name": "Grants Manager"
   },
   {
     "name": "Mustard Seed Foundation",
@@ -32,7 +38,10 @@
   {
     "name": "Arthur M. Blank Family Foundation",
     "url": "https://blankfoundation.org",
-    "location": "Atlanta, GA"
+    "location": "Atlanta, GA",
+    "phone": "(404) 367-2100",
+    "contact_email": "info@blankfoundation.org",
+    "contact_name": "Program Director"
   },
   {
     "name": "Chick-fil-A True Inspiration Awards",

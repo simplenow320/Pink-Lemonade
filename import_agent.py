@@ -128,7 +128,26 @@ def save_manual_funders(manual_funders: List[Dict[str, str]]) -> Dict[str, int]:
         for funder in manual_funders:
             if "url" in funder and "name" in funder:
                 url = funder["url"].lower()
+                # Add contact information if missing
+                if "phone" not in funder:
+                    funder["phone"] = ""
+                if "contact_email" not in funder:
+                    funder["contact_email"] = ""
+                if "contact_name" not in funder:
+                    funder["contact_name"] = ""
+                
                 if url in existing_urls:
+                    # Find the existing funder with this URL and update if needed
+                    for existing in existing_funders:
+                        if existing.get("url", "").lower() == url:
+                            # Update contact info if it exists in the new version
+                            if "phone" in funder and funder["phone"]:
+                                existing["phone"] = funder["phone"]
+                            if "contact_email" in funder and funder["contact_email"]:
+                                existing["contact_email"] = funder["contact_email"]
+                            if "contact_name" in funder and funder["contact_name"]:
+                                existing["contact_name"] = funder["contact_name"]
+                            break
                     result["skipped"] += 1
                 else:
                     existing_funders.append(funder)
