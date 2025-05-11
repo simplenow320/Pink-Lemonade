@@ -100,12 +100,12 @@ function App() {
 
   return (
     <div className="app-container">
-      <Sidebar 
+      <TopNavbar 
         currentPage={page} 
         onNavigate={navigateTo} 
         organization={organization}
       />
-      <main className="main-content">
+      <main className="main-content-full">
         <Header page={page} organization={organization} />
         {renderPage()}
       </main>
@@ -113,51 +113,85 @@ function App() {
   );
 }
 
-// Sidebar component for navigation
-function Sidebar({ currentPage, onNavigate, organization }) {
+// TopNavbar component for navigation (replaces Sidebar)
+function TopNavbar({ currentPage, onNavigate, organization }) {
+  const [isMenuOpen, setIsMenuOpen] = React.useState(false);
+
   return (
-    <aside className="sidebar">
-      <div className="sidebar-header">
-        <h1 className="sidebar-logo">GrantFlow</h1>
+    <header className="top-navbar">
+      <div className="navbar-container">
+        <div className="navbar-logo">
+          <h1>GrantFlow</h1>
+        </div>
+        
+        {/* Desktop navigation */}
+        <nav className="desktop-nav">
+          <ul>
+            <li className={currentPage === 'dashboard' ? 'active' : ''}>
+              <a href="#" onClick={() => onNavigate('dashboard')}>
+                <span className="icon">📊</span>
+                <span>Dashboard</span>
+              </a>
+            </li>
+            <li className={currentPage === 'grants' ? 'active' : ''}>
+              <a href="#" onClick={() => onNavigate('grants')}>
+                <span className="icon">📝</span>
+                <span>Grants</span>
+              </a>
+            </li>
+            <li className={currentPage === 'organization' ? 'active' : ''}>
+              <a href="#" onClick={() => onNavigate('organization')}>
+                <span className="icon">🏢</span>
+                <span>Organization</span>
+              </a>
+            </li>
+            <li className={currentPage === 'scraper' ? 'active' : ''}>
+              <a href="/scraper" target="_blank">
+                <span className="icon">🔍</span>
+                <span>Grant Scraper</span>
+              </a>
+            </li>
+          </ul>
+        </nav>
+        
+        {/* Mobile menu button */}
+        <button className="mobile-menu-button" onClick={() => setIsMenuOpen(!isMenuOpen)}>
+          <span className="icon">{isMenuOpen ? '✕' : '☰'}</span>
+        </button>
       </div>
       
-      <nav className="sidebar-nav">
-        <ul>
-          <li className={currentPage === 'dashboard' ? 'active' : ''}>
-            <a href="#" onClick={() => onNavigate('dashboard')}>
-              <span className="icon">📊</span>
-              <span>Dashboard</span>
-            </a>
-          </li>
-          <li className={currentPage === 'grants' ? 'active' : ''}>
-            <a href="#" onClick={() => onNavigate('grants')}>
-              <span className="icon">📝</span>
-              <span>Grants</span>
-            </a>
-          </li>
-          <li className={currentPage === 'organization' ? 'active' : ''}>
-            <a href="#" onClick={() => onNavigate('organization')}>
-              <span className="icon">🏢</span>
-              <span>Organization</span>
-            </a>
-          </li>
-          <li className={currentPage === 'scraper' ? 'active' : ''}>
-            <a href="/scraper" target="_blank">
-              <span className="icon">🔍</span>
-              <span>Grant Scraper</span>
-            </a>
-          </li>
-        </ul>
-      </nav>
-      
-      <div className="sidebar-footer">
-        {organization && (
-          <div className="organization-info">
-            <span className="organization-name">{organization.name}</span>
-          </div>
-        )}
-      </div>
-    </aside>
+      {/* Mobile navigation */}
+      {isMenuOpen && (
+        <nav className="mobile-nav">
+          <ul>
+            <li className={currentPage === 'dashboard' ? 'active' : ''}>
+              <a href="#" onClick={() => { onNavigate('dashboard'); setIsMenuOpen(false); }}>
+                <span className="icon">📊</span>
+                <span>Dashboard</span>
+              </a>
+            </li>
+            <li className={currentPage === 'grants' ? 'active' : ''}>
+              <a href="#" onClick={() => { onNavigate('grants'); setIsMenuOpen(false); }}>
+                <span className="icon">📝</span>
+                <span>Grants</span>
+              </a>
+            </li>
+            <li className={currentPage === 'organization' ? 'active' : ''}>
+              <a href="#" onClick={() => { onNavigate('organization'); setIsMenuOpen(false); }}>
+                <span className="icon">🏢</span>
+                <span>Organization</span>
+              </a>
+            </li>
+            <li className={currentPage === 'scraper' ? 'active' : ''}>
+              <a href="/scraper" target="_blank">
+                <span className="icon">🔍</span>
+                <span>Grant Scraper</span>
+              </a>
+            </li>
+          </ul>
+        </nav>
+      )}
+    </header>
   );
 }
 
