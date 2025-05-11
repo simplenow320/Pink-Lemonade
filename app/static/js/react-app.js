@@ -116,6 +116,39 @@ function App() {
 // TopNavbar component for navigation (replaces Sidebar)
 function TopNavbar({ currentPage, onNavigate, organization }) {
   const [isMenuOpen, setIsMenuOpen] = React.useState(false);
+  
+  // Add event listener to close menu when clicking outside
+  React.useEffect(() => {
+    const closeMenu = (e) => {
+      // Check if menu is open and click is outside the mobile-nav
+      if (isMenuOpen && !e.target.closest('.mobile-nav') && !e.target.closest('.mobile-menu-button')) {
+        setIsMenuOpen(false);
+      }
+    };
+    
+    // Add event listener when menu is open
+    if (isMenuOpen) {
+      document.addEventListener('click', closeMenu);
+    }
+    
+    // Cleanup event listener on component unmount or menu close
+    return () => {
+      document.removeEventListener('click', closeMenu);
+    };
+  }, [isMenuOpen]);
+  
+  // Prevent body scrolling when mobile menu is open
+  React.useEffect(() => {
+    if (isMenuOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [isMenuOpen]);
 
   return (
     <header className="top-navbar">
@@ -128,25 +161,25 @@ function TopNavbar({ currentPage, onNavigate, organization }) {
         <nav className="desktop-nav">
           <ul>
             <li className={currentPage === 'dashboard' ? 'active' : ''}>
-              <a href="#" onClick={() => onNavigate('dashboard')}>
+              <a href="#" onClick={(e) => { e.preventDefault(); onNavigate('dashboard'); }}>
                 <span className="icon">📊</span>
                 <span>Dashboard</span>
               </a>
             </li>
             <li className={currentPage === 'grants' ? 'active' : ''}>
-              <a href="#" onClick={() => onNavigate('grants')}>
+              <a href="#" onClick={(e) => { e.preventDefault(); onNavigate('grants'); }}>
                 <span className="icon">📝</span>
                 <span>Grants</span>
               </a>
             </li>
             <li className={currentPage === 'organization' ? 'active' : ''}>
-              <a href="#" onClick={() => onNavigate('organization')}>
+              <a href="#" onClick={(e) => { e.preventDefault(); onNavigate('organization'); }}>
                 <span className="icon">🏢</span>
                 <span>Organization</span>
               </a>
             </li>
             <li className={currentPage === 'scraper' ? 'active' : ''}>
-              <a href="/scraper" target="_blank">
+              <a href="/scraper" target="_blank" rel="noopener noreferrer">
                 <span className="icon">🔍</span>
                 <span>Grant Scraper</span>
               </a>
@@ -154,42 +187,62 @@ function TopNavbar({ currentPage, onNavigate, organization }) {
           </ul>
         </nav>
         
-        {/* Mobile menu button */}
-        <button className="mobile-menu-button" onClick={() => setIsMenuOpen(!isMenuOpen)}>
+        {/* Mobile menu button with ARIA attributes for accessibility */}
+        <button 
+          className="mobile-menu-button" 
+          onClick={() => setIsMenuOpen(!isMenuOpen)}
+          aria-expanded={isMenuOpen}
+          aria-label={isMenuOpen ? "Close menu" : "Open menu"}
+        >
           <span className="icon">{isMenuOpen ? '✕' : '☰'}</span>
         </button>
       </div>
       
-      {/* Mobile navigation */}
+      {/* Mobile navigation - Using 'active' class for animation */}
+      <nav className={`mobile-nav ${isMenuOpen ? 'active' : ''}`}>
+        <ul>
+          <li className={currentPage === 'dashboard' ? 'active' : ''}>
+            <a href="#" onClick={(e) => { e.preventDefault(); onNavigate('dashboard'); setIsMenuOpen(false); }}>
+              <span className="icon">📊</span>
+              <span>Dashboard</span>
+            </a>
+          </li>
+          <li className={currentPage === 'grants' ? 'active' : ''}>
+            <a href="#" onClick={(e) => { e.preventDefault(); onNavigate('grants'); setIsMenuOpen(false); }}>
+              <span className="icon">📝</span>
+              <span>Grants</span>
+            </a>
+          </li>
+          <li className={currentPage === 'organization' ? 'active' : ''}>
+            <a href="#" onClick={(e) => { e.preventDefault(); onNavigate('organization'); setIsMenuOpen(false); }}>
+              <span className="icon">🏢</span>
+              <span>Organization</span>
+            </a>
+          </li>
+          <li className={currentPage === 'scraper' ? 'active' : ''}>
+            <a href="/scraper" target="_blank" rel="noopener noreferrer">
+              <span className="icon">🔍</span>
+              <span>Grant Scraper</span>
+            </a>
+          </li>
+          {/* Adding organization name in mobile menu */}
+          {organization && (
+            <li className="organization-info">
+              <div className="organization-name">
+                {organization.name || "Your Organization"}
+              </div>
+            </li>
+          )}
+        </ul>
+      </nav>
+      
+      {/* Overlay when mobile menu is open */}
       {isMenuOpen && (
-        <nav className="mobile-nav">
-          <ul>
-            <li className={currentPage === 'dashboard' ? 'active' : ''}>
-              <a href="#" onClick={() => { onNavigate('dashboard'); setIsMenuOpen(false); }}>
-                <span className="icon">📊</span>
-                <span>Dashboard</span>
-              </a>
-            </li>
-            <li className={currentPage === 'grants' ? 'active' : ''}>
-              <a href="#" onClick={() => { onNavigate('grants'); setIsMenuOpen(false); }}>
-                <span className="icon">📝</span>
-                <span>Grants</span>
-              </a>
-            </li>
-            <li className={currentPage === 'organization' ? 'active' : ''}>
-              <a href="#" onClick={() => { onNavigate('organization'); setIsMenuOpen(false); }}>
-                <span className="icon">🏢</span>
-                <span>Organization</span>
-              </a>
-            </li>
-            <li className={currentPage === 'scraper' ? 'active' : ''}>
-              <a href="/scraper" target="_blank">
-                <span className="icon">🔍</span>
-                <span>Grant Scraper</span>
-              </a>
-            </li>
-          </ul>
-        </nav>
+        <div 
+          className="mobile-menu-overlay" 
+          onClick={() => setIsMenuOpen(false)}
+          aria-hidden="true"
+        />
       )}
     </header>
   );

@@ -642,6 +642,82 @@ a:hover {
   .hero-actions .btn {
     width: 100%;
   }
+  
+  /* Grants filter controls mobile optimization */
+  #grants-filters .card-body {
+    padding: 0.75rem;
+  }
+  
+  #grants-filters .row {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+  
+  #grants-filters .col-md-3 {
+    width: 100%;
+    padding: 0;
+  }
+  
+  #grants-filters .form-group {
+    margin-bottom: 0.5rem;
+  }
+  
+  #grants-filters .btn {
+    padding: 0.75rem 1rem;
+    margin-top: 0.5rem;
+    width: 100%;
+  }
+  
+  #grants-filters #applyFilters {
+    flex: 3;
+  }
+  
+  #grants-filters #resetFilters {
+    flex: 1;
+  }
+  
+  /* Filter summary responsive design */
+  #filter-summary {
+    font-size: 0.875rem;
+    padding: 0.5rem 0.75rem;
+    text-align: center;
+  }
+  
+  /* Mobile pagination */
+  .pagination {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 0.25rem;
+    margin: 1rem 0;
+  }
+  
+  .pagination-item {
+    margin: 0;
+    min-width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  
+  /* Mobile search form */
+  .search-form {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+  }
+  
+  .search-form .form-control {
+    width: 100%;
+  }
+  
+  .search-form .btn {
+    width: 100%;
+  }
 }
 
 @media (min-width: 641px) and (max-width: 768px) {
@@ -1388,12 +1464,47 @@ a:hover {
   overflow-y: auto;
   transform: translateY(-100%);
   opacity: 0;
+  pointer-events: none;
   transition: transform 0.3s ease, opacity 0.3s ease;
 }
 
 .mobile-nav.active {
   transform: translateY(0);
   opacity: 1;
+  pointer-events: auto;
+}
+
+/* Mobile menu overlay for better UX */
+.mobile-menu-overlay {
+  position: fixed;
+  top: 70px;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  z-index: 98;
+  animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* Style for organization info in mobile menu */
+.mobile-nav .organization-info {
+  padding: 1rem 1.5rem;
+  border-top: 1px solid var(--gray-100);
+  margin-top: 1rem;
+}
+
+.mobile-nav .organization-name {
+  font-weight: 600;
+  color: var(--primary-color);
 }
 
 .mobile-nav ul {
