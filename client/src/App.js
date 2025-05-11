@@ -1,18 +1,32 @@
-import React, { useState, useEffect } from 'react';
-import { Routes, Route } from 'react-router-dom';
-import MainLayout from './components/layout/MainLayout';
-import DashboardPage from './pages/DashboardPage';
-import GrantsPage from './pages/GrantsPage';
-import GrantDetailPage from './pages/GrantDetailPage';
-import ProfilePage from './pages/ProfilePage';
-import NarrativePage from './pages/NarrativePage';
-import ScraperPage from './pages/ScraperPage';
-import AnalyticsPage from './pages/AnalyticsPage';
-import WritingAssistantPage from './pages/WritingAssistantPage';
+import React, { useState, useEffect, lazy, Suspense } from 'react';
+import { Routes, Route, Navigate } from 'react-router-dom';
 import { initializeOrganization, ApiError } from './utils/api';
 import { useNotification } from './context/NotificationContext';
 import ErrorBoundary from './components/ErrorBoundary';
 import './App.css';
+
+// Modern layout
+import ModernLayout from './components/layout/ModernLayout';
+
+// Import pages using lazy loading for better performance
+const Dashboard = lazy(() => import('./pages/Dashboard'));
+const Grants = lazy(() => import('./pages/Grants'));
+const GrantDetail = lazy(() => import('./pages/GrantDetail'));
+const Organization = lazy(() => import('./pages/Organization'));
+const Narrative = lazy(() => import('./pages/Narrative'));
+const Scraper = lazy(() => import('./pages/Scraper'));
+const Analytics = lazy(() => import('./pages/Analytics'));
+const WritingAssistant = lazy(() => import('./pages/WritingAssistant'));
+
+// Loading component for suspense fallback
+const PageLoader = () => (
+  <div className="flex items-center justify-center min-h-[70vh]">
+    <div className="flex flex-col items-center">
+      <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500"></div>
+      <p className="mt-4 text-gray-600">Loading...</p>
+    </div>
+  </div>
+);
 
 function App() {
   const [loading, setLoading] = useState(true);
@@ -23,13 +37,11 @@ function App() {
   useEffect(() => {
     const initialize = async () => {
       try {
-        // First check if we have an organization profile
+        console.log('GrantFlow application initialized');
         const result = await initializeOrganization();
-        console.log('Organization initialization result:', result);
       } catch (err) {
         console.error('Error initializing application:', err);
         
-        // Use the error message from ApiError if available
         const errorMessage = err instanceof ApiError
           ? err.message
           : 'Failed to initialize application. Please reload the page.';
@@ -44,90 +56,99 @@ function App() {
     initialize();
   }, [addError]);
   
-  // Show loading screen while initializing
+  // App loading screen
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-gray-50">
         <div className="text-center">
-          <div className="inline-block animate-spin h-8 w-8 border-4 border-orange-500 border-t-transparent rounded-full mb-4"></div>
-          <h2 className="text-xl font-semibold text-gray-700">Loading GrantFlow...</h2>
+          <div className="flex flex-col items-center">
+            <div className="inline-block animate-spin h-10 w-10 border-4 border-orange-500 border-t-transparent rounded-full mb-4"></div>
+            <h2 className="text-xl font-semibold text-gray-700">Loading GrantFlow...</h2>
+            <p className="mt-2 text-sm text-gray-500">Connecting to your grants management system</p>
+          </div>
         </div>
       </div>
     );
   }
   
-  // Show error screen if initialization failed
+  // App error screen
   if (error) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-gray-50">
-        <div className="text-center max-w-md p-6 bg-white rounded-lg shadow-md">
-          <svg className="w-12 h-12 text-red-500 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-          </svg>
-          <h2 className="text-xl font-semibold text-gray-700 mb-2">Error</h2>
-          <p className="text-gray-600 mb-4">{error}</p>
+        <div className="text-center max-w-md p-8 bg-white rounded-xl shadow-lg">
+          <div className="bg-red-100 p-3 rounded-full inline-flex mb-4">
+            <svg className="w-8 h-8 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+          </div>
+          <h2 className="text-xl font-bold text-gray-800 mb-2">Connection Error</h2>
+          <p className="text-gray-600 mb-6">{error}</p>
           <button 
             onClick={() => window.location.reload()}
-            className="px-4 py-2 bg-orange-500 text-white rounded hover:bg-orange-600 transition-colors"
+            className="w-full px-4 py-2 bg-orange-500 text-white rounded-lg font-medium hover:bg-orange-600 transition-colors shadow-md hover:shadow-lg"
           >
-            Retry
+            Try Again
           </button>
         </div>
       </div>
     );
   }
 
-  // Use our completely new modern layout - no sidebar at all, all navigation in the top menu bar
+  // Modern app layout with all routes
   return (
-    <MainLayout>
-      <Routes>
-        <Route path="/" element={
-          <ErrorBoundary>
-            <DashboardPage />
-          </ErrorBoundary>
-        } />
-        <Route path="/grants" element={
-          <ErrorBoundary>
-            <GrantsPage />
-          </ErrorBoundary>
-        } />
-        <Route path="/grants/:id" element={
-          <ErrorBoundary>
-            <GrantDetailPage />
-          </ErrorBoundary>
-        } />
-        <Route path="/organization" element={
-          <ErrorBoundary>
-            <ProfilePage />
-          </ErrorBoundary>
-        } />
-        <Route path="/narratives/:grantId" element={
-          <ErrorBoundary>
-            <NarrativePage />
-          </ErrorBoundary>
-        } />
-        <Route path="/scraper" element={
-          <ErrorBoundary>
-            <ScraperPage />
-          </ErrorBoundary>
-        } />
-        <Route path="/analytics" element={
-          <ErrorBoundary>
-            <AnalyticsPage />
-          </ErrorBoundary>
-        } />
-        <Route path="/writing-assistant" element={
-          <ErrorBoundary>
-            <WritingAssistantPage />
-          </ErrorBoundary>
-        } />
-        <Route path="/writing-assistant/:grantId" element={
-          <ErrorBoundary>
-            <WritingAssistantPage />
-          </ErrorBoundary>
-        } />
-      </Routes>
-    </MainLayout>
+    <ModernLayout>
+      <Suspense fallback={<PageLoader />}>
+        <Routes>
+          <Route path="/" element={
+            <ErrorBoundary>
+              <Dashboard />
+            </ErrorBoundary>
+          } />
+          <Route path="/grants" element={
+            <ErrorBoundary>
+              <Grants />
+            </ErrorBoundary>
+          } />
+          <Route path="/grants/:id" element={
+            <ErrorBoundary>
+              <GrantDetail />
+            </ErrorBoundary>
+          } />
+          <Route path="/organization" element={
+            <ErrorBoundary>
+              <Organization />
+            </ErrorBoundary>
+          } />
+          <Route path="/narratives/:grantId" element={
+            <ErrorBoundary>
+              <Narrative />
+            </ErrorBoundary>
+          } />
+          <Route path="/scraper" element={
+            <ErrorBoundary>
+              <Scraper />
+            </ErrorBoundary>
+          } />
+          <Route path="/analytics" element={
+            <ErrorBoundary>
+              <Analytics />
+            </ErrorBoundary>
+          } />
+          <Route path="/writing-assistant" element={
+            <ErrorBoundary>
+              <WritingAssistant />
+            </ErrorBoundary>
+          } />
+          <Route path="/writing-assistant/:grantId" element={
+            <ErrorBoundary>
+              <WritingAssistant />
+            </ErrorBoundary>
+          } />
+          {/* Fallback route for any other paths */}
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
+      </Suspense>
+    </ModernLayout>
   );
 }
 

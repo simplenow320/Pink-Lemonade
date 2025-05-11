@@ -1,13 +1,16 @@
 import React from 'react';
-import ReactDOM from 'react-dom';
+import { createRoot } from 'react-dom/client';
 import './index.css';
 import App from './App';
 import { BrowserRouter } from 'react-router-dom';
 import ErrorBoundary from './components/ErrorBoundary';
 import { NotificationProvider } from './context/NotificationContext';
 
-// Use the more modern createRoot API if you're using React 18
-ReactDOM.render(
+// Modern React 18 createRoot API
+const container = document.getElementById('root');
+const root = createRoot(container);
+
+root.render(
   <React.StrictMode>
     <ErrorBoundary>
       <NotificationProvider>
@@ -16,6 +19,5 @@ ReactDOM.render(
         </BrowserRouter>
       </NotificationProvider>
     </ErrorBoundary>
-  </React.StrictMode>,
-  document.getElementById('root')
+  </React.StrictMode>
 );
