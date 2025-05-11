@@ -183,7 +183,11 @@ def discover_grants(org_profile: Dict[str, Any], limit: int = 5) -> List[Dict[st
             # Parse the response
             content = response.choices[0].message.content
             try:
-                results = json.loads(content)
+                # Make sure content is not None before parsing
+                if content is not None:
+                    results = json.loads(str(content))
+                else:
+                    results = {"grants": []}
                 
                 # The results should be a list of grants
                 grants = results.get("grants", [])
@@ -315,7 +319,11 @@ def discover_grants_for_focus_area(focus_area: str, limit: int = 3) -> List[Dict
         # Parse the response
         content = response.choices[0].message.content
         try:
-            results = json.loads(content)
+            # Make sure content is not None before parsing
+            if content is not None:
+                results = json.loads(str(content))
+            else:
+                results = {"grants": []}
             
             # The results should be a list of grants
             grants = results.get("grants", [])
