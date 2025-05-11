@@ -5,7 +5,10 @@
     "location": "National",
     "phone": "(317) 924-5471",
     "contact_email": "info@lillyendowment.org",
-    "contact_name": "Grant Inquiry Department"
+    "contact_name": "Grant Inquiry Department",
+    "match_score": 5,
+    "best_fit_initiatives": ["Pastors Thriving Together", "Urban Church Planting"],
+    "grant_programs": ["Thriving Congregations Initiative", "Clergy Renewal & National Preaching Initiatives"]
   },
   {
     "name": "The Maclellan Foundation",
@@ -13,7 +16,10 @@
     "location": "National",
     "phone": "(423) 756-0206",
     "contact_email": "contact@maclellan.net",
-    "contact_name": "Grants Manager"
+    "contact_name": "Grants Manager",
+    "match_score": 5,
+    "best_fit_initiatives": ["Pastors Thriving Together", "Urban Church Planting"],
+    "grant_programs": ["Bridge Builder Fund (capacity-building/project grants via partner invitation)"]
   },
   {
     "name": "Mustard Seed Foundation",
