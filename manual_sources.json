@@ -251,5 +251,126 @@
     "match_score": 4,
     "best_fit_initiatives": ["Mental Health and the Church", "AI, The Church, and Urban Communities"],
     "grant_programs": ["Charlotte-Mecklenburg Community Grants ($5K–$30K)", "Donor-Advised Funds"]
+  },
+  {
+    "name": "AI Grant",
+    "url": "https://aigrant.com",
+    "location": "National",
+    "phone": "",
+    "contact_email": "info@aigrant.com",
+    "contact_name": "Grant Administrator",
+    "match_score": 5,
+    "best_fit_initiatives": ["AI, The Church, and Urban Communities"],
+    "grant_programs": ["AI Accelerator ($250,000 funding + cloud credits)"]
+  },
+  {
+    "name": "National AI Research Institutes (NSF)",
+    "url": "https://www.nsf.gov/funding/opportunities/national-artificial-intelligence-research-institutes",
+    "location": "National",
+    "phone": "(703) 292-5111",
+    "contact_email": "info@nsf.gov",
+    "contact_name": "Program Director",
+    "match_score": 4,
+    "best_fit_initiatives": ["AI, The Church, and Urban Communities"],
+    "grant_programs": ["National AI Research Institutes Program"]
+  },
+  {
+    "name": "Cooperative AI Foundation",
+    "url": "https://www.cooperativeai.com/foundation",
+    "location": "National",
+    "phone": "",
+    "contact_email": "hello@cooperativeai.com",
+    "contact_name": "Research Grants Manager",
+    "match_score": 5,
+    "best_fit_initiatives": ["AI, The Church, and Urban Communities", "Mental Health and the Church"],
+    "grant_programs": ["Cooperative AI Research Grants"]
+  },
+  {
+    "name": "Open Philanthropy",
+    "url": "https://www.openphilanthropy.org/grants/openai-general-support/",
+    "location": "National",
+    "phone": "",
+    "contact_email": "info@openphilanthropy.org",
+    "contact_name": "AI Safety Program Officer",
+    "match_score": 5,
+    "best_fit_initiatives": ["AI, The Church, and Urban Communities"],
+    "grant_programs": ["AI Safety Grants", "Responsible AI Development Support"]
+  },
+  {
+    "name": "Google.org – AI Opportunity Fund",
+    "url": "https://aiopportunityfund.withgoogle.com/",
+    "location": "National",
+    "phone": "",
+    "contact_email": "aiopportunityfund@google.com",
+    "contact_name": "Program Manager",
+    "match_score": 5,
+    "best_fit_initiatives": ["AI, The Church, and Urban Communities"],
+    "grant_programs": ["AI Skills Development Grants", "AI Education Initiatives"]
+  },
+  {
+    "name": "NSF SBIR/STTR – Artificial Intelligence Topic",
+    "url": "https://seedfund.nsf.gov/topics/artificial-intelligence/",
+    "location": "National",
+    "phone": "(703) 292-8050",
+    "contact_email": "sbir@nsf.gov",
+    "contact_name": "Program Director",
+    "match_score": 4,
+    "best_fit_initiatives": ["AI, The Church, and Urban Communities"],
+    "grant_programs": ["Small Business Innovation Research Grants", "AI Technology Transfer Grants"]
+  },
+  {
+    "name": "NIH Bridge2AI Program",
+    "url": "https://commonfund.nih.gov/bridge2ai",
+    "location": "National",
+    "phone": "(301) 496-4000",
+    "contact_email": "bridge2ai@od.nih.gov",
+    "contact_name": "Program Officer",
+    "match_score": 4,
+    "best_fit_initiatives": ["AI, The Church, and Urban Communities", "Mental Health and the Church"],
+    "grant_programs": ["Biomedical AI Research Grants", "Health Data Generation Projects"]
+  },
+  {
+    "name": "National AI Research Resource (NAIRR) Pilot",
+    "url": "https://www.nsf.gov/focus-areas/artificial-intelligence/nairr",
+    "location": "National",
+    "phone": "(703) 292-5111",
+    "contact_email": "nairr@nsf.gov",
+    "contact_name": "NAIRR Coordinator",
+    "match_score": 4,
+    "best_fit_initiatives": ["AI, The Church, and Urban Communities"],
+    "grant_programs": ["AI Research Resource Access", "Computational Resources Support"]
+  },
+  {
+    "name": "Microsoft Nonprofit Tech Acceleration (NTA)",
+    "url": "https://www.microsoft.com/en-us/nonprofits/nonprofit-tech-acceleration",
+    "location": "National",
+    "phone": "",
+    "contact_email": "nta@microsoft.com",
+    "contact_name": "Nonprofit Tech Advisor",
+    "match_score": 5,
+    "best_fit_initiatives": ["AI, The Church, and Urban Communities"],
+    "grant_programs": ["Technology Grants for Nonprofits", "Technical Consulting Services"]
+  },
+  {
+    "name": "Okta for Good – Nonprofit Technology Initiative",
+    "url": "https://www.okta.com/okta-for-good/nonprofit-technology-initiative/",
+    "location": "National",
+    "phone": "(888) 722-7871",
+    "contact_email": "oktaforgood@okta.com",
+    "contact_name": "Nonprofit Tech Initiative Manager",
+    "match_score": 5,
+    "best_fit_initiatives": ["AI, The Church, and Urban Communities"],
+    "grant_programs": ["Nonprofit Technology Multiyear Funding (up to $400,000)"]
+  },
+  {
+    "name": "Omidyar Network",
+    "url": "https://omidyar.com/",
+    "location": "National",
+    "phone": "(650) 482-2500",
+    "contact_email": "info@omidyar.com",
+    "contact_name": "Responsible Technology Lead",
+    "match_score": 5,
+    "best_fit_initiatives": ["AI, The Church, and Urban Communities"],
+    "grant_programs": ["Inclusive Generative AI Initiative Grants", "Responsible AI Development"]
   }
 ]

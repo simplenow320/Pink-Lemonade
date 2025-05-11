@@ -1,0 +1,44 @@
+Certainly! Here is a curated list of prominent Christian organizations and foundations that provide grants to churches, ministries, and faith-based nonprofits:
+
+⸻
+
+🏆 Major Christian Grant-Making Foundations
+	1.	National Christian Foundation (NCF)
+One of the largest Christian grantmakers in the U.S., NCF facilitates donor-advised funds supporting various Christian ministries and charitable causes.
+🔗 https://www.ncfgiving.com
+	2.	Lilly Endowment Inc.
+Based in Indianapolis, this foundation offers substantial grants to strengthen congregations and support religious education.
+🔗 https://lillyendowment.org
+	3.	WinShape Foundation
+Established by Chick-fil-A founder Truett Cathy, WinShape supports programs in leadership development, marriage enrichment, and youth camps.
+🔗 https://winshape.org
+	4.	LCMS Foundation
+The Lutheran Church–Missouri Synod Foundation provides financial support to LCMS ministries, congregations, and schools through various planned giving instruments.
+🔗 https://www.lcmsfoundation.org
+	5.	Baptist Healing Trust
+Focused on improving healthcare access, this Tennessee-based foundation funds faith-based organizations serving vulnerable populations.
+🔗 https://healingtrust.org
+
+⸻
+
+📚 Christian Grant Directories and Resources
+	•	Christian Funding Directory
+An extensive database with over 8,000 funding sources for Christian ministries and nonprofits.
+🔗 https://npfunds.com/christian-funding-directory/ ￼
+	•	Cause IQ – Grants for Christian Organizations
+Provides data on grants awarded to Christian nonprofits, including information on grantmakers and funding amounts.
+🔗 https://www.causeiq.com/directory/grants/grants-for-christian-organizations/
+
+⸻
+
+🌍 International and UK-Based Christian Funders
+	•	Christian Funders’ Forum (UK)
+A network of Christian grant-making trusts and foundations in the UK, collaborating to support Christian mission initiatives.
+🔗 https://christianfundersforum.org ￼
+	•	Joseph Rank Trust (UK)
+An independent Christian grant-maker supporting projects that demonstrate a Christian approach to practical, educational, and spiritual needs.
+🔗 https://www.ranktrust.org ￼
+
+⸻
+
+If you’re interested in automating the process of monitoring these sites for new grant opportunities, I can provide guidance on setting up web scraping tools or integrating APIs where available. Let me know how you’d like to proceed!
