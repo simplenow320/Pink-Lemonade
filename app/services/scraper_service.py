@@ -81,9 +81,12 @@ def scrape_grants(url_list):
     
     return grants
 
-def run_scraping_job():
+def run_scraping_job(include_web_search=True):
     """
-    Run the scraping job for all active sources
+    Run the scraping job for all active sources and optionally perform internet-wide grant searching
+    
+    Args:
+        include_web_search (bool): Whether to include internet-wide grant searching
     
     Returns:
         dict: Results of the scraping job
@@ -93,6 +96,7 @@ def run_scraping_job():
         "start_time": start_time,
         "end_time": None,
         "sources_scraped": 0,
+        "web_search_performed": include_web_search,
         "grants_found": 0,
         "grants_added": 0,
         "status": "completed",
@@ -101,17 +105,7 @@ def run_scraping_job():
     }
     
     try:
-        # Get all active scraper sources
-        sources = ScraperSource.query.filter_by(is_active=True).all()
-        
-        if not sources:
-            logger.warning("No active scraper sources found")
-            result["status"] = "completed"
-            result["error_message"] = "No active scraper sources found"
-            result["end_time"] = datetime.now()
-            return result
-        
-        # Get organization keywords for matching
+        # Get organization profile for matching
         org = Organization.query.first()
         if not org:
             logger.warning("No organization profile found for matching")
@@ -123,6 +117,36 @@ def run_scraping_job():
         org_keywords = org.keywords
         org_data = org.to_dict()
         
+        # Get all active scraper sources
+        sources = ScraperSource.query.filter_by(is_active=True).all()
+        
+        if not sources and not include_web_search:
+            logger.warning("No active scraper sources found and web search is disabled")
+            result["status"] = "completed"
+            result["error_message"] = "No active scraper sources found and web search is disabled"
+            result["end_time"] = datetime.now()
+            return result
+        
+        # First, perform internet-wide grant discovery if enabled
+        discovered_grants = []
+        if include_web_search:
+            logger.info("Starting internet-wide grant discovery")
+            try:
+                # Perform internet-wide grant discovery
+                discovered_grants = discover_grants(org_data, limit=10)
+                
+                result["grants_found"] += len(discovered_grants)
+                
+                if discovered_grants:
+                    logger.info(f"Discovered {len(discovered_grants)} grants from internet-wide search")
+                else:
+                    logger.info("No grants discovered from internet-wide search")
+                    
+            except Exception as e:
+                logger.error(f"Error during internet-wide grant discovery: {str(e)}")
+                # Continue with regular scraping even if internet search fails
+        
+        # Next, process foundation sources
         for source in sources:
             logger.info(f"Scraping source: {source.name}")
             
@@ -133,81 +157,121 @@ def run_scraping_job():
                 result["sources_scraped"] += 1
                 result["grants_found"] += len(grants)
                 
-                # Process each grant
-                for grant_data in grants:
-                    # Check if grant already exists (by title and funder)
-                    existing_grant = Grant.query.filter_by(
-                        title=grant_data.get('title'),
-                        funder=grant_data.get('funder')
-                    ).first()
-                    
-                    if existing_grant:
-                        logger.info(f"Grant already exists: {grant_data.get('title')}")
-                        continue
-                    
-                    # Use OpenAI API to get a real match score based on organization profile
-                    try:
-                        # Add organization data to grant for match analysis
-                        match_result = analyze_grant_match(grant_data, org_data)
-                        grant_data['match_score'] = match_result.get('match_score', 50)
-                        grant_data['match_explanation'] = match_result.get('match_explanation', 
-                                                          f"The grant aligns with {grant_data['match_score']}% of your organization's focus areas and requirements.")
-                    except Exception as e:
-                        logger.warning(f"Error getting match score: {str(e)}")
-                        # Fallback to estimating match based on keyword overlap
-                        org_keywords_set = set([k.lower() for k in org_keywords])
-                        grant_keywords = set([grant_data.get('title', '').lower(), 
-                                            grant_data.get('funder', '').lower()])
-                        if 'focus_areas' in grant_data and isinstance(grant_data['focus_areas'], list):
-                            grant_keywords.update([area.lower() for area in grant_data['focus_areas']])
-                        
-                        overlap = org_keywords_set.intersection(grant_keywords)
-                        match_score = min(95, max(30, len(overlap) * 10))
-                        grant_data['match_score'] = match_score
-                        grant_data['match_explanation'] = f"Based on keyword matching, this grant has {len(overlap)} keyword overlaps with your organization's profile."
-                    
-                    # Only add grants with match score above threshold (30%)
-                    if grant_data['match_score'] >= 30:
-                        # Create new grant
-                        new_grant = Grant(
-                            title=grant_data.get('title'),
-                            funder=grant_data.get('funder'),
-                            description=grant_data.get('description'),
-                            amount=grant_data.get('amount'),
-                            due_date=grant_data.get('due_date'),
-                            eligibility=grant_data.get('eligibility'),
-                            website=grant_data.get('website'),
-                            status="Not Started",
-                            match_score=grant_data.get('match_score', 0),
-                            match_explanation=grant_data.get('match_explanation', ''),
-                            focus_areas=grant_data.get('focus_areas', []),
-                            contact_info=grant_data.get('contact_info', ''),
-                            is_scraped=True,
-                            source_id=source.id
-                        )
-                        
-                        db.session.add(new_grant)
-                        db.session.commit()
-                        
-                        result["grants_added"] += 1
-                        result["new_grants"].append({
-                            "id": new_grant.id,
-                            "title": new_grant.title,
-                            "funder": new_grant.funder,
-                            "match_score": new_grant.match_score
-                        })
+                # Add source grants to the discovered grants for unified processing
+                discovered_grants.extend(grants)
             
             except Exception as e:
                 logger.error(f"Error scraping source {source.name}: {str(e)}")
+        
+        # Process all discovered grants (both from web search and foundation sources)
+        logger.info(f"Processing {len(discovered_grants)} total grants discovered")
+        for grant_data in discovered_grants:
+            # Check if grant already exists (by title and funder)
+            existing_grant = Grant.query.filter_by(
+                title=grant_data.get('title'),
+                funder=grant_data.get('funder')
+            ).first()
+            
+            if existing_grant:
+                logger.info(f"Grant already exists: {grant_data.get('title')}")
                 continue
             
-            # Update the last_scraped timestamp for the source
-            source.last_scraped = datetime.now()
-            db.session.commit()
+            # Use OpenAI API to get a real match score based on organization profile
+            try:
+                # Add organization data to grant for match analysis
+                match_result = analyze_grant_match(grant_data, org_data)
+                grant_data['match_score'] = match_result.get('score', 50)
+                grant_data['match_explanation'] = match_result.get('explanation', 
+                                                  f"The grant aligns with {grant_data['match_score']}% of your organization's focus areas and requirements.")
+            except Exception as e:
+                logger.warning(f"Error getting match score: {str(e)}")
+                # Fallback to estimating match based on keyword overlap
+                org_keywords_set = set([k.lower() for k in org_keywords])
+                grant_keywords = set([grant_data.get('title', '').lower(), 
+                                    grant_data.get('funder', '').lower()])
+                if 'focus_areas' in grant_data and isinstance(grant_data['focus_areas'], list):
+                    grant_keywords.update([area.lower() for area in grant_data['focus_areas']])
+                
+                overlap = org_keywords_set.intersection(grant_keywords)
+                match_score = min(95, max(30, len(overlap) * 10))
+                grant_data['match_score'] = match_score
+                grant_data['match_explanation'] = f"Based on keyword matching, this grant has {len(overlap)} keyword overlaps with your organization's profile."
             
-            # In demo mode, use a shorter delay to speed up response time
-            time.sleep(0.5)
+            # Only add grants with match score above threshold (30%)
+            if grant_data.get('match_score', 0) >= 30:
+                try:
+                    # Determine source_id - for internet-discovered grants we don't have a source
+                    source_id = None
+                    # Try to find a matching source in the database for web-discovered grants
+                    if 'discovery_method' in grant_data and grant_data['discovery_method'] in ['web-search', 'focused-search']:
+                        # Create a special "Internet Search" source if it doesn't exist
+                        web_source = ScraperSource.query.filter_by(name="Internet Search").first()
+                        if not web_source:
+                            web_source = ScraperSource(
+                                name="Internet Search",
+                                url="https://grantflow.app/web-discovery",
+                                is_active=True,
+                                last_scraped=datetime.now()
+                            )
+                            db.session.add(web_source)
+                            db.session.commit()
+                        source_id = web_source.id
+                    
+                    # Create new grant
+                    new_grant = Grant(
+                        title=grant_data.get('title'),
+                        funder=grant_data.get('funder'),
+                        description=grant_data.get('description'),
+                        amount=grant_data.get('amount'),
+                        due_date=grant_data.get('due_date'),
+                        eligibility=grant_data.get('eligibility'),
+                        website=grant_data.get('website'),
+                        status="Not Started",
+                        match_score=grant_data.get('match_score', 0),
+                        match_explanation=grant_data.get('match_explanation', ''),
+                        focus_areas=grant_data.get('focus_areas', []),
+                        contact_info=grant_data.get('contact_info', ''),
+                        is_scraped=True,
+                        source_id=source_id
+                    )
+                    
+                    db.session.add(new_grant)
+                    db.session.commit()
+                    
+                    result["grants_added"] += 1
+                    result["new_grants"].append({
+                        "id": new_grant.id,
+                        "title": new_grant.title,
+                        "funder": new_grant.funder,
+                        "match_score": new_grant.match_score
+                    })
+                    logger.info(f"Added new grant: {new_grant.title} from {new_grant.funder}")
+                except Exception as e:
+                    logger.error(f"Error saving grant {grant_data.get('title')}: {str(e)}")
+                    continue
+            
+        # Update the scraper history
+        history = ScraperHistory(
+            start_time=start_time,
+            end_time=datetime.now(),
+            sources_scraped=result["sources_scraped"],
+            grants_found=result["grants_found"],
+            grants_added=result["grants_added"],
+            error_message=result["error_message"]
+        )
+        db.session.add(history)
+        db.session.commit()
+        
+        # Set end time
+        result["end_time"] = datetime.now()
+        return result
     
+    except Exception as e:
+        logger.error(f"Error in scraping job: {str(e)}")
+        result["status"] = "error"
+        result["error_message"] = str(e)
+        result["end_time"] = datetime.now()
+        return result
     except Exception as e:
         logger.error(f"Error running scraping job: {str(e)}")
         result["status"] = "failed"
