@@ -1,1 +1,161 @@
-[]
+{
+  "organization": {
+    "name": "THRIVE Urban Ministries",
+    "mission_statement": "Empowering urban communities through faith-based initiatives, technology training, and mental health services.",
+    "description": "THRIVE Urban Ministries is dedicated to transforming urban communities through holistic programs that address spiritual, educational, and mental health needs.",
+    "focus_areas": ["Community Development", "Faith-based Programs", "Technology Education", "Mental Health Services"],
+    "geographic_focus": ["Urban Centers", "Inner-city Neighborhoods", "Underserved Communities"],
+    "funding_priorities": [
+      "Faith-based community development",
+      "Technology training for disadvantaged youth",
+      "Mental health resources for urban communities",
+      "AI education initiatives"
+    ],
+    "population_served": "Urban residents with focus on youth, families, and vulnerable populations",
+    "annual_budget": 750000,
+    "website": "https://www.thriveurbanministries.org",
+    "contact_email": "grants@thriveurbanministries.org",
+    "phone": "(555) 123-4567",
+    "address": "123 Hope Street, Urban City, ST 12345",
+    "year_founded": 2010,
+    "num_employees": 25,
+    "num_volunteers": 150,
+    "tax_id": "12-3456789",
+    "ai_initiatives": [
+      {
+        "name": "AI in the City",
+        "description": "A program teaching AI literacy to underserved urban communities",
+        "focus": "AI education and training",
+        "target_audience": "Urban youth and young adults",
+        "goals": ["Increase AI literacy", "Prepare for AI-related careers", "Bridge the technology gap"]
+      }
+    ]
+  },
+  "grants": [
+    {
+      "title": "Technology Training Program",
+      "funder": "Smith Family Foundation",
+      "amount": 75000,
+      "due_date": "2025-08-15",
+      "description": "Funding for technology training programs in underserved communities.",
+      "url": "https://www.smithfoundation.org/grants/tech-training",
+      "status": "not_started",
+      "category": "Technology Education",
+      "recurring": true,
+      "match_required": false,
+      "match_percentage": 0,
+      "match_score": 4,
+      "notes": "Initial outreach made, funder expressed interest in our program",
+      "contact_name": "John Smith",
+      "contact_email": "j.smith@smithfoundation.org",
+      "contact_phone": "(555) 987-6543",
+      "submission_url": "https://www.smithfoundation.org/grants/apply",
+      "application_process": "Online submission with detailed project budget and timeline",
+      "grant_cycle": "Annual with August deadline"
+    },
+    {
+      "title": "Urban Community Development Grant",
+      "funder": "Urban Renewal Trust",
+      "amount": 120000,
+      "due_date": "2025-06-30",
+      "description": "Supporting faith-based initiatives for urban community development.",
+      "url": "https://www.urbantrust.org/development-grants",
+      "status": "in_progress",
+      "category": "Community Development",
+      "recurring": true,
+      "match_required": true,
+      "match_percentage": 25,
+      "match_score": 5,
+      "notes": "Draft proposal in review by program staff",
+      "contact_name": "Maria Rodriguez",
+      "contact_email": "m.rodriguez@urbantrust.org",
+      "contact_phone": "(555) 234-5678",
+      "submission_url": "https://grants.urbantrust.org/apply",
+      "application_process": "Two-stage application with letter of interest followed by full proposal",
+      "grant_cycle": "Bi-annual (January and June deadlines)"
+    },
+    {
+      "title": "Mental Health Services Expansion",
+      "funder": "Wellness Foundation",
+      "amount": 95000,
+      "due_date": "2025-07-20",
+      "description": "Funding to expand mental health services in urban communities.",
+      "url": "https://wellnessfoundation.org/mental-health-grants",
+      "status": "not_started",
+      "category": "Mental Health Services",
+      "recurring": false,
+      "match_required": false,
+      "match_percentage": 0,
+      "match_score": 4,
+      "notes": "Need to prepare comprehensive mental health program expansion plan",
+      "contact_name": "Dr. Sarah Johnson",
+      "contact_email": "s.johnson@wellnessfoundation.org",
+      "contact_phone": "(555) 345-6789",
+      "submission_url": "https://wellnessfoundation.org/apply",
+      "application_process": "One-stage application with detailed program description and outcomes measurement plan",
+      "grant_cycle": "Annual summer cycle"
+    }
+  ],
+  "scraper_sources": [
+    {
+      "name": "Smith Family Foundation",
+      "url": "https://www.smithfoundation.org/grants",
+      "location": "Boston, MA",
+      "phone": "(555) 987-6543",
+      "contact_email": "grants@smithfoundation.org",
+      "contact_name": "John Smith",
+      "match_score": 4,
+      "best_fit_initiatives": ["Technology Education", "AI in the City"],
+      "grant_programs": ["Technology Training Program", "Education Innovation Fund"],
+      "selector_config": {
+        "grants_container": ".grants-list",
+        "grant_item": ".grant-item",
+        "title": ".grant-title",
+        "description": ".grant-description",
+        "amount": ".grant-amount",
+        "deadline": ".grant-deadline"
+      },
+      "is_active": true
+    },
+    {
+      "name": "Urban Renewal Trust",
+      "url": "https://www.urbantrust.org/grants",
+      "location": "Chicago, IL",
+      "phone": "(555) 234-5678",
+      "contact_email": "grants@urbantrust.org",
+      "contact_name": "Maria Rodriguez",
+      "match_score": 5,
+      "best_fit_initiatives": ["Community Development", "Faith-based Programs"],
+      "grant_programs": ["Urban Community Development Grant", "Faith-based Leadership Program"],
+      "selector_config": {
+        "grants_container": "#grants-container",
+        "grant_item": ".grant-opportunity",
+        "title": "h3.grant-title",
+        "description": "p.grant-desc",
+        "amount": "span.amount",
+        "deadline": "span.deadline"
+      },
+      "is_active": true
+    },
+    {
+      "name": "Wellness Foundation",
+      "url": "https://wellnessfoundation.org/grants",
+      "location": "New York, NY",
+      "phone": "(555) 345-6789",
+      "contact_email": "grants@wellnessfoundation.org",
+      "contact_name": "Dr. Sarah Johnson",
+      "match_score": 4,
+      "best_fit_initiatives": ["Mental Health Services"],
+      "grant_programs": ["Mental Health Services Expansion", "Community Wellness Program"],
+      "selector_config": {
+        "grants_container": ".opportunities-wrapper",
+        "grant_item": ".opportunity",
+        "title": ".opp-title",
+        "description": ".opp-description",
+        "amount": ".opp-amount",
+        "deadline": ".opp-deadline"
+      },
+      "is_active": true
+    }
+  ]
+}
