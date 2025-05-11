@@ -95,53 +95,84 @@ function App() {
   );
 }
 
-// Top navigation bar component
+// Top navigation bar component - Modern, mobile-first design
 function TopNavbar({ currentPage, onNavigate, organization }) {
   const [mobileMenuOpen, setMobileMenuOpen] = React.useState(false);
+  const [scrolled, setScrolled] = React.useState(false);
+  
+  // Handle scroll effect for glass-like navbar on scroll
+  React.useEffect(() => {
+    const handleScroll = () => {
+      if (window.scrollY > 10) {
+        setScrolled(true);
+      } else {
+        setScrolled(false);
+      }
+    };
+    
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+  
+  // Navigation items with icons
+  const navItems = [
+    { name: 'Dashboard', id: 'dashboard', icon: 'M4 5a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H5a1 1 0 01-1-1V5zm10 0a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1V5zm-10 10a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H5a1 1 0 01-1-1v-4zm10 0a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1v-4z' },
+    { name: 'Grants', id: 'grants', icon: 'M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z' },
+    { name: 'Organization', id: 'organization', icon: 'M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z' },
+    { name: 'Discover', id: 'scraper', icon: 'M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z' }
+  ];
   
   return (
-    <div className="navbar-container">
-      <div className="navbar-logo">
-        <span className="logo-text">GrantFlow</span>
-      </div>
-      
-      <nav className="navbar">
-        {/* Desktop navigation */}
-        <ul className="nav-links">
-          <li className={currentPage === 'dashboard' ? 'active' : ''}>
-            <a href="#" onClick={(e) => { e.preventDefault(); onNavigate('dashboard'); }}>Dashboard</a>
-          </li>
-          <li className={currentPage === 'grants' ? 'active' : ''}>
-            <a href="#" onClick={(e) => { e.preventDefault(); onNavigate('grants'); }}>Grants</a>
-          </li>
-          <li className={currentPage === 'organization' ? 'active' : ''}>
-            <a href="#" onClick={(e) => { e.preventDefault(); onNavigate('organization'); }}>Organization</a>
-          </li>
-          <li className={currentPage === 'scraper' ? 'active' : ''}>
-            <a href="#" onClick={(e) => { e.preventDefault(); onNavigate('scraper'); }}>Discover</a>
-          </li>
-        </ul>
+    <header className={`top-navbar ${scrolled ? 'scrolled' : ''}`}>
+      <div className="navbar-container">
+        {/* Logo */}
+        <div className="navbar-logo">
+          <h1>
+            <span className="text-primary">Grant</span>
+            <span className="text-primary-dark">Flow</span>
+          </h1>
+        </div>
         
-        <div className="user-info">
+        {/* Desktop navigation */}
+        <nav className="desktop-nav">
+          <ul>
+            {navItems.map((item) => (
+              <li key={item.id} className={currentPage === item.id ? 'active' : ''}>
+                <a href="#" onClick={(e) => { 
+                  e.preventDefault(); 
+                  onNavigate(item.id); 
+                }}>
+                  <svg className="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d={item.icon}></path>
+                  </svg>
+                  {item.name}
+                </a>
+              </li>
+            ))}
+          </ul>
+        </nav>
+        
+        {/* Organization name on desktop */}
+        <div className="user-info desktop-only">
           {organization && organization.name ? organization.name : 'My Organization'}
         </div>
         
-        {/* Mobile menu button with ARIA attributes for accessibility */}
+        {/* Mobile menu button */}
         <button 
-          className="mobile-menu-button" 
+          className="mobile-menu-button"
           onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
           aria-expanded={mobileMenuOpen}
           aria-label="Toggle navigation menu"
         >
-          <div className="hamburger">
+          <div className={`hamburger ${mobileMenuOpen ? 'active' : ''}`}>
             <span></span>
             <span></span>
             <span></span>
           </div>
         </button>
-      </nav>
+      </div>
       
-      {/* Mobile navigation - Using 'active' class for animation */}
+      {/* Mobile menu */}
       <div className={`mobile-nav ${mobileMenuOpen ? 'active' : ''}`}>
         <ul className="mobile-nav-links">
           <li>
@@ -150,18 +181,20 @@ function TopNavbar({ currentPage, onNavigate, organization }) {
               {organization && organization.name ? organization.name : 'My Organization'}
             </div>
           </li>
-          <li className={currentPage === 'dashboard' ? 'active' : ''}>
-            <a href="#" onClick={(e) => { e.preventDefault(); onNavigate('dashboard'); setMobileMenuOpen(false); }}>Dashboard</a>
-          </li>
-          <li className={currentPage === 'grants' ? 'active' : ''}>
-            <a href="#" onClick={(e) => { e.preventDefault(); onNavigate('grants'); setMobileMenuOpen(false); }}>Grants</a>
-          </li>
-          <li className={currentPage === 'organization' ? 'active' : ''}>
-            <a href="#" onClick={(e) => { e.preventDefault(); onNavigate('organization'); setMobileMenuOpen(false); }}>Organization</a>
-          </li>
-          <li className={currentPage === 'scraper' ? 'active' : ''}>
-            <a href="#" onClick={(e) => { e.preventDefault(); onNavigate('scraper'); setMobileMenuOpen(false); }}>Discover</a>
-          </li>
+          {navItems.map((item) => (
+            <li key={item.id} className={currentPage === item.id ? 'active' : ''}>
+              <a href="#" onClick={(e) => { 
+                e.preventDefault(); 
+                onNavigate(item.id); 
+                setMobileMenuOpen(false);
+              }}>
+                <svg className="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d={item.icon}></path>
+                </svg>
+                {item.name}
+              </a>
+            </li>
+          ))}
         </ul>
       </div>
       
@@ -170,7 +203,7 @@ function TopNavbar({ currentPage, onNavigate, organization }) {
         className={`mobile-nav-overlay ${mobileMenuOpen ? 'active' : ''}`}
         onClick={() => setMobileMenuOpen(false)}
       ></div>
-    </div>
+    </header>
   );
 }
 
