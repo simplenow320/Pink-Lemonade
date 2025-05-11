@@ -15,12 +15,12 @@ if OPENAI_API_KEY:
     from openai import OpenAI
     openai = OpenAI(api_key=OPENAI_API_KEY)
 
-def extract_grant_info(text):
+def extract_grant_info(grant_url):
     """
     Extract structured grant information from text using OpenAI
     
     Args:
-        text (str): The text containing grant information
+        grant_url (str): The URL containing grant information
         
     Returns:
         dict: Structured grant information
@@ -32,38 +32,21 @@ def extract_grant_info(text):
                 "error": "OpenAI API key not configured",
                 "title": "Unknown Grant",
                 "funder": "Unknown",
-                "description": text[:250] + "..." if len(text) > 250 else text,
+                "description": "Grant information unavailable without OpenAI API key",
                 "requires_api_key": True
             }
             
-        system_prompt = """
-        You are an expert at extracting grant information from text. Your task is to extract 
-        key details about a grant opportunity and format it into a structured JSON object.
+        system_prompt = """You are an AI data extractor. Input a single grant page URL. Fetch the page. Extract
+1. title
+2. summary
+3. due_date in YYYY-MM-DD
+4. amount as a number
+5. application_link
+6. contact_email if present
+7. eligibility_criteria
+Return as a JSON object."""
         
-        Extract the following fields (if present):
-        - title: The title of the grant
-        - funder: The organization providing the grant
-        - description: A brief description of the grant purpose
-        - amount: The grant amount (numerical value only)
-        - due_date: The application deadline in YYYY-MM-DD format
-        - eligibility: Who is eligible to apply
-        - website: The website URL for more information
-        - focus_areas: An array of focus areas (e.g., ["education", "health", "community development"])
-        - contact_info: Contact information for inquiries
-        
-        If information for a field is not available, use null for that field.
-        """
-        
-        # Truncate text if it's too long
-        max_text_length = 16000  # Approximate limit for GPT-4o with system message and output
-        if len(text) > max_text_length:
-            text = text[:max_text_length] + "..."
-        
-        user_prompt = f"""
-        Please analyze the following text and extract grant information into a JSON object:
-        
-        {text}
-        """
+        user_prompt = grant_url
         
         response = openai.chat.completions.create(
             model="gpt-4o",  # the newest OpenAI model is "gpt-4o" which was released May 13, 2024
@@ -93,7 +76,7 @@ def extract_grant_info(text):
             "error": "Could not extract grant information",
             "title": "Unknown Grant",
             "funder": "Unknown",
-            "description": text[:250] + "..." if len(text) > 250 else text
+            "description": f"Error: {str(e)}"
         }
 
 def extract_grant_info_from_url(url):
