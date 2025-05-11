@@ -339,18 +339,33 @@ def scrape_source(source):
                 
                 if text and len(text) > 500:  # Ensure we have meaningful content
                     # Use AI to extract grants from the text
-                    from app.services.ai_service import extract_grant_info
+                    from app.services.ai_service import extract_grant_info, extract_grant_info_from_url
                     
-                    # First check if the text appears to contain multiple grants
-                    if "grant" in text.lower() and len(text) < 15000:  # Limit to manageable text size
-                        # Extract the potential grant
-                        grant_data = extract_grant_info(text)
+                    # First check if the text appears to contain grant-related content
+                    if ("grant" in text.lower() or "fund" in text.lower()) and len(text) < 50000:  # Limit to manageable text size
+                        logger.info(f"Found potential grant content on {source.name}, extracting information...")
+                        
+                        # First try direct URL extraction which has better context handling
+                        grant_data = extract_grant_info_from_url(source.url)
+                        
+                        # If that doesn't work well, fall back to text-only extraction
+                        if not grant_data.get('title') or grant_data.get('title') == "Unknown Grant":
+                            logger.info(f"Falling back to text-only extraction for {source.name}")
+                            grant_data = extract_grant_info(text)
+                        
+                        # Ensure the funder name is set correctly if not detected
+                        if not grant_data.get('funder') or grant_data.get('funder') == "Unknown":
+                            grant_data['funder'] = source.name
+                            
+                        # Ensure website is set
+                        if not grant_data.get('website'):
+                            grant_data['website'] = source.url
                         
                         # Validate that we have at least title and funder
                         if grant_data.get('title') and grant_data.get('funder'):
                             grants.append(grant_data)
                             logger.info(f"Extracted grant using AI: {grant_data.get('title')}")
-                            return grants
+                            # Don't return here - let's continue processing other methods to find more grants
             except Exception as e:
                 logger.warning(f"AI extraction failed for {source.name}: {str(e)}")
             

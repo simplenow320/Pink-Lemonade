@@ -15,12 +15,12 @@ if OPENAI_API_KEY:
     from openai import OpenAI
     openai = OpenAI(api_key=OPENAI_API_KEY)
 
-def extract_grant_info(grant_url):
+def extract_grant_info(content):
     """
     Extract structured grant information from text using OpenAI
     
     Args:
-        grant_url (str): The URL containing grant information
+        content (str): The text content containing grant information
         
     Returns:
         dict: Structured grant information
@@ -36,21 +36,24 @@ def extract_grant_info(grant_url):
                 "requires_api_key": True
             }
             
-        system_prompt = """You are an AI data extractor. Input a single grant page URL. Fetch the page. Extract
-1. title
-2. summary
-3. due_date in YYYY-MM-DD
-4. amount as a number
-5. application_link
-6. contact_email if present
-7. eligibility_criteria
-Return as a JSON object."""
+        system_prompt = """You are an AI data extractor specializing in grant information. Extract the following from the provided text:
+1. title (string): The name of the grant program
+2. funder (string): The organization offering the grant
+3. description (string): A brief description of the grant purpose
+4. amount (number or string): The grant amount or range if specified
+5. due_date (string in YYYY-MM-DD format if possible): The application deadline
+6. eligibility (string): Who can apply for this grant
+7. focus_areas (array of strings): The program areas or sectors this grant targets
+8. contact_info (string): Any contact information for inquiries
+9. website (string): The grant's website if mentioned
+
+Return as a JSON object with these fields. If information is not found for a field, include the field with a null value."""
         
         response = openai.chat.completions.create(
             model="gpt-4o",
             messages=[
                 {"role": "system", "content": system_prompt},
-                {"role": "user", "content": grant_url}
+                {"role": "user", "content": content}
             ],
             response_format={"type": "json_object"}
         )
@@ -80,18 +83,26 @@ def extract_grant_info_from_url(url):
         dict: Structured grant information
     """
     try:
+        logging.info(f"Extracting grant information from URL: {url}")
+        
         # Fetch web content
         downloaded = trafilatura.fetch_url(url)
         if not downloaded:
-            raise Exception("Failed to download the URL")
+            logging.warning(f"Failed to download URL with trafilatura: {url}")
+            # Fallback to direct requests
+            response = requests.get(url, headers={
+                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
+            }, timeout=15)
+            downloaded = response.text
         
         # Extract main content
         text = trafilatura.extract(downloaded)
-        if not text:
+        if not text or len(text) < 100:  # If text is too short, it's likely incomplete
+            logging.warning(f"Trafilatura extraction failed or returned minimal text for {url}, falling back to HTML parsing")
             # Fallback to simple HTML parsing
             response = requests.get(url, headers={
                 "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
-            })
+            }, timeout=15)
             soup = BeautifulSoup(response.content, 'html.parser')
             
             # Remove script and style elements
@@ -101,12 +112,24 @@ def extract_grant_info_from_url(url):
             # Get text
             text = soup.get_text(separator=' ', strip=True)
         
+        logging.info(f"Extracted {len(text)} characters of text from {url}")
+        
+        # Add source information to the text to help the AI understand context
+        source_domain = url.split('/')[2] if len(url.split('/')) > 2 else "unknown"
+        text_with_context = f"Grant information from {source_domain}:\n\n{text}"
+        
         # Process with the AI
-        grant_info = extract_grant_info(text)
+        grant_info = extract_grant_info(text_with_context)
         
-        # Add the source URL
-        grant_info['website'] = url
+        # Add the source URL if not already present
+        if 'website' not in grant_info or not grant_info['website']:
+            grant_info['website'] = url
         
+        # Add the organization name as funder if not present
+        if ('funder' not in grant_info or not grant_info['funder']) and source_domain:
+            grant_info['funder'] = source_domain.replace('www.', '').split('.')[0].title()
+        
+        logging.info(f"Successfully extracted grant information: {grant_info.get('title', 'Untitled')} from {url}")
         return grant_info
     
     except Exception as e:
