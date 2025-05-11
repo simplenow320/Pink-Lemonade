@@ -15,6 +15,7 @@ def scraper():
 @bp.route('/grants')
 @bp.route('/organization')
 @bp.route('/dashboard')
+@bp.route('/funders')
 def spa_routes():
     """Route any SPA paths back to the index"""
     return render_template('index.html')

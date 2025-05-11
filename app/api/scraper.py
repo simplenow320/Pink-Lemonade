@@ -24,13 +24,20 @@ def get_sources():
 
 @bp.route('/sources', methods=['POST'])
 def add_source():
-    """Add a new scraper source"""
+    """Add a new scraper source/funder"""
     try:
         data = request.json
         
         new_source = ScraperSource(
             name=data.get('name'),
             url=data.get('url'),
+            location=data.get('location'),
+            phone=data.get('phone'),
+            contact_email=data.get('contact_email'),
+            contact_name=data.get('contact_name'),
+            match_score=data.get('match_score', 0),
+            best_fit_initiatives=data.get('best_fit_initiatives', []),
+            grant_programs=data.get('grant_programs', []),
             selector_config=data.get('selector_config', {}),
             is_active=data.get('is_active', True)
         )
@@ -50,7 +57,7 @@ def add_source():
 
 @bp.route('/sources/<int:id>', methods=['PUT'])
 def update_source(id):
-    """Update a scraper source"""
+    """Update a scraper source/funder"""
     try:
         source = ScraperSource.query.get(id)
         if source is None:
@@ -62,6 +69,20 @@ def update_source(id):
             source.name = data['name']
         if 'url' in data:
             source.url = data['url']
+        if 'location' in data:
+            source.location = data['location']
+        if 'phone' in data:
+            source.phone = data['phone']
+        if 'contact_email' in data:
+            source.contact_email = data['contact_email']
+        if 'contact_name' in data:
+            source.contact_name = data['contact_name']
+        if 'match_score' in data:
+            source.match_score = data['match_score']
+        if 'best_fit_initiatives' in data:
+            source.best_fit_initiatives = data['best_fit_initiatives']
+        if 'grant_programs' in data:
+            source.grant_programs = data['grant_programs']
         if 'selector_config' in data:
             source.selector_config = data['selector_config']
         if 'is_active' in data:

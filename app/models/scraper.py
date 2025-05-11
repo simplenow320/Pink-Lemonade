@@ -10,6 +10,13 @@ class ScraperSource(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(100), nullable=False)
     url = db.Column(db.String(255), nullable=False)
+    location = db.Column(db.String(100))
+    phone = db.Column(db.String(50))
+    contact_email = db.Column(db.String(100))
+    contact_name = db.Column(db.String(100))
+    match_score = db.Column(db.Integer, default=0)  # 1-5 score indicating match quality
+    best_fit_initiatives = db.Column(JSON, default=list)  # List of initiative names
+    grant_programs = db.Column(JSON, default=list)  # List of grant program names
     selector_config = db.Column(JSON, default=dict)  # Configuration for CSS selectors or XPath
     is_active = db.Column(db.Boolean, default=True)
     last_scraped = db.Column(db.DateTime)
@@ -24,6 +31,13 @@ class ScraperSource(db.Model):
             'id': self.id,
             'name': self.name,
             'url': self.url,
+            'location': self.location,
+            'phone': self.phone,
+            'contact_email': self.contact_email,
+            'contact_name': self.contact_name,
+            'match_score': self.match_score,
+            'best_fit_initiatives': self.best_fit_initiatives,
+            'grant_programs': self.grant_programs,
             'selector_config': self.selector_config,
             'is_active': self.is_active,
             'last_scraped': self.last_scraped.isoformat() if self.last_scraped else None,
