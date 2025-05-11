@@ -481,6 +481,22 @@ function GrantsList({ grants, hasApiKey }) {
     funder: 'Unknown'
   });
   
+  // State for selected grant and modal
+  const [selectedGrant, setSelectedGrant] = React.useState(null);
+  const [showModal, setShowModal] = React.useState(false);
+  
+  // View grant details
+  const viewGrantDetails = (grant) => {
+    setSelectedGrant(grant);
+    setShowModal(true);
+  };
+  
+  // Close modal
+  const closeModal = () => {
+    setShowModal(false);
+    setSelectedGrant(null);
+  };
+  
   // Handle form input changes
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -619,7 +635,7 @@ function GrantsList({ grants, hasApiKey }) {
                     </td>
                     <td>
                       <div className="actions">
-                        <button className="btn btn-sm btn-outline">View</button>
+                        <button className="btn btn-sm btn-outline" onClick={() => viewGrantDetails(grant)}>View</button>
                         <button className="btn btn-sm btn-outline">Edit</button>
                       </div>
                     </td>
