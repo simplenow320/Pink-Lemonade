@@ -289,7 +289,20 @@ def run_scraping_job(include_web_search=True):
         "grants_added": 0,
         "status": "completed",
         "error_message": "",
-        "new_grants": []
+        "new_grants": [],
+        "search_report": {
+            "sites_searched_estimate": 0,
+            "total_queries_attempted": 0,
+            "successful_queries": 0,
+            "search_keywords_used": [],
+            "sites_by_category": {
+                "government": 0,
+                "foundation": 0,
+                "nonprofit": 0,
+                "corporate": 0,
+                "other": 0
+            }
+        }
     }
     
     try:
@@ -325,8 +338,26 @@ def run_scraping_job(include_web_search=True):
                 
                 result["grants_found"] += len(internet_grants)
                 
+                # Extract search report if available (from the first grant)
+                if internet_grants and 'search_report' in internet_grants[0]:
+                    search_report = internet_grants[0].get('search_report', {})
+                    
+                    # Update the main result's search report
+                    result["search_report"]["sites_searched_estimate"] = search_report.get("sites_searched_estimate", 0)
+                    result["search_report"]["total_queries_attempted"] = search_report.get("total_queries_attempted", 0)
+                    result["search_report"]["successful_queries"] = search_report.get("successful_queries", 0)
+                    result["search_report"]["search_keywords_used"] = search_report.get("search_keywords_used", [])
+                    
+                    # Log search report details
+                    logger.info(f"Search report: {result['search_report']['successful_queries']}/{result['search_report']['total_queries_attempted']} " +
+                               f"successful queries, {result['search_report']['sites_searched_estimate']} sites searched")
+                
                 if internet_grants:
                     logger.info(f"Discovered {len(internet_grants)} grants from internet-wide search")
+                    # Remove the search_report from each grant to avoid duplication
+                    for grant in internet_grants:
+                        if 'search_report' in grant:
+                            del grant['search_report']
                     discovered_grants.extend(internet_grants)
                 else:
                     logger.info("No grants discovered from internet-wide search")
