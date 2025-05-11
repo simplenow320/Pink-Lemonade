@@ -292,7 +292,7 @@ def run_scraping_job(include_web_search=True):
         "web_search_performed": include_web_search,
         "grants_found": 0,
         "grants_added": 0,
-        "status": "completed",
+        "status": "in_progress",  # Set initial status to in_progress
         "error_message": "",
         "new_grants": [],
         "search_report": {
@@ -310,13 +310,32 @@ def run_scraping_job(include_web_search=True):
         }
     }
     
+    # Create a history record immediately to track this job
+    history = ScraperHistory(
+        start_time=start_time,
+        status="in_progress",
+        sources_scraped=0,
+        grants_found=0,
+        grants_added=0,
+        web_search_performed=include_web_search
+    )
+    db.session.add(history)
+    db.session.commit()
+    
     try:
         # Get organization profile for matching
         org = Organization.query.first()
         if not org:
             logger.warning("No organization profile found for matching")
-            result["status"] = "completed"
+            result["status"] = "completed_with_errors"
             result["error_message"] = "No organization profile found for matching"
+            
+            # Update history record
+            history.end_time = datetime.now()
+            history.status = "completed_with_errors"
+            history.error_message = result["error_message"]
+            db.session.commit()
+            
             result["end_time"] = datetime.now()
             return result
         
@@ -328,8 +347,15 @@ def run_scraping_job(include_web_search=True):
         
         if not sources and not include_web_search:
             logger.warning("No active scraper sources found and web search is disabled")
-            result["status"] = "completed"
+            result["status"] = "completed_with_errors"
             result["error_message"] = "No active scraper sources found and web search is disabled"
+            
+            # Update history record
+            history.end_time = datetime.now()
+            history.status = "completed_with_errors"
+            history.error_message = result["error_message"]
+            db.session.commit()
+            
             result["end_time"] = datetime.now()
             return result
         
@@ -338,6 +364,10 @@ def run_scraping_job(include_web_search=True):
         if include_web_search:
             logger.info("Starting internet-wide grant discovery")
             try:
+                # Update history to show we're running web search
+                history.web_search_status = "in_progress"
+                db.session.commit()
+                
                 # Perform internet-wide grant discovery
                 internet_grants = discover_grants(org_data, limit=10)
                 
@@ -346,6 +376,12 @@ def run_scraping_job(include_web_search=True):
                 # Extract search report if available (from the first grant)
                 if internet_grants and 'search_report' in internet_grants[0]:
                     search_report = internet_grants[0].get('search_report', {})
+                    
+                    # Update history with search metrics
+                    history.sites_searched = search_report.get("sites_searched_estimate", 0)
+                    history.queries_attempted = search_report.get("total_queries_attempted", 0)
+                    history.successful_queries = search_report.get("successful_queries", 0)
+                    db.session.commit()
                     
                     # Update the main result's search report
                     result["search_report"]["sites_searched_estimate"] = search_report.get("sites_searched_estimate", 0)

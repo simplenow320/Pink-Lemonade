@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { formatCurrency, formatDate, getDateUrgencyClass, formatMatchScore, getMatchScoreClass, getStatusClass } from '../utils/formatters';
-import { runScraper } from '../utils/api';
+import { runScraper, getScraperHistory } from '../utils/api';
 import { useGrants } from '../hooks/useGrants';
 import Chart from 'chart.js/auto';
 
@@ -106,16 +106,70 @@ const Dashboard = () => {
     setChartInstances(newChartInstances);
   };
   
+  const [scraperStatus, setScraperStatus] = useState({
+    isRunning: false,
+    sites: 0,
+    queries: 0,
+    successful: 0,
+    grants: 0,
+    message: ''
+  });
+  
+  const checkScraperStatus = async () => {
+    try {
+      const statusData = await getScraperHistory(1);
+      if (statusData && statusData.history && statusData.history.length > 0) {
+        const latestJob = statusData.history[0];
+        
+        const isRunning = latestJob.status === 'in_progress';
+        setScraperStatus({
+          isRunning,
+          sites: latestJob.sites_searched || 0,
+          queries: latestJob.queries_attempted || 0,
+          successful: latestJob.successful_queries || 0,
+          grants: latestJob.grants_found || 0,
+          message: latestJob.error_message || ''
+        });
+        
+        if (isRunning) {
+          // If still running, check again in 2 seconds
+          setTimeout(checkScraperStatus, 2000);
+        } else {
+          // If done, refresh data and reset running state
+          setIsScraperRunning(false);
+          refreshData();
+        }
+      }
+    } catch (error) {
+      console.error('Error checking scraper status:', error);
+    }
+  };
+  
   const handleRunScraper = async () => {
     setIsScraperRunning(true);
+    setScraperStatus({
+      isRunning: true,
+      sites: 0,
+      queries: 0,
+      successful: 0, 
+      grants: 0,
+      message: 'Initializing grant discovery...'
+    });
+    
     try {
       await runScraper();
-      refreshData();
-      alert('Scraping completed successfully');
+      // Start polling for status
+      setTimeout(checkScraperStatus, 1000);
     } catch (error) {
       console.error('Error running scraper:', error);
-      alert('Error running scraper. Please try again.');
-    } finally {
+      setScraperStatus({
+        isRunning: false,
+        sites: 0,
+        queries: 0,
+        successful: 0,
+        grants: 0,
+        message: `Error: ${error.message || 'Failed to start scraper'}`
+      });
       setIsScraperRunning(false);
     }
   };
