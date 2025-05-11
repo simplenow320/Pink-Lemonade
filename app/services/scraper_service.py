@@ -12,7 +12,8 @@ from app import db
 from app.models.scraper import ScraperSource
 from app.models.grant import Grant
 from app.models.organization import Organization
-from app.services.ai_service import extract_grant_info, analyze_grant_match
+from app.services.ai_service import extract_grant_info, analyze_grant_match, extract_grant_info_from_url
+from app.services.discovery_service import discover_grants
 from sqlalchemy.exc import SQLAlchemyError
 from openai import OpenAI
 
