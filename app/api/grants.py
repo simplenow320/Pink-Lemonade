@@ -627,6 +627,35 @@ def get_dashboard_data():
         
         recently_discovered = [grant.to_dict() for grant in recent_grants]
         
+        # Add search metrics data
+        search_metrics = {}
+        try:
+            # Get the latest scraper history with search data
+            from app.models.scraper import ScraperHistory
+            latest_history = ScraperHistory.query.filter(
+                ScraperHistory.search_keywords_used.isnot(None),
+                ScraperHistory.total_queries_attempted > 0
+            ).order_by(ScraperHistory.start_time.desc()).first()
+            
+            if latest_history:
+                # Count grants discovered through search
+                search_discovered_count = Grant.query.filter(
+                    Grant.discovery_method.in_(['web-search', 'focused-search'])
+                ).count()
+                
+                search_metrics = {
+                    "sites_searched": latest_history.sites_searched_estimate,
+                    "search_success_rate": round((latest_history.successful_queries / latest_history.total_queries_attempted * 100), 1) 
+                                       if latest_history.total_queries_attempted > 0 else 0,
+                    "discovered_grants_count": search_discovered_count,
+                    "last_search_date": latest_history.end_time.isoformat() if latest_history.end_time else None
+                }
+        except Exception as search_e:
+            logging.error(f"Error getting search metrics for dashboard: {str(search_e)}")
+            search_metrics = {
+                "error": "Could not retrieve search metrics"
+            }
+        
         dashboard_data = {
             "status_counts": status_counts,
             "upcoming_deadlines": upcoming,
@@ -634,7 +663,8 @@ def get_dashboard_data():
             "won_funding": won_funding,
             "match_score_distribution": match_ranges,
             "total_grants": Grant.query.count(),
-            "recently_discovered": recently_discovered
+            "recently_discovered": recently_discovered,
+            "search_metrics": search_metrics
         }
         
         return jsonify(dashboard_data)

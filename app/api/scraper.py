@@ -185,6 +185,77 @@ def get_history():
         logging.error(f"Error fetching scraper history: {str(e)}")
         return jsonify({"error": "Failed to fetch scraper history"}), 500
 
+@bp.route('/search-metrics', methods=['GET'])
+def get_search_metrics():
+    """Get detailed search metrics and reporting data"""
+    try:
+        # Get the latest scraper history with search data
+        latest_history = ScraperHistory.query.filter(
+            ScraperHistory.search_keywords_used.isnot(None),
+            ScraperHistory.total_queries_attempted > 0
+        ).order_by(ScraperHistory.start_time.desc()).first()
+        
+        if not latest_history:
+            return jsonify({
+                "message": "No search metrics available yet",
+                "has_data": False
+            })
+            
+        # Get grants discovered through search
+        search_discovered_grants = Grant.query.filter(
+            Grant.discovery_method.in_(['web-search', 'focused-search']),
+            Grant.search_query.isnot(None)
+        ).all()
+        
+        # Analyze which keywords yielded results
+        keyword_success = {}
+        for grant in search_discovered_grants:
+            if grant.search_query:
+                if grant.search_query not in keyword_success:
+                    keyword_success[grant.search_query] = 0
+                keyword_success[grant.search_query] += 1
+        
+        # Get the most successful keywords
+        top_keywords = [
+            {"keyword": k, "grants_found": v} 
+            for k, v in sorted(keyword_success.items(), key=lambda item: item[1], reverse=True)
+        ][:10]  # Top 10 most successful
+        
+        # Get grant source distribution
+        from sqlalchemy import func
+        source_counts = db.session.query(
+            Grant.discovery_method, func.count(Grant.id)
+        ).group_by(Grant.discovery_method).all()
+        
+        discovery_methods = {method: count for method, count in source_counts if method}
+        
+        # Compile the metrics
+        search_metrics = {
+            "has_data": True,
+            "last_search": {
+                "date": latest_history.end_time.isoformat() if latest_history.end_time else None,
+                "sites_searched": latest_history.sites_searched_estimate,
+                "queries_attempted": latest_history.total_queries_attempted,
+                "successful_queries": latest_history.successful_queries,
+                "success_rate": round((latest_history.successful_queries / latest_history.total_queries_attempted * 100), 1) if latest_history.total_queries_attempted > 0 else 0,
+                "grants_found": latest_history.grants_found,
+                "grants_added": latest_history.grants_added
+            },
+            "keyword_metrics": {
+                "top_keywords": top_keywords,
+                "total_keywords_used": len(latest_history.search_keywords_used) if latest_history.search_keywords_used else 0,
+                "all_keywords": latest_history.search_keywords_used
+            },
+            "discovery_method_distribution": discovery_methods,
+            "total_search_discovered_grants": len(search_discovered_grants)
+        }
+        
+        return jsonify(search_metrics)
+    
+    except Exception as e:
+        logging.error(f"Error fetching search metrics: {str(e)}")
+        return jsonify({"error": "Failed to fetch search metrics", "has_data": False}), 500
+
 @bp.route('/seed', methods=['POST'])
 def seed_sources():
     """Seed the database with sample scraper sources from seed.json"""
