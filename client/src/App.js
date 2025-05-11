@@ -49,7 +49,7 @@ function App() {
     return (
       <div className="flex items-center justify-center min-h-screen bg-gray-50">
         <div className="text-center">
-          <div className="inline-block animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full mb-4"></div>
+          <div className="inline-block animate-spin h-8 w-8 border-4 border-orange-500 border-t-transparent rounded-full mb-4"></div>
           <h2 className="text-xl font-semibold text-gray-700">Loading GrantFlow...</h2>
         </div>
       </div>
@@ -68,7 +68,7 @@ function App() {
           <p className="text-gray-600 mb-4">{error}</p>
           <button 
             onClick={() => window.location.reload()}
-            className="px-4 py-2 bg-primary text-white rounded hover:bg-primary-dark"
+            className="px-4 py-2 bg-orange-500 text-white rounded hover:bg-orange-600 transition-colors"
           >
             Retry
           </button>
@@ -83,8 +83,8 @@ function App() {
       <TopNavbar />
       
       {/* Main Content */}
-      <div className="flex-1 overflow-auto mt-16">
-        <div className="py-4 px-4 sm:px-6 lg:px-8">
+      <div className="flex-1 overflow-auto pt-16">
+        <div className="container mx-auto py-6 px-4 sm:px-6 lg:px-8 max-w-7xl">
           <Routes>
             <Route path="/" element={
               <ErrorBoundary>
