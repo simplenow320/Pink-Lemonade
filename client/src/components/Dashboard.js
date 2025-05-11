@@ -124,9 +124,13 @@ const Dashboard = () => {
         const isRunning = latestJob.status === 'in_progress';
         setScraperStatus({
           isRunning,
-          sites: (latestJob.search_report && latestJob.search_report.sites_searched) || 0,
-          queries: (latestJob.search_report && latestJob.search_report.queries_attempted) || 0,
-          successful: (latestJob.search_report && latestJob.search_report.successful_queries) || 0,
+          // Try to get these properties from multiple places for backward compatibility
+          sites: latestJob.sites_searched || 
+                 (latestJob.search_report && latestJob.search_report.sites_searched) || 0,
+          queries: latestJob.queries_attempted || 
+                   (latestJob.search_report && latestJob.search_report.queries_attempted) || 0,
+          successful: latestJob.successful_queries || 
+                      (latestJob.search_report && latestJob.search_report.successful_queries) || 0,
           grants: latestJob.grants_found || 0,
           message: latestJob.error_message || ''
         });

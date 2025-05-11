@@ -317,7 +317,11 @@ def run_scraping_job(include_web_search=True):
     history.sources_scraped = 0
     history.grants_found = 0
     history.grants_added = 0
-    # Use the existing model columns instead of the new ones
+    # Initialize search metrics columns
+    history.sites_searched_estimate = 0
+    history.total_queries_attempted = 0
+    history.successful_queries = 0
+    history.search_keywords_used = []
     db.session.add(history)
     db.session.commit()
     
@@ -372,7 +376,7 @@ def run_scraping_job(include_web_search=True):
                 
                 result["grants_found"] += len(internet_grants)
                 
-                # Extract search report if available (from the first grant)
+                # Extract search report if it's available and update metrics in real-time (from the first grant)
                 if internet_grants and 'search_report' in internet_grants[0]:
                     search_report = internet_grants[0].get('search_report', {})
                     
