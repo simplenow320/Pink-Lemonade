@@ -1,0 +1,65 @@
+/* Hide any sidebar-related elements */
+[class*="sidebar"],
+[class*="side-bar"],
+[class*="sidenav"],
+[class*="side-nav"],
+[class*="side-panel"],
+[class*="side-menu"],
+.sidebar,
+.side-bar,
+.sidenav,
+.side-nav,
+.side-panel,
+.side-menu,
+.md\:w-64,
+.md\:w-60,
+.md\:w-72,
+.md\:block.w-64,
+.md\:block.w-60,
+.md\:block.w-72 {
+  display: none !important;
+  width: 0 !important;
+  max-width: 0 !important;
+  min-width: 0 !important;
+  opacity: 0 !important;
+  visibility: hidden !important;
+  position: absolute !important;
+  left: -9999px !important;
+}
+
+/* Ensure main content takes full width */
+.container,
+.max-w-7xl,
+.mx-auto,
+main,
+.main-content,
+.content-area,
+[class*="content"],
+[class*="main"] {
+  width: 100% !important;
+  max-width: 1280px !important;
+  margin-left: auto !important;
+  margin-right: auto !important;
+  padding-left: 1rem !important;
+  padding-right: 1rem !important;
+}
+
+/* Make sure the body has no side padding from any hidden sidebar */
+body, 
+html, 
+#root, 
+.app {
+  overflow-x: hidden;
+  width: 100%;
+}
+
+/* Reset any margin or padding that might be related to a sidebar */
+.md\:ml-64,
+.md\:ml-60,
+.md\:ml-72,
+.md\:pl-64,
+.md\:pl-60,
+.md\:pl-72 {
+  margin-left: 0 !important;
+  padding-left: 0 !important;
+}
