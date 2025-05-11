@@ -57,6 +57,8 @@ class ScraperHistory(db.Model):
     grants_added = db.Column(db.Integer, default=0)
     status = db.Column(db.String(50), default="pending")  # pending, completed, failed
     error_message = db.Column(db.Text)
+    
+    # Search reporting columns
     sites_searched_estimate = db.Column(db.Integer, default=0)
     total_queries_attempted = db.Column(db.Integer, default=0)
     successful_queries = db.Column(db.Integer, default=0)
