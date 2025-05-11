@@ -490,14 +490,22 @@ def run_scraping_job(include_web_search=True):
         
         # Update the scraper history
         try:
-            history = ScraperHistory(
-                start_time=start_time,
-                end_time=datetime.now(),
-                sources_scraped=result["sources_scraped"],
-                grants_found=result["grants_found"],
-                grants_added=result["grants_added"],
-                error_message=result["error_message"]
-            )
+            # Create a new history object
+            history = ScraperHistory()
+            history.start_time = start_time
+            history.end_time = datetime.now()
+            history.sources_scraped = result["sources_scraped"]
+            history.grants_found = result["grants_found"] 
+            history.grants_added = result["grants_added"]
+            history.status = result["status"]
+            history.error_message = result["error_message"]
+            
+            # Add search report data if available
+            if "search_report" in result:
+                history.sites_searched_estimate = result["search_report"]["sites_searched_estimate"]
+                history.total_queries_attempted = result["search_report"]["total_queries_attempted"] 
+                history.successful_queries = result["search_report"]["successful_queries"]
+                history.search_keywords_used = result["search_report"]["search_keywords_used"]
             db.session.add(history)
             db.session.commit()
         except Exception as e:

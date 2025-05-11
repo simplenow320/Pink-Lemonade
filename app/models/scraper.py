@@ -57,6 +57,10 @@ class ScraperHistory(db.Model):
     grants_added = db.Column(db.Integer, default=0)
     status = db.Column(db.String(50), default="pending")  # pending, completed, failed
     error_message = db.Column(db.Text)
+    sites_searched_estimate = db.Column(db.Integer, default=0)
+    total_queries_attempted = db.Column(db.Integer, default=0)
+    successful_queries = db.Column(db.Integer, default=0)
+    search_keywords_used = db.Column(JSON, default=list)
     
     def to_dict(self):
         """Convert scraper history to dictionary"""
@@ -69,5 +73,12 @@ class ScraperHistory(db.Model):
             'grants_found': self.grants_found,
             'grants_added': self.grants_added,
             'status': self.status,
-            'error_message': self.error_message
+            'error_message': self.error_message,
+            'search_report': {
+                'sites_searched_estimate': self.sites_searched_estimate,
+                'total_queries_attempted': self.total_queries_attempted,
+                'successful_queries': self.successful_queries,
+                'search_keywords_used': self.search_keywords_used,
+                'success_rate': f"{(self.successful_queries / self.total_queries_attempted * 100):.1f}%" if self.total_queries_attempted > 0 else "0%"
+            }
         }

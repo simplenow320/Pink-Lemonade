@@ -31,6 +31,8 @@ class Grant(db.Model):
     source_id = db.Column(db.Integer, db.ForeignKey('scraper_sources.id', ondelete='SET NULL'), nullable=True)
     date_submitted = db.Column(db.Date)  # When the grant was submitted
     date_decision = db.Column(db.Date)  # When a decision was received
+    search_query = db.Column(db.String(255))  # The search query that found this grant
+    discovery_method = db.Column(db.String(50))  # web-search, focused-search, manual
     
     # Relationships
     narrative = db.relationship('Narrative', back_populates='grant', uselist=False, cascade="all, delete-orphan")
