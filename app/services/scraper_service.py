@@ -381,10 +381,16 @@ def run_scraping_job(include_web_search=True):
                     search_report = internet_grants[0].get('search_report', {})
                     
                     # Update history with search metrics
-                    # Use existing fields
+                    # Refresh the history object first to avoid potential session issues
+                    db.session.refresh(history)
+                    
+                    # Update with the search metrics
                     history.sites_searched_estimate = search_report.get("sites_searched_estimate", 0)
                     history.total_queries_attempted = search_report.get("total_queries_attempted", 0)
                     history.successful_queries = search_report.get("successful_queries", 0)
+                    history.search_keywords_used = search_report.get("search_keywords_used", [])
+                    
+                    # Commit immediately so frontend can see updated metrics in real-time
                     db.session.commit()
                     
                     # Update the main result's search report
@@ -595,12 +601,23 @@ def run_scraping_job(include_web_search=True):
             history.status = result["status"]
             history.error_message = result["error_message"]
             
-            # Add search report data if available
+            # Add search report data if available with error handling
             if "search_report" in result:
-                history.sites_searched_estimate = result["search_report"]["sites_searched_estimate"]
-                history.total_queries_attempted = result["search_report"]["total_queries_attempted"] 
-                history.successful_queries = result["search_report"]["successful_queries"]
-                history.search_keywords_used = result["search_report"]["search_keywords_used"]
+                try:
+                    history.sites_searched_estimate = result["search_report"]["sites_searched_estimate"]
+                    history.total_queries_attempted = result["search_report"]["total_queries_attempted"] 
+                    history.successful_queries = result["search_report"]["successful_queries"]
+                    history.search_keywords_used = result["search_report"]["search_keywords_used"]
+                    
+                    # Log final metrics for debugging
+                    logger.info(f"Final search metrics: {history.sites_searched_estimate} sites searched, " +
+                               f"{history.successful_queries}/{history.total_queries_attempted} successful queries, " +
+                               f"{history.grants_found} grants found, {history.grants_added} grants added")
+                except KeyError as ke:
+                    logger.warning(f"Missing key in search report: {ke}")
+                except Exception as e:
+                    logger.warning(f"Error updating search metrics: {e}")
+            
             db.session.add(history)
             db.session.commit()
         except Exception as e:
