@@ -43,7 +43,14 @@ const GrantDetail = () => {
           status: data.status || 'Not Started',
           notes: data.notes || '',
           focus_areas: data.focus_areas ? data.focus_areas.join(', ') : '',
-          contact_info: data.contact_info || ''
+          contact_info: data.contact_info || '',
+          // Add new contact and application fields
+          contact_name: data.contact_name || '',
+          contact_email: data.contact_email || '',
+          contact_phone: data.contact_phone || '',
+          submission_url: data.submission_url || '',
+          application_process: data.application_process || '',
+          grant_cycle: data.grant_cycle || ''
         });
         setError(null);
       } catch (err) {
@@ -461,10 +468,51 @@ const GrantDetail = () => {
                       )}
                     </dd>
                   </div>
-                  <div className="sm:col-span-1">
-                    <dt className="text-sm font-medium text-gray-500">Contact Information</dt>
-                    <dd className="mt-1 text-sm text-gray-900">
-                      {grant.contact_info || 'No contact information available'}
+                  <div className="sm:col-span-2">
+                    <dt className="text-sm font-medium text-gray-500">Contact & Application Information</dt>
+                    <dd className="mt-2 grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-2 text-sm">
+                      {/* Contact Info Card */}
+                      <div className="border rounded-md p-3 bg-gray-50">
+                        <h4 className="font-medium text-gray-700">Contact Details</h4>
+                        {(grant.contact_name || grant.contact_email || grant.contact_phone || grant.contact_info) ? (
+                          <div className="mt-2 space-y-1">
+                            {grant.contact_name && (
+                              <p><span className="font-medium">Name:</span> {grant.contact_name}</p>
+                            )}
+                            {grant.contact_email && (
+                              <p><span className="font-medium">Email:</span> <a href={`mailto:${grant.contact_email}`} className="text-blue-600 hover:underline">{grant.contact_email}</a></p>
+                            )}
+                            {grant.contact_phone && (
+                              <p><span className="font-medium">Phone:</span> <a href={`tel:${grant.contact_phone}`} className="text-blue-600 hover:underline">{grant.contact_phone}</a></p>
+                            )}
+                            {grant.contact_info && (
+                              <p><span className="font-medium">Additional Info:</span> {grant.contact_info}</p>
+                            )}
+                          </div>
+                        ) : (
+                          <p className="text-gray-500 italic mt-1">No contact details available</p>
+                        )}
+                      </div>
+                      
+                      {/* Application Info Card */}
+                      <div className="border rounded-md p-3 bg-gray-50">
+                        <h4 className="font-medium text-gray-700">How to Apply</h4>
+                        {(grant.submission_url || grant.application_process || grant.grant_cycle) ? (
+                          <div className="mt-2 space-y-1">
+                            {grant.submission_url && (
+                              <p><span className="font-medium">Submit at:</span> <a href={grant.submission_url} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">Application Portal</a></p>
+                            )}
+                            {grant.application_process && (
+                              <p><span className="font-medium">Process:</span> {grant.application_process}</p>
+                            )}
+                            {grant.grant_cycle && (
+                              <p><span className="font-medium">Grant Cycle:</span> {grant.grant_cycle}</p>
+                            )}
+                          </div>
+                        ) : (
+                          <p className="text-gray-500 italic mt-1">No application details available</p>
+                        )}
+                      </div>
                     </dd>
                   </div>
                   <div className="sm:col-span-2">
