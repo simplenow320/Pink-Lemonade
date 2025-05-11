@@ -44,8 +44,14 @@ def extract_grant_info(content):
 5. due_date (string in YYYY-MM-DD format if possible): The application deadline
 6. eligibility (string): Who can apply for this grant
 7. focus_areas (array of strings): The program areas or sectors this grant targets
-8. contact_info (string): Any contact information for inquiries
+8. contact_info (string): General contact information for inquiries
 9. website (string): The grant's website if mentioned
+10. contact_name (string): Name of the specific contact person for the grant
+11. contact_email (string): Email address for grant inquiries
+12. contact_phone (string): Phone number for grant inquiries
+13. submission_url (string): Specific URL for submitting the grant application
+14. application_process (string): Description of how to apply for the grant
+15. grant_cycle (string): Information about grant cycles (annual, quarterly, etc.)
 
 Return as a JSON object with these fields. If information is not found for a field, include the field with a null value."""
         

@@ -24,14 +24,22 @@ class Grant(db.Model):
     match_explanation = db.Column(db.Text)
     notes = db.Column(db.Text)
     focus_areas = db.Column(JSON, default=list)
-    contact_info = db.Column(db.Text)
+    contact_info = db.Column(db.Text)  # General contact information
+    # Enhanced contact details
+    contact_name = db.Column(db.String(255), nullable=True)  # Name of the contact person
+    contact_email = db.Column(db.String(255), nullable=True)  # Email of the contact person
+    contact_phone = db.Column(db.String(100), nullable=True)  # Phone number of the contact person
+    submission_url = db.Column(db.String(500), nullable=True)  # Specific URL for grant submission
+    application_process = db.Column(db.Text, nullable=True)  # Description of how to apply
+    grant_cycle = db.Column(db.String(255), nullable=True)  # Information about grant cycles (annual, quarterly, etc.)
+    # Tracking fields
     created_at = db.Column(db.DateTime, default=datetime.now)
     updated_at = db.Column(db.DateTime, default=datetime.now, onupdate=datetime.now)
     is_scraped = db.Column(db.Boolean, default=False)
     source_id = db.Column(db.Integer, db.ForeignKey('scraper_sources.id', ondelete='SET NULL'), nullable=True)
     date_submitted = db.Column(db.Date)  # When the grant was submitted
     date_decision = db.Column(db.Date)  # When a decision was received
-    # Explicitly define columns with nullable=True to ensure SQLAlchemy recognizes them
+    # Search tracking fields
     search_query = db.Column(db.String(255), nullable=True)  # The search query that found this grant
     discovery_method = db.Column(db.String(50), nullable=True)  # web-search, focused-search, manual
     
@@ -50,12 +58,18 @@ class Grant(db.Model):
             'due_date': self.due_date.isoformat() if self.due_date else None,
             'eligibility': self.eligibility,
             'website': self.website,
+            'submission_url': self.submission_url,
+            'application_process': self.application_process,
+            'grant_cycle': self.grant_cycle,
             'status': self.status,
             'match_score': self.match_score,
             'match_explanation': self.match_explanation,
             'notes': self.notes,
             'focus_areas': self.focus_areas,
             'contact_info': self.contact_info,
+            'contact_name': self.contact_name,
+            'contact_email': self.contact_email,
+            'contact_phone': self.contact_phone,
             'created_at': self.created_at.isoformat() if self.created_at else None,
             'updated_at': self.updated_at.isoformat() if self.updated_at else None,
             'is_scraped': self.is_scraped,
