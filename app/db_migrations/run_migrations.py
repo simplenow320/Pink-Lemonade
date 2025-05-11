@@ -16,6 +16,7 @@ logger = logging.getLogger(__name__)
 MIGRATIONS = [
     'app.db_migrations.add_analytics_columns',
     'app.db_migrations.add_search_columns',
+    'app.db_migrations.fix_search_columns',
 ]
 
 def run_migrations():

@@ -65,6 +65,7 @@ def discover_grants(org_profile: Dict[str, Any], limit: int = 5) -> List[Dict[st
     
     # Define focused keywords for THRIVE and AI in the City initiatives
     thrive_ai_keywords = [
+        # THRIVE Initiative Keywords (15)
         "urban ministry leadership grants",
         "pastoral mentoring and coaching funding",
         "church planting support grants",
@@ -72,6 +73,16 @@ def discover_grants(org_profile: Dict[str, Any], limit: int = 5) -> List[Dict[st
         "culturally sensitive mental health grant",
         "faith-based community transformation funding",
         "holistic community flourishing grants",
+        "capacity building grants for churches",
+        "strategic planning ministry grants",
+        "peer network support for pastors grant",
+        "resource management training funding",
+        "fundraising capacity building grants",
+        "mental health first aid church grant",
+        "spiritual care and community wellness grants",
+        "discipleship leadership development funding",
+        
+        # AI in the City Initiative Keywords (15)
         "digital literacy in underserved communities grant",
         "AI education grant for urban youth",
         "workforce development through AI funding",
@@ -80,30 +91,46 @@ def discover_grants(org_profile: Dict[str, Any], limit: int = 5) -> List[Dict[st
         "AI-powered community app development grant",
         "ethical AI use training grants",
         "intergenerational tech learning funding",
-        "capacity building grants for churches",
-        "strategic planning ministry grants",
-        "peer network support for pastors grant",
-        "resource management training funding",
-        "fundraising capacity building grants",
         "equity and inclusion in urban grants",
         "after-school technology program funding",
-        "mental health first aid church grant",
-        "spiritual care and community wellness grants",
-        "discipleship leadership development funding",
         "multi-demographic tech training grant",
         "church innovation and incubation funding",
         "digital equity and inclusion grants",
         "urban neighborhood empowerment grant",
-        "faith-based workforce readiness grants"
+        "faith-based workforce readiness grants",
+        
+        # Additional AI Education Keywords
+        "AI literacy education grants",
+        "youth coding and AI scholarships",
+        "AI skills development for urban communities",
+        "generative AI education funding",
+        "community-based AI learning centers",
+        
+        # Additional Mental Health Keywords
+        "trauma-informed ministry grants",
+        "urban mental health services funding",
+        "faith community mental health partnerships",
+        "grief counseling program grants",
+        "pastoral care mental health training",
+        
+        # Additional Urban Ministry Keywords
+        "urban church revitalization grants",
+        "multi-ethnic church planting funds",
+        "urban youth mentorship grants",
+        "community engagement ministry funding",
+        "affordable housing ministry grants"
     ]
     
     # Create search queries based on organization profile
     search_queries = []
     
-    # Add specialized THRIVE and AI keywords (take a random selection of 5 to keep the query count manageable)
+    # Add specialized THRIVE and AI keywords (take a random selection of 10 to ensure better coverage)
     random.shuffle(thrive_ai_keywords)
-    selected_keywords = thrive_ai_keywords[:5]
+    selected_keywords = thrive_ai_keywords[:10]
     search_queries.extend(selected_keywords)
+    
+    # Track all selected keywords for reporting
+    all_keywords.extend(selected_keywords)
     
     # Add focus area-based queries
     for area in focus_areas[:3]:  # Limit to first 3 focus areas to keep queries manageable
