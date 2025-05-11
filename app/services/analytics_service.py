@@ -386,3 +386,104 @@ def get_grant_timeline(grant_id):
     except Exception as e:
         logger.error(f"Error retrieving grant timeline: {str(e)}")
         return {"success": False, "error": str(e)}
+
+
+def create_report(grant_history):
+    """
+    Create an analytics report from grant history data using OpenAI
+    
+    Args:
+        grant_history (list): List of grant history objects with focus_area, submitted_count, 
+                             approved_count, and total_amount_awarded
+    
+    Returns:
+        dict: Report data with summary text, chart data, and chart image
+    """
+    try:
+        import json
+        import os
+        from openai import OpenAI
+        
+        # Initialize OpenAI client
+        openai_client = OpenAI(api_key=os.environ.get("OPENAI_API_KEY"))
+        
+        if not openai_client:
+            logger.error("OpenAI API key not configured")
+            return {
+                "summary_text": "Could not generate report. OpenAI API key is not configured.",
+                "chart_data": [],
+                "chart_image_base64": None
+            }
+        
+        # System prompt for OpenAI
+        system_prompt = """You are an analytics AI. Input a JSON array of past grant outcomes each with:
+1. focus_area
+2. submitted_count
+3. approved_count
+4. total_amount_awarded
+Return:
+1. A summary paragraph of success rates
+2. A JSON array for a bar chart with objects of focus_area and success_rate
+3. A base64 encoded PNG chart image"""
+        
+        # Format grant_history for OpenAI
+        input_data = json.dumps(grant_history)
+        
+        # Make API call to OpenAI
+        response = openai_client.chat.completions.create(
+            model="gpt-4o",
+            messages=[
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": input_data}
+            ],
+            temperature=0.7,
+            max_tokens=2000
+        )
+        
+        # Extract the response text
+        response_text = response.choices[0].message.content
+        
+        # Parse the response
+        # Typically the response would have three parts: summary text, JSON data, and base64 image
+        # For simplicity, we'll extract these using basic string operations - in a real implementation
+        # you might want more robust parsing
+        
+        # Initialize return values
+        summary_text = ""
+        chart_data = []
+        chart_image_base64 = None
+        
+        # Parse the summary (first paragraph before any JSON or base64 data)
+        if response_text:
+            # Split by double newlines to find paragraphs
+            parts = response_text.split("\n\n")
+            if parts:
+                summary_text = parts[0].strip()
+            
+            # Try to find JSON data
+            import re
+            json_match = re.search(r'\[.*\]', response_text, re.DOTALL)
+            if json_match:
+                try:
+                    chart_data = json.loads(json_match.group())
+                except json.JSONDecodeError:
+                    logger.error("Failed to parse chart data JSON from OpenAI response")
+            
+            # Try to find base64 image data
+            base64_match = re.search(r'data:image\/png;base64,([A-Za-z0-9+/=]+)', response_text)
+            if base64_match:
+                chart_image_base64 = base64_match.group(1)
+        
+        return {
+            "summary_text": summary_text,
+            "chart_data": chart_data,
+            "chart_image_base64": chart_image_base64
+        }
+        
+    except Exception as e:
+        logger.error(f"Error creating analytics report: {str(e)}")
+        return {
+            "summary_text": f"Error generating report: {str(e)}",
+            "chart_data": [],
+            "chart_image_base64": None
+        }
