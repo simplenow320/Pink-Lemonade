@@ -2,7 +2,7 @@ from flask import Blueprint, request, jsonify
 from app.models.scraper import ScraperSource, ScraperHistory
 from app.models.grant import Grant
 from app import db
-from app.services.scraper_service import run_scraping_job
+from app.services.scraper_service import run_scraping_job, scrape_grants
 from app.utils.scheduler import get_next_scheduled_run
 from sqlalchemy.exc import SQLAlchemyError
 import logging
@@ -315,6 +315,27 @@ def initialize_sources():
     except Exception as e:
         logging.error(f"Error initializing sources: {str(e)}")
         return jsonify({"error": "Failed to initialize sources"}), 500
+
+@bp.route('/scrape', methods=['GET', 'POST'])
+def scrape():
+    """Scrape grants from specified URLs"""
+    try:
+        # Get URLs from request or use active sources
+        if request.method == 'POST' and request.json and 'urls' in request.json:
+            url_list = request.json['urls']
+        else:
+            # Get URLs from active sources
+            active_sources = ScraperSource.query.filter_by(is_active=True).all()
+            url_list = [source.url for source in active_sources]
+        
+        # Call the scrape_grants service
+        grants = scrape_grants(url_list)
+        
+        return jsonify(grants)
+    
+    except Exception as e:
+        logging.error(f"Error scraping grants: {str(e)}")
+        return jsonify({"error": f"Failed to scrape grants: {str(e)}"}), 500
 
 @bp.route('/add-foundation-sources', methods=['POST'])
 def add_foundation_sources():

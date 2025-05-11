@@ -1,8 +1,12 @@
 from flask import Blueprint, request, jsonify, Response
 from app.models.grant import Grant
+from app.models.organization import Organization
 from app import db
 from app.utils.helpers import parse_grant_data
 from app.api import log_request, log_response
+from app.services.ai_service import extract_grant_info, extract_grant_info_from_url
+from app.services.match_service import match_grants
+from app.services.writing_assistant_service import generate_narrative
 from sqlalchemy.exc import SQLAlchemyError, NoResultFound, DataError
 from sqlalchemy.orm.exc import MultipleResultsFound
 import logging
@@ -416,6 +420,97 @@ def get_recently_discovered():
     except Exception as e:
         logging.error(f"Error fetching recently discovered grants: {str(e)}")
         return jsonify({"error": "Failed to fetch recently discovered grants"}), 500
+
+@bp.route('/extract', methods=['POST'])
+def extract():
+    """Extract structured grant information from text or URL"""
+    try:
+        data = request.json
+        
+        if not data:
+            return jsonify({"error": "No data provided"}), 400
+        
+        # Check if text or URL is provided
+        if 'text' in data:
+            # Extract from text
+            grant_data = extract_grant_info(data['text'])
+            return jsonify(grant_data)
+        elif 'url' in data:
+            # Extract from URL
+            grant_data = extract_grant_info_from_url(data['url'])
+            return jsonify(grant_data)
+        else:
+            return jsonify({"error": "Either text or URL must be provided"}), 400
+    
+    except Exception as e:
+        logging.error(f"Error extracting grant information: {str(e)}")
+        return jsonify({"error": "Failed to extract grant information"}), 500
+
+@bp.route('/match', methods=['POST'])
+def match():
+    """Match a grant to the organization profile"""
+    try:
+        data = request.json
+        
+        if not data:
+            return jsonify({"error": "No data provided"}), 400
+        
+        grant_id = data.get('grant_id')
+        if not grant_id:
+            return jsonify({"error": "Grant ID is required"}), 400
+        
+        # Get the grant
+        grant = Grant.query.get(grant_id)
+        if not grant:
+            return jsonify({"error": "Grant not found"}), 404
+        
+        # Get the organization profile
+        org = Organization.query.first()
+        if not org:
+            return jsonify({"error": "Organization profile not found"}), 404
+        
+        # Match the grant with the organization
+        match_result = match_grants(grant, org)
+        
+        return jsonify(match_result)
+    
+    except Exception as e:
+        logging.error(f"Error matching grant: {str(e)}")
+        return jsonify({"error": "Failed to match grant"}), 500
+
+@bp.route('/write', methods=['POST'])
+def write():
+    """Generate a narrative for a grant"""
+    try:
+        data = request.json
+        
+        if not data:
+            return jsonify({"error": "No data provided"}), 400
+        
+        grant_id = data.get('grant_id')
+        if not grant_id:
+            return jsonify({"error": "Grant ID is required"}), 400
+        
+        section_type = data.get('section_type', 'overview')
+        
+        # Get the grant
+        grant = Grant.query.get(grant_id)
+        if not grant:
+            return jsonify({"error": "Grant not found"}), 404
+        
+        # Get the organization profile
+        org = Organization.query.first()
+        if not org:
+            return jsonify({"error": "Organization profile not found"}), 404
+        
+        # Generate the narrative
+        narrative = generate_narrative(grant, org, section_type)
+        
+        return jsonify(narrative)
+    
+    except Exception as e:
+        logging.error(f"Error generating narrative: {str(e)}")
+        return jsonify({"error": "Failed to generate narrative"}), 500
 
 @bp.route('/dashboard', methods=['GET'])
 def get_dashboard_data():
