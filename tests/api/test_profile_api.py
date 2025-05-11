@@ -1,33 +1,16 @@
 """
-Tests for the Profile API endpoints.
+Tests for the Organization API endpoints.
 """
 
 import json
-import os
 import pytest
+from app.models.organization import Organization
 
 
-def test_get_profile_success(client, monkeypatch):
-    """Test successful profile retrieval."""
-    # Mock profile data
-    test_profile = {
-        "mission": "Test mission statement",
-        "focus_areas": ["education", "health"],
-        "funding_priorities": ["youth programs", "community development"]
-    }
-    
-    # Mock os.path.exists to return True
-    monkeypatch.setattr(os.path, "exists", lambda path: True)
-    
-    # Mock open to return our test profile
-    mock_file = pytest.MockFixture()
-    mock_file.read.return_value = json.dumps(test_profile)
-    
-    monkeypatch.setattr("builtins.open", lambda path, mode: mock_file)
-    monkeypatch.setattr(json, "load", lambda f: test_profile)
-    
+def test_get_organization_success(client, db_organization):
+    """Test successful organization retrieval."""
     # Make a request to the endpoint
-    response = client.get('/api/profile')
+    response = client.get('/api/organization')
     
     # Check response is successful
     assert response.status_code == 200
@@ -35,56 +18,52 @@ def test_get_profile_success(client, monkeypatch):
     # Parse the JSON response
     data = json.loads(response.data)
     
-    # Check that the profile data is correct
-    assert "mission" in data
-    assert "focus_areas" in data
-    assert "funding_priorities" in data
-    assert data["mission"] == test_profile["mission"]
-    assert data["focus_areas"] == test_profile["focus_areas"]
-    assert data["funding_priorities"] == test_profile["funding_priorities"]
+    # Check that the organization data is correct
+    assert 'id' in data
+    assert 'name' in data
+    assert 'mission' in data
+    assert 'focus_areas' in data
+    assert data['id'] == db_organization.id
+    assert data['name'] == db_organization.name
+    assert data['mission'] == db_organization.mission
+    assert data['focus_areas'] == db_organization.focus_areas
 
 
-def test_get_profile_no_file(client, monkeypatch):
-    """Test profile retrieval when file doesn't exist."""
-    # Mock os.path.exists to return False
-    monkeypatch.setattr(os.path, "exists", lambda path: False)
+def test_get_organization_not_found(client, app):
+    """Test organization retrieval when not found."""
+    # Ensure no organization exists
+    with app.app_context():
+        Organization.query.delete()
+        db.session.commit()
     
     # Make a request to the endpoint
-    response = client.get('/api/profile')
+    response = client.get('/api/organization')
     
-    # Check response is successful
-    assert response.status_code == 200
+    # Check response indicates not found
+    assert response.status_code == 404
     
     # Parse the JSON response
     data = json.loads(response.data)
     
-    # Check that empty profile is returned
-    assert "mission" in data
-    assert "focus_areas" in data
-    assert "funding_priorities" in data
-    assert data["mission"] == ""
-    assert data["focus_areas"] == []
-    assert data["funding_priorities"] == []
+    # Check error message
+    assert 'error' in data
+    assert 'not found' in data['error'].lower()
 
 
-def test_update_profile_success(client, monkeypatch):
-    """Test successful profile update."""
-    # Test profile data to update
-    updated_profile = {
-        "mission": "Updated mission statement",
-        "focus_areas": ["education", "environment"],
-        "funding_priorities": ["innovation", "sustainability"]
+def test_update_organization_success(client, db_organization):
+    """Test successful organization update."""
+    # Organization data to update
+    updated_org = {
+        'name': 'Updated Organization Name',
+        'mission': 'Updated mission statement',
+        'focus_areas': ['education', 'environment', 'technology'],
+        'website': 'https://updated-org.org'
     }
     
-    # Mock file writing
-    mock_file = pytest.MockFixture()
-    monkeypatch.setattr("builtins.open", lambda path, mode: mock_file)
-    monkeypatch.setattr(json, "dump", lambda data, f, indent: None)
-    
-    # Make a request to update the profile
-    response = client.post(
-        '/api/profile',
-        data=json.dumps(updated_profile),
+    # Make a request to update the organization
+    response = client.put(
+        '/api/organization',
+        data=json.dumps(updated_org),
         content_type='application/json'
     )
     
@@ -94,29 +73,88 @@ def test_update_profile_success(client, monkeypatch):
     # Parse the JSON response
     data = json.loads(response.data)
     
-    # Check that the updated profile is returned
-    assert "mission" in data
-    assert "focus_areas" in data
-    assert "funding_priorities" in data
-    assert data["mission"] == updated_profile["mission"]
-    assert data["focus_areas"] == updated_profile["focus_areas"]
-    assert data["funding_priorities"] == updated_profile["funding_priorities"]
+    # Check that the updated organization data is returned
+    assert 'id' in data
+    assert 'name' in data
+    assert 'mission' in data
+    assert 'focus_areas' in data
+    assert 'website' in data
+    assert data['id'] == db_organization.id
+    assert data['name'] == updated_org['name']
+    assert data['mission'] == updated_org['mission']
+    assert data['focus_areas'] == updated_org['focus_areas']
+    assert data['website'] == updated_org['website']
 
 
-def test_update_profile_missing_fields(client):
-    """Test profile update with missing required fields."""
-    # Incomplete profile data
-    incomplete_profile = {
-        "mission": "Incomplete mission statement"
-        # Missing focus_areas and funding_priorities
+def test_update_organization_create_new(client, app):
+    """Test organization update creating a new organization when none exists."""
+    # Ensure no organization exists
+    with app.app_context():
+        Organization.query.delete()
+        db.session.commit()
+    
+    # Organization data to create
+    new_org = {
+        'name': 'New Organization',
+        'mission': 'New mission statement',
+        'focus_areas': ['education', 'health'],
+        'website': 'https://new-org.org'
     }
     
-    # Make a request to update the profile
-    response = client.post(
-        '/api/profile',
-        data=json.dumps(incomplete_profile),
+    # Make a request to create the organization
+    response = client.put(
+        '/api/organization',
+        data=json.dumps(new_org),
         content_type='application/json'
     )
+    
+    # Check response is successful
+    assert response.status_code == 200
+    
+    # Parse the JSON response
+    data = json.loads(response.data)
+    
+    # Check that the new organization data is returned
+    assert 'id' in data
+    assert 'name' in data
+    assert 'mission' in data
+    assert 'focus_areas' in data
+    assert 'website' in data
+    assert data['name'] == new_org['name']
+    assert data['mission'] == new_org['mission']
+    assert data['focus_areas'] == new_org['focus_areas']
+    assert data['website'] == new_org['website']
+
+
+def test_seed_organization_success(client, app):
+    """Test seeding organization with sample data."""
+    # Ensure no organization exists
+    with app.app_context():
+        Organization.query.delete()
+        db.session.commit()
+    
+    # Make a request to seed the organization
+    response = client.post('/api/organization/seed')
+    
+    # Check response is created
+    assert response.status_code == 201
+    
+    # Parse the JSON response
+    data = json.loads(response.data)
+    
+    # Check that the response has the expected structure
+    assert 'message' in data
+    assert 'data' in data
+    assert 'id' in data['data']
+    assert 'name' in data['data']
+    assert 'mission' in data['data']
+    assert 'focus_areas' in data['data']
+
+
+def test_seed_organization_already_exists(client, db_organization):
+    """Test seeding organization when one already exists."""
+    # Make a request to seed the organization
+    response = client.post('/api/organization/seed')
     
     # Check response indicates bad request
     assert response.status_code == 400
@@ -124,6 +162,6 @@ def test_update_profile_missing_fields(client):
     # Parse the JSON response
     data = json.loads(response.data)
     
-    # Check that error message indicates missing fields
-    assert "error" in data
-    assert "Missing required field" in data["error"]
+    # Check error message
+    assert 'error' in data
+    assert 'already exists' in data['error'].lower()
