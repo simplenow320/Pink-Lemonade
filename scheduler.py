@@ -20,9 +20,10 @@ scheduler_running = False
 def scheduled_scraping_job():
     """
     Function to be called by the scheduler to run the scraping job.
+    Includes internet-wide grant discovery.
     """
-    logger.info("Running scheduled scraping job")
-    result = run_scraping_job()
+    logger.info("Running scheduled scraping job with internet-wide grant discovery")
+    result = run_scraping_job(include_web_search=True)
     logger.info(f"Scheduled scraping job completed: Found {result['grants_found']} grants, added {result['grants_added']} new grants")
     return result
 

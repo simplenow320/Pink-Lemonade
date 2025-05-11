@@ -155,9 +155,9 @@ def scheduled_scraping_job() -> Dict[str, Any]:
         with app.app_context():
             logger.info(f"Running scraping job [{job_id}]")
             
-            # Run the scraping job
-            result = run_scraping_job()
-            logger.info(f"Scraping job completed [{job_id}]: {result['status']}")
+            # Run the scraping job (with internet-wide grant search)
+            result = run_scraping_job(include_web_search=True)
+            logger.info(f"Scraping job completed [{job_id}]: {result['status']} (including internet-wide search)")
             logger.debug(f"Scraping result details: {result}")
             
             # Record the scraping history

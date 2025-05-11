@@ -104,25 +104,18 @@ def delete_source(id):
 def run_scraper():
     """Manually trigger scraping job"""
     try:
+        # Check if we should include internet-wide search (default to True)
+        data = request.json or {}
+        include_web_search = data.get('include_web_search', True)
+        
         # Run the scraping job
-        result = run_scraping_job()
+        result = run_scraping_job(include_web_search=include_web_search)
         
-        # Record the scraping history
-        history = ScraperHistory(
-            start_time=result['start_time'],
-            end_time=result['end_time'],
-            sources_scraped=result['sources_scraped'],
-            grants_found=result['grants_found'],
-            grants_added=result['grants_added'],
-            status=result['status'],
-            error_message=result.get('error_message', '')
-        )
-        
-        db.session.add(history)
-        db.session.commit()
+        # No need to create history record, it's now done inside the run_scraping_job function
         
         return jsonify({
             "message": "Scraping job completed",
+            "web_search_included": include_web_search,
             "results": result
         })
     

@@ -1,0 +1,50 @@
+Certainly! Here is a curated list of organizations and programs that provide grants specifically for AI and technology initiatives:
+
+⸻
+
+🧠 AI-Focused Grant Programs
+	1.	AI Grant
+An accelerator offering $250,000 in funding and up to $600,000 in cloud credits for seed-stage AI startups.
+🔗 https://aigrant.com
+	2.	National AI Research Institutes (NSF)
+Supports multi-institutional AI research projects across various sectors, including materials science and astronomical sciences.
+🔗 https://www.nsf.gov/funding/opportunities/national-artificial-intelligence-research-institutes
+	3.	Cooperative AI Foundation
+Offers grants for research projects in cooperative AI, focusing on early-career researchers.
+🔗 https://www.cooperativeai.com/foundation
+	4.	Open Philanthropy
+Provides substantial funding for AI safety and alignment research, supporting organizations like OpenAI and Anthropic.
+🔗 https://www.openphilanthropy.org/grants/openai-general-support/
+	5.	Google.org – AI Opportunity Fund
+A $75 million fund aimed at helping over one million Americans learn essential AI skills by supporting workforce development and education organizations.
+🔗 https://aiopportunityfund.withgoogle.com/
+
+⸻
+
+🏛️ Government and Public Sector Grants
+	6.	NSF SBIR/STTR – Artificial Intelligence Topic
+Supports small businesses in developing cutting-edge AI technologies, including deep learning systems and AI-based hardware.
+🔗 https://seedfund.nsf.gov/topics/artificial-intelligence/
+	7.	NIH Bridge2AI Program
+Funds biomedical research projects that utilize AI to tackle complex challenges beyond human intuition.
+🔗 https://commonfund.nih.gov/bridge2ai
+	8.	National AI Research Resource (NAIRR) Pilot
+Provides U.S. researchers with access to computational, data, software, and training resources for AI research.
+🔗 https://www.nsf.gov/focus-areas/artificial-intelligence/nairr
+
+⸻
+
+🌐 Corporate and Nonprofit Tech Grants
+	9.	Microsoft Nonprofit Tech Acceleration (NTA)
+Provides technology grants and technical consulting to help nonprofits increase the impact of their missions.
+🔗 https://www.microsoft.com/en-us/nonprofits/nonprofit-tech-acceleration
+	10.	Okta for Good – Nonprofit Technology Initiative
+Offers multiyear funding of up to $400,000 for eligible nonprofits to advance their technology goals.
+🔗 https://www.okta.com/okta-for-good/nonprofit-technology-initiative/
+	11.	Omidyar Network
+Launched a $30 million initiative to promote inclusive and responsible development of generative AI.
+🔗 https://omidyar.com/
+
+⸻
+
+These organizations offer a range of funding opportunities for AI and technology initiatives. If you’re interested in automating the process of monitoring these sites for new grant opportunities, I can provide guidance on setting up web scraping tools or integrating APIs where available. Let me know how you’d like to proceed!
