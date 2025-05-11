@@ -43,6 +43,14 @@ def discover_grants(org_profile: Dict[str, Any], limit: int = 5) -> List[Dict[st
     logger.info(f"Starting internet-wide grant discovery for {org_profile.get('name', 'Unknown Organization')}")
     
     discovered_grants = []
+    search_report = {
+        "total_queries_attempted": 0,
+        "successful_queries": 0,
+        "sites_searched_estimate": 0,
+        "search_keywords_used": [],
+        "total_grants_found": 0,
+        "query_results": {}
+    }
     
     # Extract key information from the organization profile
     org_name = org_profile.get('name', '')
@@ -55,8 +63,47 @@ def discover_grants(org_profile: Dict[str, Any], limit: int = 5) -> List[Dict[st
         logger.error("Cannot discover grants without organization focus areas")
         return []
     
+    # Define focused keywords for THRIVE and AI in the City initiatives
+    thrive_ai_keywords = [
+        "urban ministry leadership grants",
+        "pastoral mentoring and coaching funding",
+        "church planting support grants",
+        "church-based mental health training funding",
+        "culturally sensitive mental health grant",
+        "faith-based community transformation funding",
+        "holistic community flourishing grants",
+        "digital literacy in underserved communities grant",
+        "AI education grant for urban youth",
+        "workforce development through AI funding",
+        "technology training for community adults grant",
+        "business leader AI training funding",
+        "AI-powered community app development grant",
+        "ethical AI use training grants",
+        "intergenerational tech learning funding",
+        "capacity building grants for churches",
+        "strategic planning ministry grants",
+        "peer network support for pastors grant",
+        "resource management training funding",
+        "fundraising capacity building grants",
+        "equity and inclusion in urban grants",
+        "after-school technology program funding",
+        "mental health first aid church grant",
+        "spiritual care and community wellness grants",
+        "discipleship leadership development funding",
+        "multi-demographic tech training grant",
+        "church innovation and incubation funding",
+        "digital equity and inclusion grants",
+        "urban neighborhood empowerment grant",
+        "faith-based workforce readiness grants"
+    ]
+    
     # Create search queries based on organization profile
     search_queries = []
+    
+    # Add specialized THRIVE and AI keywords (take a random selection of 5 to keep the query count manageable)
+    random.shuffle(thrive_ai_keywords)
+    selected_keywords = thrive_ai_keywords[:5]
+    search_queries.extend(selected_keywords)
     
     # Add focus area-based queries
     for area in focus_areas[:3]:  # Limit to first 3 focus areas to keep queries manageable
@@ -79,8 +126,14 @@ def discover_grants(org_profile: Dict[str, Any], limit: int = 5) -> List[Dict[st
     # Shuffle to get a diverse set of results
     random.shuffle(search_queries)
     
+    # Store all keywords before limiting for reporting purposes
+    all_keywords = search_queries.copy()
+    
     # Limit the number of queries to prevent too many API calls
-    search_queries = search_queries[:5]
+    search_queries = search_queries[:7]  # Increased from 5 to 7 for better coverage
+    
+    search_report["search_keywords_used"] = all_keywords
+    search_report["total_queries_attempted"] = len(search_queries)
     
     logger.info(f"Generated {len(search_queries)} search queries for grant discovery")
     
@@ -91,6 +144,11 @@ def discover_grants(org_profile: Dict[str, Any], limit: int = 5) -> List[Dict[st
                 break
                 
             logger.info(f"Searching for grants with query: {query}")
+            search_report["query_results"][query] = {
+                "grants_found": 0,
+                "sites_searched_estimate": 0,
+                "success": False
+            }
             
             # Use OpenAI to find grant opportunities
             response = openai.chat.completions.create(
@@ -108,10 +166,12 @@ def discover_grants(org_profile: Dict[str, Any], limit: int = 5) -> List[Dict[st
                         4. description: A brief description of what the grant funds
                         5. eligibility: Who can apply for this grant
                         6. focus_areas: A list of focus areas this grant supports
+                        7. sites_searched: Estimate how many different websites you searched to find this grant (number only)
                         
                         Return exactly 3 grants that are the most promising matches for the query.
                         Format your response as a JSON object with a key called "grants" containing an array of objects,
-                        with each object containing the above fields.
+                        with each object containing the above fields. Also include a "sites_searched_estimate" field with the total number
+                        of websites you estimate were searched.
                         
                         Important: Only include real grant opportunities with actual URLs. Do not make up or fabricate any information."""
                     },
@@ -128,9 +188,20 @@ def discover_grants(org_profile: Dict[str, Any], limit: int = 5) -> List[Dict[st
                 # The results should be a list of grants
                 grants = results.get("grants", [])
                 
+                # Get the sites searched estimate
+                sites_searched_estimate = results.get("sites_searched_estimate", 3)
+                search_report["sites_searched_estimate"] += sites_searched_estimate
+                search_report["query_results"][query]["sites_searched_estimate"] = sites_searched_estimate
+                
                 if not grants:
                     logger.warning(f"No grants found for query: {query}")
                     continue
+                
+                # Update the search report
+                search_report["successful_queries"] += 1
+                search_report["query_results"][query]["success"] = True
+                search_report["query_results"][query]["grants_found"] = len(grants)
+                search_report["total_grants_found"] += len(grants)
                 
                 logger.info(f"Found {len(grants)} potential grants for query: {query}")
                 
@@ -154,7 +225,8 @@ def discover_grants(org_profile: Dict[str, Any], limit: int = 5) -> List[Dict[st
                         'focus_areas': grant.get('focus_areas', []),
                         'eligibility': grant.get('eligibility', ''),
                         'discovery_method': 'web-search',
-                        'discovery_date': datetime.now().strftime('%Y-%m-%d')
+                        'discovery_date': datetime.now().strftime('%Y-%m-%d'),
+                        'search_query': query  # Store the query that found this grant
                     }
                     
                     # Set a default due date if none is provided
@@ -177,8 +249,15 @@ def discover_grants(org_profile: Dict[str, Any], limit: int = 5) -> List[Dict[st
                 
     except Exception as e:
         logger.error(f"Error during grant discovery: {str(e)}")
-        
-    logger.info(f"Discovered {len(discovered_grants)} new grant opportunities")
+    
+    # Add the search report to each grant for tracking
+    for grant in discovered_grants:
+        grant['search_report'] = search_report
+    
+    # Log the search results
+    logger.info(f"Discovered {len(discovered_grants)} new grant opportunities from {search_report['sites_searched_estimate']} estimated sites")
+    logger.info(f"Search metrics: {search_report['successful_queries']}/{search_report['total_queries_attempted']} successful queries, {search_report['total_grants_found']} total grants found")
+    
     return discovered_grants
 
 
