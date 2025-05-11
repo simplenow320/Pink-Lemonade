@@ -1,4 +1,4 @@
-from flask import Blueprint, request, jsonify
+from flask import Blueprint, request, jsonify, abort, current_app as app
 from app.models.scraper import ScraperSource, ScraperHistory
 from app.models.grant import Grant
 from app import db

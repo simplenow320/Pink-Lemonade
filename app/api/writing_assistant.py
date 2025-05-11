@@ -5,7 +5,7 @@ This module provides API endpoints for the AI-powered writing assistant.
 """
 
 import logging
-from flask import Blueprint, jsonify, request
+from flask import Blueprint, jsonify, request, abort, current_app as app
 
 from app import db
 from app.models.grant import Grant
