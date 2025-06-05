@@ -1,5 +1,33 @@
 // React components for GrantFlow application
 
+// Utility functions for formatting
+function formatCurrency(amount) {
+  if (!amount || amount === 0) return '$0';
+  return new Intl.NumberFormat('en-US', {
+    style: 'currency',
+    currency: 'USD',
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0
+  }).format(amount);
+}
+
+function formatDate(date) {
+  if (!date) return 'No date';
+  const dateObj = typeof date === 'string' ? new Date(date) : date;
+  return dateObj.toLocaleDateString('en-US', {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric'
+  });
+}
+
+function getMatchScoreClass(score) {
+  if (!score) return 'badge-secondary';
+  if (score >= 80) return 'badge-success';
+  if (score >= 60) return 'badge-warning';
+  return 'badge-danger';
+}
+
 // Root component for the GrantFlow application
 function App() {
   const [page, setPage] = React.useState('dashboard');
@@ -58,10 +86,15 @@ function App() {
   React.useEffect(() => {
     if (page === 'dashboard') {
       setLoading(true);
-      fetch('/api/grants/dashboard')
-        .then(response => response.json())
-        .then(data => {
-          setDashboardData(data);
+      
+      // Fetch both dashboard data and grants data for the dashboard
+      Promise.all([
+        fetch('/api/grants/dashboard').then(response => response.json()),
+        fetch('/api/grants').then(response => response.json())
+      ])
+        .then(([dashboardData, grantsData]) => {
+          setDashboardData(dashboardData);
+          setGrants(grantsData);
           setLoading(false);
         })
         .catch(error => {
@@ -103,7 +136,7 @@ function App() {
 
     switch(page) {
       case 'dashboard':
-        return <Dashboard data={dashboardData} hasApiKey={hasApiKey} onNavigate={navigateTo} />;
+        return <Dashboard data={dashboardData} grants={grants} hasApiKey={hasApiKey} onNavigate={navigateTo} />;
       case 'grants':
         return <GrantsList grants={grants} hasApiKey={hasApiKey} />;
       case 'organization':
@@ -115,7 +148,7 @@ function App() {
         window.location.href = '/scraper';
         return <LoadingIndicator />;
       default:
-        return <Dashboard data={dashboardData} hasApiKey={hasApiKey} onNavigate={navigateTo} />;
+        return <Dashboard data={dashboardData} grants={grants} hasApiKey={hasApiKey} onNavigate={navigateTo} />;
     }
   };
 
@@ -321,7 +354,78 @@ function LoadingIndicator() {
 }
 
 // Dashboard component
-function Dashboard({ data, hasApiKey, onNavigate }) {
+function Dashboard({ data, grants, hasApiKey, onNavigate }) {
+  const [isDiscovering, setIsDiscovering] = React.useState(false);
+  const [discoveryProgress, setDiscoveryProgress] = React.useState({
+    sites: 0,
+    queries: 0,
+    successful: 0,
+    grants: 0
+  });
+
+  const handleDiscoverGrants = async () => {
+    if (!hasApiKey) {
+      alert('OpenAI API key is required for grant discovery. Please configure it in your environment.');
+      return;
+    }
+
+    setIsDiscovering(true);
+    setDiscoveryProgress({ sites: 0, queries: 0, successful: 0, grants: 0 });
+
+    try {
+      // Start the scraping job
+      const response = await fetch('/api/scraper/run', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ include_web_search: true })
+      });
+
+      if (response.ok) {
+        // Poll for progress updates
+        const pollProgress = async () => {
+          try {
+            const historyResponse = await fetch('/api/scraper/history?limit=1');
+            const historyData = await historyResponse.json();
+            
+            if (historyData && historyData.length > 0) {
+              const latestJob = historyData[0];
+              
+              if (latestJob.status === 'in_progress') {
+                setDiscoveryProgress({
+                  sites: latestJob.sites_searched || latestJob.search_report?.sites_searched || 0,
+                  queries: latestJob.queries_attempted || latestJob.search_report?.queries_attempted || 0,
+                  successful: latestJob.successful_queries || latestJob.search_report?.successful_queries || 0,
+                  grants: latestJob.grants_found || 0
+                });
+                
+                // Continue polling
+                setTimeout(pollProgress, 2000);
+              } else {
+                // Discovery completed
+                setIsDiscovering(false);
+                // Refresh page data
+                window.location.reload();
+              }
+            }
+          } catch (error) {
+            console.error('Error polling progress:', error);
+          }
+        };
+
+        // Start polling after a short delay
+        setTimeout(pollProgress, 1000);
+      } else {
+        throw new Error('Failed to start grant discovery');
+      }
+    } catch (error) {
+      console.error('Error starting grant discovery:', error);
+      setIsDiscovering(false);
+      alert('Failed to start grant discovery. Please try again.');
+    }
+  };
+
   if (!data) {
     return (
       <div className="container">
@@ -353,9 +457,28 @@ function Dashboard({ data, hasApiKey, onNavigate }) {
               GrantFlow helps you find the perfect funding opportunities for your nonprofit organization with AI-powered matching and automated discovery.
             </p>
             <div className="hero-actions">
-              <a href="#" onClick={(e) => { e.preventDefault(); onNavigate('grants'); }} className="btn btn-primary">Discover Grants</a>
-              <a href="#" onClick={(e) => { e.preventDefault(); onNavigate('scraper'); }} className="btn btn-outline">Learn More</a>
+              <button 
+                onClick={handleDiscoverGrants} 
+                disabled={isDiscovering}
+                className="btn btn-primary"
+              >
+                {isDiscovering ? 'Discovering Grants...' : 'Discover Grants'}
+              </button>
+              <a href="#" onClick={(e) => { e.preventDefault(); onNavigate('grants'); }} className="btn btn-outline">View All Grants</a>
             </div>
+            
+            {isDiscovering && (
+              <div className="discovery-progress">
+                <div className="progress-info">
+                  <p>🔍 Searching for grants that match your organization...</p>
+                  <div className="progress-stats">
+                    <span><strong>{discoveryProgress.sites}</strong> sites searched</span>
+                    <span><strong>{discoveryProgress.successful}/{discoveryProgress.queries}</strong> successful queries</span>
+                    <span><strong>{discoveryProgress.grants}</strong> grants found</span>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </div>
@@ -424,6 +547,55 @@ function Dashboard({ data, hasApiKey, onNavigate }) {
                 </div>
               ) : (
                 <p>No upcoming deadlines</p>
+              )}
+            </div>
+          </div>
+        </div>
+        
+        <div className="dashboard-section">
+          <h2>Recent Grants</h2>
+          <div className="card">
+            <div className="card-body">
+              {grants && grants.length > 0 ? (
+                <div className="table-responsive">
+                  <table className="table">
+                    <thead>
+                      <tr>
+                        <th>Grant</th>
+                        <th>Funder</th>
+                        <th>Amount</th>
+                        <th>Match Score</th>
+                        <th>Status</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {grants.slice(0, 5).map(grant => (
+                        <tr key={grant.id}>
+                          <td>
+                            <div className="grant-title">{grant.title}</div>
+                            <div className="grant-description-small">{grant.description?.substring(0, 100)}...</div>
+                          </td>
+                          <td>{grant.funder}</td>
+                          <td>{grant.amount ? formatCurrency(grant.amount) : 'Not specified'}</td>
+                          <td>
+                            <span className={`badge ${getMatchScoreClass(grant.match_score)}`}>
+                              {grant.match_score ? `${grant.match_score}/100` : 'N/A'}
+                            </span>
+                          </td>
+                          <td>
+                            <span className={`badge status-${grant.status?.toLowerCase().replace(/\s+/g, '-')}`}>
+                              {grant.status}
+                            </span>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              ) : (
+                <div className="no-grants-message">
+                  <p>No grants found. Click "Discover Grants" to find funding opportunities.</p>
+                </div>
               )}
             </div>
           </div>
