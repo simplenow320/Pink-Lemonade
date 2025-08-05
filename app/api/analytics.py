@@ -211,6 +211,72 @@ def get_analytics_overview():
         return jsonify({"success": False, "error": "Failed to get analytics overview"}), 500
 
 
+@bp.route('/stats', methods=['GET'])
+def get_basic_stats():
+    """
+    Get basic dashboard statistics
+    
+    Returns:
+        Response: JSON response with basic stats.
+    """
+    log_request('GET', '/api/analytics/stats')
+    
+    try:
+        # Calculate basic statistics from database
+        total_grants = Grant.query.count()
+        
+        # Count active applications (submitted status)
+        active_applications = Grant.query.filter(
+            Grant.status.in_(["Submitted", "In Progress", "Under Review"])
+        ).count()
+        
+        # Count grants won
+        grants_won = Grant.query.filter(
+            Grant.status.in_(["Won", "Approved", "Funded"])
+        ).count()
+        
+        # Calculate total funding received
+        total_funding = db.session.query(func.sum(Grant.amount)).filter(
+            Grant.status.in_(["Won", "Approved", "Funded"])
+        ).scalar() or 0
+        
+        # Calculate success rate
+        submitted_grants = Grant.query.filter(
+            Grant.status.in_(["Submitted", "Won", "Approved", "Funded", "Declined", "Rejected"])
+        ).count()
+        
+        success_rate = 0
+        if submitted_grants > 0:
+            success_rate = round((grants_won / submitted_grants) * 100, 1)
+        
+        stats = {
+            "success": True,
+            "total_grants": total_grants,
+            "active_applications": active_applications,
+            "grants_won": grants_won,
+            "total_funding": float(total_funding),
+            "success_rate": success_rate,
+            "submitted_grants": submitted_grants
+        }
+        
+        log_response('/api/analytics/stats', 200)
+        return jsonify(stats)
+    
+    except Exception as e:
+        logger.error(f"Error getting basic stats: {str(e)}")
+        log_response('/api/analytics/stats', 500, str(e))
+        return jsonify({
+            "success": False, 
+            "error": "Failed to get basic stats",
+            "total_grants": 0,
+            "active_applications": 0,
+            "grants_won": 0,
+            "total_funding": 0,
+            "success_rate": 0,
+            "submitted_grants": 0
+        }), 500
+
+
 @bp.route('/update-metrics', methods=['POST'])
 def update_analytics_metrics():
     """
