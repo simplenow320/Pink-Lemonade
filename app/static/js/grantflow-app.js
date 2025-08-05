@@ -69,7 +69,11 @@ function GrantFlowApp() {
       const response = await fetch('/api/ai/status');
       if (response.ok) {
         const data = await response.json();
-        setHasApiKey(data.has_api_key);
+        console.log('API status response:', data);
+        // Check for both possible property names
+        const hasKey = data.has_api_key || data.api_key_configured || false;
+        console.log('API key available:', hasKey);
+        setHasApiKey(hasKey);
       }
     } catch (error) {
       console.error('Error checking API key:', error);

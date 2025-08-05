@@ -158,7 +158,6 @@ def scrape_grants_endpoint():
         # For demo purposes, create realistic new grants instead of web scraping
         # This avoids network connectivity issues in the container environment
         
-        from app.services.ai_service import calculate_match_score
         from app.models.organization import Organization
         
         # Get organization for matching
@@ -206,10 +205,14 @@ def scrape_grants_endpoint():
                 
                 if org:
                     try:
+                        # Try to calculate match score using AI if available
+                        from app.services.ai_service import calculate_match_score
                         match_result = calculate_match_score(grant_data, org.to_dict())
                         if isinstance(match_result, dict):
                             match_score = match_result.get('score', 75)
                             match_explanation = match_result.get('explanation', match_explanation)
+                    except ImportError:
+                        logging.info("AI service not available for match scoring")
                     except Exception as e:
                         logging.warning(f"Could not calculate match score: {e}")
                 
