@@ -1,5 +1,476 @@
 /* Main CSS Styles for GrantFlow */
 
+/* Base styles and layout */
+* {
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  margin: 0;
+  padding: 0;
+  background-color: #f8f9fa;
+  line-height: 1.6;
+  color: #333;
+}
+
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 20px;
+}
+
+/* Navigation */
+.navbar {
+  background-color: #fff;
+  border-bottom: 1px solid #e9ecef;
+  padding: 1rem 0;
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+}
+
+.navbar-brand {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #007bff;
+  text-decoration: none;
+}
+
+.navbar-nav {
+  display: flex;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  gap: 2rem;
+}
+
+.nav-link {
+  color: #6c757d;
+  text-decoration: none;
+  font-weight: 500;
+  transition: color 0.3s ease;
+}
+
+.nav-link:hover,
+.nav-link.active {
+  color: #007bff;
+}
+
+/* Dashboard Hero Section */
+.welcome-hero {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  padding: 4rem 0;
+  text-align: center;
+  margin-bottom: 3rem;
+}
+
+.hero-content-centered {
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.hero-title {
+  font-size: 3rem;
+  font-weight: 700;
+  margin-bottom: 1rem;
+  line-height: 1.2;
+}
+
+.hero-subtitle {
+  font-size: 1.25rem;
+  margin-bottom: 2rem;
+  opacity: 0.9;
+}
+
+.hero-actions {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+/* Discovery Progress */
+.discovery-progress {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+  padding: 1.5rem;
+  margin-top: 2rem;
+  text-align: center;
+}
+
+.progress-info p {
+  margin-bottom: 1rem;
+  font-size: 1.1rem;
+}
+
+.progress-stats {
+  display: flex;
+  gap: 2rem;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.progress-stats span {
+  font-size: 0.9rem;
+  opacity: 0.9;
+}
+
+/* Buttons */
+.btn {
+  display: inline-block;
+  padding: 0.75rem 1.5rem;
+  font-size: 1rem;
+  font-weight: 500;
+  text-align: center;
+  text-decoration: none;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  line-height: 1.5;
+}
+
+.btn-primary {
+  background-color: #007bff;
+  color: white;
+}
+
+.btn-primary:hover:not(:disabled) {
+  background-color: #0056b3;
+  transform: translateY(-1px);
+}
+
+.btn-primary:disabled {
+  background-color: #6c757d;
+  cursor: not-allowed;
+}
+
+.btn-outline {
+  background-color: transparent;
+  color: white;
+  border: 2px solid white;
+}
+
+.btn-outline:hover {
+  background-color: white;
+  color: #667eea;
+}
+
+/* Cards */
+.card {
+  background: white;
+  border-radius: 10px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  margin-bottom: 1.5rem;
+  overflow: hidden;
+}
+
+.card-body {
+  padding: 1.5rem;
+}
+
+.card-header {
+  background-color: #f8f9fa;
+  padding: 1rem 1.5rem;
+  border-bottom: 1px solid #e9ecef;
+  font-weight: 600;
+}
+
+/* Dashboard Stats */
+.dashboard-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 1.5rem;
+  margin-bottom: 3rem;
+}
+
+.stat-card {
+  background: white;
+  padding: 2rem;
+  border-radius: 10px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  text-align: center;
+  transition: transform 0.3s ease;
+}
+
+.stat-card:hover {
+  transform: translateY(-2px);
+}
+
+.stat-icon {
+  font-size: 2.5rem;
+  margin-bottom: 1rem;
+}
+
+.stat-title {
+  font-size: 0.9rem;
+  color: #6c757d;
+  margin-bottom: 0.5rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.stat-value {
+  font-size: 2rem;
+  font-weight: 700;
+  color: #333;
+}
+
+/* Dashboard Sections */
+.dashboard-section {
+  margin-bottom: 3rem;
+}
+
+.dashboard-section h2 {
+  font-size: 1.5rem;
+  font-weight: 600;
+  margin-bottom: 1rem;
+  color: #333;
+}
+
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+/* Tables */
+.table-responsive {
+  overflow-x: auto;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 0;
+}
+
+.table th,
+.table td {
+  padding: 0.75rem;
+  text-align: left;
+  border-bottom: 1px solid #e9ecef;
+}
+
+.table th {
+  background-color: #f8f9fa;
+  font-weight: 600;
+  color: #495057;
+  border-bottom: 2px solid #dee2e6;
+}
+
+.table tbody tr:hover {
+  background-color: #f8f9fa;
+}
+
+/* Grant Details */
+.grant-title {
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 0.25rem;
+}
+
+.grant-description-small {
+  font-size: 0.85rem;
+  color: #6c757d;
+}
+
+/* Badges */
+.badge {
+  display: inline-block;
+  padding: 0.35em 0.65em;
+  font-size: 0.75em;
+  font-weight: 600;
+  line-height: 1;
+  text-align: center;
+  white-space: nowrap;
+  vertical-align: baseline;
+  border-radius: 0.375rem;
+}
+
+.badge-success {
+  background-color: #28a745;
+  color: white;
+}
+
+.badge-warning {
+  background-color: #ffc107;
+  color: #212529;
+}
+
+.badge-danger {
+  background-color: #dc3545;
+  color: white;
+}
+
+.badge-secondary {
+  background-color: #6c757d;
+  color: white;
+}
+
+.bg-primary {
+  background-color: #007bff;
+  color: white;
+}
+
+/* Status badges */
+.status-not-started {
+  background-color: #6c757d;
+  color: white;
+}
+
+.status-in-progress {
+  background-color: #17a2b8;
+  color: white;
+}
+
+.status-submitted {
+  background-color: #ffc107;
+  color: #212529;
+}
+
+.status-won,
+.status-approved {
+  background-color: #28a745;
+  color: white;
+}
+
+.status-declined,
+.status-rejected {
+  background-color: #dc3545;
+  color: white;
+}
+
+/* Match Score */
+.match-score-indicator {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.match-score-bar {
+  width: 60px;
+  height: 8px;
+  background-color: #e9ecef;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.match-score-bar.high {
+  background-color: #28a745;
+}
+
+.match-score-bar.medium {
+  background-color: #ffc107;
+}
+
+.match-score-bar.low {
+  background-color: #dc3545;
+}
+
+.match-score-value {
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+/* Grant Status */
+.grants-by-status {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 1rem;
+}
+
+.status-item {
+  padding: 1rem;
+  text-align: center;
+  border-radius: 8px;
+  background-color: #f8f9fa;
+}
+
+.status-label {
+  font-size: 0.85rem;
+  color: #6c757d;
+  margin-bottom: 0.5rem;
+}
+
+.status-value {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #333;
+}
+
+/* Loading and alerts */
+.spinner {
+  width: 2rem;
+  height: 2rem;
+  border: 3px solid #f3f3f3;
+  border-top: 3px solid #007bff;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin: 0 auto;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.alert {
+  padding: 0.75rem 1rem;
+  margin-bottom: 1rem;
+  border: 1px solid transparent;
+  border-radius: 0.375rem;
+}
+
+.alert-warning {
+  color: #856404;
+  background-color: #fff3cd;
+  border-color: #ffeaa7;
+}
+
+.alert-success {
+  color: #155724;
+  background-color: #d4edda;
+  border-color: #c3e6cb;
+}
+
+.alert-danger {
+  color: #721c24;
+  background-color: #f8d7da;
+  border-color: #f5c6cb;
+}
+
+/* No data states */
+.no-grants-message {
+  text-align: center;
+  padding: 2rem;
+  color: #6c757d;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .hero-title {
+    font-size: 2rem;
+  }
+  
+  .hero-actions {
+    flex-direction: column;
+    align-items: center;
+  }
+  
+  .dashboard-stats {
+    grid-template-columns: 1fr;
+  }
+  
+  .progress-stats {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+}
+
 /* Funders Management Styles */
 .funders-page {
   padding: 20px;

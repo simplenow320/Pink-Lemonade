@@ -15,21 +15,15 @@
     <!-- Styles -->
     <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
     
-    <!-- Add root div for React app -->
-    <div id="root"></div>
-    
-    <!-- Scripts -->
-    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
-    
-    <!-- React App -->
-    <script src="https://unpkg.com/react@17/umd/react.production.min.js" crossorigin></script>
-    <script src="https://unpkg.com/react-dom@17/umd/react-dom.production.min.js" crossorigin></script>
+    <!-- React Libraries -->
+    <script src="https://unpkg.com/react@17/umd/react.development.js" crossorigin></script>
+    <script src="https://unpkg.com/react-dom@17/umd/react-dom.development.js" crossorigin></script>
     <script src="https://unpkg.com/babel-standalone@6/babel.min.js"></script>
-    
-    <!-- Include React components -->
-    <script src="{{ url_for('static', filename='js/react-app.js') }}" type="text/babel"></script>
 </head>
 <body>
+    <!-- React App Container -->
+    <div id="root"></div>
+    
     <noscript>
         <div class="container" style="padding: 2rem; text-align: center;">
             <h1>JavaScript Required</h1>
@@ -48,15 +42,29 @@
     </div>
     
     <script>
+        console.log('HTML page loading...');
+        
         // Show loading overlay while app initializes
         document.getElementById('loading-overlay').style.display = 'flex';
         
         // Hide loading overlay once page is fully loaded
         window.addEventListener('load', function() {
+            console.log('Page fully loaded, hiding loading overlay...');
             setTimeout(function() {
                 document.getElementById('loading-overlay').style.display = 'none';
-            }, 500);
+                console.log('Loading overlay hidden');
+            }, 1000);
+        });
+        
+        // Add error handler for script loading
+        window.addEventListener('error', function(e) {
+            console.error('Script loading error:', e);
         });
     </script>
+    
+    <!-- Load React App -->
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/react-test.js') }}"></script>
+    <!-- <script src="{{ url_for('static', filename='js/react-app.js') }}" type="text/babel"></script> -->
 </body>
 </html>

@@ -1758,7 +1758,37 @@ function FundersManagement({ funders, setFunders }) {
 }
 
 // Render the React application
-ReactDOM.render(
-  <App />,
-  document.getElementById('root')
-);
+console.log('Starting React app initialization...');
+console.log('React available:', typeof React !== 'undefined');
+console.log('ReactDOM available:', typeof ReactDOM !== 'undefined');
+console.log('Root element:', document.getElementById('root'));
+
+try {
+  const rootElement = document.getElementById('root');
+  if (!rootElement) {
+    console.error('Root element not found!');
+    throw new Error('Root element not found');
+  }
+  
+  console.log('Rendering React app...');
+  ReactDOM.render(
+    React.createElement(App),
+    rootElement
+  );
+  console.log('React app rendered successfully!');
+} catch (error) {
+  console.error('Failed to render React app:', error);
+  
+  // Fallback HTML content
+  const rootElement = document.getElementById('root');
+  if (rootElement) {
+    rootElement.innerHTML = `
+      <div style="padding: 2rem; text-align: center; background: white; margin: 2rem; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
+        <h1 style="color: #dc3545; margin-bottom: 1rem;">GrantFlow Loading Error</h1>
+        <p style="color: #6c757d; margin-bottom: 1rem;">There was an issue loading the React application.</p>
+        <p style="color: #6c757d; font-size: 0.9rem;">Error: ${error.message}</p>
+        <button onclick="window.location.reload()" style="background: #007bff; color: white; border: none; padding: 0.75rem 1.5rem; border-radius: 6px; cursor: pointer; margin-top: 1rem;">Reload Page</button>
+      </div>
+    `;
+  }
+}
