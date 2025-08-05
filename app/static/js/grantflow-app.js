@@ -76,13 +76,30 @@ function GrantFlowApp() {
     }
   };
 
-  const handleDiscoverGrants = async () => {
+  const handleDiscoverGrants = async (event) => {
+    console.log('Discover Grants button clicked!');
+    console.log('Has API Key:', hasApiKey);
+    console.log('Loading state:', loading);
+    
+    // Prevent any default behavior
+    if (event) {
+      event.preventDefault();
+      event.stopPropagation();
+    }
+    
     if (!hasApiKey) {
       alert('OpenAI API Key required for grant discovery. Please add your API key in settings.');
       return;
     }
 
+    if (loading) {
+      console.log('Already loading, ignoring click');
+      return;
+    }
+
     setLoading(true);
+    console.log('Starting grant discovery...');
+    
     try {
       const response = await fetch('/api/scraper/scrape', {
         method: 'POST',
@@ -90,19 +107,25 @@ function GrantFlowApp() {
         body: JSON.stringify({})
       });
 
+      console.log('API Response status:', response.status);
+      
       if (response.ok) {
         const data = await response.json();
+        console.log('API Response data:', data);
         alert(`Successfully discovered ${data.grants_found || 0} new grants!`);
         loadGrants();
         loadStats();
       } else {
-        throw new Error('Failed to discover grants');
+        const errorText = await response.text();
+        console.error('API Error:', errorText);
+        throw new Error(`Failed to discover grants: ${response.status}`);
       }
     } catch (error) {
       console.error('Error discovering grants:', error);
-      alert('Failed to discover grants. Please try again.');
+      alert(`Failed to discover grants: ${error.message}. Please try again.`);
     } finally {
       setLoading(false);
+      console.log('Grant discovery completed');
     }
   };
 
@@ -120,7 +143,12 @@ function GrantFlowApp() {
           React.createElement('button', {
             className: `btn btn-primary ${loading ? 'disabled' : ''}`,
             onClick: handleDiscoverGrants,
-            disabled: loading
+            disabled: loading,
+            style: { 
+              cursor: loading ? 'not-allowed' : 'pointer',
+              pointerEvents: 'auto',
+              zIndex: 10 
+            }
           }, loading ? 'Discovering...' : 'Discover Grants'),
           React.createElement('button', {
             className: 'btn btn-outline',
