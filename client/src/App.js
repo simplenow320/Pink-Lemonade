@@ -10,6 +10,7 @@ import './App.css';
 import ModernLayout from './components/layout/ModernLayout';
 
 // Import pages using lazy loading for better performance
+const Landing = lazy(() => import('./pages/Landing'));
 const Dashboard = lazy(() => import('./pages/Dashboard'));
 const Grants = lazy(() => import('./pages/Grants'));
 const GrantDetail = lazy(() => import('./pages/GrantDetail'));
@@ -111,86 +112,104 @@ function App() {
 
   // Modern app layout with all routes
   return (
-    <ModernLayout>
-      <Suspense fallback={<PageLoader />}>
-        <Routes>
-          <Route
-            path="/"
-            element={
-              <ErrorBoundary>
-                <Dashboard />
-              </ErrorBoundary>
-            }
-          />
-          <Route
-            path="/grants"
-            element={
-              <ErrorBoundary>
-                <Grants />
-              </ErrorBoundary>
-            }
-          />
-          <Route
-            path="/grants/:id"
-            element={
-              <ErrorBoundary>
-                <GrantDetail />
-              </ErrorBoundary>
-            }
-          />
-          <Route
-            path="/organization"
-            element={
-              <ErrorBoundary>
-                <Organization />
-              </ErrorBoundary>
-            }
-          />
-          <Route
-            path="/narratives/:grantId"
-            element={
-              <ErrorBoundary>
-                <Narrative />
-              </ErrorBoundary>
-            }
-          />
-          <Route
-            path="/scraper"
-            element={
-              <ErrorBoundary>
-                <Scraper />
-              </ErrorBoundary>
-            }
-          />
-          <Route
-            path="/analytics"
-            element={
-              <ErrorBoundary>
-                <Analytics />
-              </ErrorBoundary>
-            }
-          />
-          <Route
-            path="/writing-assistant"
-            element={
-              <ErrorBoundary>
-                <WritingAssistant />
-              </ErrorBoundary>
-            }
-          />
-          <Route
-            path="/writing-assistant/:grantId"
-            element={
-              <ErrorBoundary>
-                <WritingAssistant />
-              </ErrorBoundary>
-            }
-          />
-          {/* Fallback route for any other paths */}
-          <Route path="*" element={<Navigate to="/" replace />} />
-        </Routes>
-      </Suspense>
-    </ModernLayout>
+    <Suspense fallback={<PageLoader />}>
+      <Routes>
+        {/* Landing page without layout */}
+        <Route
+          path="/"
+          element={
+            <ErrorBoundary>
+              <Landing />
+            </ErrorBoundary>
+          }
+        />
+        
+        {/* All other pages with ModernLayout */}
+        <Route
+          path="/*"
+          element={
+            <ModernLayout>
+              <Routes>
+                <Route
+                  path="/dashboard"
+                  element={
+                    <ErrorBoundary>
+                      <Dashboard />
+                    </ErrorBoundary>
+                  }
+                />
+                <Route
+                  path="/grants"
+                  element={
+                    <ErrorBoundary>
+                      <Grants />
+                    </ErrorBoundary>
+                  }
+                />
+                <Route
+                  path="/grants/:id"
+                  element={
+                    <ErrorBoundary>
+                      <GrantDetail />
+                    </ErrorBoundary>
+                  }
+                />
+                <Route
+                  path="/organization"
+                  element={
+                    <ErrorBoundary>
+                      <Organization />
+                    </ErrorBoundary>
+                  }
+                />
+                <Route
+                  path="/narratives/:grantId"
+                  element={
+                    <ErrorBoundary>
+                      <Narrative />
+                    </ErrorBoundary>
+                  }
+                />
+                <Route
+                  path="/scraper"
+                  element={
+                    <ErrorBoundary>
+                      <Scraper />
+                    </ErrorBoundary>
+                  }
+                />
+                <Route
+                  path="/analytics"
+                  element={
+                    <ErrorBoundary>
+                      <Analytics />
+                    </ErrorBoundary>
+                  }
+                />
+                <Route
+                  path="/writing-assistant"
+                  element={
+                    <ErrorBoundary>
+                      <WritingAssistant />
+                    </ErrorBoundary>
+                  }
+                />
+                <Route
+                  path="/writing-assistant/:grantId"
+                  element={
+                    <ErrorBoundary>
+                      <WritingAssistant />
+                    </ErrorBoundary>
+                  }
+                />
+                {/* Fallback route for any other paths */}
+                <Route path="*" element={<Navigate to="/dashboard" replace />} />
+              </Routes>
+            </ModernLayout>
+          }
+        />
+      </Routes>
+    </Suspense>
   );
 }
 

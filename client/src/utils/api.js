@@ -352,3 +352,6 @@ export const generateSectionOutline = async (sectionType, grantId) => {
   const response = await api.post('/writing-assistant/outline', data);
   return response.data;
 };
+
+// Export the api object as default for direct axios calls
+export default api;

@@ -26,7 +26,7 @@ const ModernLayout = ({ children }) => {
   const navItems = [
     {
       name: 'Dashboard',
-      path: '/',
+      path: '/dashboard',
       description: 'Overview of your grants',
       icon: DashboardIcon,
     },
@@ -64,8 +64,8 @@ const ModernLayout = ({ children }) => {
 
   // Check if a path is active
   const isActive = (path) => {
-    if (path === '/') {
-      return location.pathname === '/';
+    if (path === '/dashboard') {
+      return location.pathname === '/dashboard';
     }
     return location.pathname.startsWith(path);
   };
