@@ -1,0 +1,30 @@
+We are REBUILDING from the existing project structure — do NOT start a new repo.
+
+Task:
+Create a new landing page within the current site structure that:
+- Features the uploaded official logo prominently in the hero section (large, centered, above the fold).
+- Logo placement: SINGLE instance only in the hero section. Do NOT duplicate logo or project name anywhere else in the layout.
+- Maintain minimalist, clean, modern, muted matte styling consistent with the current site's color palette.
+- Avoid bright/neon colors. Use soft muted tones with strong contrast for readability.
+- Include a headline and subheadline that speak directly to the pain points of nonprofit fundraising:
+    - Headline: Short, bold, empathetic to nonprofits struggling with funding.
+    - Subheadline: Highlight how our platform helps nonprofits discover, track, and secure grants and funding opportunities — making the process easier and more accessible.
+- Add a clear primary call-to-action button (“Get Started Free” or “Find Funding Now”) above the fold.
+- Below hero: a 3-column section with simple icons and text explaining:
+    1. Discover funding opportunities.
+    2. Track grants and deadlines.
+    3. Increase your success rate with AI assistance.
+- Ensure full responsiveness on desktop and mobile.
+
+Technical Requirements:
+- Place new landing page code in the appropriate location without breaking existing navigation.
+- Follow current routing and templating conventions.
+- Optimize for fast load speed.
+- All text content editable via standard component files so messaging can be updated without touching code.
+- Create `landing-page-notes.md` with a summary of changes and locations of all editable text.
+
+IMPORTANT:
+Prompt me when to upload the official logo file (`31C612BA-8F91-4B27-8936-ABC323FB4C03.png`) so you can insert it in the correct location without renaming it or duplicating it in other areas.
+
+Goal:
+Produce a high-converting, modern landing page that communicates directly to nonprofits about solving their fundraising struggles while maintaining brand integrity and clean design.

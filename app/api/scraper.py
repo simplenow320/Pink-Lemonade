@@ -209,10 +209,18 @@ def scrape_grants_endpoint():
         grants_added = 0
         new_grants = []
         
-        for grant_data in demo_grants:
-            # Check if similar grant already exists
+        # UPDATED: Process all API grants, not just demo grants
+        for grant_data in all_api_grants if all_api_grants else demo_grants:
+            # UPDATED: More precise duplicate check using title and funder
+            title_check = grant_data.get('title', '')[:50] if grant_data.get('title') else ''
+            funder_check = grant_data.get('funder', '')
+            
+            if not title_check or not funder_check:
+                continue
+                
             existing = Grant.query.filter(
-                Grant.title.ilike(f"%{grant_data['title'][:20]}%")
+                Grant.title.contains(title_check),
+                Grant.funder == funder_check
             ).first()
             
             if not existing:
