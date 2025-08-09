@@ -656,3 +656,13 @@ def run_scraping_job(include_web_search=True):
         result["error_message"] = str(e)
         result["end_time"] = datetime.now()
         return result
+
+
+def scheduled_scraping_job():
+    """
+    Wrapper function for scheduled scraping job
+    """
+    logger.info("Starting scheduled scraping job")
+    result = run_scraping_job(include_web_search=True)
+    logger.info(f"Scheduled scraping job completed with status: {result.get('status')}")
+    return result

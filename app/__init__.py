@@ -50,5 +50,10 @@ def create_app():
     def dashboard():
         return render_template('dashboard.html')
 
+    # Start scheduler only in production
+    if os.environ.get('FLASK_ENV') == 'production':
+        from app.utils.scheduler import start_scheduler
+        start_scheduler()
+
     # remove any "serve React for all routes" logic until the new React app is ready
     return app
