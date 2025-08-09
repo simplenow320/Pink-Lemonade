@@ -61,3 +61,15 @@
 2. **app/services/ai_service.py** 
    - UPDATED: Added fallback keyword matching when OpenAI unavailable
    - UPDATED: Improved match scoring logic
+
+3. **app/templates/landing.html**
+   - NEW: Created landing page with Pink Lemonade branding
+   - Features hero section with logo, headline, and CTA
+   - Three-column feature section explaining platform benefits
+   - Muted matte color scheme with strong contrast
+
+4. **app/routes.py**
+   - UPDATED: Added /landing route for new landing page
+
+5. **app/static/images/logo.png**
+   - NEW: Added Pink Lemonade logo file

@@ -7,6 +7,11 @@ def index():
     """Render the main application page"""
     return render_template('index.html')
 
+@bp.route('/landing')
+def landing():
+    """Landing page for new visitors"""
+    return render_template('landing.html')
+
 @bp.route('/scraper')
 def scraper():
     """Render the scraper page"""
