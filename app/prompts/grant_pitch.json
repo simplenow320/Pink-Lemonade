@@ -1,43 +1,23 @@
 {
-  "narrative_generation": {
-    "system_prompt": "You are creating compelling grant narrative content that tells the organization's story, demonstrates need, and presents a clear case for funding. Tailor the language and approach to the specific funder's priorities and giving style.",
-    
-    "core_elements": {
-      "organization_story": "Craft a compelling narrative about the organization's history, mission, and unique approach. Highlight what sets this organization apart from others in the field.",
-      
-      "community_need": "Present clear, compelling evidence of the community need or problem being addressed. Use data, statistics, and personal stories to make the need tangible and urgent.",
-      
-      "program_description": "Describe the proposed program or project with specific details about activities, timeline, participants, and expected outcomes. Make it clear how the funding will be used.",
-      
-      "impact_demonstration": "Show measurable outcomes and long-term impact. Include both quantitative metrics and qualitative stories that demonstrate the difference this funding will make.",
-      
-      "sustainability_plan": "Address how the program will continue beyond the grant period. Show planning for ongoing funding and community ownership."
-    }
+  "system": "<GLOBAL_GUARDRAILS> Module: Grant Pitch Builder — produce a concise, funder-tailored pitch.",
+  "context": {
+    "funder": "{{funder_name}}",
+    "alignment_points": "{{alignment_points}}",
+    "per_section_limits": "{{per_section_word_limits}}",
+    "order": ["Personal Impact", "Pain Point", "Solution", "Funding Request", "Vision and Impact"]
   },
-  
-  "funder_alignment": {
-    "foundation_research": "Analyze the funder's giving history, stated priorities, and previous grants to tailor the proposal language and emphasis. Match the organization's work to the funder's specific interests.",
-    
-    "proposal_customization": "Adjust narrative tone, focus areas, and supporting evidence based on funder type (family foundation, corporate foundation, government agency, etc.)",
-    
-    "relationship_building": "Include appropriate acknowledgment of any existing relationship with the funder and demonstrate knowledge of their work and values."
+  "task": {
+    "instructions": [
+      "Write five sections in the org's voice with executive clarity.",
+      "Tailor language to the funder's focus and alignment points.",
+      "Funding Request must state the exact amount and use of funds."
+    ]
   },
-  
-  "writing_guidelines": {
-    "voice_consistency": "Maintain the organization's authentic voice while adapting to funder preferences. Balance professional tone with passion for the mission.",
-    
-    "evidence_integration": "Seamlessly weave together data, research, testimonials, and stories to create a compelling case without overwhelming the reader.",
-    
-    "call_to_action": "End with a clear, specific request that makes it easy for the funder to say yes. Be explicit about the funding amount and what it will accomplish.",
-    
-    "length_optimization": "Adapt content length and detail level to match funder requirements while maintaining narrative flow and impact."
+  "validation": {
+    "must_match": ["grant_requested_amount_vs_record","grant_dates_vs_record"]
   },
-  
-  "quality_checks": {
-    "alignment_verification": "Ensure all narrative elements align with the organization's actual programs and capacity. Avoid overpromising or misrepresenting capabilities.",
-    
-    "fact_checking": "Verify all statistics, dates, and program details for accuracy. Ensure compliance with funder guidelines and requirements.",
-    
-    "readability": "Use clear, accessible language that tells the story effectively without jargon or unnecessary complexity."
+  "output_format": {
+    "type": "markdown_with_headings",
+    "end_with": "Source Notes"
   }
 }
