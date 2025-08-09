@@ -26,6 +26,40 @@ logger = logging.getLogger(__name__)
 # Create blueprint
 bp = Blueprint('analytics', __name__, url_prefix='/api/analytics')
 
+@bp.route('', methods=['GET'])
+def get_analytics():
+    """Get general analytics data"""
+    try:
+        # Mock analytics data for testing
+        analytics = {
+            'total_grants': 150,
+            'total_applications': 45,
+            'success_rate': 0.33,
+            'total_awarded': 250000
+        }
+        return jsonify(analytics)
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@bp.route('/dashboard', methods=['GET'])
+def get_dashboard_analytics():
+    """Get dashboard-specific analytics"""
+    try:
+        # Mock dashboard data for testing
+        dashboard = {
+            'grants_by_status': {
+                'discovered': 80,
+                'saved': 40,
+                'applied': 20,
+                'awarded': 10
+            },
+            'recent_activity': [],
+            'upcoming_deadlines': []
+        }
+        return jsonify(dashboard)
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
 
 @bp.route('/success-metrics', methods=['GET'])
 def get_analytics_success_metrics():

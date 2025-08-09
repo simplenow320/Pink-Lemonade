@@ -1,0 +1,102 @@
+======================================================================
+PINK LEMONADE - END-TO-END FEATURE & NAVIGATION TEST
+======================================================================
+Started: 2025-08-09 14:06:33
+----------------------------------------------------------------------
+
+1. CORE NAVIGATION ROUTES
+----------------------------------------
+✓ PASS: Home Page (/) - Redirects to /opportunities
+✓ PASS: Opportunities Page - Status 200
+✓ PASS: Profile Page - Status 200
+✓ PASS: Dashboard Page - Status 200
+✓ PASS: Settings Redirect - Redirects to /profile
+
+2. API ENDPOINTS - OPPORTUNITIES
+----------------------------------------
+✓ PASS: GET /api/opportunities - Status 200, JSON response
+✓ PASS: POST /api/opportunities/save - Status 200, JSON response
+✓ PASS: POST /api/opportunities/apply - Status 200, JSON response
+
+3. API ENDPOINTS - ORGANIZATION
+----------------------------------------
+✓ PASS: GET /api/organization - Status 200, JSON response
+✓ PASS: POST /api/organization - Status 200, JSON response
+
+4. API ENDPOINTS - PROFILE
+----------------------------------------
+✓ PASS: GET /api/profile/user - Status 200, JSON response
+✓ PASS: POST /api/profile/user - Status 200, JSON response
+✓ PASS: GET /api/profile/documents - Status 200, JSON response
+✓ PASS: GET /api/profile/context - Status 200, JSON response
+
+5. API ENDPOINTS - GRANTS
+----------------------------------------
+✓ PASS: GET /api/grants - Status 200, JSON response
+✗ FAIL: GET /api/grants/saved - Status 404, expected 200
+✗ FAIL: GET /api/grants/applications - Status 404, expected 200
+
+6. API ENDPOINTS - AI FEATURES
+----------------------------------------
+✗ FAIL: POST /api/ai/match-score - Status 404, expected 200
+✗ FAIL: POST /api/ai/extract-grant - Status 404, expected 200
+✗ FAIL: POST /api/ai/generate-narrative - Status 404, expected 200
+
+7. SEARCH & FILTERS
+----------------------------------------
+✓ PASS: Search by keyword - Returned data with params: {'search': 'community'}
+✓ PASS: Filter by city - Returned data with params: {'city': 'Atlanta'}
+✓ PASS: Filter by focus area - Returned data with params: {'focus_area': 'Youth'}
+✓ PASS: Filter by deadline - Returned data with params: {'deadline_days': '30'}
+✓ PASS: Filter by source - Returned data with params: {'source': 'grants_gov'}
+✓ PASS: Combined filters - Returned data with params: {'search': 'grant', 'focus_area': 'Education', 'deadline_days': '60'}
+
+8. PAGINATION
+----------------------------------------
+✓ PASS: Page 1 - Returned data with params: {'page': '1'}
+✓ PASS: Page 2 - Returned data with params: {'page': '2'}
+✓ PASS: Custom page size - Returned data with params: {'page': '1', 'per_page': '5'}
+
+9. PAGE ELEMENTS - OPPORTUNITIES
+----------------------------------------
+✓ PASS: Opportunities page elements - All 9 elements present
+
+10. PAGE ELEMENTS - PROFILE
+----------------------------------------
+✓ PASS: Profile page elements - All 7 elements present
+
+11. PAGE ELEMENTS - DASHBOARD
+----------------------------------------
+✓ PASS: Dashboard page elements - All 2 elements present
+
+12. DATA MODE VERIFICATION
+----------------------------------------
+✓ PASS: Demo badge display - Mode: live, Demo badge present
+
+13. ERROR HANDLING
+----------------------------------------
+✓ PASS: 404 for invalid route - Status 404
+✓ PASS: API error for invalid grant ID - Status 404, JSON response
+
+14. ADDITIONAL API ENDPOINTS
+----------------------------------------
+✗ FAIL: GET /api/analytics - Status 404, expected 200
+✗ FAIL: GET /api/analytics/dashboard - Status 404, expected 200
+✓ PASS: GET /api/scraper/sources - Status 200, JSON response
+✓ PASS: GET /api/discovery/search - Status 200, JSON response
+
+15. WRITING ASSISTANT
+----------------------------------------
+✗ FAIL: GET /api/writing-assistant/templates - Status 404, expected 200
+✗ FAIL: POST /api/writing-assistant/generate - Status 400, expected 200
+
+======================================================================
+TEST SUMMARY
+======================================================================
+Total Tests: 41
+✓ Passed: 32
+✗ Failed: 9
+⊘ Skipped: 0
+Success Rate: 78.0%
+Completed: 2025-08-09 14:08:20
+======================================================================

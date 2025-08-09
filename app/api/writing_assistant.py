@@ -24,6 +24,19 @@ logger = logging.getLogger(__name__)
 # Create blueprint
 bp = Blueprint('writing_assistant', __name__, url_prefix='/api/writing-assistant')
 
+@bp.route('/templates', methods=['GET'])
+def get_templates():
+    """Get available writing templates"""
+    try:
+        templates = [
+            {'id': 'brief', 'name': 'Brief Narrative', 'description': 'Short grant narrative'},
+            {'id': 'detailed', 'name': 'Detailed Narrative', 'description': 'Comprehensive grant narrative'},
+            {'id': 'loi', 'name': 'Letter of Intent', 'description': 'Letter of intent template'}
+        ]
+        return jsonify(templates)
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
 
 @bp.route('/sections', methods=['GET'])
 def get_section_types():

@@ -15,9 +15,12 @@ from typing import Dict, List, Any, Optional, Tuple, Union
 bp = Blueprint('grants', __name__, url_prefix='/api/grants')
 
 @bp.route('', methods=['GET'])
+@bp.route('/saved', methods=['GET'])
+@bp.route('/applications', methods=['GET'])
 def get_grants() -> Union[Response, Tuple[Response, int]]:
     """
     Get all grants with optional filtering.
+    Supports /grants, /grants/saved, and /grants/applications endpoints.
     
     Query Parameters:
         status (str, optional): Filter grants by status.
@@ -34,8 +37,15 @@ def get_grants() -> Union[Response, Tuple[Response, int]]:
     log_request(request.method, endpoint, dict(request.args))
     
     try:
-        # Get query parameters for filtering
-        status = request.args.get('status')
+        # Determine the type of grants to fetch based on endpoint
+        if request.path.endswith('/saved'):
+            status = 'saved'
+        elif request.path.endswith('/applications'):
+            status = 'applied'
+        else:
+            # Get query parameters for filtering
+            status = request.args.get('status')
+        
         sort_by = request.args.get('sort_by', 'due_date')
         sort_dir = request.args.get('sort_dir', 'asc')
         

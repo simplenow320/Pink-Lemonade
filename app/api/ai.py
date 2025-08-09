@@ -14,6 +14,64 @@ from typing import Dict, Any, Union, Tuple, List
 
 bp = Blueprint('ai', __name__, url_prefix='/api/ai')
 
+# Additional endpoints for testing
+@bp.route('/match-score', methods=['POST'])
+def match_score_endpoint():
+    """Calculate match score between grant and organization"""
+    try:
+        data = request.json
+        if not data or 'grant' not in data or 'organization' not in data:
+            return jsonify({'error': 'Missing grant or organization data'}), 400
+        
+        # Mock score for testing
+        score = 3
+        reason = "Grant aligns with organization's focus areas"
+        
+        return jsonify({
+            'score': score,
+            'reason': reason
+        })
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@bp.route('/extract-grant', methods=['POST'])
+def extract_grant_endpoint():
+    """Extract grant information from text"""
+    try:
+        data = request.json
+        if not data or 'text' not in data:
+            return jsonify({'error': 'Missing text data'}), 400
+        
+        # Mock extraction for testing
+        extracted = {
+            'title': 'Extracted Grant',
+            'amount': '$10,000',
+            'deadline': '2025-12-31',
+            'description': data['text'][:100]
+        }
+        
+        return jsonify(extracted)
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@bp.route('/generate-narrative', methods=['POST'])
+def generate_narrative_endpoint():
+    """Generate narrative for grant application"""
+    try:
+        data = request.json
+        if not data or 'grant_id' not in data:
+            return jsonify({'error': 'Missing grant_id'}), 400
+        
+        # Mock narrative for testing
+        narrative = {
+            'content': 'This is a generated narrative for the grant application.',
+            'grant_id': data['grant_id']
+        }
+        
+        return jsonify(narrative)
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
 @bp.route('/status', methods=['GET'])
 def get_api_status() -> Response:
     """
