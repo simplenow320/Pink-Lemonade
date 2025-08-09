@@ -1,24 +1,18 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>{% block title %}Pink Lemonade{% endblock %}</title>
-    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
-    <link href="{{ url_for('static', filename='css/brand.css') }}" rel="stylesheet">
+    <!-- Lock brand -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/brand.css') }}">
     {% block extra_css %}{% endblock %}
-</head>
-<body class="bg-gray-50 min-h-screen">
-    {% block navigation %}
-    <!-- Navigation will be included on pages that need it -->
-    {% endblock %}
-    
-    <div class="min-h-screen">
-        {% block content %}{% endblock %}
+  </head>
+  <body>
+    <div class="container">
+      {% include 'partials/_nav.html' %}
+      <main>{% block content %}{% endblock %}</main>
+      <footer class="small">© {{ current_year }} • Pink Lemonade • Brand locked to matte pink, white, grey, black.</footer>
     </div>
-    
-    <!-- Optional footer, mode badge is now in navigation -->
-    
-    {% block extra_js %}{% endblock %}
-</body>
+  </body>
 </html>

@@ -39,11 +39,15 @@ def create_app():
     flask_app.register_blueprint(scrape_bp, url_prefix='/api/scrape')
     flask_app.register_blueprint(ai_test_bp, url_prefix='/api/ai')
     
-    # Add template context processor for env_mode
+    # Add template context processor for env_mode and current_year
     @flask_app.context_processor
     def inject_env_mode():
         from app.services.mode import is_live
-        return {'env_mode': 'LIVE' if is_live() else 'DEMO'}
+        from datetime import datetime
+        return {
+            'env_mode': 'LIVE' if is_live() else 'DEMO',
+            'current_year': datetime.now().year
+        }
     
     # Basic routes
     from flask import render_template
