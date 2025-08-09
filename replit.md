@@ -39,6 +39,7 @@ Preferred communication style: Simple, everyday language.
 - **Grant Matching**: Intelligent 1-5 scoring system with detailed explanations
 - **Content Generation**: Automated narrative writing and proposal assistance
 - **Web Scraping**: AI-powered grant extraction from URLs and text content
+- **Edit Learning**: AI learns from user edits to improve future drafts (app/config/edit_learning.json)
 
 ### Job Scheduling
 - **Automated Discovery**: Scheduled scraping jobs using Python's schedule library
