@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>API Integration Test - Pink Lemonade</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        :root {
+            --pink: #ff69b4;
+            --pink-light: #ffb6d9;
+            --pink-dark: #ff1493;
+        }
+        
+        .pink-gradient {
+            background: linear-gradient(135deg, var(--pink-light) 0%, var(--pink) 100%);
+        }
+        
+        .source-card {
+            background: #fafafa;
+            border: 1px solid #e0e0e0;
+            transition: all 0.3s ease;
+        }
+        
+        .source-card:hover {
+            border-color: var(--pink);
+            box-shadow: 0 4px 8px rgba(255, 105, 180, 0.2);
+        }
+        
+        .enabled-badge {
+            background-color: #4ade80;
+            color: white;
+        }
+        
+        .disabled-badge {
+            background-color: #94a3b8;
+            color: white;
+        }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <div class="container mx-auto px-4 py-8">
+        <!-- Header -->
+        <div class="pink-gradient text-white p-6 rounded-lg mb-8">
+            <h1 class="text-3xl font-bold mb-2">API & Data Integration Layer Test</h1>
+            <p class="text-pink-100">Testing centralized API Manager functionality</p>
+        </div>
+        
+        <!-- Available Sources -->
+        <div class="mb-8">
+            <h2 class="text-2xl font-bold mb-4">Available Data Sources</h2>
+            <div id="sources-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <div class="text-gray-500">Loading sources...</div>
+            </div>
+        </div>
+        
+        <!-- Test Actions -->
+        <div class="mb-8">
+            <h2 class="text-2xl font-bold mb-4">Test Actions</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <button onclick="testSource('michigan_portal')" class="bg-pink-500 text-white px-4 py-2 rounded hover:bg-pink-600">
+                    Test Michigan Portal
+                </button>
+                <button onclick="testSource('georgia_portal')" class="bg-pink-500 text-white px-4 py-2 rounded hover:bg-pink-600">
+                    Test Georgia Portal
+                </button>
+                <button onclick="searchGrants()" class="bg-pink-500 text-white px-4 py-2 rounded hover:bg-pink-600">
+                    Search All Sources
+                </button>
+                <button onclick="fetchFromSource('michigan_portal')" class="bg-purple-500 text-white px-4 py-2 rounded hover:bg-purple-600">
+                    Fetch Michigan Grants
+                </button>
+                <button onclick="testDiscovery()" class="bg-indigo-500 text-white px-4 py-2 rounded hover:bg-indigo-600">
+                    Test Discovery Service
+                </button>
+            </div>
+        </div>
+        
+        <!-- Results -->
+        <div class="mb-8">
+            <h2 class="text-2xl font-bold mb-4">Results</h2>
+            <div id="results-container" class="bg-white p-6 rounded-lg border border-gray-200">
+                <pre id="results" class="text-sm text-gray-600">No tests run yet</pre>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // Load available sources on page load
+        async function loadSources() {
+            try {
+                const response = await fetch('/api/integration/sources');
+                const data = await response.json();
+                
+                if (data.success) {
+                    const container = document.getElementById('sources-container');
+                    container.innerHTML = data.sources.map(source => `
+                        <div class="source-card p-4 rounded-lg">
+                            <div class="flex justify-between items-start mb-2">
+                                <h3 class="font-bold text-lg">${source.name}</h3>
+                                <span class="${source.enabled ? 'enabled-badge' : 'disabled-badge'} px-2 py-1 rounded text-xs">
+                                    ${source.enabled ? 'Enabled' : 'Disabled'}
+                                </span>
+                            </div>
+                            <p class="text-sm text-gray-600 mb-2">${source.description}</p>
+                            <div class="flex flex-wrap gap-1">
+                                ${source.supports.map(s => `
+                                    <span class="bg-gray-200 text-gray-700 px-2 py-1 rounded text-xs">${s}</span>
+                                `).join('')}
+                            </div>
+                            <div class="mt-2">
+                                <span class="text-xs ${source.hasApiKey ? 'text-green-600' : 'text-gray-400'}">
+                                    ${source.hasApiKey ? '✓ API Key Configured' : '○ No API Key'}
+                                </span>
+                            </div>
+                        </div>
+                    `).join('');
+                }
+            } catch (error) {
+                console.error('Error loading sources:', error);
+            }
+        }
+        
+        async function testSource(sourceId) {
+            updateResults(`Testing connection to ${sourceId}...`);
+            try {
+                const response = await fetch(`/api/integration/test/${sourceId}`);
+                const data = await response.json();
+                updateResults(JSON.stringify(data, null, 2));
+            } catch (error) {
+                updateResults(`Error: ${error.message}`);
+            }
+        }
+        
+        async function fetchFromSource(sourceId) {
+            updateResults(`Fetching grants from ${sourceId}...`);
+            try {
+                const response = await fetch(`/api/integration/fetch/${sourceId}?limit=3`);
+                const data = await response.json();
+                updateResults(JSON.stringify(data, null, 2));
+            } catch (error) {
+                updateResults(`Error: ${error.message}`);
+            }
+        }
+        
+        async function searchGrants() {
+            updateResults('Searching across all enabled sources...');
+            try {
+                const response = await fetch('/api/integration/search', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        query: 'community development',
+                        filters: {limit: 5}
+                    })
+                });
+                const data = await response.json();
+                updateResults(JSON.stringify(data, null, 2));
+            } catch (error) {
+                updateResults(`Error: ${error.message}`);
+            }
+        }
+        
+        async function testDiscovery() {
+            updateResults('Testing Discovery Service integration...');
+            try {
+                const response = await fetch('/api/discovery/connectors');
+                const data = await response.json();
+                updateResults(JSON.stringify(data, null, 2));
+            } catch (error) {
+                updateResults(`Error: ${error.message}`);
+            }
+        }
+        
+        function updateResults(text) {
+            document.getElementById('results').textContent = text;
+        }
+        
+        // Load sources on page load
+        loadSources();
+    </script>
+</body>
+</html>

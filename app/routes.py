@@ -47,6 +47,11 @@ def scraper():
     """Render the scraper page"""
     return render_template('scraper.html')
 
+@bp.route('/api-test')
+def api_test():
+    """API Integration test page"""
+    return render_template('api-test.html')
+
 @bp.route('/organization')
 @bp.route('/funders')
 def spa_routes():

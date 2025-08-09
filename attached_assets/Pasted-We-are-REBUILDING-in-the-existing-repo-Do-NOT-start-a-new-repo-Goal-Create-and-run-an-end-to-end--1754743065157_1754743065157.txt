@@ -1,0 +1,87 @@
+We are REBUILDING in the existing repo. Do NOT start a new repo.
+
+Goal
+Create and run an end to end test and verification pass for Prompts 1 through 7. Ensure real data paths work. Ensure mock paths are clearly labeled. Ensure no duplicate logos or brand names. Ensure no fake numbers are printed as real results.
+
+Scope to Verify
+1) Landing page with hero logo and pain point copy
+2) Dashboard with KPIs and activity
+3) Foundation Directory with search and filters
+4) Saved Grants and My Applications CRUD with detail drawer
+5) Discovery Connectors with daily schedule and Run Now
+6) Watchlists by city
+7) API and Data Integration Layer used across pages
+
+Add a test harness
+1) Create a simple test runner at /web/tests/run-tests.ts that can run headless checks using Playwright or Puppeteer. If neither is available use jsdom and supertest for HTTP level assertions.
+2) Add npm scripts in /web/package.json
+   - "test:e2e": "tsx tests/run-tests.ts"
+   - "lint": "eslint --ext .ts,.tsx src"
+   - "typecheck": "tsc --noEmit"
+3) Add a tiny server start helper if needed so pages are reachable during tests.
+
+Create visible mode indicators
+1) Add an env flag APP_DATA_MODE with values LIVE or MOCK
+2) Show a tiny badge in the footer of every app page that reads LIVE when calling real endpoints or DEMO when serving mock data
+3) The badge must read from runtime config and change without rebuild if possible
+
+Landing page checks
+1) There is exactly one <img> with alt "Pink Lemonade logo" and it is in the hero section only
+2) No logo image or brand word mark appears in nav or sidebar
+3) Headline and subheadline render and buttons are present
+
+Dashboard checks
+1) Page loads after login route and does not duplicate the logo outside the allowed hero area
+2) KPI cards show either real calculated numbers or the string "N/A" when there is no live data
+3) There are no hardcoded placeholder numbers like 0 3.8 or 128 unless they are backed by mock mode and labeled DEMO
+
+Directory checks
+1) Each city renders at least five entries from foundations-data.json in MOCK mode
+2) Search and filters update results instantly
+3) Pagination works and keeps filters applied
+
+Saved Grants and Applications checks
+1) Create edit and delete a grant in MOCK mode then repeat in LIVE mode if backend is available
+2) Status timeline advances through all states and persists
+3) Notes contacts and attachments UI work with validations
+4) Routes /grants and /applications load with correct presets
+
+Discovery connectors and watchlists checks
+1) Run Now returns items in Latest Opportunities in MOCK mode and in LIVE mode where the free source is available
+2) Grants.gov connector returns at least one item for a broad query in LIVE mode. If no results then show an Empty state with guidance. Do not print fake numbers
+3) Federal Register plus govinfo connector returns links or produces an Empty state with guidance
+4) Philanthropy News Digest parsing works in MOCK mode and shows DEMO badge
+5) Watchlists page allows create edit delete and Run Now with logs per city
+
+API layer checks
+1) All network calls from UI go through the central API Manager not direct fetches
+2) All org scoped routes include orgId and return only scoped data
+3) No secrets appear in client code or logs
+
+Static rules checks
+1) No duplicate logos anywhere in nav or sidebar
+2) Minimalist matte tokens are used across buttons cards and links
+3) Lint passes and TypeScript typecheck passes
+
+If tests are missing create them now
+1) Build DOM level asserts in tests/run-tests.ts for the checks above
+2) For LIVE mode tests mock only the login and hit real free sources. Skip a test gracefully if a source is down and record SKIPPED with reason
+
+Produce a report
+1) Create /web/tests/TEST_REPORT.md with a table of checks and PASS FAIL SKIPPED with reasons
+2) Include current APP_DATA_MODE value and list which pages are LIVE and which are DEMO
+3) Include total counts for grants loaded in LIVE mode per connector and per city if any
+4) Output a short section called Next Fixes with any failing checks and exact file paths to change
+
+Run the sequence now
+1) Set APP_DATA_MODE=MOCK and run test:e2e lint and typecheck. Fix issues and re run until green
+2) Set APP_DATA_MODE=LIVE and run test:e2e again. Fix issues and re run until green or SKIPPED with reasons
+3) After both passes finish print a short summary to console and write TEST_REPORT.md
+
+Acceptance
+1) TEST_REPORT.md exists with clear PASS FAIL SKIPPED for every area
+2) Footer badge shows LIVE or DEMO correctly on every page
+3) No hardcoded fake KPI numbers remain. Use N/A if there is no real data
+4) No duplicate logos or brand names in nav or sidebar
+5) All tests lint and typecheck pass
+6) Provide a short summary of files added or changed

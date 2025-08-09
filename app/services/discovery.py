@@ -10,6 +10,7 @@ from datetime import datetime, timedelta
 from typing import List, Dict, Any, Optional
 import requests
 from bs4 import BeautifulSoup
+from app.services.apiManager import api_manager
 
 logger = logging.getLogger(__name__)
 
@@ -337,6 +338,26 @@ class DiscoveryService:
         """Run all enabled connectors and return aggregated results"""
         all_grants = []
         
+        # First, fetch from API Manager sources
+        try:
+            logger.info("Fetching grants from API Manager sources")
+            for source_id in api_manager.sources:
+                if api_manager.sources[source_id].get('enabled', False):
+                    try:
+                        grants = api_manager.get_grants_from_source(source_id, {'limit': 50})
+                        # Add metadata to API Manager grants
+                        for grant in grants:
+                            grant['connectorId'] = source_id
+                            if 'discoveredAt' not in grant:
+                                grant['discoveredAt'] = datetime.now().isoformat()
+                        all_grants.extend(grants)
+                        logger.info(f"Fetched {len(grants)} grants from {source_id} via API Manager")
+                    except Exception as e:
+                        logger.error(f"Error fetching from API Manager source {source_id}: {e}")
+        except Exception as e:
+            logger.error(f"Error using API Manager: {e}")
+        
+        # Then run local connectors
         for connector_id, connector in self.connectors.items():
             if connector.enabled:
                 try:

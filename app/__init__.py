@@ -62,7 +62,7 @@ def create_app(test_config=None):
         
         # Import and register blueprints
         from app.api import grants, organization, scraper, ai, analytics, writing_assistant, profile, admin
-        from app.api import discovery, dashboard
+        from app.api import discovery, dashboard, integration
         app.register_blueprint(grants.bp)
         app.register_blueprint(organization.bp)
         app.register_blueprint(scraper.bp)
@@ -73,6 +73,7 @@ def create_app(test_config=None):
         app.register_blueprint(admin.bp)  # Register the admin blueprint for data clearing
         app.register_blueprint(discovery.discovery_bp)
         app.register_blueprint(dashboard.dashboard_bp)
+        app.register_blueprint(integration.integration_bp)
         
         # Import and register main routes
         from app import routes
