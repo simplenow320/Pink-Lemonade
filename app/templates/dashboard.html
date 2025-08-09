@@ -1,91 +1,29 @@
 {% extends "base.html" %}
-
 {% block title %}Dashboard · Pink Lemonade{% endblock %}
-
 {% block content %}
-  <section class="card">
-    <h1>Grant Management Dashboard</h1>
-    <p>Monitor your grant opportunities and track application progress.</p>
+  <h1>Dashboard</h1>
+
+  <section class="grid grid-4">
+    <div class="card"><div>Total opportunities</div><h2>{{ stats.total or 0 }}</h2></div>
+    <div class="card"><div>Due this month</div><h2>{{ stats.due_this_month or 0 }}</h2></div>
+    <div class="card"><div>Average fit score</div><h2>{{ stats.avg_fit or '—' }}</h2></div>
+    <div class="card"><div>Submitted</div><h2>{{ stats.submitted or 0 }}</h2></div>
   </section>
-  
-  <section class="grid grid-4" style="margin-top:24px">
-    <div class="card">
-      <h3>Total Grants</h3>
-      <p style="font-size:28px;font-weight:bold;color:var(--pink)" id="total-grants">0</p>
-    </div>
-    <div class="card">
-      <h3>Applications</h3>
-      <p style="font-size:28px;font-weight:bold;color:var(--grey)" id="total-applications">0</p>
-    </div>
-    <div class="card">
-      <h3>Success Rate</h3>
-      <p style="font-size:28px;font-weight:bold;color:var(--black)" id="success-rate">0%</p>
-    </div>
-    <div class="card">
-      <h3>Total Awarded</h3>
-      <p style="font-size:28px;font-weight:bold;color:var(--pink)" id="total-awarded">$0</p>
-    </div>
-  </section>
-  
+
   <section class="card" style="margin-top:24px">
-    <h2>Recent Opportunities</h2>
-    <div id="recent-opportunities">
-      <p style="color:var(--grey)">Loading recent opportunities...</p>
-    </div>
+    <h2>Top matches</h2>
+    <table class="table" style="margin-top:12px">
+      <thead><tr><th>Grant</th><th>Funder</th><th>Fit</th><th>Deadline</th></tr></thead>
+      <tbody>
+        {% for g in top_matches %}
+        <tr>
+          <td><a href="{{ g.link }}" target="_blank">{{ g.title }}</a></td>
+          <td>{{ g.funder }}</td>
+          <td><span class="badge">{{ g.fit or '—' }}</span></td>
+          <td>{{ g.deadline or 'TBA' }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
   </section>
-  
-  <section class="grid grid-2" style="margin-top:24px">
-    <div class="card">
-      <h3>Quick Actions</h3>
-      <a href="/opportunities" class="btn btn-primary">Browse Opportunities</a>
-      <a href="/applications" class="btn" style="margin-left:8px">View Applications</a>
-    </div>
-    <div class="card">
-      <h3>Profile Status</h3>
-      <p>Complete your organization profile to improve grant matching accuracy.</p>
-      <a href="/settings" class="btn">Update Profile →</a>
-    </div>
-  </section>
-{% endblock %}
-
-{% block extra_js %}
-<script>
-// Load dashboard metrics
-fetch('/api/dashboard/metrics')
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            document.getElementById('total-grants').textContent = data.metrics.totalGrants || '0';
-            document.getElementById('total-applications').textContent = data.metrics.submittedGrants || '0';
-            document.getElementById('success-rate').textContent = 
-                data.metrics.winRate ? (data.metrics.winRate * 100).toFixed(1) + '%' : '0%';
-        } else {
-            console.error('Error loading metrics:', data.error);
-        }
-    })
-    .catch(error => {
-        console.error('Error:', error);
-    });
-
-// Load recent opportunities
-fetch('/api/opportunities?limit=5')
-    .then(response => response.json())
-    .then(data => {
-        const container = document.getElementById('recent-opportunities');
-        if (data.grants && data.grants.length > 0) {
-            container.innerHTML = data.grants.map(grant => `
-                <div class="border-b py-3 last:border-b-0">
-                    <h4 class="font-semibold text-gray-900">${grant.title}</h4>
-                    <p class="text-sm text-gray-600">${grant.funder}</p>
-                    <p class="text-sm text-gray-500">Deadline: ${grant.deadline || 'Not specified'}</p>
-                </div>
-            `).join('');
-        } else {
-            container.innerHTML = '<p class="text-gray-500">No opportunities found</p>';
-        }
-    })
-    .catch(error => {
-        console.error('Error loading opportunities:', error);
-    });
-</script>
 {% endblock %}
