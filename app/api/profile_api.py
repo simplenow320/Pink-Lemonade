@@ -8,8 +8,8 @@ from datetime import datetime
 import os
 import json
 from app import db
-from app.models.organization import Organization
-from app.models.grant import Grant
+from app.models import Organization
+from app.models import Grant
 import logging
 
 logger = logging.getLogger(__name__)

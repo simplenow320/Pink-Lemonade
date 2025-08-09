@@ -6,8 +6,8 @@ Fetches grant opportunities from the API Manager
 from flask import Blueprint, request, jsonify
 from datetime import datetime, timedelta
 from app import db
-from app.models.grant import Grant
-from app.models.organization import Organization
+from app.models import Grant
+from app.models import Organization
 from app.services.apiManager import api_manager
 from app.services.ai_service import ai_service
 import logging

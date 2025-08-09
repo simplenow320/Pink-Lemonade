@@ -6,8 +6,8 @@ Handles grant application lifecycle and status transitions
 from flask import Blueprint, request, jsonify, session
 from datetime import datetime, timedelta
 from app import db
-from app.models.grant import Grant
-from app.models.organization import Organization
+from app.models import Grant
+from app.models import Organization
 from app.services.notification_service import NotificationService
 import logging
 

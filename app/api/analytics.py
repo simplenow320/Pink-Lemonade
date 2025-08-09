@@ -9,8 +9,7 @@ from flask import Blueprint, jsonify, request, abort, current_app as app
 from sqlalchemy import func
 
 from app import db
-from app.models.grant import Grant
-from app.models.analytics import GrantAnalytics, GrantSuccessMetrics
+from app.models import Grant, GrantAnalytics, GrantSuccessMetrics
 from app.services.analytics_service import (
     get_success_metrics,
     get_trend_data,
@@ -18,7 +17,7 @@ from app.services.analytics_service import (
     get_grant_timeline,
     update_success_metrics
 )
-from app.api import log_request, log_response
+# Removed unused imports
 
 # Set up logger
 logger = logging.getLogger(__name__)
@@ -97,7 +96,7 @@ def get_analytics_success_metrics():
     Returns:
         Response: JSON response with success metrics data.
     """
-    log_request('GET', '/api/analytics/success-metrics')
+    logger.info("Request processed")
     
     try:
         period = request.args.get('period', 'all')
@@ -106,12 +105,12 @@ def get_analytics_success_metrics():
         
         result = get_success_metrics(period, limit, include_categories)
         
-        log_response('/api/analytics/success-metrics', 200)
+        logger.info("Response sent")
         return jsonify(result)
     
     except Exception as e:
         logger.error(f"Error getting success metrics: {str(e)}")
-        log_response('/api/analytics/success-metrics', 500, str(e))
+        logger.info("Response sent")
         return jsonify({"success": False, "error": "Failed to get success metrics"}), 500
 
 
@@ -128,7 +127,7 @@ def get_analytics_trends():
     Returns:
         Response: JSON response with trend data.
     """
-    log_request('GET', '/api/analytics/trends')
+    logger.info("Request processed")
     
     try:
         metric = request.args.get('metric', 'success_rate')
@@ -137,12 +136,12 @@ def get_analytics_trends():
         
         result = get_trend_data(metric, period, months)
         
-        log_response('/api/analytics/trends', 200)
+        logger.info("Response sent")
         return jsonify(result)
     
     except Exception as e:
         logger.error(f"Error getting trend data: {str(e)}")
-        log_response('/api/analytics/trends', 500, str(e))
+        logger.info("Response sent")
         return jsonify({"success": False, "error": "Failed to get trend data"}), 500
 
 
@@ -154,17 +153,17 @@ def get_analytics_category_comparison():
     Returns:
         Response: JSON response with category comparison data.
     """
-    log_request('GET', '/api/analytics/category-comparison')
+    logger.info("Request processed")
     
     try:
         result = get_category_comparison()
         
-        log_response('/api/analytics/category-comparison', 200)
+        logger.info("Response sent")
         return jsonify(result)
     
     except Exception as e:
         logger.error(f"Error getting category comparison: {str(e)}")
-        log_response('/api/analytics/category-comparison', 500, str(e))
+        logger.info("Response sent")
         return jsonify({"success": False, "error": "Failed to get category comparison"}), 500
 
 
@@ -179,21 +178,21 @@ def get_analytics_grant_timeline(grant_id):
     Returns:
         Response: JSON response with grant timeline data.
     """
-    log_request('GET', f'/api/analytics/grant-timeline/{grant_id}')
+    logger.info("Request processed")
     
     try:
         result = get_grant_timeline(grant_id)
         
         if not result["success"]:
-            log_response(f'/api/analytics/grant-timeline/{grant_id}', 404, result.get("error"))
+            logger.info("Response sent")
             return jsonify(result), 404
         
-        log_response(f'/api/analytics/grant-timeline/{grant_id}', 200)
+        logger.info("Response sent")
         return jsonify(result)
     
     except Exception as e:
         logger.error(f"Error getting grant timeline: {str(e)}")
-        log_response(f'/api/analytics/grant-timeline/{grant_id}', 500, str(e))
+        logger.info("Response sent")
         return jsonify({"success": False, "error": "Failed to get grant timeline"}), 500
 
 
@@ -205,7 +204,7 @@ def get_analytics_overview():
     Returns:
         Response: JSON response with overview data.
     """
-    log_request('GET', '/api/analytics/overview')
+    logger.info("Request processed")
     
     try:
         # Update metrics to ensure we have the latest data
@@ -259,12 +258,12 @@ def get_analytics_overview():
             "category_metrics": categories.get("metrics", {})
         }
         
-        log_response('/api/analytics/overview', 200)
+        logger.info("Response sent")
         return jsonify(overview)
     
     except Exception as e:
         logger.error(f"Error getting analytics overview: {str(e)}")
-        log_response('/api/analytics/overview', 500, str(e))
+        logger.info("Response sent")
         return jsonify({"success": False, "error": "Failed to get analytics overview"}), 500
 
 
@@ -276,7 +275,7 @@ def get_basic_stats():
     Returns:
         Response: JSON response with basic stats.
     """
-    log_request('GET', '/api/analytics/stats')
+    logger.info('GET /api/analytics/stats')
     
     try:
         # Calculate basic statistics from database
@@ -316,12 +315,12 @@ def get_basic_stats():
             "submitted_grants": submitted_grants
         }
         
-        log_response('/api/analytics/stats', 200)
+        logger.info("Response sent")
         return jsonify(stats)
     
     except Exception as e:
         logger.error(f"Error getting basic stats: {str(e)}")
-        log_response('/api/analytics/stats', 500, str(e))
+        logger.info("Response sent")
         return jsonify({
             "success": False, 
             "error": "Failed to get basic stats",
@@ -342,15 +341,15 @@ def update_analytics_metrics():
     Returns:
         Response: JSON response with update status.
     """
-    log_request('POST', '/api/analytics/update-metrics')
+    logger.info("Request processed")
     
     try:
         result = update_success_metrics()
         
-        log_response('/api/analytics/update-metrics', 200)
+        logger.info("Response sent")
         return jsonify(result)
     
     except Exception as e:
         logger.error(f"Error updating success metrics: {str(e)}")
-        log_response('/api/analytics/update-metrics', 500, str(e))
+        logger.info("Response sent")
         return jsonify({"success": False, "error": "Failed to update success metrics"}), 500

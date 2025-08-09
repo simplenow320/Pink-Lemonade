@@ -1,9 +1,8 @@
 from flask import Blueprint, request, jsonify, abort, current_app as app
-from app.models.scraper import ScraperSource, ScraperHistory
-from app.models.grant import Grant
+from app.models import ScraperSource, ScraperHistory, Grant, Organization
 from app import db
 from app.services.scraper_service import run_scraping_job, scrape_grants
-from app.utils.scheduler import get_next_scheduled_run
+# from app.utils.scheduler import get_next_scheduled_run  # Temporarily disabled
 from sqlalchemy.exc import SQLAlchemyError
 import logging
 import json
@@ -358,7 +357,7 @@ def scrape_grants_endpoint():
 def get_schedule():
     """Get information about the scheduled scraping job"""
     try:
-        next_run = get_next_scheduled_run()
+        next_run = "Scheduler temporarily disabled"
         
         # Get the most recent scraping history
         last_run = ScraperHistory.query.order_by(ScraperHistory.end_time.desc()).first()

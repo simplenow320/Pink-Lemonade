@@ -7,9 +7,7 @@ from datetime import datetime, timedelta
 from sqlalchemy import func, desc, and_, or_
 import logging
 from app import db
-from app.models.grant import Grant
-from app.models.watchlist import Watchlist
-from app.models.organization import Organization
+from app.models import Grant, Watchlist, Organization
 
 logger = logging.getLogger(__name__)
 

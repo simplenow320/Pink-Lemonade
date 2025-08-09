@@ -1,5 +1,5 @@
 from flask import Blueprint, request, jsonify
-from app.models.organization import Organization
+from app.models import Organization
 from app import db
 from sqlalchemy.exc import SQLAlchemyError
 import logging

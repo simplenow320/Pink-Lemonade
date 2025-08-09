@@ -19,9 +19,7 @@ from sqlalchemy.exc import SQLAlchemyError
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
 from app import db
-from app.models.scraper import ScraperSource, ScraperHistory
-from app.models.grant import Grant
-from app.models.organization import Organization
+from app.models import ScraperSource, ScraperHistory, Grant, Organization
 # AI service methods imported when needed
 from app.services.discovery_service import discover_grants
 from app.utils.http_utils import fetch_url, extract_main_content, with_retry

@@ -3,9 +3,7 @@ import logging
 from datetime import datetime
 import json
 from app import db
-from app.models.narrative import Narrative
-from app.models.grant import Grant
-from app.models.organization import Organization
+from app.models import Narrative, Grant, Organization
 from app.services.ai_service import ai_service
 import docx
 from io import BytesIO

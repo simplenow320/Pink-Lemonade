@@ -5,8 +5,7 @@ Watchlist and Saved Searches API
 from flask import Blueprint, request, jsonify, session
 from datetime import datetime
 from app import db
-from app.models.watchlist import Watchlist
-from app.models.grant import Grant
+from app.models import Watchlist, Grant
 from app.services.apiManager import api_manager
 import logging
 

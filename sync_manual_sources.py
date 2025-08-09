@@ -9,7 +9,7 @@ import logging
 import os
 import sys
 from app import db
-from app.models.scraper import ScraperSource
+from app.models import ScraperSource
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)

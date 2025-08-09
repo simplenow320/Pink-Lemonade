@@ -83,12 +83,18 @@ Preferred communication style: Simple, everyday language.
 
 ## Recent Updates (August 2025)
 
+### Database Schema Consolidation: Multi-Tenant Architecture (August 9, 2025)
+- **Consolidated Models**: Migrated all models into single `app/models.py` file with multi-tenant architecture
+- **New Schema Structure**: Org as main entity, modular system (Module, OrgModule), enhanced document management
+- **Enhanced Features**: Document management (CaseSupportDoc, GrantPitchDoc, ImpactReport), voice profiling (OrgVoiceProfile)
+- **Advanced Systems**: Contribution tracking, watchlist system (Watchlist, WatchlistSource), asset management
+- **Import Cleanup**: Fixed all import statements across codebase to use consolidated model structure
+- **Backward Compatibility**: Legacy model aliases maintained for existing API compatibility
+
 ### Application Restructuring: Flask Factory Pattern (August 9, 2025)
 - **Backend Architecture**: Migrated to Flask factory pattern for better modularity and testing
-- **API Structure**: Organized APIs into separate blueprints (grants, orgs, discovery, ai, watchlists)
+- **API Structure**: Organized APIs into separate blueprints (analytics, dashboard, organization, scraper, opportunities, admin, writing_assistant)
 - **Configuration**: Centralized settings in `app/config/settings.py` with environment variable support
-- **Database Models**: Restructured models into separate files with proper SQLAlchemy setup
-- **Removed React SPA**: Temporarily removed React single-page app catch-all routes for API-only operation
 - **Working Endpoints**: All API endpoints responding correctly on port 5000
 
 ### Phase 2 Completed: Authentication System (August 9, 2025)

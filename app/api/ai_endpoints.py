@@ -4,9 +4,7 @@ Handles matching, extraction, and narrative generation
 """
 
 from flask import Blueprint, request, jsonify
-from app.models.organization import Organization
-from app.models.grant import Grant
-from app.models.narrative import Narrative
+from app.models import Organization, Grant, Narrative
 from app import db
 from app.services.ai_service import ai_service
 import logging

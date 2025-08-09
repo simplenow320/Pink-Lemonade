@@ -11,8 +11,7 @@ from calendar import monthrange
 from collections import defaultdict
 
 from app import db
-from app.models.grant import Grant
-from app.models.analytics import GrantAnalytics, GrantSuccessMetrics
+from app.models import Grant, GrantAnalytics, GrantSuccessMetrics
 
 logger = logging.getLogger(__name__)
 

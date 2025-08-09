@@ -7,7 +7,7 @@ This module provides API endpoints for administrative functions like clearing te
 import logging
 from flask import Blueprint, jsonify, Response
 from typing import Union, Tuple
-from app.api import log_request, log_response
+# Removed unused logging imports
 from app.services.data_service import clear_mock_data
 
 # Create a blueprint for admin APIs
@@ -29,13 +29,13 @@ def clear_all_data() -> Union[Response, Tuple[Response, int]]:
         500: Server error occurred during the operation.
     """
     endpoint = "POST /api/admin/clear-data"
-    log_request("POST", endpoint)
+    logging.info(f"POST request to {endpoint}")
     
     try:
         # Call the clear_mock_data function from the data service
         result = clear_mock_data()
         
-        log_response(endpoint, 200)
+        logging.info(f"Successfully cleared mock data from {endpoint}")
         return jsonify({
             "message": "All foundation grant and user profile data has been completely erased",
             "status": "success",
@@ -45,7 +45,7 @@ def clear_all_data() -> Union[Response, Tuple[Response, int]]:
     except Exception as e:
         error_msg = f"Error clearing data: {str(e)}"
         logging.error(error_msg)
-        log_response(endpoint, 500, error_msg)
+        logging.error(f"Error response from {endpoint}: {error_msg}")
         return jsonify({
             "error": "Failed to clear data",
             "details": str(e)

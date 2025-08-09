@@ -8,15 +8,14 @@ import logging
 from flask import Blueprint, jsonify, request, abort, current_app as app
 
 from app import db
-from app.models.grant import Grant
-from app.models.organization import Organization
+from app.models import Grant, Organization
 from app.services.writing_assistant_service import (
     generate_section_content,
     improve_section_content,
     generate_section_outline,
     SECTION_TYPES
 )
-from app.api import log_request, log_response
+# Removed unused imports
 
 # Set up logger
 logger = logging.getLogger(__name__)
@@ -46,7 +45,7 @@ def get_section_types():
     Returns:
         Response: JSON response with available section types and descriptions.
     """
-    log_request('GET', '/api/writing-assistant/sections')
+    logger.info('GET /api/writing-assistant/sections')
     
     try:
         result = {
@@ -57,12 +56,12 @@ def get_section_types():
             }
         }
         
-        log_response('/api/writing-assistant/sections', 200)
+        logger.info('Success response from /api/writing-assistant/sections')
         return jsonify(result)
     
     except Exception as e:
         logger.error(f"Error getting section types: {str(e)}")
-        log_response('/api/writing-assistant/sections', 500, str(e))
+        logger.error(f'Error response from /api/writing-assistant/sections: {str(e)}')
         return jsonify({"success": False, "error": "Failed to get section types"}), 500
 
 
@@ -79,14 +78,14 @@ def generate_section():
     Returns:
         Response: JSON response with generated content and writing tips.
     """
-    log_request('POST', '/api/writing-assistant/generate', request.json)
+    logger.info('POST /api/writing-assistant/generate')
     
     try:
         data = request.json
         
         # Validate request data
         if not data or 'section_type' not in data or 'grant_id' not in data:
-            log_response('/api/writing-assistant/generate', 400, "Missing required fields")
+            logger.error('Error response from /api/writing-assistant/generate: Missing required fields')
             return jsonify({
                 "success": False,
                 "error": "Missing required fields: section_type, grant_id"
@@ -99,12 +98,12 @@ def generate_section():
         # Get grant and organization information
         grant = Grant.query.get(grant_id)
         if not grant:
-            log_response('/api/writing-assistant/generate', 404, "Grant not found")
+            logger.info("Request processed")
             return jsonify({"success": False, "error": "Grant not found"}), 404
         
         organization = Organization.query.first()  # Assuming single organization for now
         if not organization:
-            log_response('/api/writing-assistant/generate', 404, "Organization not found")
+            logger.info("Request processed")
             return jsonify({"success": False, "error": "Organization profile not found"}), 404
         
         # Prepare grant info
@@ -124,13 +123,13 @@ def generate_section():
         result = generate_section_content(section_type, grant_info, org_info, additional_inputs)
         
         status_code = 200 if result.get('success', False) else 400
-        log_response('/api/writing-assistant/generate', status_code, None if result.get('success', False) else result.get('error'))
+        logger.info("Request processed") else result.get('error'))
         
         return jsonify(result), status_code
     
     except Exception as e:
         logger.error(f"Error generating section content: {str(e)}")
-        log_response('/api/writing-assistant/generate', 500, str(e))
+        logger.info("Request processed"))
         return jsonify({"success": False, "error": "Failed to generate content"}), 500
 
 
@@ -147,14 +146,14 @@ def improve_section():
     Returns:
         Response: JSON response with improved content.
     """
-    log_request('POST', '/api/writing-assistant/improve', request.json)
+    logger.info("Request processed")
     
     try:
         data = request.json
         
         # Validate request data
         if not data or 'section_type' not in data or 'content' not in data or 'feedback' not in data:
-            log_response('/api/writing-assistant/improve', 400, "Missing required fields")
+            logger.info("Request processed")
             return jsonify({
                 "success": False,
                 "error": "Missing required fields: section_type, content, feedback"
@@ -168,13 +167,13 @@ def improve_section():
         result = improve_section_content(section_type, current_content, feedback)
         
         status_code = 200 if result.get('success', False) else 400
-        log_response('/api/writing-assistant/improve', status_code, None if result.get('success', False) else result.get('error'))
+        logger.info("Request processed") else result.get('error'))
         
         return jsonify(result), status_code
     
     except Exception as e:
         logger.error(f"Error improving section content: {str(e)}")
-        log_response('/api/writing-assistant/improve', 500, str(e))
+        logger.info("Request processed"))
         return jsonify({"success": False, "error": "Failed to improve content"}), 500
 
 
@@ -190,14 +189,14 @@ def create_section_outline():
     Returns:
         Response: JSON response with section outline.
     """
-    log_request('POST', '/api/writing-assistant/outline', request.json)
+    logger.info("Request processed")
     
     try:
         data = request.json
         
         # Validate request data
         if not data or 'section_type' not in data or 'grant_id' not in data:
-            log_response('/api/writing-assistant/outline', 400, "Missing required fields")
+            logger.info("Request processed")
             return jsonify({
                 "success": False,
                 "error": "Missing required fields: section_type, grant_id"
@@ -209,12 +208,12 @@ def create_section_outline():
         # Get grant and organization information
         grant = Grant.query.get(grant_id)
         if not grant:
-            log_response('/api/writing-assistant/outline', 404, "Grant not found")
+            logger.info("Request processed")
             return jsonify({"success": False, "error": "Grant not found"}), 404
         
         organization = Organization.query.first()  # Assuming single organization for now
         if not organization:
-            log_response('/api/writing-assistant/outline', 404, "Organization not found")
+            logger.info("Request processed")
             return jsonify({"success": False, "error": "Organization profile not found"}), 404
         
         # Prepare grant info
@@ -235,11 +234,11 @@ def create_section_outline():
         result = generate_section_outline(section_type, grant_info, org_info)
         
         status_code = 200 if result.get('success', False) else 400
-        log_response('/api/writing-assistant/outline', status_code, None if result.get('success', False) else result.get('error'))
+        logger.info("Request processed") else result.get('error'))
         
         return jsonify(result), status_code
     
     except Exception as e:
         logger.error(f"Error generating section outline: {str(e)}")
-        log_response('/api/writing-assistant/outline', 500, str(e))
+        logger.info("Request processed"))
         return jsonify({"success": False, "error": "Failed to generate outline"}), 500
