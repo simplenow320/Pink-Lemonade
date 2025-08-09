@@ -13,50 +13,88 @@
     <div id="toast" class="card" style="display:none;padding:10px;margin-top:12px;background:var(--pink);color:var(--black)"></div>
   </section>
 
-  <section id="output" class="card" style="margin-top:24px;display:none">
+  <section id="needs" class="card" style="margin-top:16px;display:none">
+    <h2>Needs input</h2>
+    <ul id="needsList" style="margin-top:8px"></ul>
+    <p style="margin-top:8px;color:#777;font-size:12px">Add the missing info in Settings or your Org profile, then regenerate.</p>
+  </section>
+
+  <section id="output" class="card" style="margin-top:16px;display:none">
     <h2>Output</h2>
     <div id="doc" style="white-space:pre-wrap"></div>
+    <div id="exports" style="margin-top:12px;display:none">
+      <a id="btnPDF" class="btn" href="#" target="_blank">Export PDF</a>
+      <a id="btnDOCX" class="btn" href="#" target="_blank" style="margin-left:8px">Export Word</a>
+    </div>
   </section>
 
   <script>
     const t = document.getElementById('toast');
+    const needs = document.getElementById('needs');
+    const needsList = document.getElementById('needsList');
     const out = document.getElementById('output');
     const docDiv = document.getElementById('doc');
+    const exportsDiv = document.getElementById('exports');
+    const btnPDF = document.getElementById('btnPDF');
+    const btnDOCX = document.getElementById('btnDOCX');
+
+    let lastDoc = { type:null, id:null };
+
+    function show(msg){ t.style.display='block'; t.textContent=msg; }
+    function showNeeds(items){
+      if(items && items.length){
+        needs.style.display='block';
+        needsList.innerHTML = items.map(i => '<li>- '+i+'</li>').join('');
+      } else {
+        needs.style.display='none';
+        needsList.innerHTML = '';
+      }
+    }
+    function enableExports(type, id){
+      lastDoc = { type, id };
+      exportsDiv.style.display='block';
+      btnPDF.href = `/api/exports/${type}/${id}?format=pdf`;
+      btnDOCX.href = `/api/exports/${type}/${id}?format=docx`;
+    }
 
     async function postJSON(url, payload){
       const res = await fetch(url, {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload)});
       if(!res.ok){ throw new Error(await res.text()); }
       return res.json();
     }
-    function show(msg){ t.style.display='block'; t.textContent=msg; }
-
     const common = { orgId: 1, orgName: 'Pink Lemonade' };
 
     document.getElementById('btnCase').onclick = async () => {
-      try {
+      try{
         show('Generating Case for Support…');
         const data = await postJSON('/api/writing/case-support', {...common, audience:'foundations and individual donors', length:'700-900', title:'Case for Support'});
         out.style.display='block'; docDiv.textContent = data.content;
-        show(data.needsInput?.length ? 'Needs input: '+data.needsInput.join(', ') : 'Done. Copy ready.');
-      } catch(e){ show('Error: '+e.message); }
+        showNeeds(data.needsInput);
+        enableExports('case-support', data.id);
+        show(data.needsInput?.length ? 'Needs input listed below.' : 'Done. Copy ready.');
+      }catch(e){ show('Error: '+e.message); }
     };
 
     document.getElementById('btnPitch').onclick = async () => {
-      try {
+      try{
         show('Generating Grant Pitch…');
         const data = await postJSON('/api/writing/grant-pitch', {...common, funder:'Target Funder', alignment:'AI literacy; workforce; community; digital divide', limits:'120'});
         out.style.display='block'; docDiv.textContent = data.content;
-        show(data.needsInput?.length ? 'Needs input: '+data.needsInput.join(', ') : 'Done. Copy ready.');
-      } catch(e){ show('Error: '+e.message); }
+        showNeeds(data.needsInput);
+        enableExports('grant-pitch', data.id);
+        show(data.needsInput?.length ? 'Needs input listed below.' : 'Done. Copy ready.');
+      }catch(e){ show('Error: '+e.message); }
     };
 
     document.getElementById('btnReport').onclick = async () => {
-      try {
+      try{
         show('Generating Impact Report…');
         const data = await postJSON('/api/writing/impact-report', {...common, startDate:'2025-01-01', endDate:'2025-06-30'});
         out.style.display='block'; docDiv.textContent = data.content;
-        show(data.needsUpdate?.length ? 'Needs update: '+data.needsUpdate.join(', ') : 'Done. Copy ready.');
-      } catch(e){ show('Error: '+e.message); }
+        showNeeds(data.needsUpdate);
+        enableExports('impact-report', data.id);
+        show(data.needsUpdate?.length ? 'Needs update listed below.' : 'Done. Copy ready.');
+      }catch(e){ show('Error: '+e.message); }
     };
   </script>
 {% endblock %}
