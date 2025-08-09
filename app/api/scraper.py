@@ -191,86 +191,137 @@ def scrape_grants_endpoint():
             logging.error(f"Error fetching from Grants.gov API: {str(e)}")
             all_api_grants = []
         
-        # Fallback demo grants if API fails
-        demo_grants = all_api_grants if all_api_grants else [
-            {
-                "title": "Emergency Tech Innovation Grant",
-                "description": "Supporting technology solutions for community organizations",
-                "funder": "Tech Foundation",
-                "amount": 50000,
-                "due_date": "2025-10-15",
-                "eligibility": "Nonprofits with tech initiatives",
-                "focus_areas": ["Mental Health", "Community Health", "Health Equity"],
-                "website": "https://www.rwjf.org",
-                "contact_email": "grants@rwjf.org"
-            }
-        ]
+        # Check if we're in LIVE mode - never use placeholder data
+        from app.services.mode import is_live
         
         grants_added = 0
         new_grants = []
         
-        # UPDATED: Process all API grants, not just demo grants
-        for grant_data in all_api_grants if all_api_grants else demo_grants:
-            # UPDATED: More precise duplicate check using title and funder
-            title_check = grant_data.get('title', '')[:50] if grant_data.get('title') else ''
-            funder_check = grant_data.get('funder', '')
+        # LIVE MODE: Only process real API grants, never use fallback fake data
+        if is_live():
+            if not all_api_grants:
+                logging.warning("No real grants found from APIs in LIVE mode - returning empty results (no fake data allowed)")
+                result["status"] = "success"
+                result["grants_found"] = 0
+                result["grants_added"] = 0
+                result["new_grants"] = []
+                result["sources_scraped"] = 0
+                result["error_message"] = None
+                return result
             
-            if not title_check or not funder_check:
-                continue
+            # Process only real API grants
+            for grant_data in all_api_grants:
+                # UPDATED: More precise duplicate check using title and funder
+                title_check = grant_data.get('title', '')[:50] if grant_data.get('title') else ''
+                funder_check = grant_data.get('funder', '')
                 
-            existing = Grant.query.filter(
-                Grant.title.contains(title_check),
-                Grant.funder == funder_check
-            ).first()
-            
-            if not existing:
-                # Calculate match score using AI if organization exists
-                match_score = 75  # Default score
-                match_explanation = "Good alignment with community focus and service delivery"
+                if not title_check or not funder_check:
+                    continue
+                    
+                existing = Grant.query.filter(
+                    Grant.title.contains(title_check),
+                    Grant.funder == funder_check
+                ).first()
                 
-                if org:
-                    try:
-                        # Try to calculate match score using AI if available
-                        from app.services.ai_service import ai_service
-                        match_result = ai_service.match_grant(org.to_dict(), grant_data)
-                        if isinstance(match_result, dict):
-                            match_score = match_result.get('score', 75)
-                            match_explanation = match_result.get('explanation', match_explanation)
-                    except ImportError:
-                        logging.info("AI service not available for match scoring")
-                    except Exception as e:
-                        logging.warning(f"Could not calculate match score: {e}")
-                
-                # Create new grant
-                new_grant = Grant()
-                new_grant.title = grant_data.get("title", "Unknown Grant")[:200]
-                new_grant.description = grant_data.get("description", "")[:1000]
-                new_grant.funder = grant_data.get("funder", "Unknown Funder")[:100]
-                new_grant.amount = grant_data.get("amount") or 75000
-                # Handle due date properly
-                if grant_data.get("due_date"):
-                    try:
-                        if isinstance(grant_data["due_date"], str):
-                            new_grant.due_date = datetime.strptime(grant_data["due_date"], "%Y-%m-%d").date()
-                        else:
-                            new_grant.due_date = grant_data["due_date"]
-                    except:
+                if not existing:
+                    # Calculate match score using AI if organization exists
+                    match_score = 75  # Default score
+                    match_explanation = "Good alignment with community focus and service delivery"
+                    
+                    if org:
+                        try:
+                            # Try to calculate match score using AI if available
+                            from app.services.ai_service import ai_service
+                            match_result = ai_service.match_grant(org.to_dict(), grant_data)
+                            if isinstance(match_result, dict):
+                                match_score = match_result.get('score', 75)
+                                match_explanation = match_result.get('explanation', match_explanation)
+                        except ImportError:
+                            logging.info("AI service not available for match scoring")
+                        except Exception as e:
+                            logging.warning(f"Could not calculate match score: {e}")
+                    
+                    # Create new grant
+                    new_grant = Grant()
+                    new_grant.title = grant_data.get("title", "Unknown Grant")[:200]
+                    new_grant.description = grant_data.get("description", "")[:1000]
+                    new_grant.funder = grant_data.get("funder", "Unknown Funder")[:100]
+                    new_grant.amount = grant_data.get("amount") or 75000
+                    # Handle due date properly
+                    if grant_data.get("due_date"):
+                        try:
+                            if isinstance(grant_data["due_date"], str):
+                                new_grant.due_date = datetime.strptime(grant_data["due_date"], "%Y-%m-%d").date()
+                            else:
+                                new_grant.due_date = grant_data["due_date"]
+                        except:
+                            new_grant.due_date = (datetime.now() + timedelta(days=60)).date()
+                    else:
                         new_grant.due_date = (datetime.now() + timedelta(days=60)).date()
-                else:
-                    new_grant.due_date = (datetime.now() + timedelta(days=60)).date()
-                new_grant.eligibility = grant_data.get("eligibility", "Check grant details")[:500]
-                new_grant.focus_areas = grant_data.get("focus_areas", [])[:5]
-                new_grant.website = grant_data.get("website", "")
-                new_grant.contact_email = grant_data.get("contact_email", "")
-                new_grant.match_score = match_score
-                new_grant.match_explanation = match_explanation
-                new_grant.status = "Not Started"
-                new_grant.discovery_method = "Grants.gov API" if all_api_grants else "demo-discovery"
-                new_grant.is_scraped = True
+                    new_grant.eligibility = grant_data.get("eligibility", "Check grant details")[:500]
+                    new_grant.focus_areas = grant_data.get("focus_areas", [])[:5]
+                    new_grant.website = grant_data.get("website", "")
+                    new_grant.contact_email = grant_data.get("contact_email", "")
+                    new_grant.match_score = match_score
+                    new_grant.match_explanation = match_explanation
+                    new_grant.status = "Not Started"
+                    new_grant.discovery_method = "Grants.gov API"
+                    new_grant.is_scraped = True
+                    
+                    db.session.add(new_grant)
+                    grants_added += 1
+                    new_grants.append(new_grant.to_dict())
+        else:
+            # DEMO MODE: Still only process real API grants if available, never fake data
+            logging.info("Running in DEMO mode - only processing real API grants, no fake data")
+            for grant_data in all_api_grants:
+                # Same processing logic as LIVE mode
+                title_check = grant_data.get('title', '')[:50] if grant_data.get('title') else ''
+                funder_check = grant_data.get('funder', '')
                 
-                db.session.add(new_grant)
-                grants_added += 1
-                new_grants.append(new_grant.to_dict())
+                if not title_check or not funder_check:
+                    continue
+                    
+                existing = Grant.query.filter(
+                    Grant.title.contains(title_check),
+                    Grant.funder == funder_check
+                ).first()
+                
+                if not existing:
+                    # Calculate match score
+                    match_score = 75
+                    match_explanation = "Good alignment with community focus and service delivery"
+                    
+                    # Create new grant
+                    new_grant = Grant()
+                    new_grant.title = grant_data.get("title", "Unknown Grant")[:200]
+                    new_grant.description = grant_data.get("description", "")[:1000]
+                    new_grant.funder = grant_data.get("funder", "Unknown Funder")[:100]
+                    new_grant.amount = grant_data.get("amount") or 75000
+                    # Handle due date properly
+                    if grant_data.get("due_date"):
+                        try:
+                            if isinstance(grant_data["due_date"], str):
+                                new_grant.due_date = datetime.strptime(grant_data["due_date"], "%Y-%m-%d").date()
+                            else:
+                                new_grant.due_date = grant_data["due_date"]
+                        except:
+                            new_grant.due_date = (datetime.now() + timedelta(days=60)).date()
+                    else:
+                        new_grant.due_date = (datetime.now() + timedelta(days=60)).date()
+                    new_grant.eligibility = grant_data.get("eligibility", "Check grant details")[:500]
+                    new_grant.focus_areas = grant_data.get("focus_areas", [])[:5]
+                    new_grant.website = grant_data.get("website", "")
+                    new_grant.contact_email = grant_data.get("contact_email", "")
+                    new_grant.match_score = match_score
+                    new_grant.match_explanation = match_explanation
+                    new_grant.status = "Not Started"
+                    new_grant.discovery_method = "Grants.gov API"
+                    new_grant.is_scraped = True
+                    
+                    db.session.add(new_grant)
+                    grants_added += 1
+                    new_grants.append(new_grant.to_dict())
         
         # Commit the new grants
         db.session.commit()

@@ -72,36 +72,16 @@ class GrantsGovConnector(DiscoveryConnector):
             return []  # Return empty list, never mock data
     
     def _fetch_mock(self) -> List[Dict[str, Any]]:
-        """Return mock data when API unavailable"""
-        mock_grants = [
-            {
-                'title': 'Community Development Block Grant',
-                'funder': 'Department of Housing and Urban Development',
-                'link': 'https://grants.gov/opportunity/12345',
-                'amountMin': 50000,
-                'amountMax': 500000,
-                'deadline': (datetime.now() + timedelta(days=45)).isoformat(),
-                'geography': 'National',
-                'eligibility': '501(c)(3) nonprofits engaged in community development',
-                'tags': ['Community Development', 'Housing', 'Federal'],
-                'sourceName': 'Grants.gov',
-                'sourceURL': 'https://grants.gov'
-            },
-            {
-                'title': 'Youth Mentoring Program Grant',
-                'funder': 'Department of Justice',
-                'link': 'https://grants.gov/opportunity/67890',
-                'amountMin': 25000,
-                'amountMax': 150000,
-                'deadline': (datetime.now() + timedelta(days=60)).isoformat(),
-                'geography': 'National',
-                'eligibility': 'Organizations providing mentoring services to at-risk youth',
-                'tags': ['Youth Development', 'Mentoring', 'Federal'],
-                'sourceName': 'Grants.gov',
-                'sourceURL': 'https://grants.gov'
-            }
-        ]
-        return mock_grants
+        """Never return mock data - only real grants allowed"""
+        # In LIVE mode, never return fake data even if API fails
+        from app.services.mode import is_live
+        if is_live():
+            logger.warning("Mock data requested in LIVE mode - returning empty (no fake data allowed)")
+            return []
+        
+        # Even in DEMO mode, prefer returning empty over fake data
+        logger.warning("Mock data endpoint called - returning empty (no fake data allowed)")
+        return []
     
     def parse(self, data: Any) -> List[Dict[str, Any]]:
         """Parse Grants.gov API response"""

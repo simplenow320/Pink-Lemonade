@@ -30,12 +30,19 @@ bp = Blueprint('analytics', __name__, url_prefix='/api/analytics')
 def get_analytics():
     """Get general analytics data"""
     try:
-        # Mock analytics data for testing
+        # Calculate real analytics from database - no mock data allowed
+        total_grants = Grant.query.count()
+        submitted_grants = Grant.query.filter_by(status='submitted').count()
+        won_grants = Grant.query.filter_by(status='won').count()
+        
+        success_rate = (won_grants / submitted_grants) if submitted_grants > 0 else 0
+        total_awarded = db.session.query(func.sum(Grant.amount)).filter(Grant.status == 'won').scalar() or 0
+        
         analytics = {
-            'total_grants': 150,
-            'total_applications': 45,
-            'success_rate': 0.33,
-            'total_awarded': 250000
+            'total_grants': total_grants,
+            'total_applications': submitted_grants,
+            'success_rate': success_rate,
+            'total_awarded': total_awarded
         }
         return jsonify(analytics)
     except Exception as e:
@@ -45,16 +52,32 @@ def get_analytics():
 def get_dashboard_analytics():
     """Get dashboard-specific analytics"""
     try:
-        # Mock dashboard data for testing
+        # Calculate real dashboard analytics from database - no mock data allowed
+        grants_by_status = {
+            'discovered': Grant.query.filter_by(status='idea').count(),
+            'saved': Grant.query.filter_by(status='saved').count(),
+            'applied': Grant.query.filter_by(status='submitted').count(),
+            'awarded': Grant.query.filter_by(status='won').count()
+        }
+        
+        # Get recent activity (last 10 grants updated)
+        recent_grants = Grant.query.order_by(Grant.updated_at.desc()).limit(10).all()
+        recent_activity = [grant.to_dict() for grant in recent_grants]
+        
+        # Get upcoming deadlines (next 30 days)
+        from datetime import datetime, timedelta
+        upcoming_date = (datetime.now() + timedelta(days=30)).date()
+        upcoming_grants = Grant.query.filter(
+            Grant.due_date.isnot(None),
+            Grant.due_date <= upcoming_date,
+            Grant.due_date > datetime.now().date()
+        ).order_by(Grant.due_date).all()
+        upcoming_deadlines = [grant.to_dict() for grant in upcoming_grants]
+        
         dashboard = {
-            'grants_by_status': {
-                'discovered': 80,
-                'saved': 40,
-                'applied': 20,
-                'awarded': 10
-            },
-            'recent_activity': [],
-            'upcoming_deadlines': []
+            'grants_by_status': grants_by_status,
+            'recent_activity': recent_activity,
+            'upcoming_deadlines': upcoming_deadlines
         }
         return jsonify(dashboard)
     except Exception as e:

@@ -58,31 +58,18 @@ def get_dashboard_metrics():
             and g.due_date <= (datetime.now() + timedelta(days=30)).date()
         ]
         
-        # Build metrics based on data mode
-        if data_mode == 'LIVE':
-            # LIVE mode: only return real data, no fallbacks
-            metrics = {
-                'totalGrants': total_grants if total_grants > 0 else None,
-                'activeGrants': len(active_grants) if len(active_grants) > 0 else None,
-                'fundsApplied': funds_applied if funds_applied > 0 else None,
-                'fundsWon': funds_won if funds_won > 0 else None,
-                'winRate': win_rate if decided_grants else None,
-                'upcomingDeadlines': len(upcoming_deadlines),
-                'submittedGrants': len([g for g in grants if g.status == 'submitted']),
-                'wonGrants': len(won_grants)
-            }
-        else:
-            # MOCK mode: provide demo data for better UX
-            metrics = {
-                'totalGrants': total_grants if total_grants > 0 else 12,
-                'activeGrants': len(active_grants) if len(active_grants) > 0 else 8,
-                'fundsApplied': funds_applied if funds_applied > 0 else 450000,
-                'fundsWon': funds_won if funds_won > 0 else 125000,
-                'winRate': win_rate if decided_grants else 28,
-                'upcomingDeadlines': len(upcoming_deadlines) if len(upcoming_deadlines) > 0 else 3,
-                'submittedGrants': len([g for g in grants if g.status == 'submitted']) or 4,
-                'wonGrants': len(won_grants) if len(won_grants) > 0 else 2
-            }
+        # Always return real data only - no mock/fake data allowed in any mode
+        from app.services.mode import is_live
+        metrics = {
+            'totalGrants': total_grants,
+            'activeGrants': len(active_grants),
+            'fundsApplied': funds_applied,
+            'fundsWon': funds_won,
+            'winRate': win_rate if decided_grants else 0,
+            'upcomingDeadlines': len(upcoming_deadlines),
+            'submittedGrants': len([g for g in grants if g.status == 'submitted']),
+            'wonGrants': len(won_grants)
+        }
         
         # Cache metrics for faster subsequent loads
         session['cached_metrics'] = metrics

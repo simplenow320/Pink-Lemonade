@@ -266,7 +266,7 @@ def discover_grants(org_profile: Dict[str, Any], limit: int = 5) -> List[Dict[st
                     
                     # Set a default due date if none is provided
                     if not final_grant.get('due_date'):
-                        # Set due date to 3 months from now as a placeholder
+                        # Set due date to 3 months from now (standard default for grants without specific deadline)
                         due_date = datetime.now() + timedelta(days=90)
                         final_grant['due_date'] = due_date.strftime('%Y-%m-%d')
                     
@@ -392,7 +392,7 @@ def discover_grants_for_focus_area(focus_area: str, limit: int = 3) -> List[Dict
                 
                 # Set a default due date if none is provided
                 if not final_grant.get('due_date'):
-                    # Set due date to 3 months from now as a placeholder
+                    # Set due date to 3 months from now (standard default for grants without specific deadline)
                     due_date = datetime.now() + timedelta(days=90)
                     final_grant['due_date'] = due_date.strftime('%Y-%m-%d')
                     
