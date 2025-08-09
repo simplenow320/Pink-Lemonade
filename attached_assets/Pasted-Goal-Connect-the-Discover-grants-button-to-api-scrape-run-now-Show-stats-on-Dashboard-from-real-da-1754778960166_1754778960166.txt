@@ -1,0 +1,144 @@
+Goal
+Connect the Discover grants button to /api/scrape/run-now. Show stats on Dashboard from real data.
+
+Create app/services/stats_service.py:
+
+from datetime import date
+from calendar import monthrange
+from sqlalchemy import func
+from app import db
+from app.models import Grant
+
+def month_bounds(dt: date):
+    start = dt.replace(day=1)
+    end = dt.replace(day=monthrange(dt.year, dt.month)[1])
+    return start, end
+
+def get_dashboard_stats(org_id: int):
+    total = db.session.query(func.count(Grant.id)).filter(
+        (Grant.org_id == org_id) | (Grant.org_id.is_(None))
+    ).scalar() or 0
+    today = date.today()
+    start, end = month_bounds(today)
+    due_this_month = db.session.query(func.count(Grant.id)).filter(
+        ((Grant.org_id == org_id) | (Grant.org_id.is_(None))),
+        Grant.deadline.isnot(None),
+        Grant.deadline >= start,
+        Grant.deadline <= end
+    ).scalar() or 0
+    avg_fit = None
+    if hasattr(Grant, "fit_score"):
+        avg_fit = db.session.query(func.avg(Grant.fit_score)).filter(
+            (Grant.org_id == org_id) | (Grant.org_id.is_(None))
+        ).scalar()
+        if avg_fit is not None:
+            avg_fit = round(float(avg_fit), 1)
+    submitted = db.session.query(func.count(Grant.id)).filter(
+        ((Grant.org_id == org_id) | (Grant.org_id.is_(None))),
+        Grant.status == "submitted"
+    ).scalar() or 0
+    return {"total": int(total), "due_this_month": int(due_this_month), "avg_fit": avg_fit, "submitted": int(submitted)}
+
+def get_top_matches(org_id: int, limit: int = 5):
+    q = db.session.query(Grant).filter(
+        (Grant.org_id == org_id) | (Grant.org_id.is_(None))
+    )
+    if hasattr(Grant, "fit_score"):
+        q = q.order_by(Grant.fit_score.desc().nullslast())
+    else:
+        q = q.order_by(Grant.created_at.desc())
+    return q.limit(limit).all()
+
+Create app/pages.py with a pages blueprint if missing:
+
+from flask import Blueprint, render_template
+from app.services.stats_service import get_dashboard_stats, get_top_matches
+from app.models import Grant
+
+pages = Blueprint("pages", __name__)
+
+@pages.get("/")
+def home():
+    return render_template("index.html", active="home")
+
+@pages.get("/dashboard")
+def dashboard():
+    org_id = 1
+    stats = get_dashboard_stats(org_id)
+    top_matches = [{
+        "title": g.title,
+        "funder": g.funder,
+        "link": g.link,
+        "fit": getattr(g, "fit_score", None),
+        "deadline": g.deadline.isoformat() if g.deadline else None
+    } for g in get_top_matches(org_id)]
+    return render_template("dashboard.html", active="dashboard", stats=stats, top_matches=top_matches, org_id=org_id)
+
+@pages.get("/opportunities")
+def opportunities():
+    org_id = 1
+    grants = Grant.query.order_by(Grant.created_at.desc()).limit(20).all()
+    return render_template("opportunities.html", active="opps", grants=grants, org_id=org_id)
+
+Register the pages blueprint in app/__init__.py:
+
+from app.pages import pages as pages_bp
+app.register_blueprint(pages_bp)
+
+Update app/templates/opportunities.html to add a Discover button that calls /api/scrape/run-now and shows a small toast. Keep brand colors only.
+
+{% extends "base.html" %}
+{% block title %}Opportunities{% endblock %}
+{% block content %}
+  <h1>Opportunities</h1>
+  <form id="searchForm" class="card" onsubmit="return false" style="margin-bottom:16px">
+    <label for="q">Search</label>
+    <input id="q" name="q" placeholder="Search grants..." style="width:100%;padding:12px;border-radius:8px;border:1px solid rgba(0,0,0,0.12)">
+    <div style="margin-top:12px">
+      <button id="discoverBtn" class="btn btn-primary" type="button">Discover grants</button>
+    </div>
+  </form>
+  <div id="toast" class="card" style="display:none;padding:12px;margin-bottom:12px;background:var(--pink);color:var(--black)">Updated.</div>
+  <section class="grid">
+    {% for g in grants %}
+    <div class="card">
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <h3 style="margin:0">{{ g.title }}</h3>
+        <span class="badge">{{ g.deadline or 'Rolling' }}</span>
+      </div>
+      <p style="margin:8px 0 12px 0">{{ g.funder }}</p>
+      <a class="btn" href="{{ g.link }}" target="_blank">Open</a>
+    </div>
+    {% endfor %}
+  </section>
+  <script>
+  const btn = document.getElementById('discoverBtn');
+  const toast = document.getElementById('toast');
+  const q = document.getElementById('q');
+  async function runDiscovery(){
+    btn.disabled = true; btn.textContent = 'Discovering…';
+    try{
+      const res = await fetch('/api/scrape/run-now', {
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({ orgId: {{ org_id|int }}, query: q.value || null })
+      });
+      const data = await res.json();
+      toast.style.display = 'block';
+      toast.textContent = `Upserted ${data.upserted || 0} opportunities (${data.mode}).`;
+      setTimeout(()=>{ window.location.reload(); }, 800);
+    }catch(e){
+      toast.style.display = 'block';
+      toast.textContent = 'Discovery failed. Please try again.';
+    }finally{
+      btn.disabled = false; btn.textContent = 'Discover grants';
+    }
+  }
+  btn.addEventListener('click', runDiscovery);
+  </script>
+{% endblock %}
+
+Verify
+- Start app
+- Open Opportunities page and press Discover grants
+- You should see a toast and new items after reload if scraper returns data

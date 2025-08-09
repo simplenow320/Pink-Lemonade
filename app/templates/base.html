@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>{% block title %}Pink Lemonade{% endblock %}</title>
-    <!-- Lock brand -->
+
     <link rel="stylesheet" href="{{ url_for('static', filename='css/brand.css') }}">
     {% block extra_css %}{% endblock %}
   </head>
@@ -12,7 +12,7 @@
     <div class="container">
       {% include 'partials/_nav.html' %}
       <main>{% block content %}{% endblock %}</main>
-      <footer class="small">© {{ current_year }} • Pink Lemonade • Brand locked to matte pink, white, grey, black.</footer>
+      <footer class="small">© {{ current_year }} • Pink Lemonade • Brand locked to matte pink white grey black.</footer>
     </div>
   </body>
 </html>

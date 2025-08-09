@@ -44,14 +44,13 @@ def create_app():
     # Add template context processor for global template variables
     @flask_app.context_processor
     def inject_globals():
-        import os
-        import datetime
-        env_mode = os.getenv("APP_DATA_MODE", "LIVE").upper()
+        import os, datetime
+        env_mode = os.getenv("APP_DATA_MODE","LIVE").upper()
         return {
             "env_mode": env_mode,
             "current_year": datetime.datetime.utcnow().year,
-            "logo_url": os.getenv("APP_LOGO_URL")  # set to your uploaded logo URL
-            # Note: Do not set 'active' here as it should come from individual routes
+            "logo_url": os.getenv("APP_LOGO_URL"),
+            "active": None
         }
     
 
