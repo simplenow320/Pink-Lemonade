@@ -83,6 +83,14 @@ Preferred communication style: Simple, everyday language.
 
 ## Recent Updates (August 2025)
 
+### Clean Architecture Implementation (August 9, 2025)
+- **Main Entry Point**: Replaced main.py with clean entrypoint (no import loops, no 404s)
+- **App Factory**: Replaced app/__init__.py with clean factory pattern (removed React catch-all)
+- **Mode Enforcement**: Added app/services/mode.py with APP_DATA_MODE environment variable support
+- **Scheduler Enhancement**: Fixed app/utils/scheduler.py with "05:00" time and LIVE-only execution
+- **UI Enhancements**: Added footer badge showing LIVE/DEMO status in base template
+- **Database Schema**: Fixed geography column issue in Grant model, all APIs operational
+
 ### Database Schema Consolidation: Multi-Tenant Architecture (August 9, 2025)
 - **Consolidated Models**: Migrated all models into single `app/models.py` file with multi-tenant architecture
 - **New Schema Structure**: Org as main entity, modular system (Module, OrgModule), enhanced document management
@@ -93,7 +101,7 @@ Preferred communication style: Simple, everyday language.
 
 ### Application Restructuring: Flask Factory Pattern (August 9, 2025)
 - **Backend Architecture**: Migrated to Flask factory pattern for better modularity and testing
-- **API Structure**: Organized APIs into separate blueprints (analytics, dashboard, organization, scraper, opportunities, admin, writing_assistant)
+- **API Structure**: Organized APIs into separate blueprints (analytics, dashboard, organization, scraper, opportunities, admin)
 - **Configuration**: Centralized settings in `app/config/settings.py` with environment variable support
 - **Working Endpoints**: All API endpoints responding correctly on port 5000
 

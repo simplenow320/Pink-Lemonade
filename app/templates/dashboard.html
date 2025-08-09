@@ -1,435 +1,78 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard - Pink Lemonade</title>
-    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
-    <style>
-        /* Pink Lemonade brand colors - consistent with landing page */
-        :root {
-            --pink: #db2777;
-            --pink-light: #f9a8d4;
-            --pink-dark: #be185d;
-            --white: #ffffff;
-            --black: #000000;
-            --grey-light: #f3f4f6;
-            --grey: #6b7280;
-            --grey-dark: #374151;
-            --border: #e5e7eb;
-            --success: #db2777;
-            --warning: #f59e0b;
-            --danger: #374151;
-            
-            /* Legacy variables for compatibility */
-            --primary: #374151;
-            --secondary: #6b7280;
-            --accent: #db2777;
-            --background: #f3f4f6;
-            --surface: #ffffff;
-            --text-primary: #000000;
-            --text-secondary: #374151;
-        }
+{% extends "base.html" %}
 
-        body {
-            background-color: var(--background);
-            color: var(--text-primary);
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-        }
+{% block title %}Dashboard - Pink Lemonade{% endblock %}
 
-        .sidebar {
-            background-color: var(--surface);
-            border-right: 1px solid var(--border);
-            min-height: 100vh;
-            width: 250px;
-            transition: all 0.3s ease;
-        }
-
-        .sidebar.collapsed {
-            width: 70px;
-        }
-
-        .nav-item {
-            padding: 0.75rem 1rem;
-            color: var(--text-secondary);
-            transition: all 0.2s ease;
-            cursor: pointer;
-        }
-
-        .nav-item:hover, .nav-item.active {
-            background-color: #f3f4f6;
-            color: var(--accent);
-        }
-
-        .widget-card {
-            background: var(--surface);
-            border-radius: 0.75rem;
-            padding: 1.5rem;
-            border: 1px solid #e5e7eb;
-            transition: all 0.3s ease;
-            border: 1px solid var(--border);
-        }
-
-        .widget-card:hover {
-            transform: translateY(-2px);
-            border: 1px solid #e5e7eb;
-        }
-
-        .grant-item {
-            padding: 1rem;
-            border: 1px solid var(--border);
-            border-radius: 0.5rem;
-            margin-bottom: 0.75rem;
-            transition: all 0.2s ease;
-        }
-
-        .grant-item:hover {
-            background-color: #f3f4f6;
-        }
-
-        .match-score {
-            background: #db2777;
-            color: var(--white);
-            padding: 0.25rem 0.75rem;
-            border-radius: 1rem;
-            font-size: 0.875rem;
-            font-weight: 600;
-        }
-
-        .deadline-urgent { color: var(--danger); }
-        .deadline-upcoming { color: var(--warning); }
-        .deadline-planned { color: var(--success); }
-
-        .top-bar {
-            background: var(--surface);
-            border-bottom: 1px solid var(--border);
-            padding: 1rem 2rem;
-        }
-
-        
-
-        @media (max-width: 768px) {
-            .sidebar {
-                position: fixed;
-                z-index: 1000;
-                transform: translateX(-100%);
-            }
-            
-            .sidebar.mobile-open {
-                transform: translateX(0);
-            }
-            
-            .main-content {
-                margin-left: 0 !important;
-            }
-        }
-    </style>
-</head>
-<body>
-    <!-- Top Navigation Bar -->
-    <div class="top-bar flex items-center justify-between">
-        <div class="flex items-center space-x-4">
-            <button id="sidebar-toggle" class="md:hidden p-2">
-                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
-                </svg>
-            </button>
-            
-            <h1 class="text-xl font-semibold hidden md:block" style="color: var(--text-primary);">Dashboard</h1>
-        </div>
-        
-        <div class="flex items-center space-x-4">
-            <span class="hidden sm:block" style="color: var(--text-secondary);" id="welcome-message">
-                Welcome back, User!
-            </span>
-            <button class="p-2 relative">
-                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-5 5v-5zM4 19h11a2 2 0 002-2V7a2 2 0 00-2-2H4a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
-                </svg>
-                <span class="absolute -top-1 -right-1 bg-pink-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">3</span>
-            </button>
-            <div class="relative">
-                <button class="flex items-center space-x-2 p-2">
-                    <div class="w-8 h-8 bg-gray-300 rounded-full"></div>
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
-                    </svg>
-                </button>
-            </div>
-        </div>
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+    <div class="mb-8">
+        <h1 class="text-3xl font-bold text-gray-900 mb-2">Grant Management Dashboard</h1>
+        <p class="text-gray-600">Monitor your grant opportunities and applications</p>
     </div>
-
-    <div class="flex">
-        <!-- Sidebar Navigation -->
-        <div class="sidebar" id="sidebar">
-            <nav class="mt-8">
-                <div class="nav-item active" data-page="dashboard">
-                    <div class="flex items-center space-x-3">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2H5a2 2 0 00-2-2z"></path>
-                        </svg>
-                        <span class="nav-text">Dashboard</span>
-                    </div>
-                </div>
-                
-                <div class="nav-item" onclick="window.location.href='/foundation-directory'">
-                    <div class="flex items-center space-x-3">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path>
-                        </svg>
-                        <span class="nav-text">Foundation Directory</span>
-                    </div>
-                </div>
-                
-                <div class="nav-item" data-page="grants">
-                    <div class="flex items-center space-x-3">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
-                        </svg>
-                        <span class="nav-text">Grants Feed</span>
-                    </div>
-                </div>
-                
-                <div class="nav-item" onclick="window.location.href='/grants'">
-                    <div class="flex items-center space-x-3">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"></path>
-                        </svg>
-                        <span class="nav-text">Saved Grants</span>
-                    </div>
-                </div>
-                
-                <div class="nav-item" onclick="window.location.href='/applications'">
-                    <div class="flex items-center space-x-3">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
-                        </svg>
-                        <span class="nav-text">My Applications</span>
-                    </div>
-                </div>
-                
-                <div class="nav-item" data-page="settings">
-                    <div class="flex items-center space-x-3">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
-                        </svg>
-                        <span class="nav-text">Settings</span>
-                    </div>
-                </div>
-            </nav>
-        </div>
-
-        <!-- Main Content -->
-        <div class="main-content flex-1 p-6" style="margin-left: 250px;">
-            <!-- Dashboard Grid -->
-            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                
-                <!-- Grants Feed Widget -->
-                <div class="lg:col-span-2">
-                    <div class="widget-card" data-source="grants-api">
-                        <div class="flex justify-between items-center mb-4">
-                            <div>
-                                <h2 class="text-xl font-semibold" style="color: var(--text-primary);">Latest Grant Opportunities</h2>
-                                <p class="text-sm" style="color: var(--text-secondary);">Fresh funding opportunities matched to your mission</p>
-                            </div>
-                            <button class="text-sm" style="color: var(--accent);">View All</button>
-                        </div>
-                        
-                        <div id="grants-container">
-                            <!-- Grant items will be populated here -->
-                        </div>
-                    </div>
-                </div>
-
-                <!-- AI Recommendations Widget -->
-                <div class="widget-card" data-source="ai-recommendations-api">
-                    <h3 class="text-lg font-semibold mb-3" style="color: var(--text-primary);">AI Recommendations</h3>
-                    <p class="text-sm mb-4" style="color: var(--text-secondary);">Personalized funding suggestions powered by AI</p>
-                    
-                    <div id="ai-recommendations-container">
-                        <!-- AI recommendations will be populated here -->
-                    </div>
-                </div>
-
-                <!-- Foundation Directory Widget -->
-                <div class="widget-card" data-source="foundation-directory-api">
-                    <h3 class="text-lg font-semibold mb-3" style="color: var(--text-primary);">Foundation Directory</h3>
-                    <p class="text-sm mb-4" style="color: var(--text-secondary);">Discover local funders in your area</p>
-                    
-                    <select class="w-full p-2 border rounded mb-3" style="border-color: var(--border);" id="city-selector">
-                        <option value="">Select City</option>
-                    </select>
-                    
-                    <div id="foundation-container">
-                        <!-- Foundation listings will be populated here -->
-                    </div>
-                </div>
-
-                <!-- Deadlines Widget -->
-                <div class="widget-card" data-source="deadlines-api">
-                    <h3 class="text-lg font-semibold mb-3" style="color: var(--text-primary);">Upcoming Deadlines</h3>
-                    <p class="text-sm mb-4" style="color: var(--text-secondary);">Never miss an application deadline</p>
-                    
-                    <div id="deadlines-container">
-                        <!-- Deadline items will be populated here -->
-                    </div>
-                </div>
-
-                <!-- Saved Grants Widget -->
-                <div class="widget-card" data-source="saved-grants-api">
-                    <h3 class="text-lg font-semibold mb-3" style="color: var(--text-primary);">Saved Grants</h3>
-                    <p class="text-sm mb-4" style="color: var(--text-secondary);">Your bookmarked opportunities</p>
-                    
-                    <div id="saved-grants-container">
-                        <!-- Saved grants will be populated here -->
-                    </div>
-                </div>
-
-            </div>
-        </div>
-    </div>
-
-    <script>
-        // Load configuration and mock data
-        let config = {};
-        let mockData = {};
-
-        // Initialize dashboard
-        async function initDashboard() {
-            try {
-                // Load configuration
-                const configResponse = await fetch('/static/dashboard-config.json');
-                config = await configResponse.json();
-                
-                // Load mock data  
-                const mockResponse = await fetch('/static/mock-data.json');
-                mockData = await mockResponse.json();
-                
-                // Initialize components
-                updateNavigationText();
-                populateGrantsFeed();
-                populateFoundationDirectory();
-                populateDeadlines();
-                populateSavedGrants();
-                populateAIRecommendations();
-                
-            } catch (error) {
-                // Error logged: 'Error initializing dashboard:', error
-            }
-        }
-
-        // Update navigation text from config
-        function updateNavigationText() {
-            document.getElementById('welcome-message').textContent = config.branding.welcome_message.replace('{{username}}', 'User');
-        }
-
-        // Populate grants feed
-        function populateGrantsFeed() {
-            const container = document.getElementById('grants-container');
-            container.innerHTML = mockData.grants_feed.map(grant => `
-                <div class="grant-item">
-                    <div class="flex justify-between items-start mb-2">
-                        <h4 class="font-semibold text-base" style="color: var(--text-primary);">${grant.title}</h4>
-                        <span class="match-score">${grant.match_score}% Match</span>
-                    </div>
-                    <p class="text-sm mb-2" style="color: var(--text-secondary);">${grant.funder}</p>
-                    <div class="flex justify-between text-sm">
-                        <span style="color: var(--text-secondary);">${grant.amount}</span>
-                        <span style="color: var(--text-secondary);">Due: ${grant.deadline}</span>
-                    </div>
-                </div>
-            `).join('');
-        }
-
-        // Populate foundation directory
-        function populateFoundationDirectory() {
-            const selector = document.getElementById('city-selector');
-            const container = document.getElementById('foundation-container');
-            
-            // Populate city selector
-            selector.innerHTML = '<option value="">Select City</option>' + 
-                config.cities.map(city => `<option value="${city}">${city}</option>`).join('');
-            
-            // Handle city selection
-            selector.addEventListener('change', (e) => {
-                const selectedCity = e.target.value;
-                if (selectedCity) {
-                    const cityData = mockData.foundation_directory.find(d => d.city === selectedCity);
-                    if (cityData) {
-                        container.innerHTML = cityData.foundations.map(foundation => `
-                            <div class="p-3 border rounded mb-2" style="border-color: var(--border);">
-                                <h5 class="font-medium" style="color: var(--text-primary);">${foundation.name}</h5>
-                                <p class="text-sm" style="color: var(--text-secondary);">${foundation.focus}</p>
-                                <p class="text-sm font-medium" style="color: var(--accent);">Avg: ${foundation.avg_grant}</p>
-                            </div>
-                        `).join('');
-                    }
-                } else {
-                    container.innerHTML = '';
-                }
-            });
-        }
-
-        // Populate deadlines
-        function populateDeadlines() {
-            const container = document.getElementById('deadlines-container');
-            container.innerHTML = mockData.upcoming_deadlines.map(deadline => `
-                <div class="flex justify-between items-center p-3 border rounded mb-2" style="border-color: var(--border);">
-                    <div>
-                        <h5 class="font-medium" style="color: var(--text-primary);">${deadline.grant_title}</h5>
-                        <p class="text-sm deadline-${deadline.status}">${deadline.days_remaining} days remaining</p>
-                    </div>
-                    <span class="text-sm" style="color: var(--text-secondary);">${deadline.deadline}</span>
-                </div>
-            `).join('');
-        }
-
-        // Populate saved grants
-        function populateSavedGrants() {
-            const container = document.getElementById('saved-grants-container');
-            container.innerHTML = mockData.saved_grants.map(grant => `
-                <div class="p-3 border rounded mb-2" style="border-color: var(--border);">
-                    <h5 class="font-medium" style="color: var(--text-primary);">${grant.title}</h5>
-                    <p class="text-sm" style="color: var(--text-secondary);">${grant.funder}</p>
-                    <div class="flex justify-between items-center mt-2">
-                        <span class="match-score text-xs">${grant.match_score}% Match</span>
-                        <span class="text-xs" style="color: var(--text-secondary);">Saved ${grant.saved_date}</span>
-                    </div>
-                </div>
-            `).join('');
-        }
-
-        // Populate AI recommendations
-        function populateAIRecommendations() {
-            const container = document.getElementById('ai-recommendations-container');
-            container.innerHTML = mockData.ai_recommendations.map(rec => `
-                <div class="p-3 border rounded mb-3" style="border-color: var(--border);">
-                    <div class="flex justify-between items-start mb-2">
-                        <h5 class="font-medium" style="color: var(--text-primary);">${rec.grant_title}</h5>
-                        <span class="text-sm font-bold" style="color: var(--success);">${rec.match_percentage}%</span>
-                    </div>
-                    <p class="text-sm mb-2" style="color: var(--text-secondary);">${rec.reasoning}</p>
-                    <div class="flex justify-between text-xs">
-                        <span style="color: var(--text-secondary);">${rec.funder}</span>
-                        <span style="color: var(--text-secondary);">Due: ${rec.deadline}</span>
-                    </div>
-                </div>
-            `).join('');
-        }
-
-        // Sidebar toggle functionality
-        document.getElementById('sidebar-toggle').addEventListener('click', () => {
-            const sidebar = document.getElementById('sidebar');
-            sidebar.classList.toggle('mobile-open');
-        });
-
-        // Initialize dashboard when page loads
-        document.addEventListener('DOMContentLoaded', initDashboard);
-    </script>
     
-    <footer class="text-xs text-gray-500">
-      {{ "LIVE" if env_mode == "LIVE" else "DEMO" }}
-    </footer>
-</body>
-</html>
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        <div class="bg-white rounded-lg shadow p-6">
+            <h3 class="text-lg font-semibold text-gray-900 mb-2">Total Grants</h3>
+            <p class="text-3xl font-bold text-pink-600" id="total-grants">Loading...</p>
+        </div>
+        
+        <div class="bg-white rounded-lg shadow p-6">
+            <h3 class="text-lg font-semibold text-gray-900 mb-2">Applications</h3>
+            <p class="text-3xl font-bold text-blue-600" id="total-applications">Loading...</p>
+        </div>
+        
+        <div class="bg-white rounded-lg shadow p-6">
+            <h3 class="text-lg font-semibold text-gray-900 mb-2">Success Rate</h3>
+            <p class="text-3xl font-bold text-green-600" id="success-rate">Loading...</p>
+        </div>
+    </div>
+    
+    <div class="bg-white rounded-lg shadow p-6">
+        <h2 class="text-xl font-semibold text-gray-900 mb-4">Recent Opportunities</h2>
+        <div id="recent-opportunities">
+            <p class="text-gray-500">Loading recent opportunities...</p>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Load dashboard metrics
+fetch('/api/dashboard/metrics')
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            document.getElementById('total-grants').textContent = data.metrics.totalGrants || '0';
+            document.getElementById('total-applications').textContent = data.metrics.submittedGrants || '0';
+            document.getElementById('success-rate').textContent = 
+                data.metrics.winRate ? (data.metrics.winRate * 100).toFixed(1) + '%' : '0%';
+        } else {
+            console.error('Error loading metrics:', data.error);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+    });
+
+// Load recent opportunities
+fetch('/api/opportunities?limit=5')
+    .then(response => response.json())
+    .then(data => {
+        const container = document.getElementById('recent-opportunities');
+        if (data.grants && data.grants.length > 0) {
+            container.innerHTML = data.grants.map(grant => `
+                <div class="border-b py-3 last:border-b-0">
+                    <h4 class="font-semibold text-gray-900">${grant.title}</h4>
+                    <p class="text-sm text-gray-600">${grant.funder}</p>
+                    <p class="text-sm text-gray-500">Deadline: ${grant.deadline || 'Not specified'}</p>
+                </div>
+            `).join('');
+        } else {
+            container.innerHTML = '<p class="text-gray-500">No opportunities found</p>';
+        }
+    })
+    .catch(error => {
+        console.error('Error loading opportunities:', error);
+    });
+</script>
+{% endblock %}
