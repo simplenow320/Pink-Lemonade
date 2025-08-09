@@ -1,147 +1,44 @@
 from app import db
-from sqlalchemy.dialects.sqlite import JSON
 from datetime import datetime
-import logging
-
-# Set up logger
-logger = logging.getLogger(__name__)
 
 class Grant(db.Model):
-    """Model for grant opportunities"""
-    
     __tablename__ = 'grants'
     
     id = db.Column(db.Integer, primary_key=True)
-    org_id = db.Column(db.String(100), nullable=True)  # Organization ID for scoping
-    title = db.Column(db.String(200), nullable=False)
-    funder = db.Column(db.String(200), nullable=False)
-    description = db.Column(db.Text)
-    amount = db.Column(db.Float)
-    due_date = db.Column(db.Date)
+    org_id = db.Column(db.Integer, nullable=True)
+    title = db.Column(db.String(500), nullable=False)
+    funder = db.Column(db.String(200))
+    link = db.Column(db.String(500))
+    amount_min = db.Column(db.Integer)
+    amount_max = db.Column(db.Integer)
+    deadline = db.Column(db.Date)
+    geography = db.Column(db.String(200))
     eligibility = db.Column(db.Text)
-    website = db.Column(db.String(255))
-    status = db.Column(db.String(50), default="Not Started")  # Not Started, In Progress, Submitted, Won, Declined
-    match_score = db.Column(db.Float, default=0)  # 0-100 matching score
-    match_explanation = db.Column(db.Text)
-    notes = db.Column(db.Text)
-    focus_areas = db.Column(JSON, default=list)
-    contact_info = db.Column(db.Text)  # General contact information
-    # Enhanced contact details
-    contact_name = db.Column(db.String(255), nullable=True)  # Name of the contact person
-    contact_email = db.Column(db.String(255), nullable=True)  # Email of the contact person
-    contact_phone = db.Column(db.String(100), nullable=True)  # Phone number of the contact person
-    submission_url = db.Column(db.String(500), nullable=True)  # Specific URL for grant submission
-    application_process = db.Column(db.Text, nullable=True)  # Description of how to apply
-    grant_cycle = db.Column(db.String(255), nullable=True)  # Information about grant cycles (annual, quarterly, etc.)
-    # Tracking fields
-    created_at = db.Column(db.DateTime, default=datetime.now)
-    updated_at = db.Column(db.DateTime, default=datetime.now, onupdate=datetime.now)
-    is_scraped = db.Column(db.Boolean, default=False)
-    source_id = db.Column(db.Integer, db.ForeignKey('scraper_sources.id', ondelete='SET NULL'), nullable=True)
-    date_submitted = db.Column(db.Date)  # When the grant was submitted
-    date_decision = db.Column(db.Date)  # When a decision was received
-    # Search tracking fields
-    search_query = db.Column(db.String(255), nullable=True)  # The search query that found this grant
-    discovery_method = db.Column(db.String(50), nullable=True)  # web-search, focused-search, manual
-    
-    # Phase 3 fields - Attachments and reminders
-    attachments = db.Column(JSON, nullable=True)  # Document attachments metadata
-    reminders = db.Column(JSON, nullable=True)  # Scheduled reminders
-    
-    # Discovery fields
-    source_name = db.Column(db.String(200), nullable=True)  # Name of the discovery source
-    source_url = db.Column(db.String(500), nullable=True)  # URL of the discovery source
-    discovered_at = db.Column(db.DateTime, nullable=True)  # When the grant was discovered
-    tags = db.Column(JSON, nullable=True)  # Tags associated with the grant
-    amount_min = db.Column(db.Float, nullable=True)  # Minimum grant amount
-    amount_max = db.Column(db.Float, nullable=True)  # Maximum grant amount
-    link = db.Column(db.String(500), nullable=True)  # Direct link to grant opportunity
-    deadline = db.Column(db.DateTime, nullable=True)  # Grant application deadline
-    
-    # Relationships
-    narrative = db.relationship('Narrative', back_populates='grant', uselist=False, cascade="all, delete-orphan")
-    # Analytics relationship defined in analytics.py to avoid circular imports
+    source_name = db.Column(db.String(100))
+    source_url = db.Column(db.String(500))
+    status = db.Column(db.String(50), default='idea')
+    match_score = db.Column(db.Integer)
+    match_reason = db.Column(db.Text)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     
     def to_dict(self):
-        """Convert grant to dictionary"""
         return {
             'id': self.id,
+            'org_id': self.org_id,
             'title': self.title,
             'funder': self.funder,
-            'description': self.description,
-            'amount': self.amount,
-            'due_date': self.due_date.isoformat() if self.due_date else None,
-            'eligibility': self.eligibility,
-            'website': self.website,
-            'submission_url': self.submission_url,
-            'application_process': self.application_process,
-            'grant_cycle': self.grant_cycle,
-            'status': self.status,
-            'match_score': self.match_score,
-            'match_explanation': self.match_explanation,
-            'notes': self.notes,
-            'focus_areas': self.focus_areas,
-            'contact_info': self.contact_info,
-            'contact_name': self.contact_name,
-            'contact_email': self.contact_email,
-            'contact_phone': self.contact_phone,
-            'created_at': self.created_at.isoformat() if self.created_at else None,
-            'updated_at': self.updated_at.isoformat() if self.updated_at else None,
-            'is_scraped': self.is_scraped,
-            'source_id': self.source_id,
-            'has_narrative': self.narrative is not None,
-            'date_submitted': self.date_submitted.isoformat() if self.date_submitted else None,
-            'date_decision': self.date_decision.isoformat() if self.date_decision else None,
-            'search_query': self.search_query,
-            'discovery_method': self.discovery_method,
-            'source_name': self.source_name,
-            'source_url': self.source_url,
-            'discovered_at': self.discovered_at.isoformat() if self.discovered_at else None,
-            'tags': self.tags,
+            'link': self.link,
             'amount_min': self.amount_min,
             'amount_max': self.amount_max,
-            'link': self.link,
-            'deadline': self.deadline.isoformat() if self.deadline else None
+            'deadline': self.deadline.isoformat() if self.deadline else None,
+            'geography': self.geography,
+            'eligibility': self.eligibility,
+            'source_name': self.source_name,
+            'source_url': self.source_url,
+            'status': self.status,
+            'match_score': self.match_score,
+            'match_reason': self.match_reason,
+            'created_at': self.created_at.isoformat() if self.created_at else None,
+            'updated_at': self.updated_at.isoformat() if self.updated_at else None
         }
-    
-    def update_status(self, new_status, metadata=None):
-        """
-        Update grant status and record the change for analytics
-        
-        Args:
-            new_status (str): New status value
-            metadata (dict, optional): Additional metadata
-            
-        Returns:
-            bool: Success of the operation
-        """
-        try:
-            # Import here to avoid circular imports
-            from app.services.analytics_service import record_status_change
-            
-            # Store the previous status
-            previous_status = self.status
-            
-            # Update the status
-            self.status = new_status
-            
-            # Update submission and decision dates if applicable
-            if new_status == "Submitted" and not self.date_submitted:
-                self.date_submitted = datetime.now().date()
-            
-            if new_status in ["Won", "Declined"] and not self.date_decision:
-                self.date_decision = datetime.now().date()
-            
-            # Record status change for analytics
-            result = record_status_change(
-                self.id, 
-                new_status, 
-                previous_status,
-                metadata
-            )
-            
-            return result["success"]
-            
-        except Exception as e:
-            logger.error(f"Error updating grant status: {str(e)}")
-            return False

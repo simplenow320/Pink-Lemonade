@@ -1,37 +1,32 @@
 from app import db
-from sqlalchemy.dialects.sqlite import JSON
+from datetime import datetime
 
 class Organization(db.Model):
-    """Model for organization profile"""
-    
-    __tablename__ = 'organization'
+    __tablename__ = 'organizations'
     
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(200), nullable=False)
     mission = db.Column(db.Text)
-    website = db.Column(db.String(255))
-    location = db.Column(JSON, default=dict)  # City, State, Zip
-    founding_year = db.Column(db.Integer)
-    team = db.Column(JSON, default=list)  # List of team members with their roles
-    focus_areas = db.Column(JSON, default=list)  # List of focus areas
-    keywords = db.Column(JSON, default=list)  # List of keywords for grant matching
-    past_programs = db.Column(JSON, default=list)  # List of past programs with details
-    financials = db.Column(JSON, default=dict)  # Financial information
-    case_for_support = db.Column(db.Text)  # Rich text content for case for support
+    focus_areas = db.Column(db.Text)
+    keywords = db.Column(db.Text)
+    location = db.Column(db.String(200))
+    annual_budget = db.Column(db.Integer)
+    ein = db.Column(db.String(20))
+    documents = db.Column(db.Text)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     
     def to_dict(self):
-        """Convert organization to dictionary"""
         return {
             'id': self.id,
             'name': self.name,
             'mission': self.mission,
-            'website': self.website,
-            'location': self.location,
-            'founding_year': self.founding_year,
-            'team': self.team,
             'focus_areas': self.focus_areas,
             'keywords': self.keywords,
-            'past_programs': self.past_programs,
-            'financials': self.financials,
-            'case_for_support': self.case_for_support
+            'location': self.location,
+            'annual_budget': self.annual_budget,
+            'ein': self.ein,
+            'documents': self.documents,
+            'created_at': self.created_at.isoformat() if self.created_at else None,
+            'updated_at': self.updated_at.isoformat() if self.updated_at else None
         }

@@ -1,5 +1,5 @@
 from app import db
-from app.models import Grant
+from app.models.grant import Grant
 from sqlalchemy import and_
 from datetime import datetime
 import logging

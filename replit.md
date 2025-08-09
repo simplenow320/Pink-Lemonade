@@ -13,11 +13,12 @@ Preferred communication style: Simple, everyday language.
 ## System Architecture
 
 ### Backend Architecture
-- **Framework**: Flask with SQLAlchemy ORM
-- **Database**: PostgreSQL with Drizzle ORM (SQLite as fallback)
-- **API Design**: RESTful API with blueprint-based organization
-- **Authentication**: JWT-based session management
-- **Migration System**: Custom database migration runner for schema evolution
+- **Framework**: Flask with factory pattern and SQLAlchemy ORM
+- **Database**: PostgreSQL (SQLite as fallback)
+- **API Design**: RESTful API with modular blueprint organization
+- **Configuration**: Environment-based settings with `app/config/settings.py`
+- **Model Structure**: Organized models in separate files (`app/models/grant.py`, `app/models/organization.py`)
+- **Service Layer**: Mode detection and database operations in `app/services/`
 
 ### Frontend Architecture
 - **Framework**: React 18 with functional components and hooks
@@ -81,6 +82,14 @@ Preferred communication style: Simple, everyday language.
 - **Deployment**: Docker containerization with multi-stage builds
 
 ## Recent Updates (August 2025)
+
+### Application Restructuring: Flask Factory Pattern (August 9, 2025)
+- **Backend Architecture**: Migrated to Flask factory pattern for better modularity and testing
+- **API Structure**: Organized APIs into separate blueprints (grants, orgs, discovery, ai, watchlists)
+- **Configuration**: Centralized settings in `app/config/settings.py` with environment variable support
+- **Database Models**: Restructured models into separate files with proper SQLAlchemy setup
+- **Removed React SPA**: Temporarily removed React single-page app catch-all routes for API-only operation
+- **Working Endpoints**: All API endpoints responding correctly on port 5000
 
 ### Phase 2 Completed: Authentication System (August 9, 2025)
 - **User Authentication**: Fully functional registration/login system with session management

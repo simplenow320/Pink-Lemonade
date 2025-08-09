@@ -1,145 +1,37 @@
 import os
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
-from sqlalchemy.orm import DeclarativeBase
 from flask_cors import CORS
-from werkzeug.middleware.proxy_fix import ProxyFix
 
-class Base(DeclarativeBase):
-    pass
+db = SQLAlchemy()
 
-# Initialize SQLAlchemy with a custom model class
-db = SQLAlchemy(model_class=Base)
+def create_app():
+    app = Flask(__name__)
+    app.config.from_object("app.config.settings")  # keep your settings module
 
-def create_app(test_config=None):
-    # Create and configure the app
-    app = Flask(__name__, instance_relative_config=True)
-    
-    # Enable CORS
-    CORS(app)
-    
-    # Configure the app
-    app.config.from_mapping(
-        SECRET_KEY=os.environ.get("SESSION_SECRET", "dev"),
-        SQLALCHEMY_DATABASE_URI=os.environ.get("DATABASE_URL", "sqlite:///grantflow.db"),
-        SQLALCHEMY_TRACK_MODIFICATIONS=False,
-        SQLALCHEMY_ENGINE_OPTIONS={
-            "pool_recycle": 300,
-            "pool_pre_ping": True,
-        }
-    )
-    
-    # Use ProxyFix for proper URL generation when behind proxies
-    app.wsgi_app = ProxyFix(app.wsgi_app, x_proto=1, x_host=1)
-
-    if test_config is None:
-        # Load the instance config, if it exists, when not testing
-        app.config.from_pyfile('config.py', silent=True)
-    else:
-        # Load the test config if passed in
-        app.config.from_mapping(test_config)
-
-    # Ensure the instance folder exists
-    try:
-        os.makedirs(app.instance_path)
-    except OSError:
-        pass
-
-    # Initialize extensions with the app
+    CORS(app, supports_credentials=True)
     db.init_app(app)
 
+    # Create tables within app context
     with app.app_context():
-        # Import models
-        from app.models import grant, organization, scraper, narrative, analytics
-        from app.models import watchlist
-        from app.models import user  # Import user model
+        # Import models so they are registered
+        from app.models.grant import Grant
+        from app.models.organization import Organization
         
-        # Create all tables in the database
+        # Create all tables
         db.create_all()
-        
-        # Run database migrations
-        from app.db_migrations.run_migrations import run_migrations
-        run_migrations()
-        
-        # Import and register blueprints
-        from app.api import grants, organization, scraper, ai, analytics, writing_assistant, profile, admin
-        from app.api import discovery, dashboard, integration, ai_endpoints, opportunities, profile_api
-        from app.api import auth  # Import auth blueprint
-        from app.api import workflow, watchlist, admin_dashboard, analytics_advanced, collaboration  # Phase 3-4 features
-        
-        # Initialize authentication
-        auth.init_auth(app)
-        
-        # Register all blueprints
-        app.register_blueprint(auth.bp)  # Register auth blueprint
-        app.register_blueprint(grants.bp)
-        app.register_blueprint(organization.bp)
-        app.register_blueprint(scraper.bp)
-        app.register_blueprint(ai.bp)
-        app.register_blueprint(analytics.bp)
-        app.register_blueprint(writing_assistant.bp)
-        app.register_blueprint(profile.bp)
-        app.register_blueprint(admin.bp)  # Register the admin blueprint for data clearing
-        app.register_blueprint(discovery.discovery_bp)
-        app.register_blueprint(dashboard.dashboard_bp)
-        app.register_blueprint(integration.integration_bp)
-        app.register_blueprint(ai_endpoints.bp, url_prefix='/api/ai-v2')  # New AI endpoints
-        app.register_blueprint(opportunities.bp)  # Opportunities page
-        app.register_blueprint(profile_api.bp)  # Profile API endpoints
-        
-        # Phase 3-4 features
-        app.register_blueprint(workflow.bp)  # Grant workflow management
-        app.register_blueprint(watchlist.bp)  # Watchlists and saved searches
-        app.register_blueprint(admin_dashboard.bp)  # Admin dashboard
-        app.register_blueprint(analytics_advanced.bp)  # Advanced analytics
-        app.register_blueprint(collaboration.bp)  # Team collaboration
-        
-        # Add mode indicator to templates
-        from app.utils.mode_indicator import get_mode_badge_html, get_data_mode
-        app.jinja_env.globals['get_mode_badge'] = get_mode_badge_html
-        app.jinja_env.globals['data_mode'] = get_data_mode
-        
-        # Import and register main routes
-        from app import routes
-        app.register_blueprint(routes.bp)
-        
-        # Serve React app for non-API routes
-        @app.route('/', defaults={'path': ''})
-        @app.route('/<path:path>')
-        def serve_react_app(path):
-            import os
-            from flask import send_from_directory
-            
-            # Skip API routes
-            if path.startswith('api/'):
-                from flask import abort
-                abort(404)
-            
-            # Serve React build files
-            react_build_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'client', 'build')
-            
-            if path and os.path.exists(os.path.join(react_build_dir, path)):
-                return send_from_directory(react_build_dir, path)
-            else:
-                # For React routing, always serve index.html
-                if os.path.exists(os.path.join(react_build_dir, 'index.html')):
-                    return send_from_directory(react_build_dir, 'index.html')
-                else:
-                    # Fallback message
-                    return '''
-                    <html>
-                    <body style="font-family: system-ui; text-align: center; padding: 50px;">
-                        <h1>Pink Lemonade</h1>
-                        <p>React app is not built. Building now...</p>
-                        <p>Please run: cd client && npm install && npm run build</p>
-                        <p>Or for development: cd client && npm start (on port 3000)</p>
-                    </body>
-                    </html>
-                    '''
-        
-        # Initialize the scheduler for automated scraping
-        if not app.config.get('TESTING', False):
-            from app.utils.scheduler import initialize_scheduler
-            initialize_scheduler()
 
+    # register blueprints
+    from app.api.grants import bp as grants_bp
+    from app.api.orgs import bp as orgs_bp
+    from app.api.discovery import bp as discovery_bp
+    from app.api.ai import bp as ai_bp
+    from app.api.watchlists import bp as watchlists_bp
+    app.register_blueprint(grants_bp, url_prefix="/api/grants")
+    app.register_blueprint(orgs_bp, url_prefix="/api/orgs")
+    app.register_blueprint(discovery_bp, url_prefix="/api/discovery")
+    app.register_blueprint(ai_bp, url_prefix="/api/ai")
+    app.register_blueprint(watchlists_bp, url_prefix="/api/watchlists")
+
+    # remove any "serve React for all routes" logic until the new React app is ready
     return app
