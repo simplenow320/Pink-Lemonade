@@ -1,0 +1,49 @@
+We are REBUILDING from the existing project structure — do NOT start a new repo.
+
+Task:
+Create a “Foundation Directory” page that:
+- Uses the same minimalist, clean, modern, muted matte style as the landing page and dashboard.
+- Avoids duplication of logo or brand name (logo remains only in top-left navigation bar).
+- Displays city-based foundation lists for:
+    1. Grand Rapids
+    2. Charlotte
+    3. Atlanta
+    4. Detroit
+    5. Indiana (state-level directory)
+- Each city should have its own section, with space for at least 5 foundation entries (API-ready placeholders).
+- Include:
+    - Foundation name
+    - Short description
+    - Grant focus area(s)
+    - Application deadline
+    - "View Details" button (placeholder link)
+- Implement a search bar that filters results across all cities in real time.
+- Include dropdown filters for:
+    - City
+    - Focus area (Education, AI, Digital Literacy, Community Development, etc.)
+    - Deadline status (Open, Closing Soon, Closed)
+
+Functionality Requirements:
+- All entries should be populated from a `foundations-data.json` file that will later be replaced by an API feed.
+- Each placeholder entry must have clear data attributes for name, description, focus areas, and deadlines.
+- Add pagination if results exceed 10 per page.
+- Include a “Save to My Grants” button on each entry (non-functional placeholder).
+- Keep layout mobile-first responsive.
+
+Navigation:
+- Add “Foundation Directory” as a nav link in the left-side menu.
+- Ensure the “Back to Dashboard” link or breadcrumb is visible.
+
+Technical Steps:
+1. Insert the new page into the existing routing structure.
+2. Create `foundations-data.json` with mock entries for all 5 cities (at least 5 entries each).
+3. Include comments in code showing where API endpoint integration will occur.
+4. Document all file paths and integration points in `foundation-directory-notes.md`.
+5. After completion:
+    - TEST search and filter functions with mock data.
+    - DEBUG any broken UI/UX elements.
+    - VERIFY:
+        - All cities load with at least 5 entries.
+        - Search works across all city data.
+        - Filters update the view instantly.
+        - Layout is mobile-friendly and matches brand style.
