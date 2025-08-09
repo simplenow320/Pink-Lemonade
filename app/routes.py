@@ -8,9 +8,8 @@ bp = Blueprint('routes', __name__)
 
 @bp.route('/')
 def index():
-    """Home page - redirect to dashboard or show landing page"""
-    # For now, redirect to opportunities page as the main entry point
-    return redirect('/opportunities')
+    """Home page - show landing page"""
+    return render_template('landing.html')
 
 @bp.route('/dashboard')
 def dashboard():
