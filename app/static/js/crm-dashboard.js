@@ -121,21 +121,30 @@ async function loadOrganizationInfo() {
 
 // Update metrics display
 function updateMetrics(metrics) {
-    // Total Grants
-    const totalGrants = metrics.totalGrants || 0;
-    document.getElementById('total-grants').textContent = totalGrants;
+    // Check data mode
+    const dataMode = document.querySelector('[data-mode]')?.dataset?.mode || 
+                     document.body.dataset?.mode || 'MOCK';
     
-    // Funds Applied For
-    const fundsApplied = metrics.fundsApplied || 0;
-    document.getElementById('funds-applied').textContent = formatCurrency(fundsApplied);
-    
-    // Funds Won
-    const fundsWon = metrics.fundsWon || 0;
-    document.getElementById('funds-won').textContent = formatCurrency(fundsWon);
-    
-    // Win Rate
-    const winRate = metrics.winRate || 0;
-    document.getElementById('win-rate').textContent = `${Math.round(winRate)}%`;
+    if (dataMode === 'LIVE') {
+        // LIVE mode - show real data or N/A
+        document.getElementById('total-grants').textContent = 
+            metrics.totalGrants !== undefined && metrics.totalGrants !== null ? metrics.totalGrants : 'N/A';
+        document.getElementById('funds-applied').textContent = 
+            metrics.fundsApplied !== undefined && metrics.fundsApplied !== null ? 
+            formatCurrency(metrics.fundsApplied) : 'N/A';
+        document.getElementById('funds-won').textContent = 
+            metrics.fundsWon !== undefined && metrics.fundsWon !== null ? 
+            formatCurrency(metrics.fundsWon) : 'N/A';
+        document.getElementById('win-rate').textContent = 
+            metrics.winRate !== undefined && metrics.winRate !== null ? 
+            `${Math.round(metrics.winRate)}%` : 'N/A';
+    } else {
+        // MOCK mode - show demo data
+        document.getElementById('total-grants').textContent = metrics.totalGrants || 12;
+        document.getElementById('funds-applied').textContent = formatCurrency(metrics.fundsApplied || 450000);
+        document.getElementById('funds-won').textContent = formatCurrency(metrics.fundsWon || 125000);
+        document.getElementById('win-rate').textContent = `${Math.round(metrics.winRate) || 28}%`;
+    }
 }
 
 // Update activity feed

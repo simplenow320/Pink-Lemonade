@@ -19,7 +19,17 @@ API_SOURCES = {
         },
         'cache_ttl': 60,  # minutes
         'supports': ['search', 'details'],
-        'description': 'Federal grant opportunities from US government'
+        'description': 'Federal grant opportunities from US government',
+        'endpoints': {
+            'search': '/opportunities/search',
+            'details': '/opportunity/details/{id}'
+        },
+        'params': {
+            'status': 'posted',
+            'sortBy': 'closeDate',
+            'oppStatuses': 'posted',
+            'rows': 25
+        }
     },
     
     'philanthropy_news': {
@@ -132,6 +142,51 @@ API_SOURCES = {
         'cache_ttl': 240,
         'supports': ['search'],
         'description': 'South Carolina state grants'
+    },
+    
+    'federal_register': {
+        'name': 'Federal Register',
+        'enabled': True,
+        'base_url': 'https://www.federalregister.gov/api/v1',
+        'api_key': None,  # Public API
+        'rate_limit': {
+            'calls': 1000,
+            'period': 3600
+        },
+        'cache_ttl': 120,
+        'supports': ['search'],
+        'description': 'Federal funding notices and NOFOs',
+        'endpoints': {
+            'search': '/documents.json'
+        },
+        'params': {
+            'fields[]': 'title,html_url,publication_date,abstract',
+            'per_page': 20,
+            'order': 'newest'
+        }
+    },
+    
+    'govinfo': {
+        'name': 'GovInfo API',
+        'enabled': True,
+        'base_url': 'https://api.govinfo.gov',
+        'api_key': None,  # Public API
+        'rate_limit': {
+            'calls': 1000,
+            'period': 3600
+        },
+        'cache_ttl': 120,
+        'supports': ['search'],
+        'description': 'Government information and documents',
+        'endpoints': {
+            'search': '/search'
+        },
+        'params': {
+            'collection': 'FR',  # Federal Register
+            'format': 'json',
+            'pageSize': 25,
+            'offsetMark': '*'
+        }
     }
 }
 

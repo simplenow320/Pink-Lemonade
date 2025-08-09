@@ -1,6 +1,6 @@
 # Pink Lemonade E2E Test Report
 
-Generated: 2025-08-09T12:43:42.491Z
+Generated: 2025-08-09T12:53:02.032Z
 Data Mode: **LIVE**
 
 ## Summary
@@ -38,7 +38,7 @@ Data Mode: **LIVE**
 | Watchlists | Run watchlist | ✅ PASS | - |
 | Watchlists | Delete watchlist | ✅ PASS | - |
 | API Layer | Sources endpoint works | ✅ PASS | - |
-| API Layer | Has enabled sources | ✅ PASS | 4 enabled sources |
+| API Layer | Has enabled sources | ✅ PASS | 6 enabled sources |
 | API Layer | Search through API Manager | ✅ PASS | - |
 | API Layer | Org-scoped data | ⏭️ SKIPPED | Could not fetch grants |
 | Static Rules | No duplicate logos in nav/sidebar | ✅ PASS | Found 0 duplicate logos across pages |
@@ -50,7 +50,7 @@ Data Mode: **LIVE**
 - dashboard: 0
 
 ### Connectors
-- api_sources: 4
+- api_sources: 6
 
 ## Next Fixes
 

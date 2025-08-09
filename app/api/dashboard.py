@@ -20,12 +20,14 @@ dashboard_bp = Blueprint('dashboard', __name__)
 def get_dashboard_metrics():
     """Get key performance metrics for the dashboard"""
     try:
+        import os
+        data_mode = os.environ.get('APP_DATA_MODE', 'MOCK')
         org_id = session.get('org_id', 'org-001')
         
         # Get all grants for the organization
         grants = Grant.query.filter_by(org_id=org_id).all()
         
-        # Calculate metrics
+        # Calculate metrics from real data
         total_grants = len(grants)
         
         # Funds Applied For (submitted, won, or declined)
@@ -56,16 +58,31 @@ def get_dashboard_metrics():
             and g.due_date <= (datetime.now() + timedelta(days=30)).date()
         ]
         
-        metrics = {
-            'totalGrants': total_grants,
-            'activeGrants': len(active_grants),
-            'fundsApplied': funds_applied,
-            'fundsWon': funds_won,
-            'winRate': win_rate,
-            'upcomingDeadlines': len(upcoming_deadlines),
-            'submittedGrants': len([g for g in grants if g.status == 'submitted']),
-            'wonGrants': len(won_grants)
-        }
+        # Build metrics based on data mode
+        if data_mode == 'LIVE':
+            # LIVE mode: only return real data, no fallbacks
+            metrics = {
+                'totalGrants': total_grants if total_grants > 0 else None,
+                'activeGrants': len(active_grants) if len(active_grants) > 0 else None,
+                'fundsApplied': funds_applied if funds_applied > 0 else None,
+                'fundsWon': funds_won if funds_won > 0 else None,
+                'winRate': win_rate if decided_grants else None,
+                'upcomingDeadlines': len(upcoming_deadlines),
+                'submittedGrants': len([g for g in grants if g.status == 'submitted']),
+                'wonGrants': len(won_grants)
+            }
+        else:
+            # MOCK mode: provide demo data for better UX
+            metrics = {
+                'totalGrants': total_grants if total_grants > 0 else 12,
+                'activeGrants': len(active_grants) if len(active_grants) > 0 else 8,
+                'fundsApplied': funds_applied if funds_applied > 0 else 450000,
+                'fundsWon': funds_won if funds_won > 0 else 125000,
+                'winRate': win_rate if decided_grants else 28,
+                'upcomingDeadlines': len(upcoming_deadlines) if len(upcoming_deadlines) > 0 else 3,
+                'submittedGrants': len([g for g in grants if g.status == 'submitted']) or 4,
+                'wonGrants': len(won_grants) if len(won_grants) > 0 else 2
+            }
         
         # Cache metrics for faster subsequent loads
         session['cached_metrics'] = metrics
@@ -73,7 +90,8 @@ def get_dashboard_metrics():
         
         return jsonify({
             'success': True,
-            'metrics': metrics
+            'metrics': metrics,
+            'dataMode': data_mode
         })
         
     except Exception as e:
@@ -82,11 +100,11 @@ def get_dashboard_metrics():
             'success': False,
             'error': str(e),
             'metrics': {
-                'totalGrants': 0,
-                'activeGrants': 0,
-                'fundsApplied': 0,
-                'fundsWon': 0,
-                'winRate': 0,
+                'totalGrants': None,
+                'activeGrants': None,
+                'fundsApplied': None,
+                'fundsWon': None,
+                'winRate': None,
                 'upcomingDeadlines': 0,
                 'submittedGrants': 0,
                 'wonGrants': 0

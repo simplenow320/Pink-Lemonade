@@ -116,6 +116,10 @@ class APIManager:
         try:
             if source_name == 'grants_gov':
                 grants = self._fetch_grants_gov(params)
+            elif source_name == 'federal_register':
+                grants = self._fetch_federal_register(params)
+            elif source_name == 'govinfo':
+                grants = self._fetch_govinfo(params)
             elif source_name == 'philanthropy_news':
                 grants = self._fetch_philanthropy_news(params)
             elif source_name == 'foundation_directory':
@@ -313,6 +317,95 @@ class APIManager:
         """
         # Implementation would depend on available Georgia open data APIs
         return self._get_mock_grants('georgia_portal', params)
+    
+    def _fetch_federal_register(self, params: Dict) -> List[Dict]:
+        """
+        Fetch grants from Federal Register API
+        """
+        try:
+            base_url = self.sources['federal_register']['base_url']
+            
+            # Build query parameters for Federal Register
+            query_params = {
+                'conditions[term]': params.get('query', 'grant funding'),
+                'conditions[type][]': 'NOTICE',
+                'conditions[agencies][]': ['agriculture-department', 'education-department', 'health-and-human-services-department'],
+                'fields[]': ['title', 'html_url', 'publication_date', 'abstract'],
+                'per_page': params.get('limit', 20),
+                'order': 'newest'
+            }
+            
+            response = requests.get(
+                f"{base_url}/documents.json",
+                params=query_params,
+                timeout=10
+            )
+            
+            if response.status_code == 200:
+                data = response.json()
+                grants = []
+                
+                for doc in data.get('results', []):
+                    grant = self._standardize_grant({
+                        'title': doc.get('title'),
+                        'description': doc.get('abstract'),
+                        'link': doc.get('html_url'),
+                        'deadline': doc.get('publication_date'),
+                        'source': 'Federal Register',
+                        'source_id': doc.get('document_number')
+                    })
+                    grants.append(grant)
+                
+                return grants
+                
+        except Exception as e:
+            logger.error(f"Error fetching from Federal Register: {e}")
+        
+        return []
+    
+    def _fetch_govinfo(self, params: Dict) -> List[Dict]:
+        """
+        Fetch grants from GovInfo API
+        """
+        try:
+            base_url = self.sources['govinfo']['base_url']
+            
+            # Build query parameters for GovInfo
+            query_params = {
+                'query': params.get('query', 'grant funding opportunity'),
+                'collection': 'FR',  # Federal Register
+                'format': 'json',
+                'pageSize': params.get('limit', 25),
+                'offsetMark': '*'
+            }
+            
+            response = requests.get(
+                f"{base_url}/search",
+                params=query_params,
+                timeout=10
+            )
+            
+            if response.status_code == 200:
+                data = response.json()
+                grants = []
+                
+                for item in data.get('packages', []):
+                    grant = self._standardize_grant({
+                        'title': item.get('title'),
+                        'description': item.get('summary'),
+                        'link': item.get('packageLink'),
+                        'deadline': item.get('dateIssued'),
+                        'source': 'GovInfo',
+                        'source_id': item.get('packageId')
+                    })
+                    grants.append(grant)
+                
+                return grants
+                
+        except Exception as e:
+            logger.error(f"Error fetching from GovInfo: {e}")
+        
+        return []
     
     def _standardize_grant(self, raw_grant: Dict) -> Dict:
         """
