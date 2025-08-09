@@ -7,6 +7,7 @@ import logging
 from typing import List, Dict, Any, Optional
 from datetime import datetime, date
 import os
+from app.services.mode import is_live
 
 logger = logging.getLogger(__name__)
 
@@ -73,13 +74,25 @@ class GrantsGovAPIService:
             return grants
             
         except requests.exceptions.RequestException as e:
-            logger.error(f"Network error fetching grants from Grants.gov: {str(e)}")
+            if is_live():
+                logger.error(f"LIVE MODE: Network error fetching grants from Grants.gov: {str(e)}")
+                logger.error("GUIDANCE: Check internet connection and Grants.gov API availability. No mock data will be provided in LIVE mode.")
+            else:
+                logger.warning(f"DEMO MODE: Network error simulated for Grants.gov: {str(e)}")
             return []
         except json.JSONDecodeError as e:
-            logger.error(f"JSON decode error from Grants.gov: {str(e)}")
+            if is_live():
+                logger.error(f"LIVE MODE: JSON decode error from Grants.gov: {str(e)}")
+                logger.error("GUIDANCE: Grants.gov API response format may have changed. No fallback data available in LIVE mode.")
+            else:
+                logger.warning(f"DEMO MODE: JSON decode error simulated for Grants.gov: {str(e)}")
             return []
         except Exception as e:
-            logger.error(f"Unexpected error fetching grants from Grants.gov: {str(e)}")
+            if is_live():
+                logger.error(f"LIVE MODE: Unexpected error fetching grants from Grants.gov: {str(e)}")
+                logger.error("GUIDANCE: API may be temporarily unavailable. Try again later or contact support. No synthetic data will be provided.")
+            else:
+                logger.warning(f"DEMO MODE: Error simulated for Grants.gov: {str(e)}")
             return []
     
     def get_faith_based_grants(self, limit: int = 15) -> List[Dict[str, Any]]:

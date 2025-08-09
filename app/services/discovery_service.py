@@ -10,8 +10,8 @@ import json
 import os
 from datetime import datetime, timedelta
 import time
-import random
 from typing import List, Dict, Any, Optional
+from app.services.mode import is_live
 
 # Initialize OpenAI client if API key is available
 OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY")
@@ -37,7 +37,11 @@ def discover_grants(org_profile: Dict[str, Any], limit: int = 5) -> List[Dict[st
         List of discovered grant opportunities
     """
     if not openai:
-        logger.error("OpenAI API key not configured. Grant discovery requires the OpenAI API.")
+        if is_live():
+            logger.error("LIVE MODE: OpenAI API key not configured. Grant discovery requires the OpenAI API.")
+            logger.error("GUIDANCE: Please provide OPENAI_API_KEY environment variable to enable grant discovery. No mock grants will be provided.")
+        else:
+            logger.warning("DEMO MODE: OpenAI API key not configured for demonstration purposes.")
         return []
     
     logger.info(f"Starting internet-wide grant discovery for {org_profile.get('name', 'Unknown Organization')}")
@@ -124,9 +128,18 @@ def discover_grants(org_profile: Dict[str, Any], limit: int = 5) -> List[Dict[st
     # Create search queries based on organization profile
     search_queries = []
     
-    # Add specialized THRIVE and AI keywords (take a random selection of 10 to ensure better coverage)
-    random.shuffle(thrive_ai_keywords)
-    selected_keywords = thrive_ai_keywords[:10]
+    # Add specialized THRIVE and AI keywords
+    if is_live():
+        # In LIVE mode, use deterministic selection for consistent results
+        selected_keywords = thrive_ai_keywords[:10]  # Take first 10 for consistent results
+        logger.info("LIVE MODE: Using deterministic keyword selection for grant discovery")
+    else:
+        # In DEMO mode, can use random selection for demonstration
+        import random
+        random.shuffle(thrive_ai_keywords)
+        selected_keywords = thrive_ai_keywords[:10]
+        logger.info("DEMO MODE: Using randomized keyword selection for demonstration")
+    
     search_queries.extend(selected_keywords)
     
     # Add focus area-based queries
@@ -147,8 +160,16 @@ def discover_grants(org_profile: Dict[str, Any], limit: int = 5) -> List[Dict[st
     # Add general queries
     search_queries.append("new grant opportunities for nonprofits")
     
-    # Shuffle to get a diverse set of results
-    random.shuffle(search_queries)
+    # Handle query ordering based on mode
+    if is_live():
+        # In LIVE mode, use deterministic ordering for consistent results
+        search_queries.sort()  # Alphabetical ordering for consistency
+        logger.info("LIVE MODE: Using deterministic query ordering for grant discovery")
+    else:
+        # In DEMO mode, can use random ordering for demonstration
+        import random
+        random.shuffle(search_queries)
+        logger.info("DEMO MODE: Using randomized query ordering for demonstration")
     
     # Store all keywords before limiting for reporting purposes
     all_keywords = search_queries.copy()
@@ -283,7 +304,11 @@ def discover_grants(org_profile: Dict[str, Any], limit: int = 5) -> List[Dict[st
             time.sleep(2)
                 
     except Exception as e:
-        logger.error(f"Error during grant discovery: {str(e)}")
+        if is_live():
+            logger.error(f"LIVE MODE: Error during grant discovery: {str(e)}")
+            logger.error("GUIDANCE: Grant discovery API failed. Check OpenAI API key and internet connection. No fallback data available.")
+        else:
+            logger.warning(f"DEMO MODE: Error simulated during grant discovery: {str(e)}")
     
     # Add the search report to each grant for tracking
     for grant in discovered_grants:

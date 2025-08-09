@@ -1,0 +1,303 @@
+# app/services/scraper_service.py
+from __future__ import annotations
+
+import os
+import logging
+from datetime import datetime, date
+from typing import Dict, Any, Iterable, List, Optional
+
+import requests
+from sqlalchemy import and_
+
+from app import db
+from app.models import Grant, Watchlist, WatchlistSource
+from app.services.mode import is_live
+
+log = logging.getLogger(__name__)
+
+# ------------------------------
+# Configuration (env-overridable)
+# ------------------------------
+GRANTSGOV_BASE = os.getenv("GRANTSGOV_BASE", "https://www.grants.gov/grantsws/rest/opportunities/search")
+GRANTSGOV_PAGE_SIZE = int(os.getenv("GRANTSGOV_PAGE_SIZE", "50"))
+HTTP_TIMEOUT = int(os.getenv("SCRAPER_HTTP_TIMEOUT", "25"))  # seconds
+USER_AGENT = os.getenv("SCRAPER_UA", "PinkLemonade/1.0 (+contact admin)")
+
+# ------------------------------
+# Public entry points
+# ------------------------------
+def scheduled_scraping_job() -> None:
+    """
+    Runs on a schedule (e.g., daily at 05:00).
+    - In LIVE mode: fetches from real connectors and upserts results.
+    - In DEMO mode: skip (never fabricate data).
+    """
+    if not is_live():
+        log.info("scheduled_scraping_job: DEMO mode detected; skipping live scraping.")
+        return
+
+    try:
+        total = run_all_connectors_for_all_orgs()
+        log.info("scheduled_scraping_job: finished. upserted_or_updated=%s", total)
+    except Exception:
+        log.exception("scheduled_scraping_job: unexpected error")
+
+
+def run_now_for_org(org_id: int, query: Optional[str] = None) -> int:
+    """
+    Manual trigger (e.g., 'Run Now' button). Returns number of upserted/updated records.
+    """
+    if not is_live():
+        log.info("run_now_for_org: DEMO mode detected; skipping live scraping for org_id=%s", org_id)
+        return 0
+    return run_all_connectors_for_org(org_id=org_id, query=query)
+
+# ------------------------------
+# Core orchestration
+# ------------------------------
+def run_all_connectors_for_all_orgs() -> int:
+    """
+    Iterate orgs that have watchlists and run all enabled connectors.
+    """
+    count = 0
+    org_ids = [row[0] for row in db.session.query(Watchlist.org_id).distinct().all()]
+    for org_id in org_ids:
+        try:
+            count += run_all_connectors_for_org(org_id)
+        except Exception:
+            log.exception("run_all_connectors_for_all_orgs: failure for org_id=%s", org_id)
+    return count
+
+
+def run_all_connectors_for_org(org_id: int, query: Optional[str] = None) -> int:
+    """
+    Pulls enabled sources for the org's watchlists and upserts results.
+    """
+    total = 0
+    watchlists: List[Watchlist] = Watchlist.query.filter_by(org_id=org_id).all()
+
+    # Build simple terms from watchlists (e.g., cities)
+    cities = [w.city for w in watchlists if (w.city or "").strip()]
+    if query:
+        # explicit query overrides city terms
+        cities = [query]
+
+    # For now: Grants.gov connector (federal). You can add more connectors below.
+    for term in cities or ["nonprofit"]:
+        try:
+            records = fetch_from_grants_gov(search_term=term, limit=GRANTSGOV_PAGE_SIZE)
+            total += upsert_many(records, org_id=org_id)
+        except Exception:
+            log.exception("run_all_connectors_for_org: connector failed for org_id=%s term=%s", org_id, term)
+
+    # Example: custom WatchlistSource URLs (future adapters)
+    # sources = (db.session.query(WatchlistSource)
+    #            .join(Watchlist, WatchlistSource.watchlist_id == Watchlist.id)
+    #            .filter(Watchlist.org_id == org_id, WatchlistSource.enabled.is_(True))
+    #            .all())
+    # for src in sources:
+    #     try:
+    #         # normalize vendor by src.name, call matching adapter here
+    #         pass
+    #     except Exception:
+    #         log.exception("Adapter error for source %s (%s)", src.name, src.url)
+
+    return total
+
+# ------------------------------
+# Connectors
+# ------------------------------
+def fetch_from_grants_gov(search_term: str, limit: int = 50, offset: int = 0) -> List[Dict[str, Any]]:
+    """
+    Minimal Grants.gov search. Returns a list of normalized grant dicts for upsert.
+    Docs: https://www.grants.gov/api/api-guide (search2 endpoint pattern)
+
+    We request open opportunities where eligibility includes nonprofits if possible.
+    """
+    if not is_live():
+        # Never fabricate in DEMO. Return empty list.
+        return []
+
+    # Build basic payload for search2
+    payload = {
+        "startRecordNum": offset + 1,
+        "keyword": search_term,
+        "oppStatuses": "forecasted|posted",  # broaden a bit; adjust as you like
+        "rows": min(max(1, limit), 100)
+    }
+
+    headers = {"User-Agent": USER_AGENT, "Content-Type": "application/json"}
+
+    try:
+        resp = requests.post(GRANTSGOV_BASE, json=payload, headers=headers, timeout=HTTP_TIMEOUT)
+        resp.raise_for_status()
+        data = resp.json() or {}
+
+        opportunities = data.get("oppHits", []) or data.get("opportunities", []) or []
+        results: List[Dict[str, Any]] = []
+
+        for item in opportunities:
+            # Grants.gov responses vary slightly by endpoint version, we guard with .get()
+            title = item.get("title") or item.get("oppTitle") or "Untitled Opportunity"
+            cfda = item.get("cfdaList") or item.get("cfdaNumbers") or []
+            opp_number = item.get("number") or item.get("oppNumber") or ""
+            agency = item.get("agency") or item.get("agencyCode") or item.get("agencyName") or "Unknown Agency"
+            close_date_str = item.get("closeDate") or item.get("closeDateStr") or item.get("postedDate") or None
+            link = item.get("url") or item.get("oppLink") or f"https://www.grants.gov/search-results-detail/{opp_number}"
+
+            results.append(normalize_grant_record({
+                "title": title,
+                "funder": agency,
+                "link": link,
+                "deadline": close_date_str,
+                "amount_min": None,
+                "amount_max": None,
+                "geography": "US",
+                "eligibility": f"Eligibility per Grants.gov; CFDA: {', '.join(cfda) if isinstance(cfda, list) else cfda}",
+                "source_name": "Grants.gov",
+                "source_url": "https://www.grants.gov"
+            }))
+
+        log.info("fetch_from_grants_gov: term=%s fetched=%s", search_term, len(results))
+        return results
+
+    except requests.HTTPError as e:
+        log.warning("Grants.gov HTTP error: %s | payload=%s | text=%s", e, payload, getattr(e.response, "text", ""))
+        return []
+    except Exception:
+        log.exception("fetch_from_grants_gov: unexpected error for term=%s", search_term)
+        return []
+
+# ------------------------------
+# Normalization & Upsert
+# ------------------------------
+def normalize_grant_record(rec: Dict[str, Any]) -> Dict[str, Any]:
+    """
+    Ensure a consistent schema for upsert_grant().
+    """
+    norm = {
+        "title": (rec.get("title") or "").strip(),
+        "funder": (rec.get("funder") or "").strip(),
+        "link": rec.get("link"),
+        "amount_min": _to_decimal(rec.get("amount_min")),
+        "amount_max": _to_decimal(rec.get("amount_max")),
+        "deadline": _to_iso_date(rec.get("deadline")),
+        "geography": rec.get("geography"),
+        "eligibility": rec.get("eligibility"),
+        "source_name": rec.get("source_name") or "Unknown",
+        "source_url": rec.get("source_url"),
+    }
+    return norm
+
+
+def upsert_many(records: Iterable[Dict[str, Any]], org_id: Optional[int] = None) -> int:
+    count = 0
+    for r in records:
+        if upsert_grant(r, org_id=org_id):
+            count += 1
+    return count
+
+
+def upsert_grant(record: Dict[str, Any], org_id: Optional[int] = None) -> Optional[Grant]:
+    """
+    Insert or update a grant using a dedupe key of (title, funder, deadline).
+    record fields (normalized): title, funder, link, amount_min, amount_max, deadline(ISO), geography, eligibility, source_name, source_url
+    """
+    try:
+        if not record.get("title"):
+            log.debug("upsert_grant: skipped record with empty title: %s", record)
+            return None
+
+        deadline_date: Optional[date] = None
+        if record.get("deadline"):
+            deadline_date = _parse_date(record["deadline"])
+
+        existing = Grant.query.filter(
+            and_(
+                Grant.title == record["title"],
+                Grant.funder == (record.get("funder") or None),
+                Grant.deadline == deadline_date
+            )
+        ).first()
+
+        if existing:
+            existing.amount_min = record.get("amount_min")
+            existing.amount_max = record.get("amount_max")
+            existing.source_name = record.get("source_name")
+            existing.source_url = record.get("source_url")
+            existing.link = record.get("link")
+            existing.geography = record.get("geography")
+            existing.eligibility = record.get("eligibility")
+            db.session.commit()
+            return existing
+
+        g = Grant(
+            org_id=org_id,
+            title=record["title"],
+            funder=record.get("funder"),
+            link=record.get("link"),
+            amount_min=record.get("amount_min"),
+            amount_max=record.get("amount_max"),
+            deadline=deadline_date,
+            geography=record.get("geography"),
+            eligibility=record.get("eligibility"),
+            source_name=record.get("source_name"),
+            source_url=record.get("source_url"),
+            status="idea",
+        )
+        db.session.add(g)
+        db.session.commit()
+        return g
+
+    except Exception:
+        db.session.rollback()
+        log.exception("upsert_grant: failed for record=%s", record)
+        return None
+
+# ------------------------------
+# Helpers
+# ------------------------------
+def _to_iso_date(val: Any) -> Optional[str]:
+    """Accepts ISO-like strings or date/datetime and returns YYYY-MM-DD or None."""
+    if not val:
+        return None
+    if isinstance(val, date):
+        return val.isoformat()
+    if isinstance(val, datetime):
+        return val.date().isoformat()
+    s = str(val).strip()
+    for fmt in ("%Y-%m-%d", "%Y-%m-%dT%H:%M:%S", "%m/%d/%Y", "%Y/%m/%d"):
+        try:
+            return datetime.strptime(s, fmt).date().isoformat()
+        except Exception:
+            continue
+    # last resort: try python fromisoformat
+    try:
+        return datetime.fromisoformat(s).date().isoformat()
+    except Exception:
+        return None
+
+
+def _parse_date(s: Optional[str]) -> Optional[date]:
+    if not s:
+        return None
+    try:
+        return datetime.fromisoformat(s).date()
+    except Exception:
+        pass
+    # try common alt formats
+    for fmt in ("%Y-%m-%d", "%m/%d/%Y", "%Y/%m/%d", "%Y-%m-%dT%H:%M:%S"):
+        try:
+            return datetime.strptime(s, fmt).date()
+        except Exception:
+            continue
+    return None
+
+
+def _to_decimal(val: Any) -> Optional[float]:
+    if val is None or val == "":
+        return None
+    try:
+        return float(val)
+    except Exception:
+        return None

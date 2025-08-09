@@ -14,6 +14,7 @@ import time
 import hashlib
 from flask import current_app
 from app.config.apiConfig import APIConfig, API_SOURCES
+from app.services.mode import is_live
 
 logger = logging.getLogger(__name__)
 
@@ -141,7 +142,11 @@ class APIManager:
             return grants
             
         except Exception as e:
-            logger.error(f"Error fetching from {source_name}: {e}")
+            if is_live():
+                logger.error(f"LIVE MODE: Error fetching from {source_name}: {e}")
+                logger.error(f"GUIDANCE: {source_name} API is unavailable. Check credentials and API status. No synthetic data provided in LIVE mode.")
+            else:
+                logger.warning(f"DEMO MODE: Error simulated for {source_name}: {e}")
             return []  # Return empty on error, never fake data
     
     def get_enabled_sources(self) -> Dict[str, Dict]:
@@ -459,7 +464,11 @@ class APIManager:
         """
         Handle cases where no real data is available
         """
-        logger.warning(f"No real data available from {source_name}. API keys or configuration may be needed.")
+        if is_live():
+            logger.warning(f"LIVE MODE: No real data available from {source_name}.")
+            logger.warning("GUIDANCE: API keys, credentials, or configuration may be needed. Check source settings and try again.")
+        else:
+            logger.info(f"DEMO MODE: No data simulation for {source_name}")
         return []  # Return empty list - never fake data
 
 # Singleton instance
