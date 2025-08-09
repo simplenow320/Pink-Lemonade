@@ -362,8 +362,33 @@ def run_scraping_job(include_web_search=True):
             result["end_time"] = datetime.now()
             return result
         
-        # First, perform internet-wide grant discovery if enabled
+        # Step 1: First try federal grants API discovery 
         discovered_grants = []
+        try:
+            logger.info("Starting federal grants API discovery...")
+            from app.services.rapidapi_service import grants_gov_service
+            
+            # Get faith-based grants from Grants.gov API
+            api_grants = grants_gov_service.get_faith_based_grants(limit=8)
+            api_grants.extend(grants_gov_service.get_community_grants(limit=5))
+            
+            if api_grants:
+                logger.info(f"Found {len(api_grants)} grants from Grants.gov API")
+                discovered_grants.extend(api_grants)
+                result["grants_found"] += len(api_grants)
+                
+                # Log grant titles for debugging
+                for grant in api_grants[:3]:
+                    logger.info(f"API Grant: {grant.get('title', 'No title')[:60]}...")
+            else:
+                logger.info("No grants found from Grants.gov API")
+                
+        except Exception as e:
+            logger.error(f"Error during Grants.gov API discovery: {str(e)}")
+            import traceback
+            logger.error(f"Traceback: {traceback.format_exc()}")
+        
+        # Step 2: Perform internet-wide grant discovery if enabled
         if include_web_search:
             logger.info("Starting internet-wide grant discovery")
             try:
@@ -477,12 +502,13 @@ def run_scraping_job(include_web_search=True):
             logger.error(f"Error updating source timestamps: {str(e)}")
             db.session.rollback()
         
-        # Process all discovered grants (both from web search and foundation sources)
+        # Process all discovered grants (both from API, web search and foundation sources)
         logger.info(f"Processing {len(discovered_grants)} total grants discovered")
-        for grant_data in discovered_grants:
+        for i, grant_data in enumerate(discovered_grants):
+            logger.info(f"Processing grant {i+1}/{len(discovered_grants)}: {grant_data.get('title', 'No title')[:50]}... from {grant_data.get('funder', 'No funder')}")
             # Skip if we don't have key information
             if not grant_data.get('title') or not grant_data.get('funder'):
-                logger.warning("Skipping grant with missing title or funder")
+                logger.warning(f"Skipping grant with missing title or funder: title='{grant_data.get('title')}', funder='{grant_data.get('funder')}'")
                 continue
                 
             # Check if grant already exists (by title and funder)
@@ -492,7 +518,7 @@ def run_scraping_job(include_web_search=True):
             ).first()
             
             if existing_grant:
-                logger.info(f"Grant already exists: {grant_data.get('title')}")
+                logger.info(f"Duplicate grant skipped: {grant_data.get('title')} from {grant_data.get('funder')}")
                 continue
             
             # Use OpenAI API to get a real match score based on organization profile

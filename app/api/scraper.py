@@ -63,7 +63,7 @@ def update_source(id):
         if source is None:
             return jsonify({"error": "Scraper source not found"}), 404
         
-        data = request.json
+        data = request.json or {}
         
         if 'name' in data:
             source.name = data['name']
@@ -206,8 +206,8 @@ def scrape_grants_endpoint():
                 if org:
                     try:
                         # Try to calculate match score using AI if available
-                        from app.services.ai_service import calculate_match_score
-                        match_result = calculate_match_score(grant_data, org.to_dict())
+                        from app.services.ai_service import analyze_grant_match
+                        match_result = analyze_grant_match(grant_data, org.to_dict())
                         if isinstance(match_result, dict):
                             match_score = match_result.get('score', 75)
                             match_explanation = match_result.get('explanation', match_explanation)
