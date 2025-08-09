@@ -9,7 +9,6 @@ import os
 import logging
 import requests
 import time
-import random
 import json
 from datetime import datetime, timedelta
 import uuid
