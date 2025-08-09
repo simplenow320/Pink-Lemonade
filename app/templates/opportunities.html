@@ -7,7 +7,7 @@
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
     <style>
         :root {
-            --pink: #ec4899;
+            --pink: #db2777;
             --pink-matte: #db2777;
             --white: #ffffff;
             --black: #000000;
@@ -34,13 +34,13 @@
             border-radius: 0.5rem;
             padding: 1.5rem;
             margin-bottom: 1.5rem;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            border: 1px solid var(--border);
         }
 
         .opportunities-grid {
             background: var(--white);
             border-radius: 0.5rem;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            border: 1px solid var(--border);
             overflow: hidden;
         }
 
@@ -62,11 +62,11 @@
             font-weight: 600;
         }
 
-        .fit-score-5 { background: #10b981; color: var(--white); }
-        .fit-score-4 { background: #84cc16; color: var(--white); }
-        .fit-score-3 { background: #eab308; color: var(--white); }
-        .fit-score-2 { background: #f97316; color: var(--white); }
-        .fit-score-1 { background: #ef4444; color: var(--white); }
+        .fit-score-5 { background: #db2777; color: var(--white); }
+        .fit-score-4 { background: #be185d; color: var(--white); }
+        .fit-score-3 { background: #6b7280; color: var(--white); }
+        .fit-score-2 { background: #9f1239; color: var(--white); }
+        .fit-score-1 { background: #831843; color: var(--white); }
         .fit-score-na { background: var(--grey); color: var(--white); }
 
         .btn-primary {
@@ -108,7 +108,7 @@
         .filter-input:focus, .filter-select:focus {
             outline: none;
             border-color: var(--pink-matte);
-            box-shadow: 0 0 0 3px rgba(219, 39, 119, 0.1);
+            border: 2px solid var(--pink-matte);
         }
 
         .empty-state {
@@ -168,7 +168,7 @@
     <div class="header-bar">
         <div class="max-w-7xl mx-auto flex items-center justify-between">
             <div class="flex items-center space-x-4">
-                <img src="/static/images/logo.png" alt="Pink Lemonade" class="h-8">
+                
                 <h1 class="text-xl font-semibold">Grant Opportunities</h1>
             </div>
             <a href="/dashboard" class="text-sm hover:underline" style="color: var(--pink-matte);">← Back to Dashboard</a>

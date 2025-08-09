@@ -9,7 +9,7 @@ function SimpleTest() {
       background: 'white',
       margin: '2rem',
       borderRadius: '8px',
-      boxShadow: '0 2px 10px rgba(0,0,0,0.1)'
+      boxShadow: '0 2px 10px r#e5e7eb'
     }
   }, 
     React.createElement('h1', { style: { color: '#007bff' } }, 'GrantFlow'),

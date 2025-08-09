@@ -8,7 +8,7 @@
     <style>
         /* Pink Lemonade brand colors - consistent with landing page */
         :root {
-            --pink: #ec4899;
+            --pink: #db2777;
             --pink-light: #f9a8d4;
             --pink-dark: #be185d;
             --white: #ffffff;
@@ -17,14 +17,14 @@
             --grey: #6b7280;
             --grey-dark: #374151;
             --border: #e5e7eb;
-            --success: #ec4899;
+            --success: #db2777;
             --warning: #f59e0b;
             --danger: #374151;
             
             /* Legacy variables for compatibility */
             --primary: #374151;
             --secondary: #6b7280;
-            --accent: #ec4899;
+            --accent: #db2777;
             --background: #f3f4f6;
             --surface: #ffffff;
             --text-primary: #000000;
@@ -57,7 +57,7 @@
         }
 
         .nav-item:hover, .nav-item.active {
-            background-color: rgba(90, 103, 216, 0.1);
+            background-color: #f3f4f6;
             color: var(--accent);
         }
 
@@ -65,14 +65,14 @@
             background: var(--surface);
             border-radius: 0.75rem;
             padding: 1.5rem;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+            border: 1px solid #e5e7eb;
             transition: all 0.3s ease;
             border: 1px solid var(--border);
         }
 
         .widget-card:hover {
             transform: translateY(-2px);
-            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+            border: 1px solid #e5e7eb;
         }
 
         .grant-item {
@@ -84,11 +84,11 @@
         }
 
         .grant-item:hover {
-            background-color: rgba(90, 103, 216, 0.05);
+            background-color: #f3f4f6;
         }
 
         .match-score {
-            background: linear-gradient(135deg, var(--pink), var(--pink-dark));
+            background: #db2777;
             color: var(--white);
             padding: 0.25rem 0.75rem;
             border-radius: 1rem;
@@ -106,10 +106,7 @@
             padding: 1rem 2rem;
         }
 
-        .logo-small {
-            height: 32px;
-            width: auto;
-        }
+        
 
         @media (max-width: 768px) {
             .sidebar {
@@ -137,7 +134,7 @@
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
                 </svg>
             </button>
-            <img src="/static/images/logo.png" alt="Pink Lemonade" class="logo-small">
+            
             <h1 class="text-xl font-semibold hidden md:block" style="color: var(--text-primary);">Dashboard</h1>
         </div>
         

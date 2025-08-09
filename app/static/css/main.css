@@ -33,7 +33,7 @@ body {
 .navbar-brand {
   font-size: 1.5rem;
   font-weight: 700;
-  color: #ec4899;
+  color: #db2777;
   text-decoration: none;
 }
 
@@ -54,12 +54,12 @@ body {
 
 .nav-link:hover,
 .nav-link.active {
-  color: #ec4899;
+  color: #db2777;
 }
 
 /* Dashboard Hero Section */
 .welcome-hero {
-  background: linear-gradient(135deg, #ec4899 0%, #f472b6 100%);
+  background: linear-gradient(135deg, #db2777 0%, #f472b6 100%);
   color: white;
   padding: 4rem 0;
   text-align: center;
@@ -133,7 +133,7 @@ body {
 }
 
 .btn-primary {
-  background-color: #ec4899;
+  background-color: #db2777;
   color: white;
 }
 
@@ -155,14 +155,14 @@ body {
 
 .btn-outline:hover {
   background-color: white;
-  color: #ec4899;
+  color: #db2777;
 }
 
 /* Cards */
 .card {
   background: white;
   border-radius: 10px;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 2px 10px r#e5e7eb;
   margin-bottom: 1.5rem;
   overflow: hidden;
 }
@@ -190,7 +190,7 @@ body {
   background: white;
   padding: 2rem;
   border-radius: 10px;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 2px 10px r#e5e7eb;
   text-align: center;
   transition: transform 0.3s ease;
 }
@@ -292,7 +292,7 @@ body {
 }
 
 .badge-success {
-  background-color: #ec4899;
+  background-color: #db2777;
   color: white;
 }
 
@@ -312,7 +312,7 @@ body {
 }
 
 .bg-primary {
-  background-color: #ec4899;
+  background-color: #db2777;
   color: white;
 }
 
@@ -483,7 +483,7 @@ body {
 
 .funders-page .card {
   margin-bottom: 30px;
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 2px 5px r#e5e7eb;
   border-radius: 8px;
   overflow: hidden;
 }
@@ -592,7 +592,7 @@ body {
   --danger: #EF4444;
   --warning: #F59E0B;
   --success: #34D399;
-  --info: #3B82F6;
+  --info: #db2777;
   --background-cream: #FEF8EF;
 }
 
@@ -746,7 +746,7 @@ a:hover {
   border: 1px solid transparent;
   cursor: pointer;
   transition: all 0.2s ease-in-out;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 4px 6px r#e5e7eb;
   max-width: 100%; /* Ensure buttons don't overflow their container */
   box-sizing: border-box; /* Include padding in width calculation */
   position: relative;
@@ -956,7 +956,7 @@ a:hover {
 .form-card {
   background-color: white;
   border-radius: 1rem;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 4px 12px r#e5e7eb;
   padding: 1.5rem;
   margin-bottom: 2rem;
 }
@@ -972,7 +972,7 @@ a:hover {
 .card {
   background-color: white;
   border-radius: 20px;
-  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 8px 16px r#e5e7eb;
   overflow: hidden;
   transition: all 0.3s ease-in-out;
   position: relative;
@@ -993,7 +993,7 @@ a:hover {
 
 .card:hover {
   transform: translateY(-5px);
-  box-shadow: 0 12px 20px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 12px 20px r#e5e7eb;
 }
 
 .card:hover::before {
@@ -1048,7 +1048,7 @@ a:hover {
   align-items: center;
   justify-content: center;
   border-radius: 50%;
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 2px 5px r#e5e7eb;
 }
 
 /* Status-specific colors */
@@ -1513,7 +1513,7 @@ a:hover {
 
 /* Additional hero enhancements */
 .welcome-hero {
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 4px 12px r#e5e7eb;
   border-radius: 0 0 30px 30px;
 }
 
@@ -1529,7 +1529,7 @@ a:hover {
   padding: 1.5rem;
   background-color: white;
   border-radius: 16px;
-  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 8px 16px r#e5e7eb;
   text-align: center;
   position: relative;
   overflow: hidden;
@@ -1538,7 +1538,7 @@ a:hover {
 
 .stat-card:hover {
   transform: translateY(-5px);
-  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 12px 24px r#e5e7eb;
 }
 
 .stat-card::before {
@@ -1712,7 +1712,7 @@ a:hover {
   padding: 1.5rem;
   background-color: white;
   border-radius: 20px;
-  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 8px 16px r#e5e7eb;
   transition: transform 0.3s ease, box-shadow 0.3s ease;
   position: relative;
   overflow: hidden;
@@ -1720,7 +1720,7 @@ a:hover {
 
 .grant-card:hover {
   transform: translateY(-5px);
-  box-shadow: 0 12px 20px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 12px 20px r#e5e7eb;
 }
 
 .grant-card::before {
@@ -1775,7 +1775,7 @@ a:hover {
   -webkit-overflow-scrolling: touch;
   margin-bottom: 1rem;
   border-radius: 12px;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 2px 10px r#e5e7eb;
 }
 
 .table {
@@ -1850,7 +1850,7 @@ a:hover {
 .table-card {
   background-color: white;
   border-radius: 12px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 4px 12px r#e5e7eb;
   overflow: hidden;
   margin-bottom: 2rem;
 }
@@ -1937,7 +1937,7 @@ a:hover {
 .sidebar {
   width: 280px;
   background-color: white;
-  box-shadow: 4px 0 10px rgba(0, 0, 0, 0.03);
+  box-shadow: 4px 0 10px r#e5e7eb;
   display: flex;
   flex-direction: column;
   position: fixed;
@@ -2037,7 +2037,7 @@ a:hover {
   right: 0;
   height: 70px;
   background-color: white;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 4px 10px r#e5e7eb;
   z-index: 100;
 }
 
@@ -2120,7 +2120,7 @@ a:hover {
   left: 0;
   right: 0;
   background-color: white;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 4px 10px r#e5e7eb;
   padding: 0.5rem 0;
   z-index: 99;
   max-height: calc(100vh - 70px);
@@ -2144,7 +2144,7 @@ a:hover {
   left: 0;
   right: 0;
   bottom: 0;
-  background-color: rgba(0, 0, 0, 0.5);
+  background-color: r#e5e7eb;
   z-index: 98;
   animation: fadeIn 0.3s ease;
 }
@@ -2389,7 +2389,7 @@ a:hover {
   margin-bottom: 1.5rem;
   border-radius: 12px;
   border-left: 4px solid transparent;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 4px 6px r#e5e7eb;
 }
 
 .alert-info {

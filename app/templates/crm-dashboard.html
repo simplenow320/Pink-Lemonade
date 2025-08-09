@@ -7,7 +7,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         :root {
-            --pink: #ec4899;
+            --pink: #db2777;
             --pink-light: #f9a8d4;
             --pink-dark: #be185d;
             --white: #ffffff;
@@ -29,7 +29,7 @@
         .nav-bar {
             background-color: var(--white);
             border-bottom: 1px solid var(--border);
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+            border: 1px solid #e5e7eb;
         }
 
         .nav-item {
@@ -51,7 +51,7 @@
         }
 
         .hero-section {
-            background: linear-gradient(135deg, rgba(236, 72, 153, 0.05) 0%, rgba(249, 168, 212, 0.05) 100%);
+            background: linear-gradient(135deg, r#f3f4f6 0%, r#f3f4f6 100%);
             border-radius: 1rem;
             padding: 3rem;
             margin-bottom: 2rem;
@@ -61,14 +61,14 @@
             background-color: var(--white);
             border-radius: 0.75rem;
             padding: 1.5rem;
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            border: 1px solid #e5e7eb;
             cursor: pointer;
             transition: transform 0.2s, box-shadow 0.2s;
         }
 
         .metric-card:hover {
             transform: translateY(-2px);
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            border: 1px solid #e5e7eb;
         }
 
         .metric-value {
@@ -104,7 +104,7 @@
 
         .btn-primary:hover {
             transform: translateY(-1px);
-            box-shadow: 0 4px 6px rgba(236, 72, 153, 0.3);
+            box-shadow: 0 4px 6px r#f3f4f6;
         }
 
         .btn-secondary {
@@ -127,7 +127,7 @@
             background-color: var(--white);
             border-radius: 0.75rem;
             padding: 1.5rem;
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            border: 1px solid #e5e7eb;
         }
 
         .table-row {
@@ -148,8 +148,8 @@
         }
 
         .status-idea {
-            background: linear-gradient(135deg, #fef3c7, #fde68a);
-            color: #92400e;
+            background: linear-gradient(135deg, #f3f4f6, #e5e7eb);
+            color: #374151;
         }
 
         .status-researching {
@@ -188,10 +188,7 @@
             font-weight: 600;
         }
 
-        .logo-container {
-            max-width: 250px;
-            height: auto;
-        }
+        
 
         @media (max-width: 768px) {
             .hero-section {
@@ -234,7 +231,7 @@
         <div class="hero-section">
             <div class="flex flex-col md:flex-row items-center">
                 <div class="logo-container mb-4 md:mb-0 md:mr-8">
-                    <img src="/static/images/pink-lemonade-logo.png" alt="Pink Lemonade logo" id="org-logo" class="w-full h-auto" onerror="this.style.display='none'">
+                    
                 </div>
                 <div class="flex-1 text-center md:text-left">
                     <h1 class="text-3xl font-bold text-gray-900 mb-2">

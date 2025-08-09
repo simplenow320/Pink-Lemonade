@@ -107,12 +107,7 @@ async function loadOrganizationInfo() {
             document.getElementById('user-name').textContent = `Welcome, ${data.organization.name || 'User'}`;
             
             // Load custom logo if available
-            if (data.organization.logo_url) {
-                const logo = document.getElementById('org-logo');
-                logo.src = data.organization.logo_url;
-                logo.style.display = 'block';
-                document.getElementById('fallback-logo').style.display = 'none';
-            }
+            if (data.organization
         }
     } catch (error) {
         console.error('Error loading organization info:', error);

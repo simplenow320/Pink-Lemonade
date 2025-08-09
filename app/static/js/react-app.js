@@ -1783,7 +1783,7 @@ try {
   const rootElement = document.getElementById('root');
   if (rootElement) {
     rootElement.innerHTML = `
-      <div style="padding: 2rem; text-align: center; background: white; margin: 2rem; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
+      <div style="padding: 2rem; text-align: center; background: white; margin: 2rem; border-radius: 8px; box-shadow: 0 2px 10px r#e5e7eb;">
         <h1 style="color: #dc3545; margin-bottom: 1rem;">GrantFlow Loading Error</h1>
         <p style="color: #6c757d; margin-bottom: 1rem;">There was an issue loading the React application.</p>
         <p style="color: #6c757d; font-size: 0.9rem;">Error: ${error.message}</p>

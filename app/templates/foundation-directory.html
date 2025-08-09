@@ -8,7 +8,7 @@
     <style>
         /* Pink Lemonade brand colors - consistent with dashboard */
         :root {
-            --pink: #ec4899;
+            --pink: #db2777;
             --pink-light: #f9a8d4;
             --pink-dark: #be185d;
             --white: #ffffff;
@@ -17,7 +17,7 @@
             --grey: #6b7280;
             --grey-dark: #374151;
             --border: #e5e7eb;
-            --success: #ec4899;
+            --success: #db2777;
             --warning: #f59e0b;
             --danger: #374151;
         }
@@ -48,7 +48,7 @@
         }
 
         .nav-item:hover, .nav-item.active {
-            background-color: rgba(236, 72, 153, 0.1);
+            background-color: #f3f4f6;
             color: var(--pink);
         }
 
@@ -58,10 +58,7 @@
             padding: 1rem 2rem;
         }
 
-        .logo-small {
-            height: 32px;
-            width: auto;
-        }
+        
 
         .main-content {
             margin-left: 250px;
@@ -73,14 +70,14 @@
             border-radius: 0.75rem;
             padding: 1.5rem;
             margin-bottom: 1rem;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+            border: 1px solid #e5e7eb;
             border: 1px solid var(--border);
             transition: all 0.3s ease;
         }
 
         .foundation-card:hover {
             transform: translateY(-2px);
-            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+            border: 1px solid #e5e7eb;
         }
 
         .search-container {
@@ -88,7 +85,7 @@
             border-radius: 0.75rem;
             padding: 1.5rem;
             margin-bottom: 2rem;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+            border: 1px solid #e5e7eb;
             border: 1px solid var(--border);
         }
 
@@ -104,7 +101,7 @@
         .filter-input:focus, .filter-select:focus {
             outline: none;
             border-color: var(--pink);
-            box-shadow: 0 0 0 3px rgba(236, 72, 153, 0.1);
+            border: 2px solid #db2777;
         }
 
         .btn-primary {
@@ -139,7 +136,7 @@
         }
 
         .focus-tag {
-            background-color: rgba(236, 72, 153, 0.1);
+            background-color: #f3f4f6;
             color: var(--pink-dark);
             padding: 0.25rem 0.75rem;
             border-radius: 1rem;
@@ -211,7 +208,7 @@
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
                 </svg>
             </button>
-            <img src="/static/images/logo.png" alt="Pink Lemonade" class="logo-small">
+            
             <h1 class="text-xl font-semibold hidden md:block" style="color: var(--black);">Foundation Directory</h1>
         </div>
         
