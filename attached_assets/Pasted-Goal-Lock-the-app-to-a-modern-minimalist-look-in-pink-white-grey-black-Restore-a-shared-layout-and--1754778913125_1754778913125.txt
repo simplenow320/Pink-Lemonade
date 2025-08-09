@@ -1,0 +1,83 @@
+Goal
+Lock the app to a modern minimalist look in pink white grey black. Restore a shared layout and top navigation.
+
+Create file app/static/css/brand.css with this exact content:
+
+:root{
+  --pink:#F8D7DA;
+  --white:#FFFFFF;
+  --grey:#4A4A4A;
+  --black:#000000;
+  --radius:8px;
+  --space:16px;
+  --space-lg:24px;
+  --font:Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Arial, "Helvetica Neue", sans-serif;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0;background:var(--white);color:var(--grey);font-family:var(--font);line-height:1.55}
+h1,h2,h3{color:var(--black);margin:0 0 var(--space)}
+a{text-decoration:none;color:var(--black)}
+.container{max-width:1100px;margin:0 auto;padding:24px}
+.card{background:var(--white);border:1px solid rgba(0,0,0,.08);border-radius:var(--radius);padding:var(--space-lg)}
+.nav{display:flex;gap:16px;align-items:center;margin-bottom:24px}
+.nav a{padding:8px 10px;border-radius:6px}
+.nav a.active,.nav a:hover{background:var(--pink)}
+.btn{display:inline-block;border-radius:var(--radius);padding:12px 18px;border:1px solid rgba(0,0,0,.1);background:var(--white);color:var(--black)}
+.btn-primary{background:var(--pink);border-color:var(--pink)}
+.badge{display:inline-block;padding:4px 10px;border-radius:999px;background:var(--pink);color:var(--black);font-size:12px}
+.grid{display:grid;gap:16px}
+.grid-2{grid-template-columns:repeat(2,minmax(0,1fr))}
+.grid-4{grid-template-columns:repeat(4,minmax(0,1fr))}
+.table{width:100%;border-collapse:collapse}
+.table th,.table td{padding:10px;border-top:1px solid rgba(0,0,0,.08);text-align:left}
+footer.small{color:#777;font-size:12px;margin-top:24px}
+
+Create app/templates/partials/_nav.html:
+
+<nav class="nav" role="navigation" aria-label="Primary">
+  {% if logo_url %}<img src="{{ logo_url }}" alt="Logo" style="height:32px;width:auto;border-radius:6px" />{% endif %}
+  <a href="/" class="{{ 'active' if active=='home' else '' }}">Home</a>
+  <a href="/dashboard" class="{{ 'active' if active=='dashboard' else '' }}">Dashboard</a>
+  <a href="/opportunities" class="{{ 'active' if active=='opps' else '' }}">Opportunities</a>
+  <a href="/saved" class="{{ 'active' if active=='saved' else '' }}">Saved</a>
+  <a href="/applications" class="{{ 'active' if active=='apps' else '' }}">Applications</a>
+  <a href="/settings" class="{{ 'active' if active=='settings' else '' }}">Settings</a>
+  <span class="badge">{{ 'LIVE' if env_mode=='LIVE' else 'DEMO' }}</span>
+</nav>
+
+Replace app/templates/base.html with:
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{% block title %}Pink Lemonade{% endblock %}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/brand.css') }}">
+    {% block extra_css %}{% endblock %}
+  </head>
+  <body>
+    <div class="container">
+      {% include 'partials/_nav.html' %}
+      <main>{% block content %}{% endblock %}</main>
+      <footer class="small">© {{ current_year }} • Pink Lemonade • Brand locked to matte pink white grey black.</footer>
+    </div>
+  </body>
+</html>
+
+Add a context processor in app/__init__.py:
+
+@app.context_processor
+def inject_globals():
+    import os, datetime
+    env_mode = os.getenv("APP_DATA_MODE","LIVE").upper()
+    return {
+        "env_mode": env_mode,
+        "current_year": datetime.datetime.utcnow().year,
+        "logo_url": os.getenv("APP_LOGO_URL"),
+        "active": None
+    }
+
+Verify
+- Start the app and GET /
+- Print first 20 lines of brand.css
