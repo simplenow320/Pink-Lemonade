@@ -1,45 +1,28 @@
 {
-  "voice_analysis": {
-    "system_prompt": "You are analyzing organizational communications to develop a comprehensive voice profile that captures the unique personality, values, and communication style of the nonprofit organization. This profile will ensure consistent, authentic messaging across all content.",
-    
-    "voice_elements": {
-      "tone_identification": "Analyze existing organizational content to identify consistent tone patterns: formal vs. casual, optimistic vs. realistic, urgent vs. patient, authoritative vs. collaborative.",
-      
-      "personality_traits": "Identify key personality characteristics that emerge in organizational communications: compassionate, innovative, determined, collaborative, professional, grassroots, etc.",
-      
-      "value_expression": "Understand how the organization expresses its core values through language choices, emphasis, and messaging priorities.",
-      
-      "audience_relationship": "Analyze how the organization positions itself relative to its audience: peer-to-peer, expert-to-novice, advocate-to-supporter, etc."
-    }
+  "system": "<GLOBAL_GUARDRAILS> Module: Voice Profile Builder — infer voice traits from approved assets and summarize for reuse.",
+  "context": {
+    "assets": "Website pages, past appeals, reports, newsletters, testimonies, style notes (approved only)."
   },
-  
-  "style_guidelines": {
-    "language_preferences": "Document preferred vocabulary, jargon usage, technical language levels, and terminology choices. Note words and phrases the organization uses frequently vs. those it avoids.",
-    
-    "sentence_structure": "Identify patterns in sentence length, complexity, and structure. Note preferences for active vs. passive voice, question usage, and rhetorical techniques.",
-    
-    "formatting_conventions": "Document preferences for paragraph length, bullet points, numbered lists, headers, and overall content organization.",
-    
-    "storytelling_approach": "Understand how the organization tells stories: emphasis on data vs. narrative, individual stories vs. collective impact, problem-focused vs. solution-focused framing."
+  "task": {
+    "instructions": [
+      "Detect reading level, formality, faith language yes/no, sentence length, CTA style.",
+      "Extract common phrases and preferred proof points."
+    ]
   },
-  
-  "contextual_adaptation": {
-    "audience_variation": "Document how voice adapts for different audiences while maintaining core authenticity: funders, beneficiaries, volunteers, general public, media.",
-    
-    "content_type_flexibility": "Understand voice variations across content types: grant proposals, newsletters, social media, annual reports, press releases, website content.",
-    
-    "situational_sensitivity": "Identify how voice changes for different contexts: crisis communication, celebration, advocacy, education, fundraising appeals.",
-    
-    "cultural_awareness": "Note cultural sensitivities, inclusive language practices, and community-specific communication preferences."
+  "output_format": {
+    "type": "json",
+    "shape": {
+      "reading_level": "grade range",
+      "formality": "1-5",
+      "faith_language": "yes|no",
+      "sentence_length": "short|medium|long",
+      "cta_style": "string",
+      "common_phrases": ["string"],
+      "preferred_proof_points": ["string"]
+    },
+    "end_with": "Source Notes"
   },
-  
-  "consistency_maintenance": {
-    "core_principles": "Identify non-negotiable voice elements that must remain consistent across all communications to maintain organizational identity.",
-    
-    "flexibility_boundaries": "Define acceptable ranges of variation that maintain authenticity while allowing appropriate adaptation to context and audience.",
-    
-    "quality_checks": "Establish criteria for evaluating whether content maintains authentic organizational voice and suggests corrections when content drifts from established patterns.",
-    
-    "evolution_tracking": "Monitor how organizational voice naturally evolves over time while maintaining core identity elements."
+  "validation": {
+    "on_missing": "if not enough approved assets, output Missing Assets list and stop"
   }
 }

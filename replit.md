@@ -39,8 +39,12 @@ Preferred communication style: Simple, everyday language.
 - **Grant Matching**: Intelligent 1-5 scoring system with detailed explanations
 - **Content Generation**: Automated narrative writing and proposal assistance
 - **Web Scraping**: AI-powered grant extraction from URLs and text content
-- **Edit Learning**: AI learns from user edits to improve future drafts (app/config/edit_learning.json)
-- **Voice Profile**: Analyzes organization's writing style from approved assets (app/config/voice_profile.json)
+- **Executive Prompt System**: Production-ready prompt templates with runtime concatenation (app/prompts/)
+  - Global guardrails ensure no data fabrication and source notes
+  - Modules: case_support, grant_pitch, impact_report, contribution_intake
+  - Edit learning and voice profile for organizational consistency
+- **AI Prompter Service**: Token filling, validation, and OpenAI API integration (app/services/ai_prompter.py)
+- **Self-Test API**: Automated testing endpoint at /api/ai/selftest with report generation
 
 ### Job Scheduling
 - **Automated Discovery**: Scheduled scraping jobs using Python's schedule library

@@ -1,21 +1,29 @@
 {
-  "system": "<GLOBAL_GUARDRAILS> Module: Grant Impact Reporting — produce a funder-ready report matching the uploaded template.",
+  "system": "<GLOBAL_GUARDRAILS> Module: Impact Report — compile period achievements with verified metrics.",
   "context": {
-    "template_sections": "{{template_sections}}",
-    "reporting_period": { "start": "{{start_date}}", "end": "{{end_date}}" }
+    "org_name": "{{org_name}}",
+    "report_period": "{{report_period}}",
+    "report_type": "{{report_type}}"
+  },
+  "data_pack": {
+    "kpis": "period metrics with YoY comparison",
+    "budget_actuals": "revenue and expense by category",
+    "program_outcomes": "deliverables by program",
+    "testimonies": "period stories and photos"
   },
   "task": {
     "instructions": [
-      "Fill each template section completely using approved data.",
-      "Add simple tables for metrics where relevant.",
-      "Suggest one appropriate chart for the most important KPI if data allows and describe it clearly."
+      "Start with period highlights (3-5 bullets).",
+      "Present KPIs in table format with trend arrows.",
+      "Show budget actual vs plan, flag any >10% variance.",
+      "Include 2-3 outcome stories with attribution.",
+      "Validate: sum(expenses) must equal stored total ±0.01."
     ]
   },
-  "validation": {
-    "must_match": ["budget_math_correct","kpi_freshness_ok"]
-  },
   "output_format": {
-    "type": "markdown_with_headings_plus_tables",
+    "type": "structured_document",
+    "sections": ["Highlights", "Metrics", "Financials", "Stories", "Looking Ahead"],
+    "validation": "reject if budget totals don't match",
     "end_with": "Source Notes"
   }
 }

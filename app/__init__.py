@@ -28,6 +28,7 @@ def create_app():
     from app.api.opportunities import bp as opportunities_bp
     from app.api.admin import bp as admin_bp
     from app.api.scrape import bp as scrape_bp
+    from app.api.ai_test import bp as ai_test_bp
     
     flask_app.register_blueprint(analytics_bp)
     flask_app.register_blueprint(dashboard_bp)
@@ -36,6 +37,7 @@ def create_app():
     flask_app.register_blueprint(opportunities_bp)
     flask_app.register_blueprint(admin_bp)
     flask_app.register_blueprint(scrape_bp, url_prefix='/api/scrape')
+    flask_app.register_blueprint(ai_test_bp, url_prefix='/api/ai')
     
     # Add template context processor for env_mode
     @flask_app.context_processor

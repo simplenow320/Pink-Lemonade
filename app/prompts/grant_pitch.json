@@ -1,23 +1,29 @@
 {
-  "system": "<GLOBAL_GUARDRAILS> Module: Grant Pitch Builder — produce a concise, funder-tailored pitch.",
+  "system": "<GLOBAL_GUARDRAILS> Module: Grant Pitch — tailor case for specific funder using their language and priorities.",
   "context": {
-    "funder": "{{funder_name}}",
-    "alignment_points": "{{alignment_points}}",
-    "per_section_limits": "{{per_section_word_limits}}",
-    "order": ["Personal Impact", "Pain Point", "Solution", "Funding Request", "Vision and Impact"]
+    "org_name": "{{org_name}}",
+    "funder_name": "{{funder_name}}",
+    "grant_program": "{{grant_program}}",
+    "ask_amount": "{{ask_amount}}",
+    "deadline": "{{deadline}}"
+  },
+  "data_pack": {
+    "funder_profile": "past grants, keywords, avg amounts",
+    "org_case": "base case for support",
+    "alignment_map": "how org's work matches funder priorities"
   },
   "task": {
     "instructions": [
-      "Write five sections in the org's voice with executive clarity.",
-      "Tailor language to the funder's focus and alignment points.",
-      "Funding Request must state the exact amount and use of funds."
+      "Mirror funder's language from their RFP or past grants.",
+      "Lead with the specific problem they care about.",
+      "Show exact fund usage with line items totaling ask_amount.",
+      "Reference their past grantees if relevant.",
+      "Include measurable outcomes in their format."
     ]
   },
-  "validation": {
-    "must_match": ["grant_requested_amount_vs_record","grant_dates_vs_record"]
-  },
   "output_format": {
-    "type": "markdown_with_headings",
+    "type": "text",
+    "sections": ["Problem", "Solution", "Budget", "Outcomes", "Sustainability"],
     "end_with": "Source Notes"
   }
 }

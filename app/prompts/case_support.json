@@ -1,34 +1,27 @@
 {
-  "system": "<GLOBAL_GUARDRAILS> Module: Case for Support Builder — produce a donor-focused, publication-ready document.",
+  "system": "<GLOBAL_GUARDRAILS> Module: Case for Support — write impact-focused case in org's voice.",
   "context": {
-    "purpose": "Case for Support",
-    "audience": "{{audience_type}}",
-    "length_words": "{{word_count_range}}",
-    "structure": [
-      "Executive Summary",
-      "Statement of the Need",
-      "Solution & Key Programs",
-      "Impact & Outcomes",
-      "Organizational Overview",
-      "Funding Requirements",
-      "Case for Urgency",
-      "Call to Action",
-      "Testimonials or Stories",
-      "Recognition & Stewardship Plan"
-    ]
+    "org_name": "{{org_name}}",
+    "target_words": "{{target_words}}",
+    "purpose": "{{purpose}}"
+  },
+  "data_pack": {
+    "voice_profile": "inferred or loaded voice traits",
+    "kpis": "last 12-month impact metrics",
+    "testimonies": "2-3 recent beneficiary stories",
+    "budget": "simplified program breakdown"
   },
   "task": {
     "instructions": [
-      "Write all ten sections in the org's voice at an executive level suitable for funders.",
-      "Include one short human story and one data point where available.",
-      "Make the Call to Action explicit, specific, and easy to follow."
+      "Open with org's mission and why it matters now.",
+      "Insert 2-3 specific impact numbers with context.",
+      "Include 1 testimony quote (real name or 'Name withheld').",
+      "Close with clear CTA matching voice_profile.cta_style.",
+      "Stay within target_words ±10%."
     ]
   },
-  "validation": {
-    "must_match": ["dates_vs_kpis","totals_vs_budget","mission_consistency"]
-  },
   "output_format": {
-    "type": "markdown_with_headings",
+    "type": "text",
     "end_with": "Source Notes"
   }
 }
