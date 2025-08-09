@@ -22,6 +22,16 @@ def foundation_directory():
     """Foundation directory page"""
     return render_template('foundation-directory.html')
 
+@bp.route('/grants')
+def grants():
+    """Saved grants page"""
+    return render_template('grants.html')
+
+@bp.route('/applications')
+def applications():
+    """My applications page"""
+    return render_template('applications.html')
+
 @bp.route('/scraper')
 def scraper():
     """Render the scraper page"""

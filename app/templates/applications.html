@@ -1,0 +1,495 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Applications - Pink Lemonade</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <style>
+        /* Pink Lemonade brand colors */
+        :root {
+            --pink: #ec4899;
+            --pink-light: #f9a8d4;
+            --pink-dark: #be185d;
+            --white: #ffffff;
+            --black: #000000;
+            --grey-light: #f3f4f6;
+            --grey: #6b7280;
+            --grey-dark: #374151;
+            --border: #e5e7eb;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+        }
+
+        body {
+            background-color: var(--grey-light);
+            color: var(--black);
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+        }
+
+        .sidebar {
+            background-color: var(--white);
+            border-right: 1px solid var(--border);
+            min-height: 100vh;
+            width: 250px;
+            transition: all 0.3s ease;
+        }
+
+        .nav-item {
+            padding: 0.75rem 1rem;
+            color: var(--grey);
+            transition: all 0.2s ease;
+            cursor: pointer;
+        }
+
+        .nav-item:hover, .nav-item.active {
+            background-color: rgba(236, 72, 153, 0.1);
+            color: var(--pink);
+        }
+
+        .top-bar {
+            background: var(--white);
+            border-bottom: 1px solid var(--border);
+            padding: 1rem 2rem;
+        }
+
+        .logo-small {
+            height: 32px;
+            width: auto;
+        }
+
+        .main-content {
+            margin-left: 250px;
+            padding: 2rem;
+        }
+
+        .grants-table {
+            background: var(--white);
+            border-radius: 0.75rem;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+            border: 1px solid var(--border);
+        }
+
+        .filter-bar {
+            background: var(--white);
+            border-radius: 0.75rem;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+            border: 1px solid var(--border);
+        }
+
+        .grant-row {
+            border-bottom: 1px solid var(--border);
+            transition: all 0.2s ease;
+            cursor: pointer;
+        }
+
+        .grant-row:hover {
+            background-color: rgba(236, 72, 153, 0.02);
+        }
+
+        .grant-row:last-child {
+            border-bottom: none;
+        }
+
+        .status-pill {
+            padding: 0.25rem 0.75rem;
+            border-radius: 1rem;
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: var(--white);
+        }
+
+        .fit-score {
+            background: linear-gradient(135deg, var(--success), #48bb78);
+            color: var(--white);
+            padding: 0.25rem 0.75rem;
+            border-radius: 0.5rem;
+            font-size: 0.875rem;
+            font-weight: 600;
+        }
+
+        .tag {
+            background-color: rgba(236, 72, 153, 0.1);
+            color: var(--pink-dark);
+            padding: 0.125rem 0.5rem;
+            border-radius: 0.5rem;
+            font-size: 0.75rem;
+            font-weight: 500;
+            margin-right: 0.25rem;
+        }
+
+        .filter-input, .filter-select {
+            border: 1px solid var(--border);
+            border-radius: 0.5rem;
+            padding: 0.75rem 1rem;
+            background: var(--white);
+            color: var(--black);
+            transition: all 0.2s ease;
+        }
+
+        .filter-input:focus, .filter-select:focus {
+            outline: none;
+            border-color: var(--pink);
+            box-shadow: 0 0 0 3px rgba(236, 72, 153, 0.1);
+        }
+
+        .btn-primary {
+            background-color: var(--pink);
+            color: var(--white);
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.5rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            border: none;
+            cursor: pointer;
+        }
+
+        .btn-primary:hover {
+            background-color: var(--pink-dark);
+        }
+
+        .btn-secondary {
+            background-color: var(--grey-light);
+            color: var(--grey-dark);
+            padding: 0.5rem 1rem;
+            border-radius: 0.5rem;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            border: 1px solid var(--border);
+            cursor: pointer;
+        }
+
+        .btn-secondary:hover {
+            background-color: var(--grey);
+            color: var(--white);
+        }
+
+        .detail-panel {
+            position: fixed;
+            top: 0;
+            right: -50%;
+            width: 50%;
+            height: 100vh;
+            background: var(--white);
+            border-left: 1px solid var(--border);
+            z-index: 1000;
+            transition: all 0.3s ease;
+            overflow-y: auto;
+        }
+
+        .detail-panel.open {
+            right: 0;
+        }
+
+        .detail-panel-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100vh;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 999;
+            opacity: 0;
+            pointer-events: none;
+            transition: all 0.3s ease;
+        }
+
+        .detail-panel-overlay.visible {
+            opacity: 1;
+            pointer-events: all;
+        }
+
+        .tab-nav {
+            border-bottom: 1px solid var(--border);
+            padding: 0 1.5rem;
+        }
+
+        .tab-button {
+            padding: 1rem 1.5rem;
+            color: var(--grey);
+            border-bottom: 2px solid transparent;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .tab-button.active {
+            color: var(--pink);
+            border-bottom-color: var(--pink);
+        }
+
+        .status-timeline {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin: 1rem 0;
+        }
+
+        .status-step {
+            flex: 1;
+            text-align: center;
+            position: relative;
+        }
+
+        .status-step:not(:last-child)::after {
+            content: '';
+            position: absolute;
+            top: 1rem;
+            right: -50%;
+            width: 100%;
+            height: 2px;
+            background: var(--border);
+        }
+
+        .status-step.completed::after {
+            background: var(--success);
+        }
+
+        .status-circle {
+            width: 2rem;
+            height: 2rem;
+            border-radius: 50%;
+            background: var(--border);
+            color: var(--grey);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 0.5rem;
+            font-size: 0.875rem;
+            font-weight: 600;
+        }
+
+        .status-circle.completed {
+            background: var(--success);
+            color: var(--white);
+        }
+
+        .status-circle.current {
+            background: var(--pink);
+            color: var(--white);
+        }
+
+        @media (max-width: 768px) {
+            .sidebar {
+                position: fixed;
+                z-index: 1000;
+                transform: translateX(-100%);
+            }
+            
+            .sidebar.mobile-open {
+                transform: translateX(0);
+            }
+            
+            .main-content {
+                margin-left: 0 !important;
+            }
+
+            .detail-panel {
+                width: 100%;
+                right: -100%;
+            }
+
+            .grants-table-container {
+                overflow-x: auto;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Top Navigation Bar -->
+    <div class="top-bar flex items-center justify-between">
+        <div class="flex items-center space-x-4">
+            <button id="sidebar-toggle" class="md:hidden p-2">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+                </svg>
+            </button>
+            <img src="/static/images/logo.png" alt="Pink Lemonade" class="logo-small">
+            <h1 class="text-xl font-semibold hidden md:block" style="color: var(--black);" id="page-title">My Applications</h1>
+        </div>
+        
+        <div class="flex items-center space-x-4">
+            <a href="/dashboard" class="text-sm hover:underline" style="color: var(--pink);">← Back to Dashboard</a>
+        </div>
+    </div>
+
+    <div class="flex">
+        <!-- Sidebar Navigation -->
+        <div class="sidebar" id="sidebar">
+            <nav class="mt-8">
+                <div class="nav-item" onclick="window.location.href='/dashboard'">
+                    <div class="flex items-center space-x-3">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2H5a2 2 0 00-2-2z"></path>
+                        </svg>
+                        <span class="nav-text">Dashboard</span>
+                    </div>
+                </div>
+                
+                <div class="nav-item" onclick="window.location.href='/foundation-directory'">
+                    <div class="flex items-center space-x-3">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path>
+                        </svg>
+                        <span class="nav-text">Foundation Directory</span>
+                    </div>
+                </div>
+                
+                <div class="nav-item" onclick="window.location.href='/grants'">
+                    <div class="flex items-center space-x-3">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"></path>
+                        </svg>
+                        <span class="nav-text">Saved Grants</span>
+                    </div>
+                </div>
+                
+                <div class="nav-item active" id="applications-nav">
+                    <div class="flex items-center space-x-3">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                        </svg>
+                        <span class="nav-text">My Applications</span>
+                    </div>
+                </div>
+                
+                <div class="nav-item">
+                    <div class="flex items-center space-x-3">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                        </svg>
+                        <span class="nav-text">Settings</span>
+                    </div>
+                </div>
+            </nav>
+        </div>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <!-- Filter Bar -->
+            <div class="filter-bar">
+                <div class="flex flex-wrap items-center gap-4 mb-4">
+                    <div class="flex-1 min-w-64">
+                        <input type="text" id="search-input" placeholder="Search grants and applications..." 
+                               class="filter-input w-full">
+                    </div>
+                    <button class="btn-primary" onclick="openAddGrantModal()">
+                        Add New Grant
+                    </button>
+                </div>
+                
+                <div class="grid grid-cols-1 md:grid-cols-5 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium mb-1" style="color: var(--grey-dark);">Status</label>
+                        <select id="status-filter" class="filter-select w-full">
+                            <option value="">All Statuses</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-1" style="color: var(--grey-dark);">Deadline</label>
+                        <select id="deadline-filter" class="filter-select w-full">
+                            <option value="">All Deadlines</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-1" style="color: var(--grey-dark);">Geography</label>
+                        <select id="geography-filter" class="filter-select w-full">
+                            <option value="">All Locations</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-1" style="color: var(--grey-dark);">Sort By</label>
+                        <select id="sort-select" class="filter-select w-full">
+                            <option value="updatedAt">Last Updated</option>
+                            <option value="deadline">Deadline</option>
+                            <option value="amount">Amount</option>
+                            <option value="fitScore">Fit Score</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-1 opacity-0">Actions</label>
+                        <button onclick="clearFilters()" class="btn-secondary w-full">Clear Filters</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Grants Table -->
+            <div class="grants-table">
+                <div class="grants-table-container">
+                    <table class="w-full">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Application</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Amount</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Deadline</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Fit</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Updated</th>
+                            </tr>
+                        </thead>
+                        <tbody id="grants-table-body">
+                            <!-- Grant rows will be populated here -->
+                        </tbody>
+                    </table>
+                </div>
+                
+                <!-- Pagination -->
+                <div class="px-6 py-4 border-t border-gray-200">
+                    <div class="flex items-center justify-between">
+                        <div class="text-sm text-gray-700">
+                            Showing <span id="pagination-start">1</span> to <span id="pagination-end">10</span> of <span id="pagination-total">0</span> results
+                        </div>
+                        <div class="flex space-x-2" id="pagination-buttons">
+                            <!-- Pagination buttons will be populated here -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Detail Panel Overlay -->
+    <div class="detail-panel-overlay" id="detail-overlay" onclick="closeDetailPanel()"></div>
+
+    <!-- Detail Panel -->
+    <div class="detail-panel" id="detail-panel">
+        <div class="p-6 border-b border-gray-200">
+            <div class="flex items-center justify-between">
+                <h2 class="text-xl font-semibold" style="color: var(--black);" id="detail-title">Application Details</h2>
+                <button onclick="closeDetailPanel()" class="p-2 hover:bg-gray-100 rounded">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </button>
+            </div>
+        </div>
+
+        <!-- Tab Navigation -->
+        <div class="tab-nav">
+            <div class="flex">
+                <button class="tab-button active" onclick="switchTab('overview')" data-tab="overview">Overview</button>
+                <button class="tab-button" onclick="switchTab('notes')" data-tab="notes">Notes</button>
+                <button class="tab-button" onclick="switchTab('contacts')" data-tab="contacts">Contacts</button>
+                <button class="tab-button" onclick="switchTab('files')" data-tab="files">Files</button>
+                <button class="tab-button" onclick="switchTab('activity')" data-tab="activity">Activity</button>
+            </div>
+        </div>
+
+        <!-- Tab Content -->
+        <div class="p-6" id="tab-content">
+            <!-- Tab content will be populated here -->
+        </div>
+    </div>
+
+    <script src="/static/js/grants-shared.js"></script>
+    <script>
+        // Initialize applications page
+        document.addEventListener('DOMContentLoaded', () => {
+            initGrantsPage('applications');
+        });
+    </script>
+</body>
+</html>

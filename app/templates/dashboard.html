@@ -6,19 +6,29 @@
     <title>Dashboard - Pink Lemonade</title>
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
     <style>
-        /* Consistent muted matte color palette */
+        /* Pink Lemonade brand colors - consistent with landing page */
         :root {
-            --primary: #4a5568;
-            --secondary: #718096;
-            --accent: #5a67d8;
-            --background: #f7fafc;
+            --pink: #ec4899;
+            --pink-light: #f9a8d4;
+            --pink-dark: #be185d;
+            --white: #ffffff;
+            --black: #000000;
+            --grey-light: #f3f4f6;
+            --grey: #6b7280;
+            --grey-dark: #374151;
+            --border: #e5e7eb;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            
+            /* Legacy variables for compatibility */
+            --primary: #374151;
+            --secondary: #6b7280;
+            --accent: #ec4899;
+            --background: #f3f4f6;
             --surface: #ffffff;
-            --text-primary: #2d3748;
-            --text-secondary: #4a5568;
-            --border: #e2e8f0;
-            --success: #38a169;
-            --warning: #d69e2e;
-            --danger: #e53e3e;
+            --text-primary: #000000;
+            --text-secondary: #374151;
         }
 
         body {
@@ -183,16 +193,16 @@
                     </div>
                 </div>
                 
-                <div class="nav-item" data-page="saved">
+                <div class="nav-item" onclick="window.location.href='/grants'">
                     <div class="flex items-center space-x-3">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"></path>
                         </svg>
-                        <span class="nav-text">Saved Opportunities</span>
+                        <span class="nav-text">Saved Grants</span>
                     </div>
                 </div>
                 
-                <div class="nav-item" data-page="applications">
+                <div class="nav-item" onclick="window.location.href='/applications'">
                     <div class="flex items-center space-x-3">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>

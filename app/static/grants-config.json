@@ -1,0 +1,85 @@
+{
+  "labels": {
+    "grants_page_title": "Saved Grants",
+    "applications_page_title": "My Applications",
+    "search_placeholder": "Search grants and applications...",
+    "no_results": "No grants found matching your criteria.",
+    "add_grant": "Add New Grant",
+    "edit_grant": "Edit Grant Details",
+    "delete_grant": "Delete Grant",
+    "bulk_actions": "Bulk Actions"
+  },
+  "statuses": {
+    "idea": {
+      "label": "Idea",
+      "color": "#6b7280",
+      "description": "Initial concept or opportunity identified"
+    },
+    "researching": {
+      "label": "Researching", 
+      "color": "#3b82f6",
+      "description": "Gathering information and requirements"
+    },
+    "drafting": {
+      "label": "Drafting",
+      "color": "#f59e0b",
+      "description": "Writing and preparing application"
+    },
+    "submitted": {
+      "label": "Submitted",
+      "color": "#ec4899",
+      "description": "Application has been submitted"
+    },
+    "awarded": {
+      "label": "Awarded",
+      "color": "#10b981",
+      "description": "Grant has been awarded to organization"
+    },
+    "declined": {
+      "label": "Declined",
+      "color": "#ef4444",
+      "description": "Application was not successful"
+    }
+  },
+  "filters": {
+    "status_options": ["idea", "researching", "drafting", "submitted", "awarded", "declined"],
+    "deadline_windows": [
+      {"value": 30, "label": "Next 30 days"},
+      {"value": 60, "label": "Next 60 days"},
+      {"value": 90, "label": "Next 90 days"}
+    ],
+    "geography_options": [
+      "National",
+      "Regional",
+      "Indiana",
+      "Michigan", 
+      "Ohio",
+      "Illinois",
+      "Local"
+    ]
+  },
+  "default_filters": {
+    "grants_page": {},
+    "applications_page": {
+      "status": ["drafting", "submitted", "awarded", "declined"]
+    }
+  },
+  "sort_options": [
+    {"value": "deadline", "label": "Deadline"},
+    {"value": "amount", "label": "Amount"},
+    {"value": "updatedAt", "label": "Last Updated"},
+    {"value": "fitScore", "label": "Fit Score"}
+  ],
+  "common_tags": [
+    "Education",
+    "Community Development",
+    "Health",
+    "Arts & Culture",
+    "Environment",
+    "Technology",
+    "Youth Development",
+    "Faith-Based",
+    "Social Justice",
+    "Economic Development"
+  ]
+}

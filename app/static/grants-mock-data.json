@@ -1,0 +1,480 @@
+{
+  "grants": [
+    {
+      "id": "grant-001",
+      "orgId": "org-001",
+      "title": "Community Health Innovation Initiative",
+      "funder": "Lilly Endowment Inc.",
+      "link": "https://lillyendowment.org/grants/community-health",
+      "amountMin": 50000,
+      "amountMax": 250000,
+      "deadline": "2025-03-15T23:59:59Z",
+      "geography": "Indiana",
+      "eligibility": "501(c)(3) organizations focused on community health initiatives. Must demonstrate community partnerships and measurable health outcomes. Previous grant recipients eligible to reapply after 2-year period.",
+      "tags": ["Health", "Community Development", "Indiana"],
+      "status": "researching",
+      "fitScore": 4.2,
+      "contacts": [
+        {
+          "name": "Sarah Martinez",
+          "role": "Program Officer",
+          "email": "s.martinez@lillyendowment.org",
+          "phone": "(317) 555-0123",
+          "notes": "Attended webinar on 1/15. Very responsive to questions."
+        }
+      ],
+      "notes": [
+        {
+          "id": "note-001",
+          "body": "Initial research shows strong alignment with our community health programs. Need to gather impact data from last 3 years.",
+          "author": "Jessica Chen",
+          "createdAt": "2025-01-10T14:30:00Z"
+        }
+      ],
+      "attachments": [
+        {
+          "id": "att-001",
+          "name": "Lilly_Guidelines_2025.pdf",
+          "size": 2456789,
+          "note": "Official application guidelines and requirements"
+        }
+      ],
+      "updatedAt": "2025-01-15T10:22:00Z",
+      "createdAt": "2025-01-08T09:15:00Z"
+    },
+    {
+      "id": "grant-002",
+      "orgId": "org-001",
+      "title": "Digital Equity Education Grant",
+      "funder": "Knight Foundation",
+      "link": "https://knightfoundation.org/grants/digital-equity",
+      "amountMin": 25000,
+      "amountMax": 100000,
+      "deadline": "2025-02-28T23:59:59Z",
+      "geography": "National",
+      "eligibility": "Organizations working to bridge the digital divide through education and access programs. Focus on underserved communities required.",
+      "tags": ["Technology", "Education", "Digital Literacy"],
+      "status": "drafting",
+      "fitScore": 4.8,
+      "contacts": [
+        {
+          "name": "Michael Torres",
+          "role": "Senior Program Manager",
+          "email": "m.torres@knightfdn.org",
+          "phone": "(305) 555-0456"
+        }
+      ],
+      "notes": [
+        {
+          "id": "note-002",
+          "body": "Application draft is 70% complete. Need to finalize budget section and get board approval letter.",
+          "author": "Marcus Johnson",
+          "createdAt": "2025-01-12T16:45:00Z"
+        },
+        {
+          "id": "note-003",
+          "body": "Board meeting scheduled for Jan 20th to review final draft.",
+          "author": "Jessica Chen",
+          "createdAt": "2025-01-14T11:20:00Z"
+        }
+      ],
+      "attachments": [
+        {
+          "id": "att-002",
+          "name": "Draft_Application_v3.docx",
+          "size": 1234567,
+          "note": "Latest draft application document"
+        },
+        {
+          "id": "att-003",
+          "name": "Budget_Worksheet.xlsx",
+          "size": 567890,
+          "note": "Detailed budget breakdown"
+        }
+      ],
+      "updatedAt": "2025-01-14T11:20:00Z",
+      "createdAt": "2025-01-05T13:30:00Z"
+    },
+    {
+      "id": "grant-003",
+      "orgId": "org-001",
+      "title": "Youth Development Leadership Program",
+      "funder": "Mustard Seed Foundation",
+      "link": "https://mustardseed.org/grants/youth",
+      "amountMin": 15000,
+      "amountMax": 75000,
+      "deadline": "2025-04-10T23:59:59Z",
+      "geography": "Regional",
+      "eligibility": "Christian organizations developing leadership skills in young adults ages 18-25. Program must include mentorship and practical leadership experience.",
+      "tags": ["Youth Development", "Faith-Based", "Leadership"],
+      "status": "submitted",
+      "fitScore": 4.5,
+      "contacts": [
+        {
+          "name": "Rebecca Williams",
+          "role": "Grants Coordinator",
+          "email": "r.williams@mustardseed.org",
+          "phone": "(410) 555-0789",
+          "notes": "Submitted application on 1/10. Confirmation received. Decision expected by March 1st."
+        }
+      ],
+      "notes": [
+        {
+          "id": "note-004",
+          "body": "Application submitted successfully! Received confirmation email with tracking number MSF-2025-0156.",
+          "author": "Jessica Chen",
+          "createdAt": "2025-01-10T17:30:00Z"
+        }
+      ],
+      "attachments": [
+        {
+          "id": "att-004",
+          "name": "Final_Application_YouthLeadership.pdf",
+          "size": 3456789,
+          "note": "Final submitted application"
+        },
+        {
+          "id": "att-005",
+          "name": "Letters_of_Support.pdf",
+          "size": 1890123,
+          "note": "Combined letters of support from community partners"
+        }
+      ],
+      "updatedAt": "2025-01-10T17:30:00Z",
+      "createdAt": "2024-12-15T10:00:00Z"
+    },
+    {
+      "id": "grant-004",
+      "orgId": "org-001",
+      "title": "Environmental Justice Community Grant",
+      "funder": "Ford Foundation",
+      "link": "https://fordfoundation.org/work/challenging-inequality/environment",
+      "amountMin": 100000,
+      "amountMax": 500000,
+      "deadline": "2025-05-15T23:59:59Z",
+      "geography": "National",
+      "eligibility": "Organizations addressing environmental justice issues in communities disproportionately affected by environmental hazards. Must demonstrate community leadership and partnership.",
+      "tags": ["Environment", "Social Justice", "Community Development"],
+      "status": "idea",
+      "fitScore": 3.8,
+      "contacts": [],
+      "notes": [
+        {
+          "id": "note-005",
+          "body": "Interesting opportunity but may not align perfectly with our current programs. Need to assess if we have capacity to develop environmental justice initiatives.",
+          "author": "Marcus Johnson",
+          "createdAt": "2025-01-16T09:15:00Z"
+        }
+      ],
+      "attachments": [],
+      "updatedAt": "2025-01-16T09:15:00Z",
+      "createdAt": "2025-01-16T09:15:00Z"
+    },
+    {
+      "id": "grant-005",
+      "orgId": "org-001",
+      "title": "Arts & Culture Community Resilience Fund",
+      "funder": "National Endowment for the Arts",
+      "link": "https://arts.gov/grants/our-town",
+      "amountMin": 25000,
+      "amountMax": 200000,
+      "deadline": "2025-06-01T23:59:59Z",
+      "geography": "National",
+      "eligibility": "Partnerships between nonprofit arts organizations and other community development entities. Projects must demonstrate measurable community impact through creative placemaking.",
+      "tags": ["Arts & Culture", "Community Development"],
+      "status": "awarded",
+      "fitScore": 4.0,
+      "contacts": [
+        {
+          "name": "Lisa Park",
+          "role": "Regional Coordinator",
+          "email": "l.park@arts.gov",
+          "phone": "(202) 555-0321",
+          "notes": "Fantastic support throughout process. Grant awarded $85,000 in December 2024."
+        }
+      ],
+      "notes": [
+        {
+          "id": "note-006",
+          "body": "AWARDED! $85,000 for our community mural and storytelling project. Grant period starts February 1st, 2025.",
+          "author": "Jessica Chen",
+          "createdAt": "2024-12-18T14:45:00Z"
+        },
+        {
+          "id": "note-007",
+          "body": "Need to schedule kickoff meeting with community partners for February 5th.",
+          "author": "Marcus Johnson",
+          "createdAt": "2024-12-20T10:30:00Z"
+        }
+      ],
+      "attachments": [
+        {
+          "id": "att-006",
+          "name": "Award_Letter_NEA_2024.pdf",
+          "size": 987654,
+          "note": "Official award notification"
+        },
+        {
+          "id": "att-007",
+          "name": "Grant_Agreement_Signed.pdf",
+          "size": 2345678,
+          "note": "Executed grant agreement"
+        }
+      ],
+      "updatedAt": "2024-12-20T10:30:00Z",
+      "createdAt": "2024-10-05T11:00:00Z"
+    },
+    {
+      "id": "grant-006",
+      "orgId": "org-001",
+      "title": "Mental Health Support Services",
+      "funder": "Robert Wood Johnson Foundation",
+      "link": "https://rwjf.org/grants/mental-health",
+      "amountMin": 75000,
+      "amountMax": 300000,
+      "deadline": "2025-01-30T23:59:59Z",
+      "geography": "National",
+      "eligibility": "Organizations providing innovative mental health support services. Priority given to programs serving underrepresented communities and addressing systemic barriers to care.",
+      "tags": ["Health", "Mental Health", "Community Services"],
+      "status": "declined",
+      "fitScore": 3.5,
+      "contacts": [
+        {
+          "name": "Dr. Amanda Chen",
+          "role": "Program Officer",
+          "email": "a.chen@rwjf.org",
+          "phone": "(609) 555-0654",
+          "notes": "Provided helpful feedback on declined application. Encouraged to reapply next cycle with revised approach."
+        }
+      ],
+      "notes": [
+        {
+          "id": "note-008",
+          "body": "Application was declined but received detailed feedback. Main issue was lack of evidence-based program model. Recommended to partner with academic institution for next application.",
+          "author": "Jessica Chen",
+          "createdAt": "2024-11-15T16:20:00Z"
+        },
+        {
+          "id": "note-009",
+          "body": "Reached out to Dr. Smith at local university about potential partnership for future application.",
+          "author": "Marcus Johnson",
+          "createdAt": "2024-11-20T13:45:00Z"
+        }
+      ],
+      "attachments": [
+        {
+          "id": "att-008",
+          "name": "Decline_Letter_Feedback.pdf",
+          "size": 456789,
+          "note": "Decline notification with detailed feedback"
+        }
+      ],
+      "updatedAt": "2024-11-20T13:45:00Z",
+      "createdAt": "2024-08-10T15:30:00Z"
+    },
+    {
+      "id": "grant-007",
+      "orgId": "org-001",
+      "title": "Technology Access for Seniors",
+      "funder": "AARP Foundation",
+      "link": "https://aarpfoundation.org/grants/technology",
+      "amountMin": 10000,
+      "amountMax": 50000,
+      "deadline": "2025-03-30T23:59:59Z",
+      "geography": "Local",
+      "eligibility": "Programs that help adults 50+ gain digital skills and access to technology. Must serve low-income populations and demonstrate sustainable impact.",
+      "tags": ["Technology", "Seniors", "Digital Literacy"],
+      "status": "researching",
+      "fitScore": 4.1,
+      "contacts": [],
+      "notes": [
+        {
+          "id": "note-010",
+          "body": "Good fit for our senior center partnership. Need to research their specific requirements for technology training programs.",
+          "author": "Marcus Johnson",
+          "createdAt": "2025-01-12T11:30:00Z"
+        }
+      ],
+      "attachments": [],
+      "updatedAt": "2025-01-12T11:30:00Z",
+      "createdAt": "2025-01-12T11:30:00Z"
+    },
+    {
+      "id": "grant-008",
+      "orgId": "org-001",
+      "title": "Sustainable Food Systems Initiative",
+      "funder": "W.K. Kellogg Foundation",
+      "link": "https://wkkf.org/grants/food-systems",
+      "amountMin": 200000,
+      "amountMax": 1000000,
+      "deadline": "2025-07-15T23:59:59Z",
+      "geography": "Regional",
+      "eligibility": "Multi-year initiatives that transform food systems to advance racial equity and support thriving communities. Collaboration required.",
+      "tags": ["Food Systems", "Social Justice", "Economic Development"],
+      "status": "idea",
+      "fitScore": 3.2,
+      "contacts": [],
+      "notes": [
+        {
+          "id": "note-011",
+          "body": "Large opportunity but outside our current expertise. Would need significant partnerships and capacity building.",
+          "author": "Jessica Chen",
+          "createdAt": "2025-01-17T14:15:00Z"
+        }
+      ],
+      "attachments": [],
+      "updatedAt": "2025-01-17T14:15:00Z",
+      "createdAt": "2025-01-17T14:15:00Z"
+    },
+    {
+      "id": "grant-009",
+      "orgId": "org-001",
+      "title": "Community Financial Literacy Program",
+      "funder": "JPMorgan Chase Foundation",
+      "link": "https://jpmorganchase.com/foundation/financial-health",
+      "amountMin": 50000,
+      "amountMax": 250000,
+      "deadline": "2025-04-20T23:59:59Z",
+      "geography": "National",
+      "eligibility": "Organizations providing financial education and coaching services to underserved communities. Must track measurable financial outcomes.",
+      "tags": ["Financial Literacy", "Economic Development", "Education"],
+      "status": "drafting",
+      "fitScore": 4.3,
+      "contacts": [
+        {
+          "name": "Carlos Rodriguez",
+          "role": "Community Development Manager", 
+          "email": "c.rodriguez@jpmchase.com",
+          "phone": "(212) 555-0987"
+        }
+      ],
+      "notes": [
+        {
+          "id": "note-012",
+          "body": "Started application draft. Strong alignment with our financial counseling services. Need to gather outcome data from current programs.",
+          "author": "Marcus Johnson",
+          "createdAt": "2025-01-13T10:45:00Z"
+        }
+      ],
+      "attachments": [
+        {
+          "id": "att-009",
+          "name": "Financial_Program_Outcomes_2024.xlsx",
+          "size": 789012,
+          "note": "Data from current financial literacy programs"
+        }
+      ],
+      "updatedAt": "2025-01-13T10:45:00Z",
+      "createdAt": "2025-01-11T16:20:00Z"
+    },
+    {
+      "id": "grant-010",
+      "orgId": "org-001",
+      "title": "Rural Broadband Access Initiative",
+      "funder": "USDA Rural Development",
+      "link": "https://rd.usda.gov/programs-services/telecommunications-programs",
+      "amountMin": 100000,
+      "amountMax": 2000000,
+      "deadline": "2025-08-01T23:59:59Z",
+      "geography": "Regional",
+      "eligibility": "Projects that expand broadband access in rural communities. Must serve areas with limited existing infrastructure and demonstrate community support.",
+      "tags": ["Technology", "Rural Development", "Infrastructure"],
+      "status": "idea",
+      "fitScore": 2.8,
+      "contacts": [],
+      "notes": [
+        {
+          "id": "note-013",
+          "body": "Potential opportunity but requires significant technical expertise we don't currently have. Would need major partnerships.",
+          "author": "Jessica Chen",
+          "createdAt": "2025-01-18T09:30:00Z"
+        }
+      ],
+      "attachments": [],
+      "updatedAt": "2025-01-18T09:30:00Z",
+      "createdAt": "2025-01-18T09:30:00Z"
+    },
+    {
+      "id": "grant-011",
+      "orgId": "org-001",
+      "title": "Homeless Services Coordination Grant",
+      "funder": "HUD CoC Program",
+      "link": "https://hud.gov/program_offices/comm_planning/homeless",
+      "amountMin": 150000,
+      "amountMax": 800000,
+      "deadline": "2025-09-15T23:59:59Z",
+      "geography": "Local",
+      "eligibility": "Coordinated entry systems and supportive services for individuals and families experiencing homelessness. Must be part of Continuum of Care.",
+      "tags": ["Housing", "Human Services", "Homelessness"],
+      "status": "researching",
+      "fitScore": 3.9,
+      "contacts": [
+        {
+          "name": "Jennifer Lopez",
+          "role": "CoC Coordinator",
+          "email": "j.lopez@hud.gov",
+          "phone": "(317) 555-0543"
+        }
+      ],
+      "notes": [
+        {
+          "id": "note-014",
+          "body": "Need to coordinate with other CoC members. Deadline is far out but application process is complex.",
+          "author": "Marcus Johnson",
+          "createdAt": "2025-01-14T15:20:00Z"
+        }
+      ],
+      "attachments": [],
+      "updatedAt": "2025-01-14T15:20:00Z",
+      "createdAt": "2025-01-14T15:20:00Z"
+    },
+    {
+      "id": "grant-012",
+      "orgId": "org-001",
+      "title": "Workforce Development Training Program",
+      "funder": "Department of Labor WIOA",
+      "link": "https://dol.gov/wioa",
+      "amountMin": 300000,
+      "amountMax": 1500000,
+      "deadline": "2025-05-30T23:59:59Z",
+      "geography": "Regional",
+      "eligibility": "Training programs for in-demand occupations serving unemployed and underemployed adults. Must partner with employers and demonstrate job placement outcomes.",
+      "tags": ["Workforce Development", "Economic Development", "Training"],
+      "status": "submitted",
+      "fitScore": 4.6,
+      "contacts": [
+        {
+          "name": "Robert Kim",
+          "role": "WIOA Program Manager",
+          "email": "r.kim@dol.gov",
+          "phone": "(202) 555-0876",
+          "notes": "Application submitted 1/5. Very competitive program. Decision expected by March 15th."
+        }
+      ],
+      "notes": [
+        {
+          "id": "note-015",
+          "body": "Submitted comprehensive application for $450,000. Strong employer partnerships included. Fingers crossed!",
+          "author": "Jessica Chen",
+          "createdAt": "2025-01-05T18:45:00Z"
+        }
+      ],
+      "attachments": [
+        {
+          "id": "att-010",
+          "name": "WIOA_Application_Final.pdf",
+          "size": 4567890,
+          "note": "Final submitted WIOA application"
+        },
+        {
+          "id": "att-011",
+          "name": "Employer_Partnership_Letters.pdf",
+          "size": 1234567,
+          "note": "Letters of commitment from employer partners"
+        }
+      ],
+      "updatedAt": "2025-01-05T18:45:00Z",
+      "createdAt": "2024-11-01T12:00:00Z"
+    }
+  ]
+}

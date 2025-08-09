@@ -1,0 +1,67 @@
+We are REBUILDING from the existing project structure — do NOT start a new repo.
+
+Task:
+Create backend + service layer + UI integration for “Discovery Connectors”:
+- Pulls new grant opportunities from multiple sources.
+- Updates Saved Grants list with new records.
+- Adds "Watchlists" feature so users can monitor grants for their city.
+
+Discovery Sources (initial set):
+1) Grants.gov API – search for open opportunities, filter by eligibility=nonprofits, status=open.
+2) Federal Register + govinfo APIs – search for funding announcements.
+3) Philanthropy News Digest (RFPs) – scrape public RFP listings (respect robots.txt).
+4) City/Regional foundation websites – create a connector template and preconfigure 5+ per city (use Grand Rapids as example: [list 5 placeholders now, swap later for live URLs]).
+
+Connector Logic:
+- Each connector has:
+  id, name, type (api/scrape), endpoint/url, auth (if needed), params, parser function.
+- Standardized output (GrantRecord schema from Prompt 4.0).
+- Runs daily via cron/scheduled job.
+- Deduplication: compare title + funder + deadline; skip if match exists in Saved Grants.
+- Store source attribution in grant record (sourceName, sourceURL).
+
+Watchlists:
+- Table: watchlists (id, orgId, city, sources[], createdAt, updatedAt)
+- Prepopulate 5 or more local sources per city (mock entries).
+- UI in /watchlists:
+  - List view of watchlists by city.
+  - Option to add/remove sources.
+  - Toggle to enable/disable each source.
+  - Button: “Run Now” to fetch immediately.
+- Connect watchlist sources to Discovery Connectors for targeted fetch.
+
+UI Integration:
+- Discovery tab in nav.
+- Section: “Latest Opportunities” – table view with source filter, date added, and “Save” button (moves to Saved Grants).
+- Section: “Watchlists” – editable list by city.
+
+Backend:
+- Create /api/discovery/run (POST) – run all connectors or specific one.
+- Create /api/watchlists (CRUD).
+- Ensure org scoping on all routes.
+
+Mock Data Fallback:
+- If API keys or scrape access missing, load mock JSON results from /web/src/lib/mocks/discovery.json.
+- Include sample entries from each source type.
+
+Testing / Debug / Verify (MANDATORY):
+1) TEST:
+   - Run connectors manually and via schedule.
+   - Verify new records appear in “Latest Opportunities” without overwriting existing Saved Grants.
+   - Create/edit/delete a watchlist; add/remove sources.
+   - Test “Run Now” per watchlist.
+2) DEBUG:
+   - Fix failed fetches, CORS issues, cron errors.
+   - Ensure all parsers return complete GrantRecord objects.
+3) VERIFY:
+   - UI responsive and styled in minimalist matte look.
+   - No duplicate logo or brand name appears.
+   - API responses return only org-scoped data.
+   - Switching MOCK ↔ LIVE mode works without code edits.
+   - Provide one-paragraph summary of files added/changed, how to add new sources, and how to set up per-city watchlists.
+
+Deliverables:
+- Fully functional Discovery Connectors pulling from listed sources.
+- Watchlists feature live in UI.
+- Mock data mode.
+- Documentation: web/docs/discovery-connectors.md explaining how to add connectors, schedule fetches, and manage watchlists.
