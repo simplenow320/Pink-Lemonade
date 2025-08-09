@@ -1,0 +1,48 @@
+We are REBUILDING from the existing project structure — do NOT start a new repo.
+
+Task:
+Create a new dashboard view that:
+- Matches the minimalist, clean, modern, muted matte design established on the landing page.
+- Uses the same color palette, typography, and spacing for a cohesive brand experience.
+- Avoids duplication of logo or project name (logo should ONLY appear in the top-left navigation bar once).
+- Is responsive for desktop, tablet, and mobile.
+- Contains placeholder widgets and sections that will later connect to APIs for:
+    1. Grants & Funding Opportunities Feed
+    2. Foundation Directory by City (Grand Rapids, Charlotte, Atlanta, Detroit, Indiana)
+    3. Application Deadlines & Reminders
+    4. Saved/Bookmarked Grants
+    5. AI Recommendation Panel (personalized funding suggestions)
+
+Functionality Requirements:
+- Each placeholder must have a clear `data-source` attribute in the HTML/JS so API endpoints can be swapped in without code restructuring.
+- Include mock data examples in JSON format for each placeholder so layout can be previewed before API integration.
+- Add a collapsible left-side navigation menu with links to:
+    - Dashboard (active)
+    - Grants Feed
+    - Saved Opportunities
+    - My Applications
+    - Settings
+- Ensure top bar includes:
+    - Welcome message with the user’s name (placeholder variable: `{{username}}`)
+    - Notifications icon
+    - User profile dropdown
+- All text and labels must be editable from a single config file (`dashboard-config.json`).
+
+Technical Steps:
+1. Insert dashboard code into the appropriate location in the existing structure.
+2. Maintain routing consistency and avoid breaking navigation from the landing page.
+3. Write `dashboard-notes.md` explaining:
+    - File paths for each section
+    - How to update text
+    - How to swap mock data for live APIs
+4. After completing the build:
+    - TEST the dashboard in desktop and mobile views for layout consistency.
+    - DEBUG any console errors or broken styles.
+    - VERIFY:
+        - All placeholders are present and labeled
+        - Navigation works correctly
+        - No duplication of logo or brand name
+        - Config file edits update text sitewide
+
+Goal:
+Produce a functional, API-ready dashboard skeleton that looks polished and requires zero manual restructuring when APIs are integrated later.

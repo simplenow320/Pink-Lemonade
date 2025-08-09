@@ -1,0 +1,42 @@
+{
+  "branding": {
+    "title": "Pink Lemonade",
+    "welcome_message": "Welcome back, {{username}}!"
+  },
+  "navigation": {
+    "dashboard": "Dashboard",
+    "grants_feed": "Grants Feed",
+    "saved_opportunities": "Saved Opportunities",
+    "my_applications": "My Applications",
+    "settings": "Settings"
+  },
+  "widgets": {
+    "grants_feed": {
+      "title": "Latest Grant Opportunities",
+      "subtitle": "Fresh funding opportunities matched to your mission"
+    },
+    "foundation_directory": {
+      "title": "Foundation Directory",
+      "subtitle": "Discover local funders in your area"
+    },
+    "deadlines": {
+      "title": "Upcoming Deadlines",
+      "subtitle": "Never miss an application deadline"
+    },
+    "saved_grants": {
+      "title": "Saved Grants",
+      "subtitle": "Your bookmarked opportunities"
+    },
+    "ai_recommendations": {
+      "title": "AI Recommendations",
+      "subtitle": "Personalized funding suggestions powered by AI"
+    }
+  },
+  "cities": [
+    "Grand Rapids",
+    "Charlotte",
+    "Atlanta",
+    "Detroit",
+    "Indianapolis"
+  ]
+}

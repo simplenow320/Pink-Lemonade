@@ -10,7 +10,7 @@ def index():
 @bp.route('/dashboard')
 def dashboard():
     """Access the main application dashboard"""
-    return render_template('index.html')
+    return render_template('dashboard.html')
 
 @bp.route('/landing')
 def landing():

@@ -1,0 +1,113 @@
+{
+  "grants_feed": [
+    {
+      "id": "grant_001",
+      "title": "Community Health Innovation Grant",
+      "funder": "Lilly Endowment Inc.",
+      "amount": "$50,000 - $250,000",
+      "deadline": "2025-03-15",
+      "match_score": 92,
+      "focus_areas": ["Health", "Community Development"],
+      "location": "Indianapolis, IN"
+    },
+    {
+      "id": "grant_002", 
+      "title": "Youth Development Program Funding",
+      "funder": "Mustard Seed Foundation",
+      "amount": "$25,000 - $100,000",
+      "deadline": "2025-02-28",
+      "match_score": 88,
+      "focus_areas": ["Youth", "Education"],
+      "location": "National"
+    },
+    {
+      "id": "grant_003",
+      "title": "Arts & Culture Community Grant",
+      "funder": "Knight Foundation",
+      "amount": "$10,000 - $75,000",
+      "deadline": "2025-04-10",
+      "match_score": 85,
+      "focus_areas": ["Arts", "Culture", "Community"],
+      "location": "Charlotte, NC"
+    }
+  ],
+  "foundation_directory": [
+    {
+      "city": "Grand Rapids",
+      "foundations": [
+        {"name": "Steelcase Foundation", "focus": "Education, Community Development", "avg_grant": "$15,000"},
+        {"name": "Frey Foundation", "focus": "Civic Progress, Environment", "avg_grant": "$25,000"}
+      ]
+    },
+    {
+      "city": "Charlotte", 
+      "foundations": [
+        {"name": "Foundation For The Carolinas", "focus": "Community Development", "avg_grant": "$30,000"},
+        {"name": "Wells Fargo Foundation", "focus": "Education, Housing", "avg_grant": "$20,000"}
+      ]
+    },
+    {
+      "city": "Atlanta",
+      "foundations": [
+        {"name": "Community Foundation for Greater Atlanta", "focus": "Social Justice", "avg_grant": "$35,000"},
+        {"name": "Arthur M. Blank Foundation", "focus": "Youth Development", "avg_grant": "$45,000"}
+      ]
+    }
+  ],
+  "upcoming_deadlines": [
+    {
+      "grant_title": "Digital Equity Initiative",
+      "deadline": "2025-01-30",
+      "days_remaining": 12,
+      "status": "urgent"
+    },
+    {
+      "grant_title": "Environmental Justice Grant",
+      "deadline": "2025-02-15",
+      "days_remaining": 28,
+      "status": "upcoming"
+    },
+    {
+      "grant_title": "Mental Health Support Program",
+      "deadline": "2025-03-01",
+      "days_remaining": 42,
+      "status": "planned"
+    }
+  ],
+  "saved_grants": [
+    {
+      "id": "saved_001",
+      "title": "Technology for Good Initiative",
+      "funder": "Google.org",
+      "amount": "$100,000 - $500,000",
+      "saved_date": "2025-01-15",
+      "match_score": 94,
+      "notes": "Perfect fit for our AI literacy program"
+    },
+    {
+      "id": "saved_002",
+      "title": "Community Resilience Fund",
+      "funder": "Robert Wood Johnson Foundation",
+      "amount": "$25,000 - $150,000", 
+      "saved_date": "2025-01-10",
+      "match_score": 89,
+      "notes": "Aligns with our health outreach efforts"
+    }
+  ],
+  "ai_recommendations": [
+    {
+      "grant_title": "STEM Education Innovation Grant",
+      "match_percentage": 96,
+      "reasoning": "Matches your education focus and previous STEM program success",
+      "funder": "National Science Foundation",
+      "deadline": "2025-04-20"
+    },
+    {
+      "grant_title": "Community Partnership Development",
+      "match_percentage": 91,
+      "reasoning": "Aligns with your collaborative approach and community partnerships",
+      "funder": "Ford Foundation",
+      "deadline": "2025-03-25"
+    }
+  ]
+}
