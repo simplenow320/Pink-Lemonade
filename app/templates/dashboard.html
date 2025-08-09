@@ -2,14 +2,12 @@
 {% block title %}Dashboard · Pink Lemonade{% endblock %}
 {% block content %}
   <h1>Dashboard</h1>
-
   <section class="grid grid-4">
     <div class="card"><div>Total opportunities</div><h2>{{ stats.total or 0 }}</h2></div>
     <div class="card"><div>Due this month</div><h2>{{ stats.due_this_month or 0 }}</h2></div>
     <div class="card"><div>Average fit score</div><h2>{{ stats.avg_fit or '—' }}</h2></div>
     <div class="card"><div>Submitted</div><h2>{{ stats.submitted or 0 }}</h2></div>
   </section>
-
   <section class="card" style="margin-top:24px">
     <h2>Top matches</h2>
     <table class="table" style="margin-top:12px">
