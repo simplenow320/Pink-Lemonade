@@ -1,5 +1,5 @@
 # GrantFlow Makefile for common operations
-.PHONY: setup setup-env clean run-backend run-frontend run check-db dev-mode install-frontend-deps
+.PHONY: setup setup-env clean test run-backend run-frontend run check-db dev-mode install-frontend-deps
 
 # Setup the development environment
 setup: setup-env
@@ -22,6 +22,10 @@ clean:
         @find . -name "htmlcov" -type d -exec rm -rf {} +
         @find . -name ".tox" -type d -exec rm -rf {} +
         @echo "Clean complete."
+
+# Run tests
+test:
+        @pytest -q
 
 # Run backend server
 run-backend:
@@ -69,7 +73,8 @@ help:
         @echo "GrantFlow Makefile commands:"
         @echo "  make setup       - Setup development environment"
         @echo "  make setup-env   - Setup environment variables only"
-        @echo "  make clean       - Clean up cached and temporary files" 
+        @echo "  make clean       - Clean up cached and temporary files"
+        @echo "  make test        - Run tests with pytest"
         @echo "  make run         - Run the application (both backend and frontend)"
         @echo "  make run-backend - Run only the backend"
         @echo "  make run-frontend - Run only the frontend"
