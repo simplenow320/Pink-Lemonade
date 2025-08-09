@@ -78,50 +78,10 @@ def scrape_source(source):
     """
     grants = []
     
-    # If this is a mock/demo source, generate sample grants
+    # Never generate fake/demo data - only real grants allowed
     if hasattr(source, 'is_demo') and source.is_demo:
-        logger.info(f"Generating sample grants for demo source: {source.name}")
-        
-        # Generate 1-3 sample grants
-        num_grants = random.randint(1, 3)
-        
-        for _ in range(num_grants):
-            # Generate random data
-            focus_areas = ["Education", "Healthcare", "Environment", "Arts", "Community Development", 
-                         "Youth Services", "Economic Development", "Social Justice"]
-            random.shuffle(focus_areas)
-            focus_areas = focus_areas[:random.randint(1, 3)]
-            
-            amount = random.choice(["$5,000", "$10,000", "$25,000", "$50,000", 
-                                  "$100,000", "$250,000", "$10,000 - $50,000"])
-            
-            # Generate a due date between 30 and 120 days from now
-            days_ahead = random.randint(30, 120)
-            due_date = datetime.now() + timedelta(days=days_ahead)
-            
-            # Construct a fictitious title and funder
-            title = f"{random.choice(['Community', 'Innovation', 'Development', 'Leadership', 'Transformation'])} " \
-                  f"{random.choice(['Grant', 'Fund', 'Initiative', 'Program'])} for " \
-                  f"{focus_areas[0]}"
-            
-            funder = source.name if source.name else "Sample Foundation"
-            
-            grant_data = {
-                'title': title,
-                'funder': funder,
-                'description': f"This grant supports organizations working on {', '.join(focus_areas)}. Applications must demonstrate clear outcomes and community impact.",
-                'amount': amount,
-                'due_date': due_date.date(),
-                'eligibility': "501(c)(3) organizations with at least 2 years of operating history",
-                'website': f"https://example.org/grants/{uuid.uuid4().hex[:8]}",
-                'focus_areas': focus_areas,
-                'contact_info': "grants@example.org"
-            }
-            
-            grants.append(grant_data)
-            logger.info(f"Generated sample grant: {grant_data.get('title')}")
-        
-        return grants
+        logger.warning(f"Demo source requested: {source.name} - returning empty (no fake data allowed)")
+        return []  # Never return fake data
     
     # Real scraping logic
     try:

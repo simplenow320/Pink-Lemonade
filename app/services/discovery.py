@@ -46,9 +46,10 @@ class GrantsGovConnector(DiscoveryConnector):
     
     def fetch(self) -> List[Dict[str, Any]]:
         try:
-            # Mock implementation - replace with actual API call when keys available
+            # Never use mock data - only real APIs
             if self.endpoint == 'MOCK':
-                return self._fetch_mock()
+                logger.warning("Mock endpoint requested - returning empty (no fake data allowed)")
+                return []
             
             headers = self.auth if self.auth else {}
             params = {
@@ -68,7 +69,7 @@ class GrantsGovConnector(DiscoveryConnector):
             
         except Exception as e:
             logger.error(f"Error fetching from Grants.gov: {e}")
-            return self._fetch_mock()
+            return []  # Return empty list, never mock data
     
     def _fetch_mock(self) -> List[Dict[str, Any]]:
         """Return mock data when API unavailable"""
@@ -134,7 +135,7 @@ class FederalRegisterConnector(DiscoveryConnector):
             
         except Exception as e:
             logger.error(f"Error fetching from Federal Register: {e}")
-            return self._fetch_mock()
+            return []  # Return empty list, never mock data
     
     def _fetch_mock(self) -> List[Dict[str, Any]]:
         """Return mock data when API unavailable"""
@@ -195,7 +196,7 @@ class PhilanthropyNewsConnector(DiscoveryConnector):
             
         except Exception as e:
             logger.error(f"Error fetching from Philanthropy News: {e}")
-            return self._fetch_mock()
+            return []  # Return empty list, never mock data
     
     def _fetch_mock(self) -> List[Dict[str, Any]]:
         """Return mock data when scraping unavailable"""
@@ -230,7 +231,8 @@ class CityFoundationConnector(DiscoveryConnector):
     def fetch(self) -> List[Dict[str, Any]]:
         try:
             if self.endpoint == 'MOCK' or not self.endpoint:
-                return self._fetch_mock()
+                logger.warning("Mock endpoint or empty endpoint - returning empty (no fake data allowed)")
+                return []
             
             response = requests.get(
                 self.endpoint,
@@ -242,7 +244,7 @@ class CityFoundationConnector(DiscoveryConnector):
             
         except Exception as e:
             logger.error(f"Error fetching from {self.name}: {e}")
-            return self._fetch_mock()
+            return []  # Return empty list, never mock data
     
     def _fetch_mock(self) -> List[Dict[str, Any]]:
         """Return mock data for city foundations"""
