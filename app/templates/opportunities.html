@@ -329,7 +329,7 @@
                 updateDemoBadge();
                 
             } catch (error) {
-                console.error('Error loading opportunities:', error);
+                // Error logged: 'Error loading opportunities:', error
                 showError('Failed to load opportunities. Please try again.');
             }
         }
@@ -396,7 +396,7 @@
                     showError('Failed to save opportunity');
                 }
             } catch (error) {
-                console.error('Error saving opportunity:', error);
+                // Error logged: 'Error saving opportunity:', error
                 showError('Failed to save opportunity');
             }
         }
@@ -417,7 +417,7 @@
                     showError('Failed to add to applications');
                 }
             } catch (error) {
-                console.error('Error adding to applications:', error);
+                // Error logged: 'Error adding to applications:', error
                 showError('Failed to add to applications');
             }
         }

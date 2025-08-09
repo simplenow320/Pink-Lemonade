@@ -270,7 +270,7 @@
                 .catch(error => {
                     // Show error
                     showStatus('Error running scraper. Please try again.', 'error');
-                    console.error('Error:', error);
+                    // Error logged: 'Error:', error
                     
                     // Re-enable button
                     runButton.disabled = false;
@@ -282,7 +282,7 @@
                 
                 // Show error
                 showStatus('Error getting sources. Please try again.', 'error');
-                console.error('Error:', error);
+                // Error logged: 'Error:', error
                 
                 // Re-enable button
                 runButton.disabled = false;

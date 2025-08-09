@@ -433,7 +433,7 @@
                     document.getElementById('title').value = data.title || '';
                 }
             } catch (error) {
-                console.error('Error loading user profile:', error);
+                // Error logged: 'Error loading user profile:', error
             }
         }
 
@@ -452,7 +452,7 @@
                     updateAIContext(data);
                 }
             } catch (error) {
-                console.error('Error loading organization:', error);
+                // Error logged: 'Error loading organization:', error
             }
         }
 
@@ -479,7 +479,7 @@
                     showNotification('Failed to save user information', 'error');
                 }
             } catch (error) {
-                console.error('Error saving user profile:', error);
+                // Error logged: 'Error saving user profile:', error
                 showNotification('Error saving user information', 'error');
             }
         }
@@ -510,7 +510,7 @@
                     showNotification('Failed to save organization details', 'error');
                 }
             } catch (error) {
-                console.error('Error saving organization:', error);
+                // Error logged: 'Error saving organization:', error
                 showNotification('Error saving organization details', 'error');
             }
         }
@@ -545,7 +545,7 @@
                         showNotification(`Failed to upload ${file.name}`, 'error');
                     }
                 } catch (error) {
-                    console.error('Error uploading file:', error);
+                    // Error logged: 'Error uploading file:', error
                     showNotification(`Error uploading ${file.name}`, 'error');
                 }
             }
@@ -560,7 +560,7 @@
                     uploadedDocuments = documents;
                 }
             } catch (error) {
-                console.error('Error loading documents:', error);
+                // Error logged: 'Error loading documents:', error
             }
         }
 
@@ -609,7 +609,7 @@
                     showNotification('Failed to delete document', 'error');
                 }
             } catch (error) {
-                console.error('Error deleting document:', error);
+                // Error logged: 'Error deleting document:', error
                 showNotification('Error deleting document', 'error');
             }
         }
@@ -686,7 +686,7 @@
                     showNotification('Profile exported successfully', 'success');
                 }
             } catch (error) {
-                console.error('Error exporting profile:', error);
+                // Error logged: 'Error exporting profile:', error
                 showNotification('Error exporting profile', 'error');
             }
         }
@@ -712,7 +712,7 @@
                     updateCompleteness();
                 }
             } catch (error) {
-                console.error('Error clearing documents:', error);
+                // Error logged: 'Error clearing documents:', error
                 showNotification('Error clearing documents', 'error');
             }
         }

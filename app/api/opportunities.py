@@ -139,8 +139,10 @@ def get_opportunities():
                 '_raw': opp  # Keep raw data for save/apply actions
             })
         
-        # Determine mode (live vs mock) based on whether we got real data
-        mode = 'live' if len(all_opportunities) > 0 else 'mock'
+        # Determine mode (live vs mock) based on environment variable
+        import os
+        data_mode = os.environ.get('APP_DATA_MODE', 'MOCK')
+        mode = 'mock' if data_mode == 'MOCK' else 'live'
         
         return jsonify({
             'opportunities': formatted_opportunities,
@@ -148,7 +150,8 @@ def get_opportunities():
             'page': page,
             'per_page': per_page,
             'total_pages': (total + per_page - 1) // per_page,
-            'mode': mode
+            'mode': mode,
+            'demo': data_mode == 'MOCK'  # Explicit demo flag
         })
         
     except Exception as e:

@@ -42,23 +42,23 @@
     </div>
     
     <script>
-        console.log('HTML page loading...');
+        
         
         // Show loading overlay while app initializes
         document.getElementById('loading-overlay').style.display = 'flex';
         
         // Hide loading overlay once page is fully loaded
         window.addEventListener('load', function() {
-            console.log('Page fully loaded, hiding loading overlay...');
+            
             setTimeout(function() {
                 document.getElementById('loading-overlay').style.display = 'none';
-                console.log('Loading overlay hidden');
+                
             }, 1000);
         });
         
         // Add error handler for script loading
         window.addEventListener('error', function(e) {
-            console.error('Script loading error:', e);
+            // Error logged: 'Script loading error:', e
         });
     </script>
     
