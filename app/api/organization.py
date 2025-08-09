@@ -24,7 +24,7 @@ def get_organization():
         logging.error(f"Error fetching organization profile: {str(e)}")
         return jsonify({"error": "Failed to fetch organization profile"}), 500
 
-@bp.route('', methods=['PUT'])
+@bp.route('', methods=['PUT', 'POST'])
 def update_organization():
     """Update organization profile"""
     try:

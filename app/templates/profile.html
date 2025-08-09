@@ -1,0 +1,740 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Profile - Pink Lemonade</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --pink: #ec4899;
+            --pink-matte: #db2777;
+            --white: #ffffff;
+            --black: #000000;
+            --grey-light: #f3f4f6;
+            --grey: #6b7280;
+            --grey-dark: #374151;
+            --border: #e5e7eb;
+        }
+
+        body {
+            background-color: var(--grey-light);
+            color: var(--black);
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        }
+
+        .header-bar {
+            background: var(--white);
+            border-bottom: 1px solid var(--border);
+            padding: 1rem 1.5rem;
+        }
+
+        .profile-section {
+            background: var(--white);
+            border-radius: 0.5rem;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        .section-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            color: var(--black);
+            border-bottom: 2px solid var(--pink-matte);
+            padding-bottom: 0.5rem;
+        }
+
+        .form-input, .form-textarea, .form-select {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid var(--border);
+            border-radius: 0.375rem;
+            background: var(--white);
+            color: var(--black);
+        }
+
+        .form-input:focus, .form-textarea:focus, .form-select:focus {
+            outline: none;
+            border-color: var(--pink-matte);
+            box-shadow: 0 0 0 3px rgba(219, 39, 119, 0.1);
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+            color: var(--grey-dark);
+        }
+
+        .btn-primary {
+            background: var(--pink-matte);
+            color: var(--white);
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.375rem;
+            font-weight: 500;
+            transition: opacity 0.2s;
+            border: none;
+            cursor: pointer;
+        }
+
+        .btn-primary:hover {
+            opacity: 0.9;
+        }
+
+        .btn-secondary {
+            background: var(--white);
+            color: var(--grey-dark);
+            border: 1px solid var(--border);
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.375rem;
+            font-weight: 500;
+            transition: all 0.2s;
+            cursor: pointer;
+        }
+
+        .btn-secondary:hover {
+            background: var(--grey-light);
+        }
+
+        .document-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 1rem;
+            background: var(--grey-light);
+            border-radius: 0.375rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .document-info {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .document-icon {
+            width: 40px;
+            height: 40px;
+            background: var(--pink-matte);
+            color: var(--white);
+            border-radius: 0.375rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .upload-zone {
+            border: 2px dashed var(--border);
+            border-radius: 0.5rem;
+            padding: 2rem;
+            text-align: center;
+            transition: all 0.3s;
+            cursor: pointer;
+        }
+
+        .upload-zone:hover {
+            border-color: var(--pink-matte);
+            background: rgba(219, 39, 119, 0.05);
+        }
+
+        .upload-zone.dragover {
+            border-color: var(--pink-matte);
+            background: rgba(219, 39, 119, 0.1);
+        }
+
+        .tag {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            background: var(--grey-light);
+            color: var(--grey-dark);
+            border-radius: 1rem;
+            font-size: 0.875rem;
+            margin-right: 0.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .tag-pink {
+            background: rgba(219, 39, 119, 0.1);
+            color: var(--pink-matte);
+        }
+
+        .notification {
+            position: fixed;
+            top: 1rem;
+            right: 1rem;
+            padding: 1rem 1.5rem;
+            border-radius: 0.375rem;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            z-index: 1000;
+            animation: slideIn 0.3s ease-out;
+        }
+
+        .notification-success {
+            background: #10b981;
+            color: var(--white);
+        }
+
+        .notification-error {
+            background: #ef4444;
+            color: var(--white);
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        /* Mobile responsiveness */
+        @media (max-width: 768px) {
+            .grid-cols-2 {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <div class="header-bar">
+        <div class="max-w-7xl mx-auto flex items-center justify-between">
+            <div class="flex items-center space-x-4">
+                <img src="/static/images/logo.png" alt="Pink Lemonade" class="h-8">
+                <h1 class="text-xl font-semibold">User Profile</h1>
+            </div>
+            <a href="/dashboard" class="text-sm hover:underline" style="color: var(--pink-matte);">← Back to Dashboard</a>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="max-w-7xl mx-auto px-4 py-6">
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <!-- Left Column: User Details -->
+            <div class="lg:col-span-2">
+                <!-- User Information -->
+                <div class="profile-section">
+                    <h2 class="section-title">User Information</h2>
+                    <form id="user-form">
+                        <div class="grid grid-cols-2 gap-4 mb-4">
+                            <div>
+                                <label class="form-label">First Name</label>
+                                <input type="text" id="first_name" class="form-input" placeholder="John">
+                            </div>
+                            <div>
+                                <label class="form-label">Last Name</label>
+                                <input type="text" id="last_name" class="form-input" placeholder="Doe">
+                            </div>
+                        </div>
+                        
+                        <div class="grid grid-cols-2 gap-4 mb-4">
+                            <div>
+                                <label class="form-label">Email</label>
+                                <input type="email" id="email" class="form-input" placeholder="john@example.com">
+                            </div>
+                            <div>
+                                <label class="form-label">Phone</label>
+                                <input type="tel" id="phone" class="form-input" placeholder="(555) 123-4567">
+                            </div>
+                        </div>
+                        
+                        <div class="mb-4">
+                            <label class="form-label">Title/Role</label>
+                            <input type="text" id="title" class="form-input" placeholder="Grant Manager">
+                        </div>
+                        
+                        <button type="submit" class="btn-primary">Save User Information</button>
+                    </form>
+                </div>
+
+                <!-- Organization Details -->
+                <div class="profile-section">
+                    <h2 class="section-title">Organization Details</h2>
+                    <form id="org-form">
+                        <div class="mb-4">
+                            <label class="form-label">Organization Name</label>
+                            <input type="text" id="org_name" class="form-input" placeholder="Nitrogen Network">
+                        </div>
+                        
+                        <div class="mb-4">
+                            <label class="form-label">Mission Statement</label>
+                            <textarea id="mission" class="form-textarea" rows="4" placeholder="Our mission is to..."></textarea>
+                        </div>
+                        
+                        <div class="grid grid-cols-2 gap-4 mb-4">
+                            <div>
+                                <label class="form-label">EIN Number</label>
+                                <input type="text" id="ein" class="form-input" placeholder="12-3456789">
+                            </div>
+                            <div>
+                                <label class="form-label">Annual Budget</label>
+                                <input type="text" id="budget" class="form-input" placeholder="$500,000">
+                            </div>
+                        </div>
+                        
+                        <div class="mb-4">
+                            <label class="form-label">Primary Location</label>
+                            <input type="text" id="location" class="form-input" placeholder="Atlanta, GA">
+                        </div>
+                        
+                        <div class="mb-4">
+                            <label class="form-label">Focus Areas (comma-separated)</label>
+                            <input type="text" id="focus_areas" class="form-input" placeholder="Youth Development, Education, Community Service">
+                        </div>
+                        
+                        <div class="mb-4">
+                            <label class="form-label">Keywords for AI Matching</label>
+                            <input type="text" id="keywords" class="form-input" placeholder="urban ministry, faith-based, after-school programs">
+                            <small class="text-gray-500">These keywords help AI better match your organization with relevant grants</small>
+                        </div>
+                        
+                        <button type="submit" class="btn-primary">Save Organization Details</button>
+                    </form>
+                </div>
+
+                <!-- Document Upload -->
+                <div class="profile-section">
+                    <h2 class="section-title">Organization Documents</h2>
+                    <p class="text-gray-600 mb-4">Upload program descriptions, annual reports, and other documents to help AI better understand your organization and improve grant matching.</p>
+                    
+                    <div class="upload-zone" id="upload-zone">
+                        <svg class="w-12 h-12 mx-auto mb-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
+                        </svg>
+                        <p class="font-medium mb-1">Drop files here or click to upload</p>
+                        <p class="text-sm text-gray-500">PDF, DOC, DOCX, TXT (max 10MB)</p>
+                        <input type="file" id="file-input" class="hidden" accept=".pdf,.doc,.docx,.txt" multiple>
+                    </div>
+                    
+                    <div id="documents-list" class="mt-6">
+                        <!-- Documents will be listed here -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Column: Summary -->
+            <div>
+                <!-- Profile Completeness -->
+                <div class="profile-section">
+                    <h3 class="font-semibold mb-3">Profile Completeness</h3>
+                    <div class="mb-3">
+                        <div class="flex justify-between text-sm mb-1">
+                            <span>Profile Status</span>
+                            <span id="completion-percent">0%</span>
+                        </div>
+                        <div class="w-full bg-gray-200 rounded-full h-2">
+                            <div id="completion-bar" class="bg-pink-500 h-2 rounded-full" style="width: 0%"></div>
+                        </div>
+                    </div>
+                    <ul class="text-sm space-y-2" id="completion-checklist">
+                        <li class="flex items-center">
+                            <span class="mr-2">❌</span> User information
+                        </li>
+                        <li class="flex items-center">
+                            <span class="mr-2">❌</span> Organization details
+                        </li>
+                        <li class="flex items-center">
+                            <span class="mr-2">❌</span> Mission statement
+                        </li>
+                        <li class="flex items-center">
+                            <span class="mr-2">❌</span> Focus areas
+                        </li>
+                        <li class="flex items-center">
+                            <span class="mr-2">❌</span> Documents uploaded
+                        </li>
+                    </ul>
+                </div>
+
+                <!-- AI Context Preview -->
+                <div class="profile-section">
+                    <h3 class="font-semibold mb-3">AI Context Preview</h3>
+                    <p class="text-sm text-gray-600 mb-3">This information is used by AI for grant matching:</p>
+                    <div id="ai-context" class="space-y-2">
+                        <!-- Context tags will be displayed here -->
+                    </div>
+                </div>
+
+                <!-- Quick Actions -->
+                <div class="profile-section">
+                    <h3 class="font-semibold mb-3">Quick Actions</h3>
+                    <div class="space-y-2">
+                        <button onclick="exportProfile()" class="btn-secondary w-full">Export Profile</button>
+                        <button onclick="previewAIContext()" class="btn-secondary w-full">Test AI Matching</button>
+                        <button onclick="clearDocuments()" class="btn-secondary w-full">Clear All Documents</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let uploadedDocuments = [];
+
+        // Initialize page
+        document.addEventListener('DOMContentLoaded', () => {
+            loadUserProfile();
+            loadOrganization();
+            loadDocuments();
+            setupEventListeners();
+            updateCompleteness();
+        });
+
+        function setupEventListeners() {
+            // User form submission
+            document.getElementById('user-form').addEventListener('submit', async (e) => {
+                e.preventDefault();
+                await saveUserProfile();
+            });
+
+            // Organization form submission
+            document.getElementById('org-form').addEventListener('submit', async (e) => {
+                e.preventDefault();
+                await saveOrganization();
+            });
+
+            // File upload
+            const uploadZone = document.getElementById('upload-zone');
+            const fileInput = document.getElementById('file-input');
+
+            uploadZone.addEventListener('click', () => fileInput.click());
+            fileInput.addEventListener('change', handleFileSelect);
+
+            // Drag and drop
+            uploadZone.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                uploadZone.classList.add('dragover');
+            });
+
+            uploadZone.addEventListener('dragleave', () => {
+                uploadZone.classList.remove('dragover');
+            });
+
+            uploadZone.addEventListener('drop', (e) => {
+                e.preventDefault();
+                uploadZone.classList.remove('dragover');
+                handleFiles(e.dataTransfer.files);
+            });
+        }
+
+        async function loadUserProfile() {
+            try {
+                const response = await fetch('/api/profile/user');
+                if (response.ok) {
+                    const data = await response.json();
+                    document.getElementById('first_name').value = data.first_name || '';
+                    document.getElementById('last_name').value = data.last_name || '';
+                    document.getElementById('email').value = data.email || '';
+                    document.getElementById('phone').value = data.phone || '';
+                    document.getElementById('title').value = data.title || '';
+                }
+            } catch (error) {
+                console.error('Error loading user profile:', error);
+            }
+        }
+
+        async function loadOrganization() {
+            try {
+                const response = await fetch('/api/organization');
+                if (response.ok) {
+                    const data = await response.json();
+                    document.getElementById('org_name').value = data.name || '';
+                    document.getElementById('mission').value = data.mission || '';
+                    document.getElementById('ein').value = data.ein || '';
+                    document.getElementById('budget').value = data.annual_budget || '';
+                    document.getElementById('location').value = data.location || '';
+                    document.getElementById('focus_areas').value = (data.focus_areas || []).join(', ');
+                    document.getElementById('keywords').value = (data.keywords || []).join(', ');
+                    updateAIContext(data);
+                }
+            } catch (error) {
+                console.error('Error loading organization:', error);
+            }
+        }
+
+        async function saveUserProfile() {
+            const userData = {
+                first_name: document.getElementById('first_name').value,
+                last_name: document.getElementById('last_name').value,
+                email: document.getElementById('email').value,
+                phone: document.getElementById('phone').value,
+                title: document.getElementById('title').value
+            };
+
+            try {
+                const response = await fetch('/api/profile/user', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify(userData)
+                });
+
+                if (response.ok) {
+                    showNotification('User information saved successfully', 'success');
+                    updateCompleteness();
+                } else {
+                    showNotification('Failed to save user information', 'error');
+                }
+            } catch (error) {
+                console.error('Error saving user profile:', error);
+                showNotification('Error saving user information', 'error');
+            }
+        }
+
+        async function saveOrganization() {
+            const orgData = {
+                name: document.getElementById('org_name').value,
+                mission: document.getElementById('mission').value,
+                ein: document.getElementById('ein').value,
+                annual_budget: document.getElementById('budget').value,
+                location: document.getElementById('location').value,
+                focus_areas: document.getElementById('focus_areas').value.split(',').map(s => s.trim()),
+                keywords: document.getElementById('keywords').value.split(',').map(s => s.trim())
+            };
+
+            try {
+                const response = await fetch('/api/organization', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify(orgData)
+                });
+
+                if (response.ok) {
+                    showNotification('Organization details saved successfully', 'success');
+                    updateCompleteness();
+                    updateAIContext(orgData);
+                } else {
+                    showNotification('Failed to save organization details', 'error');
+                }
+            } catch (error) {
+                console.error('Error saving organization:', error);
+                showNotification('Error saving organization details', 'error');
+            }
+        }
+
+        function handleFileSelect(e) {
+            handleFiles(e.target.files);
+        }
+
+        async function handleFiles(files) {
+            for (const file of files) {
+                if (file.size > 10 * 1024 * 1024) {
+                    showNotification(`${file.name} is too large (max 10MB)`, 'error');
+                    continue;
+                }
+
+                const formData = new FormData();
+                formData.append('file', file);
+
+                try {
+                    const response = await fetch('/api/profile/documents', {
+                        method: 'POST',
+                        body: formData
+                    });
+
+                    if (response.ok) {
+                        const doc = await response.json();
+                        uploadedDocuments.push(doc);
+                        showNotification(`${file.name} uploaded successfully`, 'success');
+                        loadDocuments();
+                        updateCompleteness();
+                    } else {
+                        showNotification(`Failed to upload ${file.name}`, 'error');
+                    }
+                } catch (error) {
+                    console.error('Error uploading file:', error);
+                    showNotification(`Error uploading ${file.name}`, 'error');
+                }
+            }
+        }
+
+        async function loadDocuments() {
+            try {
+                const response = await fetch('/api/profile/documents');
+                if (response.ok) {
+                    const documents = await response.json();
+                    displayDocuments(documents);
+                    uploadedDocuments = documents;
+                }
+            } catch (error) {
+                console.error('Error loading documents:', error);
+            }
+        }
+
+        function displayDocuments(documents) {
+            const container = document.getElementById('documents-list');
+            if (documents.length === 0) {
+                container.innerHTML = '<p class="text-gray-500 text-center py-4">No documents uploaded yet</p>';
+                return;
+            }
+
+            container.innerHTML = documents.map(doc => `
+                <div class="document-item">
+                    <div class="document-info">
+                        <div class="document-icon">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                            </svg>
+                        </div>
+                        <div>
+                            <div class="font-medium">${doc.name}</div>
+                            <div class="text-sm text-gray-500">${formatFileSize(doc.size)} • ${formatDate(doc.uploaded_at)}</div>
+                        </div>
+                    </div>
+                    <button onclick="deleteDocument(${doc.id})" class="text-red-500 hover:text-red-700">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                        </svg>
+                    </button>
+                </div>
+            `).join('');
+        }
+
+        async function deleteDocument(docId) {
+            if (!confirm('Are you sure you want to delete this document?')) return;
+
+            try {
+                const response = await fetch(`/api/profile/documents/${docId}`, {
+                    method: 'DELETE'
+                });
+
+                if (response.ok) {
+                    showNotification('Document deleted successfully', 'success');
+                    loadDocuments();
+                    updateCompleteness();
+                } else {
+                    showNotification('Failed to delete document', 'error');
+                }
+            } catch (error) {
+                console.error('Error deleting document:', error);
+                showNotification('Error deleting document', 'error');
+            }
+        }
+
+        function updateCompleteness() {
+            let complete = 0;
+            const total = 5;
+            const checklist = [];
+
+            // Check user info
+            const hasUserInfo = document.getElementById('first_name').value && 
+                               document.getElementById('email').value;
+            if (hasUserInfo) complete++;
+            checklist.push(`<li class="flex items-center"><span class="mr-2">${hasUserInfo ? '✅' : '❌'}</span> User information</li>`);
+
+            // Check org details
+            const hasOrgDetails = document.getElementById('org_name').value;
+            if (hasOrgDetails) complete++;
+            checklist.push(`<li class="flex items-center"><span class="mr-2">${hasOrgDetails ? '✅' : '❌'}</span> Organization details</li>`);
+
+            // Check mission
+            const hasMission = document.getElementById('mission').value;
+            if (hasMission) complete++;
+            checklist.push(`<li class="flex items-center"><span class="mr-2">${hasMission ? '✅' : '❌'}</span> Mission statement</li>`);
+
+            // Check focus areas
+            const hasFocusAreas = document.getElementById('focus_areas').value;
+            if (hasFocusAreas) complete++;
+            checklist.push(`<li class="flex items-center"><span class="mr-2">${hasFocusAreas ? '✅' : '❌'}</span> Focus areas</li>`);
+
+            // Check documents
+            const hasDocuments = uploadedDocuments.length > 0;
+            if (hasDocuments) complete++;
+            checklist.push(`<li class="flex items-center"><span class="mr-2">${hasDocuments ? '✅' : '❌'}</span> Documents uploaded</li>`);
+
+            const percent = Math.round((complete / total) * 100);
+            document.getElementById('completion-percent').textContent = `${percent}%`;
+            document.getElementById('completion-bar').style.width = `${percent}%`;
+            document.getElementById('completion-checklist').innerHTML = checklist.join('');
+        }
+
+        function updateAIContext(orgData) {
+            const contextDiv = document.getElementById('ai-context');
+            const tags = [];
+
+            if (orgData.location) tags.push(`<span class="tag tag-pink">📍 ${orgData.location}</span>`);
+            if (orgData.focus_areas) {
+                orgData.focus_areas.forEach(area => {
+                    if (area) tags.push(`<span class="tag">🎯 ${area}</span>`);
+                });
+            }
+            if (orgData.keywords) {
+                orgData.keywords.forEach(keyword => {
+                    if (keyword) tags.push(`<span class="tag">🔑 ${keyword}</span>`);
+                });
+            }
+            if (uploadedDocuments.length > 0) {
+                tags.push(`<span class="tag tag-pink">📄 ${uploadedDocuments.length} documents</span>`);
+            }
+
+            contextDiv.innerHTML = tags.join('');
+        }
+
+        async function exportProfile() {
+            try {
+                const response = await fetch('/api/profile/export');
+                if (response.ok) {
+                    const blob = await response.blob();
+                    const url = window.URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = 'profile_export.json';
+                    a.click();
+                    showNotification('Profile exported successfully', 'success');
+                }
+            } catch (error) {
+                console.error('Error exporting profile:', error);
+                showNotification('Error exporting profile', 'error');
+            }
+        }
+
+        async function previewAIContext() {
+            showNotification('Testing AI matching with your profile...', 'success');
+            // This would trigger an AI test match
+            window.location.href = '/opportunities';
+        }
+
+        async function clearDocuments() {
+            if (!confirm('Are you sure you want to delete all documents?')) return;
+
+            try {
+                const response = await fetch('/api/profile/documents', {
+                    method: 'DELETE'
+                });
+
+                if (response.ok) {
+                    showNotification('All documents cleared', 'success');
+                    uploadedDocuments = [];
+                    loadDocuments();
+                    updateCompleteness();
+                }
+            } catch (error) {
+                console.error('Error clearing documents:', error);
+                showNotification('Error clearing documents', 'error');
+            }
+        }
+
+        function showNotification(message, type) {
+            const notification = document.createElement('div');
+            notification.className = `notification notification-${type}`;
+            notification.textContent = message;
+            document.body.appendChild(notification);
+            setTimeout(() => notification.remove(), 3000);
+        }
+
+        function formatFileSize(bytes) {
+            if (bytes < 1024) return bytes + ' B';
+            if (bytes < 1024 * 1024) return Math.round(bytes / 1024) + ' KB';
+            return Math.round(bytes / (1024 * 1024)) + ' MB';
+        }
+
+        function formatDate(dateStr) {
+            const date = new Date(dateStr);
+            return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+        }
+    </script>
+</body>
+</html>

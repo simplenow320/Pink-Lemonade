@@ -1,0 +1,33 @@
+{
+  "organization": {
+    "id": 2,
+    "name": "Test Organization",
+    "mission": "Empowering communities through education and service",
+    "website": "",
+    "location": "Atlanta, GA",
+    "founding_year": null,
+    "team": [],
+    "focus_areas": [
+      "Youth Development",
+      "Education",
+      "Community Service"
+    ],
+    "keywords": [
+      "urban ministry",
+      "after-school",
+      "mentorship"
+    ],
+    "past_programs": [],
+    "financials": {},
+    "case_for_support": "Transform underserved neighborhoods by empowering leaders, strengthening well-being, and closing the technology gap."
+  },
+  "user": {
+    "first_name": "John",
+    "last_name": "Doe",
+    "email": "john@nitrogennetwork.org",
+    "phone": "(555) 123-4567",
+    "title": "Grant Manager"
+  },
+  "documents_count": 0,
+  "export_date": "2025-08-09T13:40:43.330510"
+}

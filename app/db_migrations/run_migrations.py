@@ -22,6 +22,7 @@ MIGRATIONS = [
     'app.db_migrations.add_org_id_to_grants',
     'app.db_migrations.add_discovery_fields_to_grants',
     'app.db_migrations.add_ai_matching_fields',
+    'app.db_migrations.add_profile_fields',
     # Temporarily removed 'app.db_migrations.add_scraper_history_columns',
 ]
 

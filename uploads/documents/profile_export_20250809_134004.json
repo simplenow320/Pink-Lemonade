@@ -1,0 +1,58 @@
+{
+  "organization": {
+    "id": 2,
+    "name": "Nitrogen Network",
+    "mission": "Equip urban churches and communities to holistically flourish.",
+    "website": "",
+    "location": {
+      "city": "",
+      "state": "",
+      "zip": ""
+    },
+    "founding_year": null,
+    "team": [],
+    "focus_areas": [
+      "Urban ministry leadership",
+      "Pastoral mentoring & training",
+      "Church-based mental health support",
+      "Community mental health hubs",
+      "AI training & digital literacy",
+      "Technology workforce development",
+      "Faith-based innovation",
+      "Church planting & expansion",
+      "Cross-generational community engagement",
+      "Holistic community transformation"
+    ],
+    "keywords": [
+      "equip",
+      "urban ministry leadership",
+      "ai training & digital literacy",
+      "technology workforce development",
+      "pastors thriving together",
+      "urban church planting",
+      "mental health and the church",
+      "cross-generational community engagement",
+      "faith-based innovation",
+      "pastoral mentoring & training",
+      "transform",
+      "church planting & expansion",
+      "holistic community transformation",
+      "church-based mental health support",
+      "the church",
+      "community mental health hubs",
+      "and urban communities"
+    ],
+    "past_programs": [],
+    "financials": {},
+    "case_for_support": "Transform underserved neighborhoods by empowering leaders, strengthening well-being, and closing the technology gap."
+  },
+  "user": {
+    "first_name": "John",
+    "last_name": "Doe",
+    "email": "john@nitrogennetwork.org",
+    "phone": "(555) 123-4567",
+    "title": "Grant Manager"
+  },
+  "documents_count": 0,
+  "export_date": "2025-08-09T13:40:04.604675"
+}
