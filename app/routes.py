@@ -28,9 +28,18 @@ def profile():
 
 @bp.route('/settings')
 def settings():
-    """Redirect settings to profile page"""
-    from flask import redirect
-    return redirect('/profile')
+    """Settings page"""
+    return render_template('settings.html')
+
+@bp.route('/saved')
+def saved():
+    """Saved grants page"""
+    return render_template('saved.html')
+
+@bp.route('/applications')
+def applications():
+    """Applications page"""
+    return render_template('applications.html')
 
 @bp.route('/login')
 def login():

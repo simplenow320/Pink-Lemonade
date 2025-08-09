@@ -21,6 +21,7 @@ def create_app():
         db.create_all()
     
     # Register blueprints
+    from app.routes import bp as routes_bp
     from app.api.analytics import bp as analytics_bp
     from app.api.dashboard import dashboard_bp
     from app.api.organization import bp as organization_bp
@@ -30,6 +31,7 @@ def create_app():
     from app.api.scrape import bp as scrape_bp
     from app.api.ai_test import bp as ai_test_bp
     
+    flask_app.register_blueprint(routes_bp)  # Register routes blueprint for page templates
     flask_app.register_blueprint(analytics_bp)
     flask_app.register_blueprint(dashboard_bp)
     flask_app.register_blueprint(organization_bp)
@@ -119,22 +121,6 @@ def create_app():
                 print(f"Dashboard data error: {e}")
         
         return render_template('dashboard.html', stats=stats, top_matches=top_matches)
-    
-    @flask_app.route('/opportunities')
-    def opportunities():
-        return render_template('opportunities.html')
-    
-    @flask_app.route('/saved')
-    def saved():
-        return render_template('saved.html')
-    
-    @flask_app.route('/applications')
-    def applications():
-        return render_template('applications.html')
-    
-    @flask_app.route('/settings')
-    def settings():
-        return render_template('settings.html')
     
     # Start scheduler only in production
     if os.environ.get('FLASK_ENV') == 'production':

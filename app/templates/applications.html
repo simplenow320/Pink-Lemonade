@@ -1,83 +1,10 @@
 {% extends "base.html" %}
-
-{% block title %}Applications - Pink Lemonade{% endblock %}
-
+{% block title %}Applications · Pink Lemonade{% endblock %}
 {% block content %}
-<div class="container mx-auto px-4 py-8">
-    <div class="mb-8">
-        <h1 class="text-3xl font-bold text-gray-900 mb-2">Grant Applications</h1>
-        <p class="text-gray-600">Track your grant application progress</p>
-    </div>
-    
-    <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
-        <div class="bg-white rounded-lg shadow p-4">
-            <h3 class="text-sm font-medium text-gray-600 mb-1">Draft</h3>
-            <p class="text-2xl font-bold text-gray-900" id="draft-count">0</p>
-        </div>
-        <div class="bg-white rounded-lg shadow p-4">
-            <h3 class="text-sm font-medium text-gray-600 mb-1">Submitted</h3>
-            <p class="text-2xl font-bold text-blue-600" id="submitted-count">0</p>
-        </div>
-        <div class="bg-white rounded-lg shadow p-4">
-            <h3 class="text-sm font-medium text-gray-600 mb-1">Awarded</h3>
-            <p class="text-2xl font-bold text-green-600" id="awarded-count">0</p>
-        </div>
-        <div class="bg-white rounded-lg shadow p-4">
-            <h3 class="text-sm font-medium text-gray-600 mb-1">Declined</h3>
-            <p class="text-2xl font-bold text-red-600" id="declined-count">0</p>
-        </div>
-    </div>
-    
-    <div class="bg-white rounded-lg shadow">
-        <div class="px-6 py-4 border-b">
-            <h2 class="text-lg font-semibold text-gray-900">Application Pipeline</h2>
-        </div>
-        <div id="applications-container" class="p-6">
-            <p class="text-gray-500">Loading applications...</p>
-        </div>
-    </div>
-</div>
-{% endblock %}
-
-{% block extra_js %}
-<script>
-    // Load application stats
-    fetch('/api/dashboard/applications')
-        .then(response => response.json())
-        .then(data => {
-            // Update counts
-            document.getElementById('draft-count').textContent = data.stats?.draft || '0';
-            document.getElementById('submitted-count').textContent = data.stats?.submitted || '0';
-            document.getElementById('awarded-count').textContent = data.stats?.awarded || '0';
-            document.getElementById('declined-count').textContent = data.stats?.declined || '0';
-            
-            // Update applications list
-            const container = document.getElementById('applications-container');
-            if (data.applications && data.applications.length > 0) {
-                container.innerHTML = data.applications.map(app => `
-                    <div class="border-b py-4 last:border-b-0">
-                        <div class="flex justify-between items-start">
-                            <div>
-                                <h3 class="font-semibold text-gray-900">${app.title}</h3>
-                                <p class="text-sm text-gray-600">${app.funder}</p>
-                                <p class="text-sm text-gray-500">Status: <span class="font-medium">${app.status}</span></p>
-                                <p class="text-sm text-gray-500">Deadline: ${app.deadline || 'Not specified'}</p>
-                            </div>
-                            <div class="flex gap-2">
-                                <button class="btn-secondary text-sm">View</button>
-                                <button class="btn-primary text-sm">Edit</button>
-                            </div>
-                        </div>
-                    </div>
-                `).join('');
-            } else {
-                container.innerHTML = '<p class="text-gray-500">No applications yet. Start by saving grants from the Opportunities page.</p>';
-            }
-        })
-        .catch(error => {
-            console.error('Error loading applications:', error);
-            document.getElementById('applications-container').innerHTML = 
-                '<p class="text-gray-500">No applications yet. Start by saving grants from the Opportunities page.</p>';
-        });
-</script>
+  <h1>Grant Applications</h1>
+  
+  <section class="card" style="margin-top:24px">
+    <h2>Coming soon</h2>
+    <p>Track your grant applications from draft to decision. This feature will help you manage deadlines and monitor application status.</p>
+  </section>
 {% endblock %}

@@ -1,50 +1,10 @@
 {% extends "base.html" %}
-
-{% block title %}Saved Grants - Pink Lemonade{% endblock %}
-
+{% block title %}Saved · Pink Lemonade{% endblock %}
 {% block content %}
-<div class="container mx-auto px-4 py-8">
-    <div class="mb-8">
-        <h1 class="text-3xl font-bold text-gray-900 mb-2">Saved Grants</h1>
-        <p class="text-gray-600">Your bookmarked funding opportunities</p>
-    </div>
-    
-    <div class="bg-white rounded-lg shadow p-6">
-        <div id="saved-grants-container">
-            <p class="text-gray-500">Loading saved grants...</p>
-        </div>
-    </div>
-</div>
-{% endblock %}
-
-{% block extra_js %}
-<script>
-    // Load saved grants
-    fetch('/api/dashboard/saved')
-        .then(response => response.json())
-        .then(data => {
-            const container = document.getElementById('saved-grants-container');
-            if (data.grants && data.grants.length > 0) {
-                container.innerHTML = data.grants.map(grant => `
-                    <div class="border-b py-4 last:border-b-0">
-                        <div class="flex justify-between items-start">
-                            <div>
-                                <h3 class="font-semibold text-gray-900">${grant.title}</h3>
-                                <p class="text-sm text-gray-600">${grant.funder}</p>
-                                <p class="text-sm text-gray-500">Deadline: ${grant.deadline || 'Not specified'}</p>
-                            </div>
-                            <button class="btn-secondary text-sm">Remove</button>
-                        </div>
-                    </div>
-                `).join('');
-            } else {
-                container.innerHTML = '<p class="text-gray-500">No saved grants yet. Browse opportunities to save grants for later.</p>';
-            }
-        })
-        .catch(error => {
-            console.error('Error loading saved grants:', error);
-            document.getElementById('saved-grants-container').innerHTML = 
-                '<p class="text-gray-500">No saved grants yet. Browse opportunities to save grants for later.</p>';
-        });
-</script>
+  <h1>Saved Grants</h1>
+  
+  <section class="card" style="margin-top:24px">
+    <h2>Coming soon</h2>
+    <p>Your saved grants will appear here. This feature will allow you to bookmark interesting opportunities for later review.</p>
+  </section>
 {% endblock %}
