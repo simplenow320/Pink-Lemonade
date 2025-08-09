@@ -32,4 +32,19 @@ def settings():
     from flask import redirect
     return redirect('/profile')
 
+@bp.route('/login')
+def login():
+    """Login page"""
+    return render_template('login.html')
+
+@bp.route('/register')
+def register():
+    """Register page"""
+    return render_template('register.html')
+
+@bp.route('/reset-password')
+def reset_password():
+    """Password reset page"""
+    return render_template('reset_password.html')
+
 # Add other page routes as needed

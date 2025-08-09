@@ -52,6 +52,7 @@ def create_app(test_config=None):
         # Import models
         from app.models import grant, organization, scraper, narrative, analytics
         from app.models import watchlist
+        from app.models import user  # Import user model
         
         # Create all tables in the database
         db.create_all()
@@ -63,6 +64,13 @@ def create_app(test_config=None):
         # Import and register blueprints
         from app.api import grants, organization, scraper, ai, analytics, writing_assistant, profile, admin
         from app.api import discovery, dashboard, integration, ai_endpoints, opportunities, profile_api
+        from app.api import auth  # Import auth blueprint
+        
+        # Initialize authentication
+        auth.init_auth(app)
+        
+        # Register all blueprints
+        app.register_blueprint(auth.bp)  # Register auth blueprint
         app.register_blueprint(grants.bp)
         app.register_blueprint(organization.bp)
         app.register_blueprint(scraper.bp)

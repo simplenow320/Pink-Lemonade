@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pink Lemonade - Login</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --pink: #FFB6C1;
+            --white: #FFFFFF;
+            --black: #000000;
+            --grey: #808080;
+        }
+        body {
+            background: linear-gradient(135deg, #FFB6C1 0%, #FFFFFF 100%);
+            min-height: 100vh;
+        }
+        .glass {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 182, 193, 0.2);
+        }
+        .btn-pink {
+            background-color: var(--pink);
+            color: var(--black);
+            transition: all 0.3s ease;
+        }
+        .btn-pink:hover {
+            background-color: #FF91A4;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+        .input-field {
+            border: 1px solid #E5E5E5;
+            transition: all 0.3s ease;
+        }
+        .input-field:focus {
+            border-color: var(--pink);
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(255, 182, 193, 0.1);
+        }
+    </style>
+</head>
+<body class="font-sans text-gray-800">
+    <div class="min-h-screen flex items-center justify-center px-4">
+        <div class="glass rounded-lg shadow-2xl p-8 w-full max-w-md">
+            <!-- Logo and Title -->
+            <div class="text-center mb-8">
+                <h1 class="text-3xl font-bold" style="color: var(--pink);">Pink Lemonade</h1>
+                <p class="text-gray-600 mt-2">Grant Management Platform</p>
+            </div>
+
+            <!-- Login Form -->
+            <form id="loginForm" class="space-y-6">
+                <div>
+                    <label for="email" class="block text-sm font-medium text-gray-700 mb-1">
+                        Email or Username
+                    </label>
+                    <input 
+                        type="text" 
+                        id="email" 
+                        name="email" 
+                        required
+                        class="input-field w-full px-4 py-2 rounded-lg"
+                        placeholder="Enter your email or username"
+                    >
+                </div>
+
+                <div>
+                    <label for="password" class="block text-sm font-medium text-gray-700 mb-1">
+                        Password
+                    </label>
+                    <input 
+                        type="password" 
+                        id="password" 
+                        name="password" 
+                        required
+                        class="input-field w-full px-4 py-2 rounded-lg"
+                        placeholder="Enter your password"
+                    >
+                </div>
+
+                <div class="flex items-center justify-between">
+                    <label class="flex items-center">
+                        <input type="checkbox" name="remember" class="mr-2">
+                        <span class="text-sm text-gray-600">Remember me</span>
+                    </label>
+                    <a href="/reset-password" class="text-sm" style="color: var(--pink);">
+                        Forgot password?
+                    </a>
+                </div>
+
+                <button 
+                    type="submit" 
+                    class="btn-pink w-full py-3 rounded-lg font-semibold"
+                >
+                    Sign In
+                </button>
+
+                <div id="errorMessage" class="hidden bg-red-50 text-red-600 p-3 rounded-lg text-sm"></div>
+                <div id="successMessage" class="hidden bg-green-50 text-green-600 p-3 rounded-lg text-sm"></div>
+            </form>
+
+            <!-- Register Link -->
+            <div class="mt-6 text-center">
+                <p class="text-gray-600">
+                    Don't have an account? 
+                    <a href="/register" class="font-semibold" style="color: var(--pink);">
+                        Sign up
+                    </a>
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('loginForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const errorDiv = document.getElementById('errorMessage');
+            const successDiv = document.getElementById('successMessage');
+            errorDiv.classList.add('hidden');
+            successDiv.classList.add('hidden');
+            
+            const formData = {
+                email: document.getElementById('email').value,
+                password: document.getElementById('password').value,
+                remember: document.querySelector('input[name="remember"]').checked
+            };
+            
+            try {
+                const response = await fetch('/api/auth/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(formData)
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    successDiv.textContent = 'Login successful! Redirecting...';
+                    successDiv.classList.remove('hidden');
+                    setTimeout(() => {
+                        window.location.href = '/dashboard';
+                    }, 1500);
+                } else {
+                    errorDiv.textContent = data.error || 'Login failed';
+                    errorDiv.classList.remove('hidden');
+                }
+            } catch (error) {
+                errorDiv.textContent = 'Network error. Please try again.';
+                errorDiv.classList.remove('hidden');
+            }
+        });
+    </script>
+</body>
+</html>
