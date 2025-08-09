@@ -17,7 +17,7 @@
     },
     "researching": {
       "label": "Researching", 
-      "color": "#3b82f6",
+      "color": "#6b7280",
       "description": "Gathering information and requirements"
     },
     "drafting": {
@@ -32,7 +32,7 @@
     },
     "awarded": {
       "label": "Awarded",
-      "color": "#10b981",
+      "color": "#ec4899",
       "description": "Grant has been awarded to organization"
     },
     "declined": {
