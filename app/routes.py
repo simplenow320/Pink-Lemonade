@@ -4,7 +4,12 @@ bp = Blueprint('main', __name__)
 
 @bp.route('/')
 def index():
-    """Render the main application page"""
+    """Render the Pink Lemonade landing page"""
+    return render_template('landing.html')
+
+@bp.route('/dashboard')
+def dashboard():
+    """Access the main application dashboard"""
     return render_template('index.html')
 
 @bp.route('/landing')
