@@ -1,0 +1,242 @@
+{% extends "base.html" %}
+
+{% block title %}Live Data Integration - Pink Lemonade{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-6">
+    <h1 class="text-3xl font-bold mb-6" style="color: #4A4A4A;">Live Grant Data Sources</h1>
+    
+    <!-- Source Status -->
+    <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+        <h2 class="text-xl font-semibold mb-4" style="color: #4A4A4A;">Data Source Status</h2>
+        <div id="sourceStatus" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div class="text-center">
+                <div class="spinner-border" role="status">
+                    <span class="sr-only">Loading...</span>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Fetch Controls -->
+    <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+        <h2 class="text-xl font-semibold mb-4" style="color: #4A4A4A;">Fetch Live Grants</h2>
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+            <div>
+                <label class="block text-sm font-medium mb-2">Source</label>
+                <select id="dataSource" class="w-full px-3 py-2 border rounded-md">
+                    <option value="all">All Sources</option>
+                    <option value="grants_gov">Grants.gov</option>
+                    <option value="federal_register">Federal Register</option>
+                    <option value="govinfo">GovInfo</option>
+                    <option value="pnd">Philanthropy News Digest</option>
+                </select>
+            </div>
+            
+            <div>
+                <label class="block text-sm font-medium mb-2">Days Back</label>
+                <input type="number" id="daysBack" value="30" min="1" max="365" class="w-full px-3 py-2 border rounded-md">
+            </div>
+        </div>
+        
+        <div class="mb-4">
+            <label class="block text-sm font-medium mb-2">Keywords (comma-separated)</label>
+            <input type="text" id="keywords" value="community, faith, urban, church, nonprofit" 
+                class="w-full px-3 py-2 border rounded-md" placeholder="Enter keywords...">
+        </div>
+        
+        <div class="flex items-center gap-4">
+            <button onclick="fetchGrants()" class="px-6 py-2 rounded-md" 
+                style="background-color: #F8D7DA; color: #4A4A4A;">
+                Fetch Grants
+            </button>
+            
+            <label class="flex items-center">
+                <input type="checkbox" id="saveToDb" class="mr-2">
+                <span class="text-sm">Save to Database</span>
+            </label>
+        </div>
+        
+        <div id="fetchStatus" class="mt-4"></div>
+    </div>
+    
+    <!-- Results -->
+    <div class="bg-white rounded-lg shadow-md p-6">
+        <h2 class="text-xl font-semibold mb-4" style="color: #4A4A4A;">Grant Results</h2>
+        <div id="grantResults" class="space-y-4">
+            <p class="text-gray-500">No grants fetched yet. Click "Fetch Grants" to retrieve live data.</p>
+        </div>
+    </div>
+    
+    <!-- Sync All Button -->
+    <div class="mt-6 text-center">
+        <button onclick="syncAll()" class="px-8 py-3 rounded-md text-white" 
+            style="background-color: #4A4A4A;">
+            Sync All Sources & Populate Database
+        </button>
+    </div>
+</div>
+
+<script>
+// Load source status on page load
+document.addEventListener('DOMContentLoaded', loadSourceStatus);
+
+async function loadSourceStatus() {
+    try {
+        const response = await fetch('/api/live/sources/status');
+        const data = await response.json();
+        
+        if (data.success) {
+            const statusDiv = document.getElementById('sourceStatus');
+            statusDiv.innerHTML = '';
+            
+            for (const [key, source] of Object.entries(data.sources)) {
+                const card = document.createElement('div');
+                card.className = 'p-4 border rounded-md';
+                card.innerHTML = `
+                    <h3 class="font-semibold">${source.name}</h3>
+                    <p class="text-sm ${source.enabled ? 'text-green-600' : 'text-red-600'}">
+                        ${source.enabled ? '✓ Enabled' : '✗ Disabled'}
+                    </p>
+                    <p class="text-xs text-gray-500">${source.rate_limit}</p>
+                `;
+                statusDiv.appendChild(card);
+            }
+        }
+    } catch (error) {
+        console.error('Error loading source status:', error);
+    }
+}
+
+async function fetchGrants() {
+    const source = document.getElementById('dataSource').value;
+    const keywords = document.getElementById('keywords').value.split(',').map(k => k.trim());
+    const daysBack = document.getElementById('daysBack').value;
+    const saveToDb = document.getElementById('saveToDb').checked;
+    const statusDiv = document.getElementById('fetchStatus');
+    const resultsDiv = document.getElementById('grantResults');
+    
+    statusDiv.innerHTML = '<p class="text-blue-500">Fetching grants...</p>';
+    resultsDiv.innerHTML = '';
+    
+    try {
+        const response = await fetch(`/api/live/fetch/${source}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                keywords: keywords,
+                days_back: parseInt(daysBack),
+                save_to_db: saveToDb
+            })
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            statusDiv.innerHTML = `
+                <p class="text-green-600">
+                    ✓ Found ${data.grants_found} grants from ${source}
+                    ${saveToDb ? ' (Saved to database)' : ''}
+                </p>
+            `;
+            
+            // Display grants
+            if (data.grants && data.grants.length > 0) {
+                resultsDiv.innerHTML = data.grants.map(grant => `
+                    <div class="border rounded-md p-4">
+                        <div class="flex justify-between items-start mb-2">
+                            <h3 class="font-semibold text-lg">${grant.title}</h3>
+                            ${grant.fit_score ? `
+                                <span class="px-3 py-1 rounded-full text-sm" 
+                                    style="background-color: #FFF5F5; color: #4A4A4A;">
+                                    Match: ${grant.fit_score}/5
+                                </span>
+                            ` : ''}
+                        </div>
+                        <p class="text-sm text-gray-600 mb-1"><strong>Funder:</strong> ${grant.funder}</p>
+                        <p class="text-sm text-gray-600 mb-1"><strong>Amount:</strong> 
+                            $${grant.amount_min || 0} - $${grant.amount_max || 'Unlimited'}
+                        </p>
+                        <p class="text-sm text-gray-600 mb-1"><strong>Deadline:</strong> 
+                            ${grant.deadline || 'Not specified'}
+                        </p>
+                        <p class="text-sm text-gray-600 mb-1"><strong>Source:</strong> ${grant.source_name}</p>
+                        <p class="text-sm mb-2">${grant.description?.substring(0, 200)}...</p>
+                        ${grant.fit_reason ? `
+                            <div class="mt-2 p-2" style="background-color: #FFF5F5;">
+                                <p class="text-sm">${grant.fit_reason}</p>
+                            </div>
+                        ` : ''}
+                        ${grant.link ? `
+                            <a href="${grant.link}" target="_blank" class="text-blue-600 text-sm hover:underline">
+                                View Grant →
+                            </a>
+                        ` : ''}
+                    </div>
+                `).join('');
+            } else {
+                resultsDiv.innerHTML = '<p class="text-gray-500">No grants found matching criteria.</p>';
+            }
+        } else {
+            statusDiv.innerHTML = `<p class="text-red-500">Error: ${data.error}</p>`;
+        }
+    } catch (error) {
+        statusDiv.innerHTML = `<p class="text-red-500">Error: ${error.message}</p>`;
+    }
+}
+
+async function syncAll() {
+    if (!confirm('This will fetch grants from all sources and save them to the database. Continue?')) {
+        return;
+    }
+    
+    const statusDiv = document.getElementById('fetchStatus');
+    const resultsDiv = document.getElementById('grantResults');
+    
+    statusDiv.innerHTML = '<p class="text-blue-500">Syncing all sources... This may take a few minutes.</p>';
+    resultsDiv.innerHTML = '';
+    
+    try {
+        const response = await fetch('/api/live/sync/all', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                keywords: ['community', 'faith', 'urban', 'church', 'nonprofit', 'ministry'],
+                days_back: 30
+            })
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            statusDiv.innerHTML = `
+                <div class="bg-green-50 p-4 rounded-md">
+                    <p class="text-green-800 font-semibold">✓ Sync Complete!</p>
+                    <p class="text-sm text-green-700">Total Fetched: ${data.total_fetched}</p>
+                    <p class="text-sm text-green-700">New Grants Saved: ${data.total_saved}</p>
+                    <p class="text-xs text-gray-600 mt-2">Timestamp: ${data.timestamp}</p>
+                </div>
+            `;
+            
+            // Show breakdown by source
+            if (data.results_by_source) {
+                resultsDiv.innerHTML = `
+                    <h3 class="font-semibold mb-2">Results by Source:</h3>
+                    ${Object.entries(data.results_by_source).map(([source, result]) => `
+                        <div class="flex justify-between py-1">
+                            <span>${source}:</span>
+                            <span>Fetched ${result.fetched}, Saved ${result.saved}</span>
+                        </div>
+                    `).join('')}
+                `;
+            }
+        } else {
+            statusDiv.innerHTML = `<p class="text-red-500">Error: ${data.error}</p>`;
+        }
+    } catch (error) {
+        statusDiv.innerHTML = `<p class="text-red-500">Error: ${error.message}</p>`;
+    }
+}
+</script>
+{% endblock %}

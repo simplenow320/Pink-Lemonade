@@ -54,6 +54,10 @@ def create_app():
     from app.api.ai_endpoints import bp as ai_endpoints_bp
     flask_app.register_blueprint(ai_endpoints_bp)
     
+    # Register live data integration endpoints
+    from app.api.live_data import bp as live_data_bp
+    flask_app.register_blueprint(live_data_bp)
+    
     # Add template context processor for global template variables
     @flask_app.context_processor
     def inject_globals():

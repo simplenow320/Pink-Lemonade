@@ -46,3 +46,8 @@ def writing():
 def ai_demo():
     """AI Features Demo Page"""
     return render_template("ai_demo.html", active="ai")
+
+@pages.get("/live-data")
+def live_data():
+    """Live Data Integration Page"""
+    return render_template("live_data.html", active="live")
