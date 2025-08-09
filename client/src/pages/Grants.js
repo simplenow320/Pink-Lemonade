@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useGrants } from '../hooks/useGrants';
 import { formatCurrency, formatDate, getDateUrgencyClass, getStatusClass, formatMatchScore } from '../utils/formatters';
 import { motion } from 'framer-motion';
 
 const Grants = () => {
+  const navigate = useNavigate();
   const { grants, loading, error, refreshData } = useGrants();
   const [filteredGrants, setFilteredGrants] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
@@ -282,10 +283,13 @@ const Grants = () => {
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     transition={{ duration: 0.3 }}
-                    className="hover:bg-gray-50"
+                    className="hover:bg-gray-50 cursor-pointer"
+                    onClick={() => navigate(`/grants/${grant.id}`)}
                   >
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm font-medium text-gray-900">{grant.title}</div>
+                      <Link to={`/grants/${grant.id}`} className="text-sm font-medium text-gray-900 hover:text-orange-600 hover:underline">
+                        {grant.title}
+                      </Link>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="text-sm text-gray-500">{grant.funder}</div>
@@ -311,8 +315,8 @@ const Grants = () => {
                       </span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                      <Link to={`/grants/${grant.id}`} className="text-orange-600 hover:text-orange-900">
-                        View
+                      <Link to={`/grants/${grant.id}`} className="inline-flex items-center px-3 py-1 border border-transparent text-sm leading-4 font-medium rounded-md text-white bg-orange-600 hover:bg-orange-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500">
+                        View Details
                       </Link>
                     </td>
                   </motion.tr>
