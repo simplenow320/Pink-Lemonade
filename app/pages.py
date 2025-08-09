@@ -38,3 +38,7 @@ def applications():
 @pages.get("/settings")
 def settings():
     return render_template("settings.html", active="settings")
+
+@pages.get("/writing")
+def writing():
+    return render_template("writing.html", active="writing")

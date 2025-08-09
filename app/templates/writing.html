@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+{% block title %}Writing · Pink Lemonade{% endblock %}
+{% block content %}
+  <h1>Writing</h1>
+
+  <section class="card">
+    <h2>Create documents</h2>
+    <div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:12px">
+      <button class="btn btn-primary" id="btnCase">Generate Case for Support</button>
+      <button class="btn" id="btnPitch">Generate Grant Pitch</button>
+      <button class="btn" id="btnReport">Generate Impact Report</button>
+    </div>
+    <div id="toast" class="card" style="display:none;padding:10px;margin-top:12px;background:var(--pink);color:var(--black)"></div>
+  </section>
+
+  <section id="output" class="card" style="margin-top:24px;display:none">
+    <h2>Output</h2>
+    <div id="doc" style="white-space:pre-wrap"></div>
+  </section>
+
+  <script>
+    const t = document.getElementById('toast');
+    const out = document.getElementById('output');
+    const docDiv = document.getElementById('doc');
+
+    async function postJSON(url, payload){
+      const res = await fetch(url, {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload)});
+      if(!res.ok){ throw new Error(await res.text()); }
+      return res.json();
+    }
+    function show(msg){ t.style.display='block'; t.textContent=msg; }
+
+    const common = { orgId: 1, orgName: 'Pink Lemonade' };
+
+    document.getElementById('btnCase').onclick = async () => {
+      try {
+        show('Generating Case for Support…');
+        const data = await postJSON('/api/writing/case-support', {...common, audience:'foundations and individual donors', length:'700-900', title:'Case for Support'});
+        out.style.display='block'; docDiv.textContent = data.content;
+        show(data.needsInput?.length ? 'Needs input: '+data.needsInput.join(', ') : 'Done. Copy ready.');
+      } catch(e){ show('Error: '+e.message); }
+    };
+
+    document.getElementById('btnPitch').onclick = async () => {
+      try {
+        show('Generating Grant Pitch…');
+        const data = await postJSON('/api/writing/grant-pitch', {...common, funder:'Target Funder', alignment:'AI literacy; workforce; community; digital divide', limits:'120'});
+        out.style.display='block'; docDiv.textContent = data.content;
+        show(data.needsInput?.length ? 'Needs input: '+data.needsInput.join(', ') : 'Done. Copy ready.');
+      } catch(e){ show('Error: '+e.message); }
+    };
+
+    document.getElementById('btnReport').onclick = async () => {
+      try {
+        show('Generating Impact Report…');
+        const data = await postJSON('/api/writing/impact-report', {...common, startDate:'2025-01-01', endDate:'2025-06-30'});
+        out.style.display='block'; docDiv.textContent = data.content;
+        show(data.needsUpdate?.length ? 'Needs update: '+data.needsUpdate.join(', ') : 'Done. Copy ready.');
+      } catch(e){ show('Error: '+e.message); }
+    };
+  </script>
+{% endblock %}

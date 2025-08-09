@@ -1,0 +1,309 @@
+We are extending the EXISTING repo. Do NOT start a new repo.
+
+Goals
+1) Add export endpoints for CaseSupportDoc, GrantPitchDoc, ImpactReport to download as PDF or DOCX.
+2) Add “Needs Input” checklist UI on the Writing page.
+3) Keep brand locked (matte pink #F8D7DA, white, grey #4A4A4A, black #000000).
+4) Add tests for export routes.
+
+Notes
+- Use only standard Python libs plus python-docx and reportlab for simple, reliable exports.
+- Do NOT add other CSS frameworks. Use brand.css tokens already installed.
+- Do NOT duplicate the logo or name.
+
+Tasks
+
+A) Install deps
+- pip install python-docx reportlab
+
+B) Add a tiny markdown-to-plain helper (we will export as readable plain text)
+---BEGIN FILE app/services/text_utils.py---
+import re
+
+def md_to_plain(md: str) -> str:
+    if not md:
+        return ""
+    s = md
+    # headings and bold/italics
+    s = re.sub(r'[#*_`]+', '', s)
+    # links [text](url) -> text (url)
+    s = re.sub(r'$begin:math:display$([^$end:math:display$]+)\]$begin:math:text$([^)]+)$end:math:text$', r'\\1 (\\2)', s)
+    # bullets -> dash
+    s = re.sub(r'^\s*[-•]\s*', '- ', s, flags=re.MULTILINE)
+    # collapse extra spaces
+    s = re.sub(r'[ \t]+', ' ', s)
+    return s.strip()
+---END FILE---
+
+C) Export service for PDF and DOCX
+---BEGIN FILE app/services/export_service.py---
+from __future__ import annotations
+from typing import Optional
+import os, io, tempfile
+from flask import send_file
+from docx import Document
+from reportlab.pdfgen import canvas
+from reportlab.lib.pagesizes import letter
+from reportlab.lib.units import inch
+from app.services.text_utils import md_to_plain
+
+def export_docx(md_text: str, download_name: str = "document.docx"):
+    plain = md_to_plain(md_text) or "Empty document"
+    doc = Document()
+    for line in plain.splitlines():
+        doc.add_paragraph(line)
+    tmp = tempfile.NamedTemporaryFile(delete=False, suffix=".docx")
+    doc.save(tmp.name)
+    tmp.flush()
+    return send_file(tmp.name, as_attachment=True, download_name=download_name, mimetype="application/vnd.openxmlformats-officedocument.wordprocessingml.document")
+
+def export_pdf(md_text: str, download_name: str = "document.pdf"):
+    plain = md_to_plain(md_text) or "Empty document"
+    tmp = tempfile.NamedTemporaryFile(delete=False, suffix=".pdf")
+    c = canvas.Canvas(tmp.name, pagesize=letter)
+    width, height = letter
+    left = 1.0 * inch
+    top = height - 1.0 * inch
+    max_width = width - 2.0 * inch
+    y = top
+    for paragraph in plain.splitlines():
+        # simple wrap: split very long lines
+        words = paragraph.split(' ')
+        line = ""
+        for w in words:
+            test = (line + " " + w).strip()
+            if c.stringWidth(test, "Times-Roman", 11) > max_width:
+                c.drawString(left, y, line)
+                y -= 14
+                line = w
+                if y < 1.0 * inch:
+                    c.showPage()
+                    y = top
+            else:
+                line = test
+        if line:
+            c.drawString(left, y, line)
+            y -= 14
+            if y < 1.0 * inch:
+                c.showPage()
+                y = top
+        # paragraph spacing
+        y -= 6
+        if y < 1.0 * inch:
+            c.showPage()
+            y = top
+    c.save()
+    return send_file(tmp.name, as_attachment=True, download_name=download_name, mimetype="application/pdf")
+
+def export_content(md_text: str, fmt: str, base_name: str):
+    fmt = (fmt or "").lower()
+    base = base_name.replace(" ", "_")
+    if fmt == "pdf":
+        return export_pdf(md_text, f"{base}.pdf")
+    elif fmt in ("docx","doc"):
+        return export_docx(md_text, f"{base}.docx")
+    else:
+        # default to docx
+        return export_docx(md_text, f"{base}.docx")
+---END FILE---
+
+D) Export API routes
+---BEGIN FILE app/api/exports.py---
+from flask import Blueprint, request, abort
+from app.models import CaseSupportDoc, GrantPitchDoc, ImpactReport
+from app.services.export_service import export_content
+
+bp = Blueprint("exports", __name__)
+
+def _fmt():
+    return request.args.get("format","docx").lower()
+
+@bp.get("/case-support/<int:doc_id>")
+def export_case(doc_id: int):
+    doc = CaseSupportDoc.query.get_or_404(doc_id)
+    md = (doc.sections or {}).get("body") or ""
+    return export_content(md, _fmt(), doc.title or "Case_for_Support")
+
+@bp.get("/grant-pitch/<int:doc_id>")
+def export_pitch(doc_id: int):
+    doc = GrantPitchDoc.query.get_or_404(doc_id)
+    md = (doc.sections or {}).get("body") or ""
+    base = f"Grant_Pitch_{doc.funder or 'Funder'}"
+    return export_content(md, _fmt(), base)
+
+@bp.get("/impact-report/<int:doc_id>")
+def export_report(doc_id: int):
+    doc = ImpactReport.query.get_or_404(doc_id)
+    md = (doc.sections or {}).get("body") or ""
+    base = "Impact_Report"
+    return export_content(md, _fmt(), base)
+---END FILE---
+
+Register blueprint in app/__init__.py:
+---BEGIN PATCH app/__init__.py---
+from app.api.exports import bp as exports_bp
+app.register_blueprint(exports_bp, url_prefix="/api/exports")
+---END PATCH---
+
+E) Upgrade Writing page with Needs Input checklist and Export buttons
+Update app/templates/writing.html to:
+1) show a checklist when the model returns `needsInput` or `needsUpdate`
+2) show Export buttons after a document is created (PDF and Word)
+3) keep brand colors only
+
+---BEGIN PATCH app/templates/writing.html---
+{% extends "base.html" %}
+{% block title %}Writing · Pink Lemonade{% endblock %}
+{% block content %}
+  <h1>Writing</h1>
+
+  <section class="card">
+    <h2>Create documents</h2>
+    <div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:12px">
+      <button class="btn btn-primary" id="btnCase">Generate Case for Support</button>
+      <button class="btn" id="btnPitch">Generate Grant Pitch</button>
+      <button class="btn" id="btnReport">Generate Impact Report</button>
+    </div>
+    <div id="toast" class="card" style="display:none;padding:10px;margin-top:12px;background:var(--pink);color:var(--black)"></div>
+  </section>
+
+  <section id="needs" class="card" style="margin-top:16px;display:none">
+    <h2>Needs input</h2>
+    <ul id="needsList" style="margin-top:8px"></ul>
+    <p style="margin-top:8px;color:#777;font-size:12px">Add the missing info in Settings or your Org profile, then regenerate.</p>
+  </section>
+
+  <section id="output" class="card" style="margin-top:16px;display:none">
+    <h2>Output</h2>
+    <div id="doc" style="white-space:pre-wrap"></div>
+    <div id="exports" style="margin-top:12px;display:none">
+      <a id="btnPDF" class="btn" href="#" target="_blank">Export PDF</a>
+      <a id="btnDOCX" class="btn" href="#" target="_blank" style="margin-left:8px">Export Word</a>
+    </div>
+  </section>
+
+  <script>
+    const t = document.getElementById('toast');
+    const needs = document.getElementById('needs');
+    const needsList = document.getElementById('needsList');
+    const out = document.getElementById('output');
+    const docDiv = document.getElementById('doc');
+    const exportsDiv = document.getElementById('exports');
+    const btnPDF = document.getElementById('btnPDF');
+    const btnDOCX = document.getElementById('btnDOCX');
+
+    let lastDoc = { type:null, id:null };
+
+    function show(msg){ t.style.display='block'; t.textContent=msg; }
+    function showNeeds(items){
+      if(items && items.length){
+        needs.style.display='block';
+        needsList.innerHTML = items.map(i => '<li>- '+i+'</li>').join('');
+      } else {
+        needs.style.display='none';
+        needsList.innerHTML = '';
+      }
+    }
+    function enableExports(type, id){
+      lastDoc = { type, id };
+      exportsDiv.style.display='block';
+      btnPDF.href = `/api/exports/${type}/${id}?format=pdf`;
+      btnDOCX.href = `/api/exports/${type}/${id}?format=docx`;
+    }
+
+    async function postJSON(url, payload){
+      const res = await fetch(url, {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload)});
+      if(!res.ok){ throw new Error(await res.text()); }
+      return res.json();
+    }
+    const common = { orgId: 1, orgName: 'Pink Lemonade' };
+
+    document.getElementById('btnCase').onclick = async () => {
+      try{
+        show('Generating Case for Support…');
+        const data = await postJSON('/api/writing/case-support', {...common, audience:'foundations and individual donors', length:'700-900', title:'Case for Support'});
+        out.style.display='block'; docDiv.textContent = data.content;
+        showNeeds(data.needsInput);
+        enableExports('case-support', data.id);
+        show(data.needsInput?.length ? 'Needs input listed below.' : 'Done. Copy ready.');
+      }catch(e){ show('Error: '+e.message); }
+    };
+
+    document.getElementById('btnPitch').onclick = async () => {
+      try{
+        show('Generating Grant Pitch…');
+        const data = await postJSON('/api/writing/grant-pitch', {...common, funder:'Target Funder', alignment:'AI literacy; workforce; community; digital divide', limits:'120'});
+        out.style.display='block'; docDiv.textContent = data.content;
+        showNeeds(data.needsInput);
+        enableExports('grant-pitch', data.id);
+        show(data.needsInput?.length ? 'Needs input listed below.' : 'Done. Copy ready.');
+      }catch(e){ show('Error: '+e.message); }
+    };
+
+    document.getElementById('btnReport').onclick = async () => {
+      try{
+        show('Generating Impact Report…');
+        const data = await postJSON('/api/writing/impact-report', {...common, startDate:'2025-01-01', endDate:'2025-06-30'});
+        out.style.display='block'; docDiv.textContent = data.content;
+        showNeeds(data.needsUpdate);
+        enableExports('impact-report', data.id);
+        show(data.needsUpdate?.length ? 'Needs update listed below.' : 'Done. Copy ready.');
+      }catch(e){ show('Error: '+e.message); }
+    };
+  </script>
+{% endblock %}
+---END PATCH---
+
+F) Add simple export tests
+---BEGIN FILE tests/test_exports.py---
+import os, pytest
+from app import create_app, db
+from app.models import Org, CaseSupportDoc, GrantPitchDoc, ImpactReport
+
+@pytest.fixture
+def app_ctx():
+    os.environ["SQLALCHEMY_DATABASE_URI"] = "sqlite://"
+    os.environ["SQLALCHEMY_TRACK_MODIFICATIONS"] = "false"
+    app = create_app()
+    with app.app_context():
+        db.create_all()
+        db.session.add(Org(name="Test Org")); db.session.commit()
+        yield app
+        db.session.remove(); db.drop_all()
+
+def test_case_export(app_ctx):
+    with app_ctx.app_context():
+        d = CaseSupportDoc(org_id=1, title="Case", sections={"body":"# Executive Summary\nHello\n\nSource Notes: org_profile"})
+        db.session.add(d); db.session.commit()
+        client = app_ctx.test_client()
+        res = client.get(f"/api/exports/case-support/{d.id}?format=pdf")
+        assert res.status_code == 200
+
+def test_pitch_export(app_ctx):
+    with app_ctx.app_context():
+        d = GrantPitchDoc(org_id=1, funder="Acme", sections={"body":"# Pitch\nHello\n\nSource Notes: fields"})
+        db.session.add(d); db.session.commit()
+        client = app_ctx.test_client()
+        res = client.get(f"/api/exports/grant-pitch/{d.id}?format=docx")
+        assert res.status_code == 200
+
+def test_report_export(app_ctx):
+    with app_ctx.app_context():
+        d = ImpactReport(org_id=1, sections={"body":"# Report\nHello\n\nSource Notes: KPIs"})
+        db.session.add(d); db.session.commit()
+        client = app_ctx.test_client()
+        res = client.get(f"/api/exports/impact-report/{d.id}?format=pdf")
+        assert res.status_code == 200
+---END FILE---
+
+Brand guardrails
+- Keep the Writing page buttons and sections using only brand.css classes and inline styles that reference brand tokens.
+- No new colors.
+
+Test Debug Verify
+- Run pytest and confirm all export tests pass.
+- Open /writing. Generate each doc. Confirm:
+  - Output appears
+  - If model flags missing info, checklist shows
+  - Export PDF and Word buttons download files
+- Report files added/changed.

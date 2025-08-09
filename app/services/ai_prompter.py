@@ -208,3 +208,20 @@ def get_prompter(model: str = "gpt-4o") -> AIPrompter:
     if _prompter_instance is None:
         _prompter_instance = AIPrompter(model)
     return _prompter_instance
+
+def run_prompt(module_name: str, tokens: Dict[str, str], data_pack: Dict[str, Any]) -> Dict[str, Any]:
+    """
+    Module-level convenience function for running prompts
+    """
+    global _prompter_instance
+    if _prompter_instance is None:
+        _prompter_instance = AIPrompter()
+    
+    result = _prompter_instance.run_prompt(module_name, tokens, data_pack)
+    # Convert to the expected format for the writing API
+    return {
+        "content": result.get("output", ""),
+        "model": _prompter_instance.model,
+        "success": result.get("success", False),
+        "needs_input": result.get("needs_input", [])
+    }
