@@ -58,7 +58,7 @@ export function useGrants(filters = {}) {
     loading,
     error,
     refreshData,
-    dashboardData
+    dashboardData,
   };
 }
 

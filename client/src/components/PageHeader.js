@@ -14,15 +14,9 @@ const PageHeader = ({ title, description, children }) => {
         <h1 className="text-2xl font-bold leading-7 text-gray-900 sm:text-3xl sm:truncate">
           {title}
         </h1>
-        {description && (
-          <p className="mt-1 text-sm text-gray-500">{description}</p>
-        )}
+        {description && <p className="mt-1 text-sm text-gray-500">{description}</p>}
       </div>
-      {children && (
-        <div className="mt-3 flex sm:mt-0 sm:ml-4">
-          {children}
-        </div>
-      )}
+      {children && <div className="mt-3 flex sm:mt-0 sm:ml-4">{children}</div>}
     </div>
   );
 };

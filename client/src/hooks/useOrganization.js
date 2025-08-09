@@ -67,7 +67,7 @@ export function useOrganization() {
     saveOrganization,
     initializeSampleOrganization,
     saveStatus,
-    refreshOrganization: fetchOrganization
+    refreshOrganization: fetchOrganization,
   };
 }
 

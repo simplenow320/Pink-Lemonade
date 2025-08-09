@@ -12,7 +12,7 @@ const ModernLayout = ({ children }) => {
     const handleScroll = () => {
       setScrollPosition(window.scrollY);
     };
-    
+
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
@@ -24,44 +24,44 @@ const ModernLayout = ({ children }) => {
 
   // Navigation items with modern icons
   const navItems = [
-    { 
-      name: 'Dashboard', 
-      path: '/', 
+    {
+      name: 'Dashboard',
+      path: '/',
       description: 'Overview of your grants',
-      icon: DashboardIcon 
+      icon: DashboardIcon,
     },
-    { 
-      name: 'Grants', 
-      path: '/grants', 
+    {
+      name: 'Grants',
+      path: '/grants',
       description: 'Manage your grant opportunities',
-      icon: GrantsIcon 
+      icon: GrantsIcon,
     },
-    { 
-      name: 'Organization', 
-      path: '/organization', 
+    {
+      name: 'Organization',
+      path: '/organization',
       description: 'Your organization profile',
-      icon: OrganizationIcon 
+      icon: OrganizationIcon,
     },
-    { 
-      name: 'Scraper', 
-      path: '/scraper', 
+    {
+      name: 'Scraper',
+      path: '/scraper',
       description: 'Find new grant opportunities',
-      icon: ScraperIcon 
+      icon: ScraperIcon,
     },
-    { 
-      name: 'Analytics', 
-      path: '/analytics', 
+    {
+      name: 'Analytics',
+      path: '/analytics',
       description: 'Track your success metrics',
-      icon: AnalyticsIcon 
+      icon: AnalyticsIcon,
     },
-    { 
-      name: 'Writing', 
-      path: '/writing-assistant', 
+    {
+      name: 'Writing',
+      path: '/writing-assistant',
       description: 'AI-powered grant writing',
-      icon: WritingIcon 
-    }
+      icon: WritingIcon,
+    },
   ];
-  
+
   // Check if a path is active
   const isActive = (path) => {
     if (path === '/') {
@@ -73,11 +73,9 @@ const ModernLayout = ({ children }) => {
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
       {/* Modern Top Navigation - fixed, with glass effect on scroll */}
-      <header 
+      <header
         className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
-          scrollPosition > 10 
-            ? 'bg-white shadow-md' 
-            : 'bg-white/90 backdrop-blur-sm'
+          scrollPosition > 10 ? 'bg-white shadow-md' : 'bg-white/90 backdrop-blur-sm'
         }`}
       >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -99,7 +97,7 @@ const ModernLayout = ({ children }) => {
                   to={item.path}
                   className={`relative px-3 py-2 rounded-md text-sm font-medium transition-all duration-200 flex items-center ${
                     isActive(item.path)
-                      ? 'text-orange-600' 
+                      ? 'text-orange-600'
                       : 'text-gray-600 hover:text-orange-500 hover:bg-gray-50'
                   }`}
                 >
@@ -115,7 +113,9 @@ const ModernLayout = ({ children }) => {
                   )}
                   <item.icon
                     className={`mr-1.5 h-5 w-5 ${
-                      isActive(item.path) ? 'text-orange-500' : 'text-gray-400 group-hover:text-orange-500'
+                      isActive(item.path)
+                        ? 'text-orange-500'
+                        : 'text-gray-400 group-hover:text-orange-500'
                     }`}
                   />
                   <span>{item.name}</span>
@@ -143,12 +143,34 @@ const ModernLayout = ({ children }) => {
               >
                 <span className="sr-only">Open main menu</span>
                 {!isMenuOpen ? (
-                  <svg className="block h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                  <svg
+                    className="block h-6 w-6"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                    aria-hidden="true"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M4 6h16M4 12h16M4 18h16"
+                    />
                   </svg>
                 ) : (
-                  <svg className="block h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  <svg
+                    className="block h-6 w-6"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                    aria-hidden="true"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M6 18L18 6M6 6l12 12"
+                    />
                   </svg>
                 )}
               </button>
@@ -159,14 +181,14 @@ const ModernLayout = ({ children }) => {
         {/* Mobile Menu - slide down animation */}
         <AnimatePresence>
           {isMenuOpen && (
-            <motion.div 
+            <motion.div
               className="md:hidden bg-white shadow-lg overflow-hidden"
               initial={{ height: 0, opacity: 0 }}
               animate={{ height: 'auto', opacity: 1 }}
               exit={{ height: 0, opacity: 0 }}
               transition={{ duration: 0.2 }}
             >
-              <motion.div 
+              <motion.div
                 className="px-3 pt-2 pb-3 space-y-1"
                 initial={{ y: -10, opacity: 0 }}
                 animate={{ y: 0, opacity: 1 }}
@@ -189,7 +211,9 @@ const ModernLayout = ({ children }) => {
                       />
                       <div>
                         <span className="font-medium block">{item.name}</span>
-                        <span className="text-xs text-gray-500 block mt-0.5">{item.description}</span>
+                        <span className="text-xs text-gray-500 block mt-0.5">
+                          {item.description}
+                        </span>
                       </div>
                     </Link>
                   </motion.div>
@@ -202,9 +226,7 @@ const ModernLayout = ({ children }) => {
 
       {/* Main Content with padding for fixed header */}
       <main className="flex-grow pt-16 pb-12">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-          {children}
-        </div>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">{children}</div>
       </main>
 
       {/* Footer */}
@@ -253,8 +275,18 @@ function DashboardIcon(props) {
 function GrantsIcon(props) {
   return (
     <svg {...props} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <path d="M7 3C5.89543 3 5 3.89543 5 5V19C5 20.1046 5.89543 21 7 21H17C18.1046 21 19 20.1046 19 19V9L13 3H7Z" fill="currentColor" fillOpacity="0.2" />
-      <path d="M9 9H15M9 13H15M9 17H13M13 3L19 9M19 9H15C13.8954 9 13 8.10457 13 7V3M5 5C5 3.89543 5.89543 3 7 3H13" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+      <path
+        d="M7 3C5.89543 3 5 3.89543 5 5V19C5 20.1046 5.89543 21 7 21H17C18.1046 21 19 20.1046 19 19V9L13 3H7Z"
+        fill="currentColor"
+        fillOpacity="0.2"
+      />
+      <path
+        d="M9 9H15M9 13H15M9 17H13M13 3L19 9M19 9H15C13.8954 9 13 8.10457 13 7V3M5 5C5 3.89543 5.89543 3 7 3H13"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
     </svg>
   );
 }
@@ -262,10 +294,30 @@ function GrantsIcon(props) {
 function OrganizationIcon(props) {
   return (
     <svg {...props} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <path d="M17 21V19C17 16.7909 15.2091 15 13 15H7C4.79086 15 3 16.7909 3 19V21" fill="currentColor" fillOpacity="0.2" />
-      <path d="M10 11C12.2091 11 14 9.20914 14 7C14 4.79086 12.2091 3 10 3C7.79086 3 6 4.79086 6 7C6 9.20914 7.79086 11 10 11Z" fill="currentColor" fillOpacity="0.2" />
-      <path d="M17 21V19C17 16.7909 15.2091 15 13 15H7C4.79086 15 3 16.7909 3 19V21H17ZM10 11C12.2091 11 14 9.20914 14 7C14 4.79086 12.2091 3 10 3C7.79086 3 6 4.79086 6 7C6 9.20914 7.79086 11 10 11Z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-      <path d="M21 10V16M18 13H24" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+      <path
+        d="M17 21V19C17 16.7909 15.2091 15 13 15H7C4.79086 15 3 16.7909 3 19V21"
+        fill="currentColor"
+        fillOpacity="0.2"
+      />
+      <path
+        d="M10 11C12.2091 11 14 9.20914 14 7C14 4.79086 12.2091 3 10 3C7.79086 3 6 4.79086 6 7C6 9.20914 7.79086 11 10 11Z"
+        fill="currentColor"
+        fillOpacity="0.2"
+      />
+      <path
+        d="M17 21V19C17 16.7909 15.2091 15 13 15H7C4.79086 15 3 16.7909 3 19V21H17ZM10 11C12.2091 11 14 9.20914 14 7C14 4.79086 12.2091 3 10 3C7.79086 3 6 4.79086 6 7C6 9.20914 7.79086 11 10 11Z"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <path
+        d="M21 10V16M18 13H24"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
     </svg>
   );
 }
@@ -273,9 +325,25 @@ function OrganizationIcon(props) {
 function ScraperIcon(props) {
   return (
     <svg {...props} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <path d="M10 17C13.866 17 17 13.866 17 10C17 6.13401 13.866 3 10 3C6.13401 3 3 6.13401 3 10C3 13.866 6.13401 17 10 17Z" fill="currentColor" fillOpacity="0.2" />
-      <path d="M10 17C13.866 17 17 13.866 17 10C17 6.13401 13.866 3 10 3C6.13401 3 3 6.13401 3 10C3 13.866 6.13401 17 10 17Z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-      <path d="M20.9984 21.0004L15.9984 16.0004" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+      <path
+        d="M10 17C13.866 17 17 13.866 17 10C17 6.13401 13.866 3 10 3C6.13401 3 3 6.13401 3 10C3 13.866 6.13401 17 10 17Z"
+        fill="currentColor"
+        fillOpacity="0.2"
+      />
+      <path
+        d="M10 17C13.866 17 17 13.866 17 10C17 6.13401 13.866 3 10 3C6.13401 3 3 6.13401 3 10C3 13.866 6.13401 17 10 17Z"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <path
+        d="M20.9984 21.0004L15.9984 16.0004"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
     </svg>
   );
 }
@@ -283,7 +351,12 @@ function ScraperIcon(props) {
 function AnalyticsIcon(props) {
   return (
     <svg {...props} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <path d="M7 10V17M12 7V17M17 14V17" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+      <path
+        d="M7 10V17M12 7V17M17 14V17"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+      />
       <rect x="6" y="10" width="2" height="7" fill="currentColor" fillOpacity="0.2" />
       <rect x="11" y="7" width="2" height="10" fill="currentColor" fillOpacity="0.2" />
       <rect x="16" y="14" width="2" height="3" fill="currentColor" fillOpacity="0.2" />
@@ -297,10 +370,34 @@ function WritingIcon(props) {
     <svg {...props} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
       <path d="M12 19L19 12L22 15L15 22L12 19Z" fill="currentColor" fillOpacity="0.2" />
       <path d="M16 5L15 4L11 8L12 9L16 5Z" fill="currentColor" fillOpacity="0.2" />
-      <path d="M12 19L19 12L22 15L15 22L12 19Z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-      <path d="M16 5L15 4L11 8L12 9L16 5Z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-      <path d="M11 8L9 10L8 13L11 11L11 8Z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-      <path d="M15 4L18 7" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+      <path
+        d="M12 19L19 12L22 15L15 22L12 19Z"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <path
+        d="M16 5L15 4L11 8L12 9L16 5Z"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <path
+        d="M11 8L9 10L8 13L11 11L11 8Z"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <path
+        d="M15 4L18 7"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
     </svg>
   );
 }
@@ -308,8 +405,20 @@ function WritingIcon(props) {
 function QuestionIcon(props) {
   return (
     <svg {...props} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <path d="M12 17H12.01M12 14V10M12 7H12.01" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-      <path d="M12 22C17.5228 22 22 17.5228 22 12C22 6.47715 17.5228 2 12 2C6.47715 2 2 6.47715 2 12C2 17.5228 6.47715 22 12 22Z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+      <path
+        d="M12 17H12.01M12 14V10M12 7H12.01"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <path
+        d="M12 22C17.5228 22 22 17.5228 22 12C22 6.47715 17.5228 2 12 2C6.47715 2 2 6.47715 2 12C2 17.5228 6.47715 22 12 22Z"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
     </svg>
   );
 }

@@ -24,52 +24,49 @@ describe('SafeComponent', () => {
         <div data-testid="safe-child">Safe Content</div>
       </SafeComponent>
     );
-    
+
     expect(screen.getByTestId('safe-child')).toBeInTheDocument();
     expect(screen.getByText('Safe Content')).toBeInTheDocument();
   });
-  
+
   test('renders custom fallback UI when an error occurs', () => {
     render(
-      <SafeComponent
-        fallbackTitle="Custom Error Title"
-        resetButtonText="Reset Test"
-      >
+      <SafeComponent fallbackTitle="Custom Error Title" resetButtonText="Reset Test">
         <ErrorComponent />
       </SafeComponent>
     );
-    
+
     // Check if the custom fallback elements are shown
     expect(screen.getByText('Custom Error Title')).toBeInTheDocument();
     expect(screen.getByText('Test error in SafeComponent')).toBeInTheDocument();
     expect(screen.getByText('Reset Test')).toBeInTheDocument();
   });
-  
+
   test('calls custom resetAction when reset button is clicked', () => {
     const resetAction = jest.fn();
-    
+
     render(
       <SafeComponent resetAction={resetAction}>
         <ErrorComponent />
       </SafeComponent>
     );
-    
+
     // Click the reset button
     fireEvent.click(screen.getByText('Try again'));
-    
+
     // Verify resetAction was called
     expect(resetAction).toHaveBeenCalledTimes(1);
   });
-  
+
   test('calls onError when an error occurs', () => {
     const onError = jest.fn();
-    
+
     render(
       <SafeComponent onError={onError}>
         <ErrorComponent />
       </SafeComponent>
     );
-    
+
     // Verify onError was called with an error
     expect(onError).toHaveBeenCalledTimes(1);
     expect(onError.mock.calls[0][0]).toBeInstanceOf(Error);
