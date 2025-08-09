@@ -1,29 +1,17 @@
 {% extends "base.html" %}
-
-{% block title %}Pink Lemonade - Grant Management{% endblock %}
-
+{% block title %}Home · Pink Lemonade{% endblock %}
 {% block content %}
-<div class="container mx-auto px-4 py-8">
-    <div class="text-center">
-        <h1 class="text-4xl font-bold text-gray-900 mb-4">Welcome to Pink Lemonade</h1>
-        <p class="text-xl text-gray-600 mb-8">AI-Powered Grant Management Platform</p>
-        
-        <div class="bg-white rounded-lg shadow-lg p-8 max-w-2xl mx-auto">
-            <h2 class="text-2xl font-semibold mb-4">Welcome to Pink Lemonade</h2>
-            <p class="text-gray-700 mb-6">
-                Discover, evaluate, and track funding opportunities with intelligent web scraping, 
-                AI-powered matching, and automated narrative generation.
-            </p>
-            
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <a href="/dashboard" class="bg-pink-500 hover:bg-pink-600 text-white font-semibold py-3 px-6 rounded-lg transition duration-200">
-                    Go to Dashboard
-                </a>
-                <a href="/api/opportunities" class="bg-gray-500 hover:bg-gray-600 text-white font-semibold py-3 px-6 rounded-lg transition duration-200">
-                    View Opportunities
-                </a>
-            </div>
-        </div>
-    </div>
-</div>
+  <section class="card">
+    <h1>Your Funding Shouldn't Feel Like a Full‑Time Job</h1>
+    <p>We help nonprofits discover, track, and secure grants with AI‑powered tools — so you can focus on impact, not paperwork.</p>
+    <a class="btn btn-primary" href="/opportunities">Find Funding Now</a>
+    <a class="btn" href="/dashboard" style="margin-left:8px">See a sample dashboard</a>
+  </section>
+
+  <section class="grid grid-2" style="margin-top:24px">
+    <div class="card"><h3>Missed deadlines</h3><p>Never get blindsided again. See all due dates in one place.</p></div>
+    <div class="card"><h3>Bad fit grants</h3><p>AI scores alignment based on your mission and programs.</p></div>
+    <div class="card"><h3>Too many tabs</h3><p>Save opportunities with links, notes, and contacts.</p></div>
+    <div class="card"><h3>No clear pipeline</h3><p>Track status from idea to submitted to awarded.</p></div>
+  </section>
 {% endblock %}
