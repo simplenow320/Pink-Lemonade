@@ -350,11 +350,9 @@ class APIManager:
             base_url = self.sources['federal_register']['base_url']
             
             # Build query parameters for Federal Register
+            # Note: Federal Register API has specific URL encoding requirements
             query_params = {
-                'conditions[term]': params.get('query', 'grant funding'),
-                'conditions[type][]': 'NOTICE',
-                'conditions[agencies][]': ['agriculture-department', 'education-department', 'health-and-human-services-department'],
-                'fields[]': ['title', 'html_url', 'publication_date', 'abstract'],
+                'conditions[term]': params.get('query', 'grant'),
                 'per_page': params.get('limit', 20),
                 'order': 'newest'
             }

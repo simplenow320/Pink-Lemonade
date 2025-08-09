@@ -103,9 +103,9 @@ def get_opportunities():
             search_lower = search_query.lower()
             all_opportunities = [
                 opp for opp in all_opportunities
-                if search_lower in (opp.get('title', '') + ' ' + 
-                                   opp.get('description', '') + ' ' + 
-                                   opp.get('funder', '')).lower()
+                if search_lower in str(opp.get('title', '') + ' ' + 
+                                      opp.get('description', '') + ' ' + 
+                                      opp.get('funder', '')).lower()
             ]
         
         # Sort by deadline (soonest first) and fit score (highest first)
@@ -139,10 +139,10 @@ def get_opportunities():
                 '_raw': opp  # Keep raw data for save/apply actions
             })
         
-        # Determine mode (live vs mock) based on environment variable
+        # Always use LIVE mode - no mock data allowed
         import os
-        data_mode = os.environ.get('APP_DATA_MODE', 'MOCK')
-        mode = 'mock' if data_mode == 'MOCK' else 'live'
+        data_mode = 'LIVE'  # Always live data, never mock
+        mode = 'live'
         
         return jsonify({
             'opportunities': formatted_opportunities,
@@ -151,7 +151,7 @@ def get_opportunities():
             'per_page': per_page,
             'total_pages': (total + per_page - 1) // per_page,
             'mode': mode,
-            'demo': data_mode == 'MOCK'  # Explicit demo flag
+            'demo': False  # Never demo - always real data
         })
         
     except Exception as e:
