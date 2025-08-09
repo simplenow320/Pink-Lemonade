@@ -110,7 +110,7 @@ class APIManager:
             rate_limit['period']
         ):
             logger.warning(f"Rate limit exceeded for {source_name}")
-            return self._get_mock_grants(source_name, params)
+            return []  # Return empty when rate limited
         
         # Route to appropriate fetcher
         try:
@@ -131,7 +131,8 @@ class APIManager:
             elif source_name == 'georgia_portal':
                 grants = self._fetch_georgia_portal(params)
             else:
-                grants = self._get_mock_grants(source_name, params)
+                logger.warning(f"Unknown source: {source_name}")
+                grants = []  # No data for unknown sources
             
             # Cache successful response
             if grants:
@@ -141,7 +142,7 @@ class APIManager:
             
         except Exception as e:
             logger.error(f"Error fetching from {source_name}: {e}")
-            return self._get_mock_grants(source_name, params)
+            return []  # Return empty on error, never fake data
     
     def get_enabled_sources(self) -> Dict[str, Dict]:
         """Get all enabled sources with their configurations"""
@@ -313,31 +314,33 @@ class APIManager:
         """
         Fetch from Foundation Directory Online (placeholder for paid API)
         """
-        # This would require API credentials
-        # For now, return mock data
-        return self._get_mock_grants('foundation_directory', params)
+        # This requires API credentials
+        logger.warning("Foundation Directory API requires paid subscription")
+        return []  # No data without API key
     
     def _fetch_grantwatch(self, params: Dict) -> List[Dict]:
         """
         Fetch from GrantWatch free listings
         """
         # GrantWatch requires subscription for API
-        # This is a placeholder for future implementation
-        return self._get_mock_grants('grantwatch', params)
+        logger.warning("GrantWatch API requires paid subscription")
+        return []  # No data without API key
     
     def _fetch_michigan_portal(self, params: Dict) -> List[Dict]:
         """
         Fetch from Michigan state portal
         """
         # Implementation would depend on available Michigan open data APIs
-        return self._get_mock_grants('michigan_portal', params)
+        logger.info("Michigan portal: No public API available yet")
+        return []  # No data source configured
     
     def _fetch_georgia_portal(self, params: Dict) -> List[Dict]:
         """
         Fetch from Georgia state portal
         """
         # Implementation would depend on available Georgia open data APIs
-        return self._get_mock_grants('georgia_portal', params)
+        logger.info("Georgia portal: No public API available yet")
+        return []  # No data source configured
     
     def _fetch_federal_register(self, params: Dict) -> List[Dict]:
         """
@@ -454,32 +457,12 @@ class APIManager:
         unique_str = f"{grant.get('title', '')}:{grant.get('funder', '')}:{grant.get('source', '')}"
         return hashlib.md5(unique_str.encode()).hexdigest()[:12]
     
-    def _get_mock_grants(self, source_name: str, params: Dict) -> List[Dict]:
+    def _handle_no_data(self, source_name: str) -> List[Dict]:
         """
-        Return mock grants for testing/demo purposes
+        Handle cases where no real data is available
         """
-        mock_grants = [
-            {
-                'title': f'Community Development Grant - {source_name}',
-                'funder': 'Mock Foundation',
-                'amount_min': 10000,
-                'amount_max': 50000,
-                'deadline': (datetime.now() + timedelta(days=30)).isoformat(),
-                'description': 'Mock grant for testing purposes',
-                'source': source_name
-            },
-            {
-                'title': f'Youth Program Initiative - {source_name}',
-                'funder': 'Demo Foundation',
-                'amount_min': 5000,
-                'amount_max': 25000,
-                'deadline': (datetime.now() + timedelta(days=45)).isoformat(),
-                'description': 'Demo grant for development',
-                'source': source_name
-            }
-        ]
-        
-        return [self._standardize_grant(grant) for grant in mock_grants]
+        logger.warning(f"No real data available from {source_name}. API keys or configuration may be needed.")
+        return []  # Return empty list - never fake data
 
 # Singleton instance
 api_manager = APIManager()
