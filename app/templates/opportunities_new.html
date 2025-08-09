@@ -1,0 +1,500 @@
+{% extends "base.html" %}
+{% block title %}Discover Opportunities{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-6">
+    <!-- Header Section -->
+    <div class="mb-6">
+        <h1 class="text-3xl font-bold mb-2" style="color: var(--black)">Discover Grant Opportunities</h1>
+        <p class="text-gray-600">Find and track funding opportunities that match your organization's mission</p>
+    </div>
+
+    <!-- Search and Filters -->
+    <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+        <form id="searchForm" class="space-y-4">
+            <!-- Search Bar -->
+            <div>
+                <label for="searchInput" class="block text-sm font-medium text-gray-700 mb-1">Search Grants</label>
+                <input 
+                    type="text" 
+                    id="searchInput" 
+                    name="search"
+                    placeholder="Search by title, funder, or description..." 
+                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-200 focus:border-pink-400"
+                >
+            </div>
+
+            <!-- Filter Grid -->
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <!-- City Filter -->
+                <div>
+                    <label for="cityFilter" class="block text-sm font-medium text-gray-700 mb-1">City</label>
+                    <select id="cityFilter" name="city" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-200">
+                        <option value="">All Cities</option>
+                        <option value="New York">New York</option>
+                        <option value="Chicago">Chicago</option>
+                        <option value="Los Angeles">Los Angeles</option>
+                        <option value="Houston">Houston</option>
+                        <option value="Phoenix">Phoenix</option>
+                        <option value="Philadelphia">Philadelphia</option>
+                        <option value="Detroit">Detroit</option>
+                        <option value="Atlanta">Atlanta</option>
+                    </select>
+                </div>
+
+                <!-- Focus Area Filter -->
+                <div>
+                    <label for="focusFilter" class="block text-sm font-medium text-gray-700 mb-1">Focus Area</label>
+                    <select id="focusFilter" name="focus_area" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-200">
+                        <option value="">All Areas</option>
+                        <option value="Youth Development">Youth Development</option>
+                        <option value="Community Development">Community Development</option>
+                        <option value="Family Services">Family Services</option>
+                        <option value="Food Security">Food Security</option>
+                        <option value="Education">Education</option>
+                        <option value="Health">Health & Wellness</option>
+                        <option value="Housing">Housing</option>
+                        <option value="Arts">Arts & Culture</option>
+                    </select>
+                </div>
+
+                <!-- Deadline Filter -->
+                <div>
+                    <label for="deadlineFilter" class="block text-sm font-medium text-gray-700 mb-1">Deadline</label>
+                    <select id="deadlineFilter" name="deadline_days" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-200">
+                        <option value="">Any Time</option>
+                        <option value="7">Next 7 Days</option>
+                        <option value="30">Next 30 Days</option>
+                        <option value="60">Next 60 Days</option>
+                        <option value="90">Next 90 Days</option>
+                    </select>
+                </div>
+
+                <!-- Source Filter -->
+                <div>
+                    <label for="sourceFilter" class="block text-sm font-medium text-gray-700 mb-1">Source</label>
+                    <select id="sourceFilter" name="source" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-200">
+                        <option value="">All Sources</option>
+                        <option value="grants_gov">Grants.gov</option>
+                        <option value="foundation">Foundations</option>
+                        <option value="corporate">Corporate</option>
+                        <option value="state">State & Local</option>
+                        <option value="federal">Federal</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="flex gap-4">
+                <button type="submit" class="px-6 py-2 rounded-lg font-medium" style="background-color: var(--pink); color: var(--black)">
+                    Search Grants
+                </button>
+                <button type="button" id="clearFilters" class="px-6 py-2 border border-gray-300 rounded-lg font-medium text-gray-700 hover:bg-gray-50">
+                    Clear Filters
+                </button>
+                <button type="button" id="discoverBtn" class="px-6 py-2 border rounded-lg font-medium" style="border-color: var(--pink); color: var(--pink)">
+                    Run Discovery
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Results Section -->
+    <div id="resultsSection">
+        <!-- Results Header -->
+        <div class="flex justify-between items-center mb-4">
+            <h2 class="text-xl font-semibold">
+                <span id="resultCount">0</span> Opportunities Found
+            </h2>
+            <div class="flex items-center gap-2">
+                <span class="text-sm text-gray-600">Sort by:</span>
+                <select id="sortBy" class="px-3 py-1 border border-gray-300 rounded-lg text-sm">
+                    <option value="deadline">Deadline</option>
+                    <option value="fit_score">Best Match</option>
+                    <option value="amount">Amount</option>
+                    <option value="recent">Most Recent</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- Loading State -->
+        <div id="loadingState" class="hidden">
+            <div class="bg-white rounded-lg shadow-md p-8 text-center">
+                <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-pink-400 mx-auto mb-4"></div>
+                <p class="text-gray-600">Searching for opportunities...</p>
+            </div>
+        </div>
+
+        <!-- Results Grid -->
+        <div id="opportunitiesGrid" class="grid gap-4">
+            <!-- Opportunities will be loaded here -->
+        </div>
+
+        <!-- Empty State -->
+        <div id="emptyState" class="hidden">
+            <div class="bg-white rounded-lg shadow-md p-8 text-center">
+                <svg class="w-16 h-16 mx-auto mb-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"></path>
+                </svg>
+                <h3 class="text-lg font-semibold mb-2">No opportunities found</h3>
+                <p class="text-gray-600 mb-4">Try adjusting your filters or run a new discovery</p>
+                <button type="button" onclick="document.getElementById('clearFilters').click()" class="px-4 py-2 rounded-lg" style="background-color: var(--pink); color: var(--black)">
+                    Clear Filters
+                </button>
+            </div>
+        </div>
+
+        <!-- Pagination -->
+        <div id="pagination" class="flex justify-center items-center gap-2 mt-6 hidden">
+            <button id="prevPage" class="px-3 py-1 border border-gray-300 rounded-lg text-sm hover:bg-gray-50">Previous</button>
+            <span id="pageInfo" class="text-sm text-gray-600">Page 1 of 1</span>
+            <button id="nextPage" class="px-3 py-1 border border-gray-300 rounded-lg text-sm hover:bg-gray-50">Next</button>
+        </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div id="toast" class="fixed bottom-4 right-4 px-6 py-3 rounded-lg shadow-lg hidden" style="background-color: var(--pink); color: var(--black)">
+        <span id="toastMessage">Notification</span>
+    </div>
+</div>
+
+<script>
+// State management
+let currentPage = 1;
+let totalPages = 1;
+let currentFilters = {};
+let opportunities = [];
+
+// DOM elements
+const searchForm = document.getElementById('searchForm');
+const clearBtn = document.getElementById('clearFilters');
+const discoverBtn = document.getElementById('discoverBtn');
+const loadingState = document.getElementById('loadingState');
+const emptyState = document.getElementById('emptyState');
+const opportunitiesGrid = document.getElementById('opportunitiesGrid');
+const resultCount = document.getElementById('resultCount');
+const pagination = document.getElementById('pagination');
+const prevPage = document.getElementById('prevPage');
+const nextPage = document.getElementById('nextPage');
+const pageInfo = document.getElementById('pageInfo');
+const sortBy = document.getElementById('sortBy');
+
+// Initialize
+document.addEventListener('DOMContentLoaded', () => {
+    loadOpportunities();
+});
+
+// Search form submission
+searchForm.addEventListener('submit', (e) => {
+    e.preventDefault();
+    currentPage = 1;
+    loadOpportunities();
+});
+
+// Clear filters
+clearBtn.addEventListener('click', () => {
+    searchForm.reset();
+    currentPage = 1;
+    loadOpportunities();
+});
+
+// Sort change
+sortBy.addEventListener('change', () => {
+    sortOpportunities();
+    renderOpportunities();
+});
+
+// Pagination
+prevPage.addEventListener('click', () => {
+    if (currentPage > 1) {
+        currentPage--;
+        loadOpportunities();
+    }
+});
+
+nextPage.addEventListener('click', () => {
+    if (currentPage < totalPages) {
+        currentPage++;
+        loadOpportunities();
+    }
+});
+
+// Load opportunities from API
+async function loadOpportunities() {
+    // Show loading state
+    loadingState.classList.remove('hidden');
+    emptyState.classList.add('hidden');
+    opportunitiesGrid.innerHTML = '';
+    pagination.classList.add('hidden');
+    
+    // Get form data
+    const formData = new FormData(searchForm);
+    const params = new URLSearchParams();
+    
+    for (const [key, value] of formData.entries()) {
+        if (value) params.append(key, value);
+    }
+    params.append('page', currentPage);
+    
+    try {
+        const response = await fetch(`/api/opportunities/search?${params.toString()}`);
+        const data = await response.json();
+        
+        opportunities = data.opportunities || [];
+        totalPages = data.total_pages || 1;
+        
+        // Update UI
+        resultCount.textContent = data.total || 0;
+        
+        if (opportunities.length > 0) {
+            sortOpportunities();
+            renderOpportunities();
+            
+            // Show pagination if needed
+            if (totalPages > 1) {
+                pagination.classList.remove('hidden');
+                pageInfo.textContent = `Page ${currentPage} of ${totalPages}`;
+                prevPage.disabled = currentPage === 1;
+                nextPage.disabled = currentPage === totalPages;
+            }
+        } else {
+            emptyState.classList.remove('hidden');
+        }
+    } catch (error) {
+        console.error('Error loading opportunities:', error);
+        showToast('Failed to load opportunities. Please try again.');
+        emptyState.classList.remove('hidden');
+    } finally {
+        loadingState.classList.add('hidden');
+    }
+}
+
+// Sort opportunities
+function sortOpportunities() {
+    const sortValue = sortBy.value;
+    
+    opportunities.sort((a, b) => {
+        switch (sortValue) {
+            case 'deadline':
+                return (a.deadline || '9999-12-31').localeCompare(b.deadline || '9999-12-31');
+            case 'fit_score':
+                return (b.fit_score || 0) - (a.fit_score || 0);
+            case 'amount':
+                return (b.amount_max || 0) - (a.amount_max || 0);
+            case 'recent':
+                return (b.id || 0) - (a.id || 0);
+            default:
+                return 0;
+        }
+    });
+}
+
+// Render opportunities
+function renderOpportunities() {
+    opportunitiesGrid.innerHTML = opportunities.map(opp => createOpportunityCard(opp)).join('');
+}
+
+// Create opportunity card HTML
+function createOpportunityCard(opp) {
+    const deadline = opp.deadline ? new Date(opp.deadline).toLocaleDateString() : 'Rolling';
+    const amount = formatAmount(opp.amount_min, opp.amount_max);
+    const fitBadge = opp.fit_score ? getFitBadge(opp.fit_score) : '';
+    
+    return `
+        <div class="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow">
+            <div class="flex justify-between items-start mb-3">
+                <div class="flex-1">
+                    <h3 class="text-lg font-semibold mb-1">${escapeHtml(opp.title)}</h3>
+                    <p class="text-gray-600">${escapeHtml(opp.funder)}</p>
+                </div>
+                ${fitBadge}
+            </div>
+            
+            <p class="text-gray-700 mb-3 line-clamp-2">${escapeHtml(opp.description || 'No description available')}</p>
+            
+            <div class="flex flex-wrap gap-4 text-sm text-gray-600 mb-4">
+                <span class="flex items-center gap-1">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                    </svg>
+                    ${deadline}
+                </span>
+                <span class="flex items-center gap-1">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                    ${amount}
+                </span>
+                ${opp.source ? `
+                <span class="flex items-center gap-1">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                    ${escapeHtml(opp.source)}
+                </span>
+                ` : ''}
+            </div>
+            
+            ${opp.fit_reason ? `
+            <div class="bg-pink-50 rounded-lg p-3 mb-4">
+                <p class="text-sm text-gray-700">${escapeHtml(opp.fit_reason)}</p>
+            </div>
+            ` : ''}
+            
+            <div class="flex gap-2">
+                <button onclick="saveOpportunity(${opp.id})" class="px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium hover:bg-gray-50">
+                    Save
+                </button>
+                <button onclick="applyToOpportunity(${opp.id})" class="px-4 py-2 rounded-lg text-sm font-medium" style="background-color: var(--pink); color: var(--black)">
+                    Apply
+                </button>
+            </div>
+        </div>
+    `;
+}
+
+// Get fit score badge
+function getFitBadge(score) {
+    const colors = {
+        5: 'bg-green-100 text-green-800',
+        4: 'bg-blue-100 text-blue-800',
+        3: 'bg-yellow-100 text-yellow-800',
+        2: 'bg-orange-100 text-orange-800',
+        1: 'bg-red-100 text-red-800'
+    };
+    
+    return `
+        <span class="px-2 py-1 rounded-full text-xs font-medium ${colors[score] || 'bg-gray-100 text-gray-800'}">
+            Match: ${score}/5
+        </span>
+    `;
+}
+
+// Format amount
+function formatAmount(min, max) {
+    if (!min && !max) return 'Amount not specified';
+    if (min === max) return `$${min.toLocaleString()}`;
+    if (!min) return `Up to $${max.toLocaleString()}`;
+    if (!max) return `$${min.toLocaleString()}+`;
+    return `$${min.toLocaleString()} - $${max.toLocaleString()}`;
+}
+
+// Escape HTML
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text || '';
+    return div.innerHTML;
+}
+
+// Save opportunity
+async function saveOpportunity(id) {
+    const opp = opportunities.find(o => o.id === id);
+    if (!opp) return;
+    
+    try {
+        const response = await fetch('/api/opportunities/save', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(opp)
+        });
+        
+        if (response.ok) {
+            showToast('Opportunity saved to your library');
+        } else {
+            showToast('Failed to save opportunity');
+        }
+    } catch (error) {
+        console.error('Error saving opportunity:', error);
+        showToast('Failed to save opportunity');
+    }
+}
+
+// Apply to opportunity
+async function applyToOpportunity(id) {
+    const opp = opportunities.find(o => o.id === id);
+    if (!opp) return;
+    
+    try {
+        const response = await fetch('/api/opportunities/apply', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(opp)
+        });
+        
+        if (response.ok) {
+            showToast('Application started. Redirecting...');
+            setTimeout(() => {
+                window.location.href = '/applications';
+            }, 1500);
+        } else {
+            showToast('Failed to start application');
+        }
+    } catch (error) {
+        console.error('Error applying to opportunity:', error);
+        showToast('Failed to start application');
+    }
+}
+
+// Run discovery
+discoverBtn.addEventListener('click', async () => {
+    discoverBtn.disabled = true;
+    discoverBtn.textContent = 'Running Discovery...';
+    
+    try {
+        const response = await fetch('/api/scrape/run-now', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({
+                orgId: 1,
+                query: document.getElementById('searchInput').value
+            })
+        });
+        
+        const data = await response.json();
+        
+        if (response.ok) {
+            showToast(`Discovery complete! Found ${data.grants_found || 0} new opportunities`);
+            setTimeout(() => loadOpportunities(), 1500);
+        } else {
+            showToast('Discovery failed. Please try again.');
+        }
+    } catch (error) {
+        console.error('Error running discovery:', error);
+        showToast('Discovery failed. Please try again.');
+    } finally {
+        discoverBtn.disabled = false;
+        discoverBtn.textContent = 'Run Discovery';
+    }
+});
+
+// Show toast notification
+function showToast(message) {
+    const toast = document.getElementById('toast');
+    const toastMessage = document.getElementById('toastMessage');
+    
+    toastMessage.textContent = message;
+    toast.classList.remove('hidden');
+    
+    setTimeout(() => {
+        toast.classList.add('hidden');
+    }, 3000);
+}
+</script>
+
+<style>
+.line-clamp-2 {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+.animate-spin {
+    animation: spin 1s linear infinite;
+}
+</style>
+{% endblock %}

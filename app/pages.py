@@ -23,9 +23,8 @@ def dashboard():
 
 @pages.get("/opportunities")
 def opportunities():
-    org_id = 1
-    grants = Grant.query.order_by(Grant.created_at.desc()).limit(20).all()
-    return render_template("opportunities.html", active="opps", grants=grants, org_id=org_id)
+    # Use the new opportunities template with full filtering
+    return render_template("opportunities_new.html", active="opportunities")
 
 @pages.get("/saved")
 def saved():

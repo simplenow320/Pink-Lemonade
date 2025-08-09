@@ -52,8 +52,8 @@ def get_dashboard_metrics():
         active_grants = [g for g in grants if g.status not in ['won', 'declined', 'abandoned']]
         upcoming_deadlines = [
             g for g in active_grants 
-            if g.due_date and g.due_date > datetime.now().date() 
-            and g.due_date <= (datetime.now() + timedelta(days=30)).date()
+            if g.deadline and g.deadline > datetime.now().date() 
+            and g.deadline <= (datetime.now() + timedelta(days=30)).date()
         ]
         
         # Always return real data only - no mock/fake data allowed in any mode

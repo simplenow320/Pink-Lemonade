@@ -16,6 +16,94 @@ logger = logging.getLogger(__name__)
 
 bp = Blueprint('opportunities', __name__, url_prefix='/api')
 
+@bp.route('/opportunities/search', methods=['GET'])
+def search_opportunities():
+    """Search endpoint that returns simplified data from database"""
+    try:
+        # Get query parameters
+        search_query = request.args.get('search', '')
+        city = request.args.get('city', '')
+        focus_area = request.args.get('focus_area', '')
+        deadline_days = request.args.get('deadline_days', '')
+        source = request.args.get('source', '')
+        page = int(request.args.get('page', 1))
+        per_page = 20
+        
+        # Get grants from database
+        query = Grant.query.filter(Grant.status != 'abandoned')
+        
+        # Apply search filter
+        if search_query:
+            search_pattern = f'%{search_query}%'
+            query = query.filter(db.or_(
+                Grant.title.ilike(search_pattern),
+                Grant.funder.ilike(search_pattern),
+                Grant.eligibility.ilike(search_pattern)
+            ))
+        
+        # Apply city filter
+        if city:
+            query = query.filter(Grant.geography.ilike(f'%{city}%'))
+        
+        # Apply focus area filter
+        if focus_area:
+            query = query.filter(Grant.eligibility.ilike(f'%{focus_area}%'))
+        
+        # Apply deadline filter
+        if deadline_days:
+            cutoff_date = datetime.now().date() + timedelta(days=int(deadline_days))
+            query = query.filter(Grant.deadline <= cutoff_date)
+        
+        # Apply source filter
+        if source:
+            query = query.filter(Grant.source_name == source)
+        
+        # Order by deadline and created date
+        query = query.order_by(Grant.deadline.asc().nullslast(), Grant.created_at.desc())
+        
+        # Paginate
+        paginated = query.paginate(page=page, per_page=per_page, error_out=False)
+        
+        # Format results
+        opportunities = []
+        for grant in paginated.items:
+            opportunities.append({
+                'id': grant.id,
+                'title': grant.title,
+                'funder': grant.funder,
+                'description': grant.eligibility or '',
+                'amount_min': grant.amount_min,
+                'amount_max': grant.amount_max,
+                'deadline': grant.deadline.isoformat() if grant.deadline else None,
+                'source': grant.source_name,
+                'status': grant.status,
+                'fit_score': grant.match_score,
+                'fit_reason': grant.match_reason,
+                'location': grant.geography,
+                'focus_areas': grant.eligibility
+            })
+        
+        return jsonify({
+            'opportunities': opportunities,
+            'total': paginated.total,
+            'page': page,
+            'per_page': per_page,
+            'total_pages': paginated.pages,
+            'mode': 'live'
+        })
+        
+    except Exception as e:
+        logger.error(f"Error searching opportunities: {e}")
+        return jsonify({
+            'opportunities': [],
+            'total': 0,
+            'page': 1,
+            'per_page': 20,
+            'total_pages': 0,
+            'mode': 'live',
+            'error': str(e)
+        })
+
 @bp.route('/opportunities', methods=['GET'])
 def get_opportunities():
     """
@@ -175,18 +263,17 @@ def save_opportunity():
         
         # Create a new grant from the opportunity
         # This is a simplified version - you'd want to pass the full opportunity data
-        grant = Grant(
-            title=data.get('title', 'Grant Opportunity'),
-            funder=data.get('funder', 'Unknown'),
-            description=data.get('description', ''),
-            amount_min=data.get('amount_min', 0),
-            amount_max=data.get('amount_max', 0),
-            due_date=data.get('deadline'),
-            status='prospect',
-            org_id=org.id,
-            source_name=data.get('source', 'Opportunities'),
-            discovered_at=datetime.now()
-        )
+        grant = Grant()
+        grant.title = data.get('title', 'Grant Opportunity')
+        grant.funder = data.get('funder', 'Unknown')
+        grant.description = data.get('description', '')
+        grant.amount_min = data.get('amount_min', 0)
+        grant.amount_max = data.get('amount_max', 0)
+        grant.deadline = data.get('deadline')
+        grant.status = 'prospect'
+        grant.org_id = org.id
+        grant.source_name = data.get('source', 'Opportunities')
+        grant.created_at = datetime.now()
         
         db.session.add(grant)
         db.session.commit()
@@ -214,18 +301,17 @@ def apply_to_opportunity():
             return jsonify({'error': 'Organization not found'}), 404
         
         # First save as grant
-        grant = Grant(
-            title=data.get('title', 'Grant Opportunity'),
-            funder=data.get('funder', 'Unknown'),
-            description=data.get('description', ''),
-            amount_min=data.get('amount_min', 0),
-            amount_max=data.get('amount_max', 0),
-            due_date=data.get('deadline'),
-            status='drafting',  # Set to drafting for applications
-            org_id=org.id,
-            source_name=data.get('source', 'Opportunities'),
-            discovered_at=datetime.now()
-        )
+        grant = Grant()
+        grant.title = data.get('title', 'Grant Opportunity')
+        grant.funder = data.get('funder', 'Unknown')
+        grant.description = data.get('description', '')
+        grant.amount_min = data.get('amount_min', 0)
+        grant.amount_max = data.get('amount_max', 0)
+        grant.deadline = data.get('deadline')
+        grant.status = 'drafting'  # Set to drafting for applications
+        grant.org_id = org.id
+        grant.source_name = data.get('source', 'Opportunities')
+        grant.created_at = datetime.now()
         
         db.session.add(grant)
         db.session.commit()
