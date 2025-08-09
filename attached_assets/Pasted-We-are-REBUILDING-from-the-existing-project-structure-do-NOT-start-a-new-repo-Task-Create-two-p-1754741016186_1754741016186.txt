@@ -1,0 +1,105 @@
+We are REBUILDING from the existing project structure — do NOT start a new repo.
+
+Task:
+Create two pages with shared components and API-ready logic:
+1) /grants (Saved Grants)
+2) /applications (My Applications)
+
+Design & UX:
+- Keep the minimalist, clean, modern, muted matte look established.
+- DO NOT duplicate the logo or brand name anywhere new. Follow prior guardrails.
+- Consistent spacing, calm pink accents, black text, generous white space.
+- Mobile-first responsive layout.
+
+Core Features (both pages share components):
+- List view with: Title, Funder, Amount, Deadline, Fit Score (placeholder), Status, Tags, Last Updated.
+- Filters: Status, Deadline window (30/60/90), Tags, City/Geography.
+- Sort: Deadline, Amount, Last Updated, Fit Score.
+- Search: Title/Funder text search.
+- Pagination: 10 per page with next/prev.
+- Bulk actions: Add Tag, Update Status (optional if simple to implement cleanly).
+
+Grant Detail Drawer/Modal:
+- Open item shows:
+  - Overview: Title, Link, Funder, Amounts, Deadline, Geography, Eligibility (long text area).
+  - Status timeline: Idea → Researching → Drafting → Submitted → Awarded → Declined (click to advance or select).
+  - Notes: Rich text (minimal toolbar). Timestamp + author.
+  - Contacts: Name, Role, Email, Phone, Notes.
+  - Attachments: Upload placeholder (UI only) with filename, size, notes. Do NOT implement file storage; show mock.
+  - Activity log: Created, status changes, important edits.
+
+Data Model (front-end types; adapt to existing backend fields):
+type GrantRecord = {
+  id: string
+  orgId: string
+  title: string
+  funder?: string
+  link?: string
+  amountMin?: number
+  amountMax?: number
+  deadline?: string // ISO
+  geography?: string
+  eligibility?: string
+  tags?: string[]
+  status: 'idea'|'researching'|'drafting'|'submitted'|'awarded'|'declined'
+  fitScore?: number // 1-5 (placeholder)
+  contacts?: { name: string; role?: string; email?: string; phone?: string; notes?: string }[]
+  notes?: { id: string; body: string; author?: string; createdAt: string }[]
+  attachments?: { id: string; name: string; size?: number; note?: string }[]
+  updatedAt: string
+  createdAt: string
+}
+
+API Integration Strategy:
+- First, try to use existing backend endpoints if present (Flask/SQLAlchemy).
+- If endpoints are missing, create thin API routes that match the above schema:
+  GET /api/grants
+  POST /api/grants
+  GET /api/grants/:id
+  PATCH /api/grants/:id
+  DELETE /api/grants/:id
+  POST /api/grants/:id/notes
+  POST /api/grants/:id/contacts
+  POST /api/grants/:id/attachments (placeholder; do not store files yet)
+- All routes must be org-scoped (require orgId from session or header).
+- Include simple server-side validation and return JSON.
+
+Mock Data Fallback (required):
+- If backend is not ready, use a local mock provider (e.g., /web/src/lib/mocks/grants.json) and a data service that can switch between MOCK and API via an env flag.
+- Include at least 12 sample records to exercise pagination, filters, and statuses.
+- Provide one example per status to validate the status flow UI.
+
+UI Components:
+- GrantsTable (list with filters, search, sort, pagination)
+- GrantDetailPanel (drawer/modal with tabs: Overview, Notes, Contacts, Files, Activity)
+- StatusPill and StatusTimeline components
+- Tag input with typeahead (local list)
+- ConfirmDialog for delete
+
+Routing:
+- /grants shows all saved opportunities (list + detail panel).
+- /applications shows items where status ∈ { 'drafting','submitted','awarded','declined' } by default (filter preset).
+
+Config:
+- Create web/src/config/grants-config.json for labels, status colors, and default filters.
+- Ensure text labels are editable via config.
+
+Testing / Debug / Verify (MANDATORY):
+1) TEST:
+   - Create grant, edit fields, update status through each step, add note, add contact, attach mock file, delete grant.
+   - Exercise filters, search, sort, and pagination.
+   - Navigate between /grants and /applications and ensure presets work.
+2) DEBUG:
+   - Fix any console errors, 404s, failed fetches, or React key warnings.
+   - Ensure date parsing and formatting is consistent.
+3) VERIFY:
+   - Mobile and desktop layouts look clean and aligned to brand tokens.
+   - No duplicate logo or brand name appears.
+   - Switching MOCK ↔ API mode works via env flag.
+   - If API mode is enabled, all requests include org scoping and succeed.
+   - Provide a one-paragraph summary of files changed and how to switch between MOCK and API.
+
+Deliverables:
+- Fully working Saved Grants and My Applications pages with detail panel.
+- Mock data and toggle.
+- Notes file: web/docs/grants-pages-notes.md describing endpoints, mock toggle, and extensibility.

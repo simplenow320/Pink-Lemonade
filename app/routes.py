@@ -17,6 +17,11 @@ def landing():
     """Landing page for new visitors"""
     return render_template('landing.html')
 
+@bp.route('/foundation-directory')
+def foundation_directory():
+    """Foundation directory page"""
+    return render_template('foundation-directory.html')
+
 @bp.route('/scraper')
 def scraper():
     """Render the scraper page"""
