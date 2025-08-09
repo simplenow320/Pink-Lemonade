@@ -1,16 +1,44 @@
 {% extends "base.html" %}
-{% block title %}Home · Pink Lemonade{% endblock %}
+{% block title %}Pink Lemonade · AI-Powered Grant Management{% endblock %}
 {% block content %}
-  <section class="card">
-    <h1>Your funding should not feel like a full time job</h1>
-    <p>We help nonprofits discover track and secure grants with AI powered tools so you can focus on impact.</p>
-    <a class="btn btn-primary" href="/opportunities">Find funding now</a>
-    <a class="btn" href="/dashboard" style="margin-left:8px">See a sample dashboard</a>
-  </section>
-  <section class="grid grid-2" style="margin-top:24px">
-    <div class="card"><h3>Missed deadlines</h3><p>See all due dates in one place.</p></div>
-    <div class="card"><h3>Bad fit grants</h3><p>AI scores alignment with your mission.</p></div>
-    <div class="card"><h3>Too many tabs</h3><p>Save opportunities with notes and contacts.</p></div>
-    <div class="card"><h3>No clear pipeline</h3><p>Track status from idea to submitted to awarded.</p></div>
-  </section>
+  <div style="min-height:100vh;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;padding:40px 20px;background:#FAFAFA">
+    
+    <!-- Large Pink Lemonade Logo -->
+    <div style="margin-bottom:60px">
+      <svg width="400" height="120" viewBox="0 0 400 120" style="max-width:100%;height:auto">
+        <!-- Pink Lemon Slice -->
+        <circle cx="60" cy="60" r="45" fill="#F8D7DA" stroke="#E91E63" stroke-width="4"/>
+        <g stroke="#E91E63" stroke-width="2">
+          <line x1="60" y1="15" x2="60" y2="105"/>
+          <line x1="15" y1="60" x2="105" y2="60"/>
+          <line x1="28.7" y1="28.7" x2="91.3" y2="91.3"/>
+          <line x1="91.3" y1="28.7" x2="28.7" y2="91.3"/>
+        </g>
+        
+        <!-- "pink" text -->
+        <text x="140" y="50" font-family="Arial, sans-serif" font-size="36" font-weight="bold" fill="#E91E63">pink</text>
+        
+        <!-- "lemonade" text -->
+        <text x="140" y="85" font-family="Arial, sans-serif" font-size="36" font-weight="bold" fill="#E91E63">lemonade</text>
+      </svg>
+    </div>
+
+    <!-- Main Headline -->
+    <h1 style="font-size:3.5rem;font-weight:900;color:#000;margin:0 0 20px 0;line-height:1.1;max-width:800px">
+      Your Funding<br>
+      Shouldn't Feel Like a<br>
+      Full-Time Job
+    </h1>
+
+    <!-- Subheading -->
+    <p style="font-size:1.4rem;color:#666;margin:0 0 50px 0;max-width:600px;line-height:1.5">
+      We help nonprofits discover, track, and secure grants with AI-powered tools that simplify the entire funding process—so you can focus on your mission, not paperwork.
+    </p>
+
+    <!-- CTA Button -->
+    <a href="/opportunities" class="btn btn-primary" style="font-size:1.3rem;padding:18px 36px;border-radius:12px;text-decoration:none;display:inline-block">
+      Find Funding Now
+    </a>
+
+  </div>
 {% endblock %}
