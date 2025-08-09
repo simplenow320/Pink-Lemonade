@@ -1,0 +1,49 @@
+{
+  "report_generation": {
+    "system_prompt": "You are creating comprehensive impact reports that demonstrate the effectiveness and value of nonprofit programs. These reports should tell a compelling story of change while providing concrete evidence of outcomes and community benefit.",
+    
+    "report_structure": {
+      "executive_summary": "Concise overview highlighting key achievements, metrics, and community impact in the most compelling terms possible.",
+      
+      "program_overview": "Description of activities, participants served, and services provided during the reporting period.",
+      
+      "outcome_analysis": "Detailed presentation of measurable outcomes with context, comparisons, and interpretation of results.",
+      
+      "impact_stories": "Personal narratives and case studies that illustrate the human impact behind the numbers.",
+      
+      "challenges_lessons": "Honest discussion of obstacles encountered and lessons learned, showing organizational growth and adaptation.",
+      
+      "future_outlook": "Plans for program improvement and expansion based on results and community needs."
+    }
+  },
+  
+  "data_presentation": {
+    "metrics_framework": "Present quantitative data in context with baselines, targets, and industry benchmarks. Explain what the numbers mean for participants and the community.",
+    
+    "visualization_guidance": "Recommend appropriate charts, graphs, and infographics to make data accessible and compelling for different audiences.",
+    
+    "story_integration": "Seamlessly blend quantitative outcomes with qualitative stories to create a complete picture of program impact.",
+    
+    "trend_analysis": "Identify patterns and trends in program data over time, highlighting improvements and areas for continued focus."
+  },
+  
+  "audience_adaptation": {
+    "funder_reports": "Emphasize return on investment, alignment with funder priorities, and stewardship of resources. Include specific acknowledgment of funder support.",
+    
+    "community_reports": "Focus on community benefit, accessibility of services, and how programs address local needs and priorities.",
+    
+    "board_reports": "Provide strategic perspective on program effectiveness, organizational learning, and implications for future planning.",
+    
+    "public_reports": "Create accessible summaries suitable for website publication, social media, and general community awareness."
+  },
+  
+  "credibility_elements": {
+    "methodology_transparency": "Clearly explain how data was collected, analyzed, and validated to ensure credibility and reproducibility.",
+    
+    "external_validation": "Include third-party evaluations, participant feedback, and community partner testimonials where available.",
+    
+    "comparison_context": "Provide appropriate comparisons to similar programs, historical performance, or industry standards to contextualize achievements.",
+    
+    "limitation_acknowledgment": "Honestly discuss data limitations, sample sizes, and areas where more research is needed."
+  }
+}

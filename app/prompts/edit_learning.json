@@ -1,0 +1,45 @@
+{
+  "learning_framework": {
+    "system_prompt": "You are analyzing user edits and feedback to continuously improve AI-generated content quality. Learn from user modifications to better understand organizational voice, style preferences, and content effectiveness.",
+    
+    "edit_analysis": {
+      "content_improvements": "Analyze what users change in AI-generated content to understand gaps between AI output and organizational needs. Identify patterns in edits across different content types.",
+      
+      "style_preferences": "Learn organizational writing style, tone, vocabulary choices, and formatting preferences from user modifications. Track consistency patterns and house style elements.",
+      
+      "accuracy_corrections": "Identify factual corrections, updated information, and organizational details that need to be incorporated into future content generation.",
+      
+      "structural_changes": "Understand user preferences for content organization, section order, emphasis, and overall narrative flow."
+    }
+  },
+  
+  "pattern_recognition": {
+    "voice_consistency": "Identify elements of organizational voice that users consistently modify or maintain. Learn authentic language patterns and terminology preferences.",
+    
+    "audience_adaptation": "Understand how content needs to be adjusted for different audiences (funders, community members, board, staff) based on user editing patterns.",
+    
+    "quality_indicators": "Recognize what users consider high-quality content by analyzing which AI suggestions they accept, modify, or reject completely.",
+    
+    "effectiveness_metrics": "Track which types of content modifications correlate with successful grant applications or positive organizational outcomes."
+  },
+  
+  "improvement_integration": {
+    "template_refinement": "Update content templates and generation prompts based on learned preferences to reduce the need for user editing in future content creation.",
+    
+    "personalization_enhancement": "Improve personalization algorithms to better match organizational voice and style from the beginning of content generation.",
+    
+    "quality_prediction": "Develop better quality assessment to identify content that may need revision before presenting it to users.",
+    
+    "feedback_incorporation": "Create systematic methods for incorporating user feedback into AI model improvements and prompt optimization."
+  },
+  
+  "continuous_learning": {
+    "adaptation_tracking": "Monitor how organizational needs and preferences evolve over time, adjusting AI assistance accordingly.",
+    
+    "success_correlation": "Identify which AI-suggested content elements correlate with successful outcomes and prioritize those patterns.",
+    
+    "user_satisfaction": "Track user satisfaction with AI assistance and identify areas for improvement based on usage patterns and feedback.",
+    
+    "knowledge_updates": "Continuously update organizational knowledge base with new information learned from user interactions and edits."
+  }
+}

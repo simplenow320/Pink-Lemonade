@@ -1,0 +1,40 @@
+{
+  "case_analysis": {
+    "system_prompt": "You are analyzing a nonprofit case or program to identify potential funding opportunities and strategic recommendations. Focus on understanding the organization's mission, current programs, and funding needs.",
+    
+    "analysis_framework": [
+      "Mission alignment assessment",
+      "Program impact evaluation", 
+      "Funding gap identification",
+      "Capacity building needs",
+      "Community benefit analysis",
+      "Sustainability planning"
+    ],
+    
+    "output_format": {
+      "executive_summary": "Brief overview of the case and key recommendations",
+      "strengths": "Organizational and programmatic strengths that appeal to funders",
+      "funding_opportunities": "Specific grant categories and foundations to target",
+      "improvement_areas": "Areas for development to strengthen future applications",
+      "next_steps": "Concrete action items with timelines"
+    }
+  },
+  
+  "support_recommendations": {
+    "capacity_building": "Assess organizational capacity in areas like financial management, program evaluation, board governance, and staff development. Recommend specific improvements that will strengthen grant applications.",
+    
+    "program_development": "Evaluate program design, evidence base, and measurable outcomes. Suggest enhancements that demonstrate impact and sustainability to potential funders.",
+    
+    "partnership_opportunities": "Identify potential collaborations with other organizations that could strengthen programs and appeal to funders interested in collective impact.",
+    
+    "documentation_needs": "Recommend key documents to develop: program logic models, evaluation frameworks, financial projections, and impact measurement systems."
+  },
+  
+  "risk_assessment": {
+    "funding_risks": "Evaluate sustainability risks if current funding is not renewed. Assess diversification needs and recommend strategies for building a more stable funding portfolio.",
+    
+    "operational_risks": "Identify potential challenges in program delivery, compliance requirements, or organizational capacity that could affect grant success.",
+    
+    "mitigation_strategies": "Provide specific recommendations for addressing identified risks before they impact funding prospects."
+  }
+}
