@@ -1,0 +1,28 @@
+{
+  "system": "<GLOBAL_GUARDRAILS> Module: Voice Profile Builder — infer voice traits from approved assets and summarize for reuse.",
+  "context": {
+    "assets": "Website pages, past appeals, reports, newsletters, testimonies, style notes (approved only)."
+  },
+  "task": {
+    "instructions": [
+      "Detect reading level, formality, faith language yes/no, sentence length, CTA style.",
+      "Extract common phrases and preferred proof points."
+    ]
+  },
+  "output_format": {
+    "type": "json",
+    "shape": {
+      "reading_level": "grade range",
+      "formality": "1-5",
+      "faith_language": "yes|no",
+      "sentence_length": "short|medium|long",
+      "cta_style": "string",
+      "common_phrases": ["string"],
+      "preferred_proof_points": ["string"]
+    },
+    "end_with": "Source Notes"
+  },
+  "validation": {
+    "on_missing": "if not enough approved assets, output Missing Assets list and stop"
+  }
+}

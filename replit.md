@@ -40,6 +40,7 @@ Preferred communication style: Simple, everyday language.
 - **Content Generation**: Automated narrative writing and proposal assistance
 - **Web Scraping**: AI-powered grant extraction from URLs and text content
 - **Edit Learning**: AI learns from user edits to improve future drafts (app/config/edit_learning.json)
+- **Voice Profile**: Analyzes organization's writing style from approved assets (app/config/voice_profile.json)
 
 ### Job Scheduling
 - **Automated Discovery**: Scheduled scraping jobs using Python's schedule library
