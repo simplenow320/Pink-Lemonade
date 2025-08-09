@@ -100,24 +100,8 @@ def scrape_source(source):
             logger.error(f"Unexpected error when scraping {source.name}: {str(e)}")
             return grants
         
-        # Use direct URL extraction as the most reliable method
-        try:
-            grant_data = extract_grant_info_from_url(source.url)
-            
-            # Validate the grant data and add it to the list
-            if grant_data.get('title') and grant_data.get('funder'):
-                # Make sure the source name is set as funder if not detected
-                if grant_data.get('funder') == "Unknown" and source.name:
-                    grant_data['funder'] = source.name
-                
-                grants.append(grant_data)
-                logger.info(f"Extracted grant from URL: {grant_data.get('title')}")
-                
-            else:
-                logger.warning(f"Failed to extract grant info from {source.url}")
-        except Exception as e:
-            logger.warning(f"Error extracting grant from URL {source.url}: {str(e)}")
-            # Continue with other extraction methods
+        # Skip direct URL extraction for now - implement with AI service when needed
+        grant_data = None
         
         # If we didn't get a result from direct URL extraction, try other methods
         if not grants:
@@ -130,23 +114,8 @@ def scrape_source(source):
                     if "grant" in text.lower() or "fund" in text.lower() or "nonprofit" in text.lower():
                         logger.info(f"Found potential grant content on {source.name}, extracting information...")
                         
-                        try:
-                            grant_data = extract_grant_info(text)
-                            
-                            # Ensure the funder name is set correctly if not detected
-                            if (not grant_data.get('funder') or grant_data.get('funder') == "Unknown") and source.name:
-                                grant_data['funder'] = source.name
-                                
-                            # Ensure website is set
-                            if not grant_data.get('website'):
-                                grant_data['website'] = source.url
-                            
-                            # Validate that we have at least title and funder
-                            if grant_data.get('title') and grant_data.get('funder'):
-                                grants.append(grant_data)
-                                logger.info(f"Extracted grant using AI: {grant_data.get('title')}")
-                        except Exception as ai_extract_error:
-                            logger.warning(f"AI extraction error for {source.name}: {str(ai_extract_error)}")
+                        # AI extraction placeholder - implement with AI service when needed
+                        logger.info(f"AI extraction not yet implemented for {source.name}")
             except Exception as e:
                 logger.warning(f"Content extraction failed for {source.name}: {str(e)}")
         
@@ -214,24 +183,8 @@ def scrape_source(source):
                         text = main_content.get_text(separator=' ', strip=True)
                         
                         if text and len(text) < 15000:  # Limit to manageable text size
-                            # Use AI to extract grants from the text
-                            try:
-                                grant_data = extract_grant_info(text)
-                                
-                                # Ensure the funder name is set correctly if not detected
-                                if (not grant_data.get('funder') or grant_data.get('funder') == "Unknown") and source.name:
-                                    grant_data['funder'] = source.name
-                                    
-                                # Ensure website is set
-                                if not grant_data.get('website'):
-                                    grant_data['website'] = source.url
-                                
-                                # Validate that we have at least title and funder
-                                if grant_data.get('title') and grant_data.get('funder'):
-                                    grants.append(grant_data)
-                                    logger.info(f"Extracted grant using AI on main content: {grant_data.get('title')}")
-                            except Exception as e:
-                                logger.warning(f"AI extraction on main content failed: {str(e)}")
+                            # AI extraction placeholder - implement with AI service when needed
+                            logger.info(f"AI main content extraction not yet implemented for {source.name}")
             
             except Exception as e:
                 logger.warning(f"HTML parsing failed for {source.name}: {str(e)}")
@@ -518,26 +471,17 @@ def run_scraping_job(include_web_search=True):
                 logger.info(f"Duplicate grant skipped: {grant_data.get('title')} from {grant_data.get('funder')}")
                 continue
             
-            # Use OpenAI API to get a real match score based on organization profile
-            try:
-                # Add organization data to grant for match analysis
-                match_result = analyze_grant_match(grant_data, org_data)
-                grant_data['match_score'] = match_result.get('score', 50)
-                grant_data['match_explanation'] = match_result.get('explanation', 
-                                                  f"The grant aligns with {grant_data.get('match_score', 50)}% of your organization's focus areas and requirements.")
-            except Exception as e:
-                logger.warning(f"Error getting match score: {str(e)}")
-                # Fallback to estimating match based on keyword overlap
-                org_keywords_set = set([k.lower() for k in org_keywords])
-                grant_keywords = set([grant_data.get('title', '').lower(), 
-                                    grant_data.get('funder', '').lower()])
-                if 'focus_areas' in grant_data and isinstance(grant_data['focus_areas'], list):
-                    grant_keywords.update([area.lower() for area in grant_data['focus_areas']])
-                
-                overlap = org_keywords_set.intersection(grant_keywords)
-                match_score = min(95, max(30, len(overlap) * 10))
-                grant_data['match_score'] = match_score
-                grant_data['match_explanation'] = f"Based on keyword matching, this grant has {len(overlap)} keyword overlaps with your organization's profile."
+            # Calculate match score based on keyword overlap
+            org_keywords_set = set([k.lower() for k in org_keywords])
+            grant_keywords = set([grant_data.get('title', '').lower(), 
+                                grant_data.get('funder', '').lower()])
+            if 'focus_areas' in grant_data and isinstance(grant_data['focus_areas'], list):
+                grant_keywords.update([area.lower() for area in grant_data['focus_areas']])
+            
+            overlap = org_keywords_set.intersection(grant_keywords)
+            match_score = min(95, max(30, len(overlap) * 10))
+            grant_data['match_score'] = match_score
+            grant_data['match_explanation'] = f"Based on keyword matching, this grant has {len(overlap)} keyword overlaps with your organization's profile."
             
             # Only add grants with match score above threshold (30%)
             if grant_data.get('match_score', 0) >= 30:
@@ -567,47 +511,63 @@ def run_scraping_job(include_web_search=True):
                             db.session.commit()
                         source_id = web_source.id
                     
-                    # Create new grant
-                    new_grant = Grant()
-                    new_grant.title = grant_data.get('title')
-                    new_grant.funder = grant_data.get('funder')
-                    new_grant.description = grant_data.get('description', '')
-                    new_grant.amount = grant_data.get('amount')
-                    new_grant.due_date = grant_data.get('due_date')
-                    new_grant.eligibility = grant_data.get('eligibility', '')
-                    new_grant.website = grant_data.get('website', '')
-                    new_grant.status = "Not Started"
-                    new_grant.match_score = grant_data.get('match_score', 0)
-                    new_grant.match_explanation = grant_data.get('match_explanation', '')
-                    new_grant.focus_areas = grant_data.get('focus_areas', [])
-                    new_grant.contact_info = grant_data.get('contact_info', '')
+                    # Prepare grant record for upsert_grant function
+                    grant_record = {
+                        'title': grant_data.get('title'),
+                        'funder': grant_data.get('funder'),
+                        'link': grant_data.get('website', ''),
+                        'deadline': grant_data.get('due_date'),  # Should be in ISO format
+                        'amount_min': None,
+                        'amount_max': None,
+                        'geography': grant_data.get('geography'),
+                        'eligibility': grant_data.get('eligibility', ''),
+                        'source_name': grant_data.get('funder'),
+                        'source_url': grant_data.get('website', '')
+                    }
                     
-                    # Add enhanced contact and application details
-                    new_grant.contact_name = grant_data.get('contact_name', '')
-                    new_grant.contact_email = grant_data.get('contact_email', '')
-                    new_grant.contact_phone = grant_data.get('contact_phone', '')
-                    new_grant.submission_url = grant_data.get('submission_url', '')
-                    new_grant.application_process = grant_data.get('application_process', '')
-                    new_grant.grant_cycle = grant_data.get('grant_cycle', '')
+                    # Parse amount if available
+                    if grant_data.get('amount'):
+                        amount_str = str(grant_data.get('amount'))
+                        # Try to extract numeric values
+                        import re
+                        amounts = re.findall(r'\$?(\d+(?:,\d+)*(?:\.\d+)?)', amount_str.replace(',', ''))
+                        if amounts:
+                            try:
+                                amount_val = int(float(amounts[0].replace(',', '')))
+                                if 'up to' in amount_str.lower() or 'maximum' in amount_str.lower():
+                                    grant_record['amount_max'] = amount_val
+                                elif 'minimum' in amount_str.lower() or 'at least' in amount_str.lower():
+                                    grant_record['amount_min'] = amount_val
+                                else:
+                                    grant_record['amount_max'] = amount_val
+                            except (ValueError, IndexError):
+                                pass
                     
-                    new_grant.is_scraped = True
-                    new_grant.source_id = source_id
+                    # Get org_id for the grant
+                    org_id = org.id if org else None
                     
-                    # Add the new search-related fields
-                    new_grant.search_query = grant_data.get('search_query', '')
-                    new_grant.discovery_method = grant_data.get('discovery_method', 'manual')
+                    # Use the new upsert_grant function
+                    new_grant = upsert_grant(grant_record, org_id=org_id)
                     
-                    db.session.add(new_grant)
-                    db.session.commit()
-                    
-                    result["grants_added"] += 1
-                    result["new_grants"].append({
-                        "id": new_grant.id,
-                        "title": new_grant.title,
-                        "funder": new_grant.funder,
-                        "match_score": new_grant.match_score
-                    })
-                    logger.info(f"Added new grant: {new_grant.title} from {new_grant.funder}")
+                    if new_grant:
+                        # Update additional fields not handled by upsert_grant
+                        try:
+                            new_grant.match_score = grant_data.get('match_score', 0)
+                            new_grant.match_reason = grant_data.get('match_explanation', '')
+                            db.session.commit()
+                        except Exception as e:
+                            logger.warning(f"Could not update match fields: {e}")
+                        
+                        result["grants_added"] += 1
+                        result["new_grants"].append({
+                            "id": new_grant.id,
+                            "title": new_grant.title,
+                            "funder": new_grant.funder,
+                            "match_score": new_grant.match_score
+                        })
+                        logger.info(f"Added/updated grant: {new_grant.title} from {new_grant.funder}")
+                    else:
+                        logger.error(f"Failed to save grant: {grant_data.get('title')}")
                 except Exception as e:
                     logger.error(f"Error saving grant {grant_data.get('title')}: {str(e)}")
                     continue
@@ -658,10 +618,66 @@ def run_scraping_job(include_web_search=True):
         return result
 
 
+def upsert_grant(record: dict, org_id: int | None = None) -> Grant | None:
+    """
+    record expects keys: title, funder, link, deadline (ISO), amount_min, amount_max, source_name, source_url
+    """
+    try:
+        # normalize deadline
+        deadline = None
+        if record.get("deadline"):
+            deadline = datetime.fromisoformat(record["deadline"]).date()
+
+        # dedupe: title + funder + deadline
+        from sqlalchemy import and_
+        existing = Grant.query.filter(
+            and_(Grant.title == record["title"],
+                 Grant.funder == record.get("funder"),
+                 Grant.deadline == deadline)
+        ).first()
+
+        if existing:
+            # update minimal fields
+            existing.amount_min = record.get("amount_min")
+            existing.amount_max = record.get("amount_max")
+            existing.source_name = record.get("source_name")
+            existing.source_url = record.get("source_url")
+            existing.link = record.get("link")
+            db.session.commit()
+            return existing
+
+        g = Grant(
+            org_id=org_id,
+            title=record["title"],
+            funder=record.get("funder"),
+            link=record.get("link"),
+            amount_min=record.get("amount_min"),
+            amount_max=record.get("amount_max"),
+            deadline=deadline,
+            geography=record.get("geography"),
+            eligibility=record.get("eligibility"),
+            source_name=record.get("source_name"),
+            source_url=record.get("source_url"),
+            status="idea"
+        )
+        db.session.add(g)
+        db.session.commit()
+        return g
+    except Exception as e:
+        db.session.rollback()
+        logger.exception("Grant save failed", extra={"record": record})
+        return None
+
+
 def scheduled_scraping_job():
     """
     Wrapper function for scheduled scraping job
     """
+    from app.services.mode import is_live
+    if not is_live():
+        logger.info("Skipping scheduled scraping in DEMO mode.")
+        return
+    
     logger.info("Starting scheduled scraping job")
     result = run_scraping_job(include_web_search=True)
     logger.info(f"Scheduled scraping job completed with status: {result.get('status')}")
