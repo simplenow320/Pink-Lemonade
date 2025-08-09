@@ -57,6 +57,12 @@ Preferred communication style: Simple, everyday language.
 - **PostgreSQL**: Primary database for production deployments
 - **SQLite**: Development and testing database
 
+### Live Data Sources (Integrated August 2025)
+- **Grants.gov REST API**: Live federal grant opportunities with 100 calls/hour limit
+- **Federal Register API**: Government NOFOs and funding notices with 1000 calls/hour limit
+- **GovInfo API**: Federal document search with 1000 calls/hour limit
+- **Philanthropy News Digest**: RSS-based foundation opportunities (custom XML parser)
+
 ### Frontend Libraries
 - **React Ecosystem**: React 18, React Router, React Scripts
 - **UI Components**: Chart.js, Framer Motion for animations

@@ -143,6 +143,18 @@ class APIManager:
             logger.error(f"Error fetching from {source_name}: {e}")
             return self._get_mock_grants(source_name, params)
     
+    def get_enabled_sources(self) -> Dict[str, Dict]:
+        """Get all enabled sources with their configurations"""
+        return self.sources
+    
+    def search_grants(self, source_name: str, params: Optional[Dict] = None) -> List[Dict]:
+        """Search grants from a specific source - alias for get_grants_from_source"""
+        return self.get_grants_from_source(source_name, params)
+    
+    def _get_current_timestamp(self) -> str:
+        """Get current ISO timestamp"""
+        return datetime.now().isoformat()
+    
     def search_opportunities(self, query: str, filters: Optional[Dict] = None) -> List[Dict]:
         """
         Search for grant opportunities across all enabled sources
@@ -259,29 +271,38 @@ class APIManager:
         Fetch grants from Philanthropy News Digest RSS
         """
         try:
-            # Try to import feedparser, fall back to mock data if not available
-            try:
-                import feedparser
-                
-                base_url = self.sources['philanthropy_news']['base_url']
-                feed = feedparser.parse(base_url)
+            # Note: feedparser dependency not available - using alternative approach
+            base_url = self.sources['philanthropy_news']['base_url']
+            
+            # Simple RSS parsing without feedparser
+            response = requests.get(base_url, timeout=10)
+            if response.status_code == 200:
+                # Basic RSS parsing - extract title and link from XML
+                import xml.etree.ElementTree as ET
+                root = ET.fromstring(response.content)
                 
                 grants = []
-                for entry in feed.entries[:params.get('limit', 25)]:
-                    # Parse grant info from RSS entry
+                items = root.findall('.//item')[:params.get('limit', 25)]
+                
+                for item in items:
+                    title = item.find('title')
+                    link = item.find('link')
+                    description = item.find('description')
+                    pub_date = item.find('pubDate')
+                    
                     grant = self._standardize_grant({
-                        'title': entry.get('title'),
-                        'description': entry.get('summary'),
-                        'link': entry.get('link'),
-                        'deadline': entry.get('published'),
+                        'title': title.text if title is not None else 'Grant Opportunity',
+                        'description': description.text if description is not None else '',
+                        'link': link.text if link is not None else '',
+                        'deadline': pub_date.text if pub_date is not None else '',
                         'source': 'Philanthropy News Digest'
                     })
                     grants.append(grant)
                 
                 return grants
-            except ImportError:
-                logger.warning("feedparser not installed, using mock data for Philanthropy News")
-                return self._get_mock_grants('philanthropy_news', params)
+            else:
+                logger.warning(f"Failed to fetch RSS feed: {response.status_code}")
+                return []
             
         except Exception as e:
             logger.error(f"Error fetching from Philanthropy News: {e}")

@@ -52,7 +52,106 @@ The API Manager is a centralized service that handles all external data source i
 - **Michigan Portal**: Mock data (placeholder for future integration)
 - **Georgia Portal**: Mock data (placeholder for future integration)
 
+### Data Mode Configuration
+
+The API Manager supports two operational modes:
+
+#### LIVE Mode (`APP_DATA_MODE=LIVE`)
+- Connects to real external APIs
+- Returns actual grant data from live sources
+- Shows "N/A" in dashboard when no data exists
+- Rate limiting and caching apply to real API calls
+
+#### MOCK Mode (`APP_DATA_MODE=MOCK`)
+- Falls back to demonstration data
+- Shows DEMO badge across all pages
+- Provides consistent test experience
+- No external API calls made
+
+### Setting Data Mode
+
+```bash
+# For production with live data
+export APP_DATA_MODE=LIVE
+
+# For development/demos with mock data
+export APP_DATA_MODE=MOCK
+```
+
 ## API Usage
+
+### Discovery Endpoints
+
+#### Get Available Sources
+```
+GET /api/discovery/sources
+```
+Returns list of all enabled discovery sources with status information.
+
+#### Search Opportunities
+```
+GET /api/discovery/search?query=nonprofit&limit=25&source=grants_gov
+```
+Search for grants across enabled sources. Parameters:
+- `query`: Search terms (default: "nonprofit grant")
+- `limit`: Number of results (default: 25)  
+- `source`: Optional specific source to search
+
+#### Run Discovery
+```
+POST /api/discovery/run
+```
+Runs discovery across all sources with broad search terms for new opportunities.
+
+#### Discovery Status
+```
+GET /api/discovery/status
+```
+Tests connectivity to all enabled sources and reports status.
+
+### Dashboard Integration
+
+#### Get Metrics
+```
+GET /api/dashboard/metrics
+```
+Returns dashboard KPIs computed from real saved grants in LIVE mode, demo values in MOCK mode.
+
+#### Recent Activity
+```
+GET /api/dashboard/recent-activity
+```
+Returns activity feed from actual grant status changes and discovery results.
+
+## Usage Examples
+
+### Basic Search
+```javascript
+fetch('/api/discovery/search?query=education%20grant&limit=10')
+  .then(response => response.json())
+  .then(data => {
+    if (data.success) {
+      console.log(`Found ${data.total} opportunities`);
+      data.opportunities.forEach(opp => {
+        console.log(`${opp.title} - ${opp.funder}`);
+      });
+    }
+  });
+```
+
+### Check Source Status
+```javascript
+fetch('/api/discovery/status')
+  .then(response => response.json())
+  .then(data => {
+    console.log(`${data.onlineSources}/${data.totalSources} sources online`);
+    Object.entries(data.sources).forEach(([id, status]) => {
+      console.log(`${id}: ${status.status}`);
+    });
+  });
+```
+
+## API Usage (Legacy Documentation)
 
 ### Search Across All Sources
 ```python

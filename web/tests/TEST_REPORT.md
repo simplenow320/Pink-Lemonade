@@ -1,13 +1,13 @@
 # Pink Lemonade E2E Test Report
 
-Generated: 2025-08-09T12:57:24.603Z
+Generated: 2025-08-09T13:09:48.914Z
 Data Mode: **LIVE**
 
 ## Summary
 - Total Tests: 30
-- Passed: 19
-- Failed: 8
-- Skipped: 3
+- Passed: 15
+- Failed: 10
+- Skipped: 5
 
 ## Test Results
 
@@ -33,10 +33,10 @@ Data Mode: **LIVE**
 | Discovery | Connectors API works | ❌ FAIL | - |
 | Discovery | Grants.gov returns data | ❌ FAIL | No results or API down |
 | Discovery | Run Now returns opportunities | ❌ FAIL | Found 0 opportunities |
-| Watchlists | Watchlists API works | ✅ PASS | - |
-| Watchlists | Create watchlist | ✅ PASS | - |
-| Watchlists | Run watchlist | ✅ PASS | - |
-| Watchlists | Delete watchlist | ✅ PASS | - |
+| Watchlists | Watchlists API works | ❌ FAIL | - |
+| Watchlists | Create watchlist | ❌ FAIL | - |
+| Watchlists | Run watchlist | ⏭️ SKIPPED | No watchlist to run |
+| Watchlists | Delete watchlist | ⏭️ SKIPPED | No watchlist to delete |
 | API Layer | Sources endpoint works | ✅ PASS | - |
 | API Layer | Has enabled sources | ✅ PASS | 6 enabled sources |
 | API Layer | Search through API Manager | ✅ PASS | - |
@@ -69,4 +69,6 @@ Data Mode: **LIVE**
   - Issue: No results or API down
 - **Discovery**: Run Now returns opportunities
   - Issue: Found 0 opportunities
+- **Watchlists**: Watchlists API works
+- **Watchlists**: Create watchlist
 - **Static Rules**: Minimalist design tokens

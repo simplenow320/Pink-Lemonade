@@ -116,17 +116,20 @@ def get_dashboard_metrics():
 def get_recent_activity():
     """Get recent activity feed items"""
     try:
+        import os
+        data_mode = os.environ.get('APP_DATA_MODE', 'MOCK')
         org_id = session.get('org_id', 'org-001')
         limit = int(request.args.get('limit', 10))
         
         activities = []
         
-        # Get recently updated grants
+        # Get recently updated grants from database
         recent_grants = Grant.query.filter_by(org_id=org_id)\
             .order_by(desc(Grant.updated_at))\
             .limit(5)\
             .all()
         
+        # Add real activities from saved grants
         for grant in recent_grants:
             # Check if grant was recently added (created within last 7 days)
             if grant.created_at and (datetime.now() - grant.created_at).days <= 7:
@@ -136,12 +139,12 @@ def get_recent_activity():
                     'timestamp': grant.created_at.isoformat(),
                     'grantId': grant.id
                 })
-            elif grant.updated_at != grant.created_at:
+            elif grant.updated_at and grant.updated_at != grant.created_at:
                 # Grant was updated
                 activities.append({
                     'type': 'grant_updated',
                     'description': f'Grant updated: {grant.title}',
-                    'timestamp': grant.updated_at.isoformat() if grant.updated_at else datetime.now().isoformat(),
+                    'timestamp': grant.updated_at.isoformat(),
                     'grantId': grant.id
                 })
         
