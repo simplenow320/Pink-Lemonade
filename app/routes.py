@@ -2,9 +2,20 @@
 Flask routes for rendering pages
 """
 
-from flask import Blueprint, render_template
+from flask import Blueprint, render_template, redirect
 
 bp = Blueprint('routes', __name__)
+
+@bp.route('/')
+def index():
+    """Home page - redirect to dashboard or show landing page"""
+    # For now, redirect to opportunities page as the main entry point
+    return redirect('/opportunities')
+
+@bp.route('/dashboard')
+def dashboard():
+    """Dashboard page"""
+    return render_template('dashboard.html')
 
 @bp.route('/opportunities')
 def opportunities():

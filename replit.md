@@ -2,9 +2,9 @@
 
 ## Overview
 
-GrantFlow is a comprehensive AI-powered grant management platform designed specifically for nonprofit organizations. The system helps nonprofits discover, evaluate, track, and apply for grants through intelligent web scraping, AI-powered matching, and automated narrative generation. Built with a focus on urban ministries and faith-based organizations, GrantFlow streamlines the entire grant lifecycle from discovery to application submission.
+Pink Lemonade (formerly GrantFlow) is a comprehensive AI-powered grant management platform designed specifically for nonprofit organizations. The system helps nonprofits discover, evaluate, track, and apply for grants through intelligent web scraping, AI-powered matching, and automated narrative generation. Built with a focus on urban ministries and faith-based organizations, Pink Lemonade streamlines the entire grant lifecycle from discovery to application submission.
 
-The platform leverages OpenAI's GPT-4o for intelligent grant analysis, match scoring, and proposal writing assistance. It features automated grant discovery through web scraping, real-time analytics, and a complete grant management dashboard with status tracking from initial discovery through final decision.
+The platform leverages OpenAI's GPT-4o for intelligent grant analysis, match scoring, and proposal writing assistance. It features automated grant discovery through web scraping, real-time analytics, and a complete grant management dashboard with status tracking from initial discovery through final decision. The system maintains strict Pink Lemonade branding (pink, white, black, grey only) with single logo placement.
 
 ## User Preferences
 
@@ -79,6 +79,23 @@ Preferred communication style: Simple, everyday language.
 - **Code Quality**: ESLint, Prettier for consistent formatting
 - **Build Tools**: React Scripts for frontend bundling
 - **Deployment**: Docker containerization with multi-stage builds
+
+## Recent Updates (August 2025)
+
+### Completed Features
+- **Opportunities Page**: Fully functional unified Discovery page with search, filters (city, focus area, deadline, source), and actions (Save, Add to Applications)
+- **User Profile Space**: Complete profile management with document upload capabilities for enhanced AI matching
+- **Navigation**: Fixed routing - home page ("/") redirects to Opportunities, Settings button routes to Profile
+- **Mobile-First Design**: Responsive layout with strict Pink Lemonade branding (matte pink, white, grey, black only)
+- **DEMO Badge**: Visual indicator when using mock data vs live data sources
+
+### Current Capabilities
+- Real-time grant discovery from 6+ sources (live when API keys provided)
+- AI-powered fit scoring (1-5) with explanations for each opportunity
+- Organization-scoped grant management (Save to library, Create applications)
+- Document upload system for program/org materials to enhance AI context
+- Profile completeness tracking with 5 key areas
+- Export profile functionality for backup/sharing
 
 ### Grant Discovery Sources
 - **Government**: Grants.gov for federal opportunities
