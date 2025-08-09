@@ -138,23 +138,8 @@ class FederalRegisterConnector(DiscoveryConnector):
             return []  # Return empty list, never mock data
     
     def _fetch_mock(self) -> List[Dict[str, Any]]:
-        """Return mock data when API unavailable"""
-        mock_grants = [
-            {
-                'title': 'Notice of Funding Opportunity: Rural Health Network Development',
-                'funder': 'Health Resources and Services Administration',
-                'link': 'https://federalregister.gov/documents/2025/01/rural-health',
-                'amountMin': 100000,
-                'amountMax': 300000,
-                'deadline': (datetime.now() + timedelta(days=75)).isoformat(),
-                'geography': 'Rural Areas',
-                'eligibility': 'Rural nonprofit health networks',
-                'tags': ['Health', 'Rural Development', 'Federal'],
-                'sourceName': 'Federal Register',
-                'sourceURL': 'https://federalregister.gov'
-            }
-        ]
-        return mock_grants
+        """Never return mock data - only real grants allowed"""
+        return []  # Always return empty list, no fake data
     
     def parse(self, data: Any) -> List[Dict[str, Any]]:
         """Parse Federal Register API response"""
@@ -199,23 +184,8 @@ class PhilanthropyNewsConnector(DiscoveryConnector):
             return []  # Return empty list, never mock data
     
     def _fetch_mock(self) -> List[Dict[str, Any]]:
-        """Return mock data when scraping unavailable"""
-        mock_grants = [
-            {
-                'title': 'Arts and Culture Innovation Grant',
-                'funder': 'National Arts Foundation',
-                'link': 'https://philanthropynewsdigest.org/rfps/arts-innovation',
-                'amountMin': 10000,
-                'amountMax': 50000,
-                'deadline': (datetime.now() + timedelta(days=30)).isoformat(),
-                'geography': 'National',
-                'eligibility': 'Arts organizations with innovative programming',
-                'tags': ['Arts', 'Culture', 'Innovation'],
-                'sourceName': 'Philanthropy News Digest',
-                'sourceURL': 'https://philanthropynewsdigest.org'
-            }
-        ]
-        return mock_grants
+        """Never return mock data - only real grants allowed"""
+        return []  # Always return empty list, no fake data
     
     def parse(self, html: str) -> List[Dict[str, Any]]:
         """Parse HTML from Philanthropy News Digest"""
@@ -247,24 +217,8 @@ class CityFoundationConnector(DiscoveryConnector):
             return []  # Return empty list, never mock data
     
     def _fetch_mock(self) -> List[Dict[str, Any]]:
-        """Return mock data for city foundations"""
-        city = self.params.get('city', 'Grand Rapids')
-        mock_grants = [
-            {
-                'title': f'{city} Community Impact Grant',
-                'funder': f'{city} Community Foundation',
-                'link': f'https://{city.lower().replace(" ", "")}-foundation.org/grants',
-                'amountMin': 5000,
-                'amountMax': 25000,
-                'deadline': (datetime.now() + timedelta(days=45)).isoformat(),
-                'geography': city,
-                'eligibility': f'Local nonprofits serving {city} residents',
-                'tags': ['Local', 'Community Development', city],
-                'sourceName': f'{city} Community Foundation',
-                'sourceURL': f'https://{city.lower().replace(" ", "")}-foundation.org'
-            }
-        ]
-        return mock_grants
+        """Never return mock data - only real grants allowed"""
+        return []  # Always return empty list, no fake data
     
     def parse(self, html: str) -> List[Dict[str, Any]]:
         """Parse HTML from foundation website"""
