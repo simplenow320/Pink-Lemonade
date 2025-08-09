@@ -44,6 +44,10 @@ class Grant(db.Model):
     search_query = db.Column(db.String(255), nullable=True)  # The search query that found this grant
     discovery_method = db.Column(db.String(50), nullable=True)  # web-search, focused-search, manual
     
+    # Phase 3 fields - Attachments and reminders
+    attachments = db.Column(JSON, nullable=True)  # Document attachments metadata
+    reminders = db.Column(JSON, nullable=True)  # Scheduled reminders
+    
     # Discovery fields
     source_name = db.Column(db.String(200), nullable=True)  # Name of the discovery source
     source_url = db.Column(db.String(500), nullable=True)  # URL of the discovery source

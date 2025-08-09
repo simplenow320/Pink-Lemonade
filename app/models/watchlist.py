@@ -1,75 +1,41 @@
 """
-Watchlist model for monitoring grant sources by city
+Watchlist model for saved searches and alerts
 """
 
-from datetime import datetime
 from app import db
-
+from datetime import datetime
 
 class Watchlist(db.Model):
-    """Watchlist model for monitoring grant sources"""
-    __tablename__ = 'watchlists'
+    """Model for saved searches and alert preferences"""
+    
+    __tablename__ = 'watchlist'
     
     id = db.Column(db.Integer, primary_key=True)
-    org_id = db.Column(db.String(100), nullable=False)
-    city = db.Column(db.String(100), nullable=False)
-    sources = db.Column(db.JSON, default=list)  # List of connector IDs
-    enabled = db.Column(db.Boolean, default=True)
-    last_run = db.Column(db.DateTime)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    user_id = db.Column(db.String(50), nullable=False)
+    name = db.Column(db.String(200), nullable=False)
+    type = db.Column(db.String(50), nullable=False)  # 'search' or 'alert'
+    criteria = db.Column(db.JSON, nullable=True)  # Search criteria or alert conditions
+    notify_email = db.Column(db.Boolean, default=True)
+    notify_app = db.Column(db.Boolean, default=True)
+    frequency = db.Column(db.String(50), default='daily')  # daily, weekly, immediate
+    is_active = db.Column(db.Boolean, default=True)
+    last_checked = db.Column(db.DateTime, nullable=True)
+    created_at = db.Column(db.DateTime, default=datetime.now)
+    updated_at = db.Column(db.DateTime, default=datetime.now, onupdate=datetime.now)
     
     def to_dict(self):
-        """Convert watchlist to dictionary"""
+        """Convert to dictionary"""
         return {
             'id': self.id,
-            'orgId': self.org_id,
-            'city': self.city,
-            'sources': self.sources or [],
-            'enabled': self.enabled,
-            'lastRun': self.last_run.isoformat() if self.last_run else None,
-            'createdAt': self.created_at.isoformat() if self.created_at else None,
-            'updatedAt': self.updated_at.isoformat() if self.updated_at else None
+            'user_id': self.user_id,
+            'name': self.name,
+            'type': self.type,
+            'criteria': self.criteria,
+            'notify_email': self.notify_email,
+            'notify_app': self.notify_app,
+            'frequency': self.frequency,
+            'is_active': self.is_active,
+            'last_checked': self.last_checked.isoformat() if self.last_checked else None,
+            'created_at': self.created_at.isoformat() if self.created_at else None,
+            'updated_at': self.updated_at.isoformat() if self.updated_at else None
         }
-    
-    @classmethod
-    def create_default_watchlists(cls, org_id: str):
-        """Create default watchlists for major cities"""
-        cities_and_sources = {
-            'Grand Rapids': [
-                'gr_foundation_1',
-                'gr_foundation_2',
-                'gr_foundation_3',
-                'gr_foundation_4',
-                'gr_foundation_5'
-            ],
-            'Charlotte': [
-                'grants_gov',
-                'federal_register'
-            ],
-            'Atlanta': [
-                'grants_gov',
-                'federal_register'
-            ],
-            'Detroit': [
-                'grants_gov',
-                'federal_register'
-            ],
-            'Indiana': [
-                'grants_gov',
-                'federal_register',
-                'philanthropy_news'
-            ]
-        }
-        
-        watchlists = []
-        for city, sources in cities_and_sources.items():
-            watchlist = cls(
-                org_id=org_id,
-                city=city,
-                sources=sources,
-                enabled=True
-            )
-            watchlists.append(watchlist)
-        
-        return watchlists

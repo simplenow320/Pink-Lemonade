@@ -65,6 +65,7 @@ def create_app(test_config=None):
         from app.api import grants, organization, scraper, ai, analytics, writing_assistant, profile, admin
         from app.api import discovery, dashboard, integration, ai_endpoints, opportunities, profile_api
         from app.api import auth  # Import auth blueprint
+        from app.api import workflow, watchlist, admin_dashboard, analytics_advanced, collaboration  # Phase 3-4 features
         
         # Initialize authentication
         auth.init_auth(app)
@@ -85,6 +86,13 @@ def create_app(test_config=None):
         app.register_blueprint(ai_endpoints.bp, url_prefix='/api/ai-v2')  # New AI endpoints
         app.register_blueprint(opportunities.bp)  # Opportunities page
         app.register_blueprint(profile_api.bp)  # Profile API endpoints
+        
+        # Phase 3-4 features
+        app.register_blueprint(workflow.bp)  # Grant workflow management
+        app.register_blueprint(watchlist.bp)  # Watchlists and saved searches
+        app.register_blueprint(admin_dashboard.bp)  # Admin dashboard
+        app.register_blueprint(analytics_advanced.bp)  # Advanced analytics
+        app.register_blueprint(collaboration.bp)  # Team collaboration
         
         # Add mode indicator to templates
         from app.utils.mode_indicator import get_mode_badge_html, get_data_mode

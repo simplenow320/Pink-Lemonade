@@ -1,194 +1,194 @@
-# GrantFlow Deployment Guide
+# Pink Lemonade - Production Deployment Guide
 
-This document provides instructions for deploying the GrantFlow application using Docker and explains the CI/CD pipeline setup with GitHub Actions.
-
-## Local Development with Docker
+## Phase 6: Deployment Configuration
 
 ### Prerequisites
+- PostgreSQL database
+- OpenAI API key
+- SMTP credentials for email notifications
+- Domain name (optional)
 
-- [Docker](https://docs.docker.com/get-docker/)
-- [Docker Compose](https://docs.docker.com/compose/install/)
+### Environment Variables
 
-### Setup and Deployment
+Create a `.env` file with:
 
-1. **Clone the repository**:
-   ```bash
-   git clone https://github.com/your-org/grantflow.git
-   cd grantflow
-   ```
+```bash
+# Database
+DATABASE_URL=postgresql://user:password@host:port/dbname
 
-2. **Set up environment variables**:
-   ```bash
-   cp .env.docker.example .env
-   ```
+# Security
+SESSION_SECRET=your-secret-key-here
+FLASK_SECRET_KEY=another-secret-key
 
-   Edit the `.env` file to set your environment variables:
-   - Set a strong `SESSION_SECRET`
-   - Add your `OPENAI_API_KEY`
-   - Modify database credentials if needed
+# APIs
+OPENAI_API_KEY=sk-your-openai-key
 
-3. **Build and start the containers**:
-   ```bash
-   docker-compose up -d
-   ```
+# Email (optional)
+SMTP_SERVER=smtp.gmail.com
+SMTP_PORT=587
+SMTP_USER=your-email@gmail.com
+SMTP_PASSWORD=your-app-password
 
-   This command builds and starts three containers:
-   - PostgreSQL database
-   - Flask backend
-   - React/Nginx frontend
+# Data Mode
+APP_DATA_MODE=LIVE
 
-4. **Access the application**:
-   - Frontend: http://localhost (or the port specified in your .env file)
-   - Backend API: http://localhost:5000/api (or the port specified in your .env file)
-
-5. **View logs**:
-   ```bash
-   # View logs from all containers
-   docker-compose logs -f
-
-   # View logs from a specific container
-   docker-compose logs -f backend
-   docker-compose logs -f frontend
-   docker-compose logs -f postgres
-   ```
-
-6. **Stop the application**:
-   ```bash
-   docker-compose down
-   ```
-
-   To remove volumes (database data) as well:
-   ```bash
-   docker-compose down -v
-   ```
-
-## Container Architecture
-
-The application is divided into three main containers:
-
-### 1. PostgreSQL Database (`postgres`)
-- Stores all application data
-- Persists data in a Docker volume
-- Configured with health checks
-
-### 2. Flask Backend (`backend`)
-- Built from `python:3.11-slim`
-- Runs the Flask application with Gunicorn
-- Connects to PostgreSQL database
-- Exposes API endpoints
-
-### 3. React Frontend (`frontend`)
-- Uses multi-stage build process
-  - Stage 1: Builds React application
-  - Stage 2: Serves via Nginx
-- Configured for optimal performance
-- Proxies API requests to backend
-
-## CI/CD Pipeline with GitHub Actions
-
-The repository includes a GitHub Actions workflow for continuous integration and deployment.
-
-### Workflow File
-
-The workflow configuration is located in `.github/workflows/ci.yml` and runs on each push to the `main` branch.
-
-### CI Pipeline Stages
-
-The workflow consists of three main jobs:
-
-#### 1. Backend Tests
-- Sets up PostgreSQL service
-- Runs Python linting with flake8
-- Executes pytest with code coverage
-- Uploads coverage reports to Codecov
-
-#### 2. Frontend Build
-- Sets up Node.js environment
-- Installs dependencies
-- Runs ESLint
-- Executes Jest tests
-- Builds the React application
-- Uploads build artifacts
-
-#### 3. Docker Build
-- Depends on the success of backend tests and frontend build
-- Downloads frontend build artifacts
-- Builds Docker images for:
-  - Backend (using Dockerfile.backend)
-  - Frontend (using Dockerfile.frontend)
-- Pushes images to GitHub Container Registry (ghcr.io)
-- Tags images with latest and commit SHA
-
-## Production Deployment
-
-For production deployment:
-
-1. **Configure environment variables**:
-   - Set environment variables in your production environment
-   - Ensure all sensitive information is securely stored
-
-2. **Pull and run Docker images**:
-   ```bash
-   # Pull images from GitHub Container Registry
-   docker pull ghcr.io/your-org/grantflow/backend:latest
-   docker pull ghcr.io/your-org/grantflow/frontend:latest
-
-   # Create an external network
-   docker network create grantflow-network
-
-   # Run Docker Compose in production
-   docker-compose -f docker-compose.yml -f docker-compose.prod.yml up -d
-   ```
-
-## Security Considerations
-
-- The Docker Compose setup includes security best practices:
-  - No root access in containers
-  - Environment variables for credentials
-  - Network isolation through Docker networks
-  - Health checks for service dependencies
-
-- For production:
-  - Consider using Docker Swarm or Kubernetes for orchestration
-  - Set up proper monitoring and logging (Prometheus/Grafana)
-  - Implement a reverse proxy (like Traefik or Nginx) with HTTPS
-  - Use secrets management for sensitive data
-
-## Troubleshooting
-
-### Common Issues
-
-1. **Database connection issues**:
-   ```bash
-   docker-compose logs backend
-   ```
-   Check if the backend can connect to PostgreSQL.
-
-2. **Frontend not connecting to API**:
-   Verify Nginx configuration in the frontend container:
-   ```bash
-   docker exec -it grantflow-frontend cat /etc/nginx/conf.d/default.conf
-   ```
-
-3. **Container not starting**:
-   Check if there are port conflicts or missing environment variables:
-   ```bash
-   docker-compose logs
-   ```
-
-## Directory Structure
-
+# Optional API Keys
+GRANTS_GOV_API_KEY=your-key
+CANDID_API_KEY=your-key
 ```
-.
-├── .github/workflows    # GitHub Actions workflows
-│   └── ci.yml           # CI/CD configuration
-├── app/                 # Backend Flask application
-├── client/              # Frontend React application
-├── nginx/               # Nginx configuration
-│   └── default.conf     # Default Nginx server config
-├── .env.docker.example  # Example environment variables
-├── docker-compose.yml   # Docker Compose configuration
-├── Dockerfile.backend   # Docker config for backend
-├── Dockerfile.frontend  # Docker config for frontend
-└── docker-entrypoint.sh # Script for backend container startup
+
+### Database Setup
+
+1. Create PostgreSQL database:
+```sql
+CREATE DATABASE pinklemonade;
 ```
+
+2. Run migrations:
+```bash
+python -c "from app import create_app; app = create_app(); app.app_context().push()"
+```
+
+3. Create indexes for performance:
+```python
+from app.utils.performance import create_database_indexes
+create_database_indexes()
+```
+
+### Production Configuration
+
+1. **Gunicorn Configuration** (`gunicorn.conf.py`):
+```python
+bind = "0.0.0.0:5000"
+workers = 4
+worker_class = "sync"
+worker_connections = 1000
+max_requests = 1000
+max_requests_jitter = 50
+preload_app = True
+accesslog = "access.log"
+errorlog = "error.log"
+loglevel = "info"
+```
+
+2. **Nginx Configuration** (if using reverse proxy):
+```nginx
+server {
+    listen 80;
+    server_name your-domain.com;
+    
+    location / {
+        proxy_pass http://localhost:5000;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+    
+    client_max_body_size 10M;
+}
+```
+
+### Monitoring Setup
+
+1. **Health Check Endpoint**: `/api/admin/system/health`
+2. **Metrics Endpoint**: `/api/admin/dashboard`
+3. **Error Logs**: Check `error.log` file
+
+### Backup Strategy
+
+1. **Database Backups**:
+```bash
+# Daily backup script
+pg_dump $DATABASE_URL > backup_$(date +%Y%m%d).sql
+```
+
+2. **File Backups**:
+- Upload directory
+- Configuration files
+- Log files
+
+### Security Checklist
+
+- [x] Environment variables for sensitive data
+- [x] HTTPS enabled (via Replit or Nginx)
+- [x] SQL injection prevention (SQLAlchemy ORM)
+- [x] XSS protection (template escaping)
+- [x] CSRF protection (Flask-WTF)
+- [x] Rate limiting on API endpoints
+- [x] Secure password hashing (bcrypt)
+- [x] Session security (secure cookies)
+
+### Performance Optimization
+
+1. **Database**:
+   - Indexes created on frequently queried columns
+   - Connection pooling enabled
+   - Query optimization with pagination
+
+2. **Caching**:
+   - In-memory cache for API responses
+   - Cache TTL: 5 minutes for grant data
+   - Cache stats available in admin dashboard
+
+3. **Frontend**:
+   - Lazy loading for grant lists
+   - Pagination (20 items per page)
+   - Debounced search inputs
+
+### Deployment Steps
+
+1. **Clone repository**
+2. **Install dependencies**:
+   ```bash
+   pip install -r requirements.txt
+   npm install
+   ```
+
+3. **Set environment variables**
+4. **Initialize database**
+5. **Create first admin user**:
+   ```python
+   from app.models.user import User
+   admin = User(username='admin', email='admin@pinklemonade.com', role='admin')
+   admin.set_password('secure-password')
+   db.session.add(admin)
+   db.session.commit()
+   ```
+
+6. **Start application**:
+   ```bash
+   gunicorn main:app
+   ```
+
+### Monitoring Commands
+
+```bash
+# Check system health
+curl http://localhost:5000/api/admin/system/health
+
+# View cache statistics
+curl http://localhost:5000/api/admin/dashboard
+
+# Check error logs
+tail -f error.log
+```
+
+### Troubleshooting
+
+1. **Database connection errors**: Check DATABASE_URL
+2. **API failures**: Verify API keys are set
+3. **Performance issues**: Check cache hit rate and slow queries
+4. **Memory issues**: Adjust gunicorn workers
+
+### Support
+
+For issues or questions:
+1. Check error logs
+2. Review health endpoint
+3. Monitor system metrics
+4. Contact support with health report
+
+## Deployment Complete! 🚀
+
+Your Pink Lemonade platform is ready for production use.
