@@ -417,7 +417,7 @@ function renderOverviewTab() {
             ${currentGrant.link ? `
                 <div>
                     <h3 class="text-sm font-medium text-gray-500 mb-2">Grant Link</h3>
-                    <a href="${currentGrant.link}" target="_blank" class="text-blue-600 hover:underline">
+                    <a href="${currentGrant.link}" target="_blank" class="text-pink-600 hover:underline">
                         View Grant Details →
                     </a>
                 </div>
@@ -522,7 +522,7 @@ function renderContactsTab() {
                             <div class="space-y-1">
                                 ${contact.email ? `
                                     <p class="text-sm">
-                                        <a href="mailto:${contact.email}" class="text-blue-600 hover:underline">
+                                        <a href="mailto:${contact.email}" class="text-pink-600 hover:underline">
                                             ${contact.email}
                                         </a>
                                     </p>
