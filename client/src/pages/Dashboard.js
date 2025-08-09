@@ -243,6 +243,71 @@ const Dashboard = () => {
         </div>
       )}
       
+      {/* Latest Grant Opportunities - Mobile First View */}
+      <div className="lg:hidden bg-white shadow-sm rounded-xl overflow-hidden mb-6">
+        <div className="px-6 py-4 border-b border-gray-200">
+          <h2 className="text-lg font-medium text-gray-900">Latest Grant Opportunities</h2>
+        </div>
+        {grants.length > 0 ? (
+          <div className="divide-y divide-gray-200">
+            {grants.slice(0, 5).map((grant) => (
+              <Link 
+                key={grant.id} 
+                to={`/grants/${grant.id}`} 
+                className="block px-6 py-4 hover:bg-gray-50 transition-colors cursor-pointer"
+              >
+                <div className="flex items-start justify-between">
+                  <div className="flex-1 min-w-0 pr-4">
+                    <h3 className="text-base font-medium text-gray-900 mb-1">
+                      {grant.title}
+                    </h3>
+                    <p className="text-sm text-gray-600 line-clamp-2 mb-2">
+                      {grant.description || 'No description available'}
+                    </p>
+                    <div className="flex items-center text-xs text-gray-500 space-x-3">
+                      <span className="flex items-center">
+                        <svg className="mr-1 h-3 w-3" fill="currentColor" viewBox="0 0 20 20">
+                          <path d="M2 6a2 2 0 012-2h6a2 2 0 012 2v8a2 2 0 01-2 2H4a2 2 0 01-2-2V6zM14.553 7.106A1 1 0 0014 8v4a1 1 0 00.553.894l2 1A1 1 0 0018 13V7a1 1 0 00-1.447-.894l-2 1z"/>
+                        </svg>
+                        {grant.funder || 'Unknown Funder'}
+                      </span>
+                      {grant.amount && (
+                        <span>{formatCurrency(grant.amount)}</span>
+                      )}
+                      {grant.due_date && (
+                        <span>Due: {formatDate(grant.due_date)}</span>
+                      )}
+                    </div>
+                  </div>
+                  {grant.match_score && (
+                    <div className="flex-shrink-0">
+                      <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-pink-100 text-pink-800">
+                        {grant.match_score}%
+                      </span>
+                    </div>
+                  )}
+                </div>
+              </Link>
+            ))}
+          </div>
+        ) : (
+          <div className="px-6 py-10 text-center text-gray-500">
+            <svg className="mx-auto h-10 w-10 text-gray-400 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+            </svg>
+            <p className="text-sm">No grant opportunities found</p>
+            <Link to="/scraper" className="mt-3 inline-block text-sm font-medium text-orange-600 hover:text-orange-500">
+              Discover new grants →
+            </Link>
+          </div>
+        )}
+        <div className="px-6 py-3 bg-gray-50 text-right">
+          <Link to="/grants" className="text-sm font-medium text-orange-600 hover:text-orange-500">
+            View all grants →
+          </Link>
+        </div>
+      </div>
+
       {/* Charts and Lists */}
       <div className="grid grid-cols-1 lg:grid-cols-5 gap-8">
         {/* Left column - Charts */}
@@ -324,27 +389,27 @@ const Dashboard = () => {
             {upcomingGrants.length > 0 ? (
               <div className="divide-y divide-gray-200">
                 {upcomingGrants.map((grant) => (
-                  <div key={grant.id} className="px-6 py-4 flex items-center">
-                    <div className="min-w-0 flex-1">
-                      <h3 className="text-sm font-medium text-gray-900">
-                        <Link to={`/grants/${grant.id}`} className="hover:underline">
+                  <Link key={grant.id} to={`/grants/${grant.id}`} className="block px-6 py-4 hover:bg-gray-50 transition-colors cursor-pointer">
+                    <div className="flex items-center">
+                      <div className="min-w-0 flex-1">
+                        <h3 className="text-sm font-medium text-gray-900 hover:text-orange-600">
                           {grant.title}
-                        </Link>
-                      </h3>
-                      <div className="mt-1 flex items-center text-sm text-gray-500">
-                        <span className="truncate">{grant.funder}</span>
-                        <span className="mx-1">•</span>
-                        <span className="font-medium text-orange-600">
-                          Due: {formatDate(grant.due_date)}
+                        </h3>
+                        <div className="mt-1 flex items-center text-sm text-gray-500">
+                          <span className="truncate">{grant.funder}</span>
+                          <span className="mx-1">•</span>
+                          <span className="font-medium text-orange-600">
+                            Due: {formatDate(grant.due_date)}
+                          </span>
+                        </div>
+                      </div>
+                      <div className="ml-6 flex-shrink-0">
+                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusBadgeClass(grant.status)}`}>
+                          {grant.status}
                         </span>
                       </div>
                     </div>
-                    <div className="ml-6 flex-shrink-0">
-                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusBadgeClass(grant.status)}`}>
-                        {grant.status}
-                      </span>
-                    </div>
-                  </div>
+                  </Link>
                 ))}
               </div>
             ) : (
@@ -370,29 +435,29 @@ const Dashboard = () => {
             {topMatchingGrants.length > 0 ? (
               <div className="divide-y divide-gray-200">
                 {topMatchingGrants.map((grant) => (
-                  <div key={grant.id} className="px-6 py-4 flex items-center">
-                    <div className="min-w-0 flex-1">
-                      <h3 className="text-sm font-medium text-gray-900">
-                        <Link to={`/grants/${grant.id}`} className="hover:underline">
+                  <Link key={grant.id} to={`/grants/${grant.id}`} className="block px-6 py-4 hover:bg-gray-50 transition-colors cursor-pointer">
+                    <div className="flex items-center">
+                      <div className="min-w-0 flex-1">
+                        <h3 className="text-sm font-medium text-gray-900 hover:text-orange-600">
                           {grant.title}
-                        </Link>
-                      </h3>
-                      <div className="mt-1 flex items-center text-sm text-gray-500">
-                        <span className="truncate">{grant.funder}</span>
-                        {grant.amount && (
-                          <>
-                            <span className="mx-1">•</span>
-                            <span>{formatCurrency(grant.amount)}</span>
-                          </>
-                        )}
+                        </h3>
+                        <div className="mt-1 flex items-center text-sm text-gray-500">
+                          <span className="truncate">{grant.funder}</span>
+                          {grant.amount && (
+                            <>
+                              <span className="mx-1">•</span>
+                              <span>{formatCurrency(grant.amount)}</span>
+                            </>
+                          )}
+                        </div>
+                      </div>
+                      <div className="ml-6 flex-shrink-0">
+                        <span className={`font-medium ${getMatchScoreClass(grant.match_score)}`}>
+                          {grant.match_score}% Match
+                        </span>
                       </div>
                     </div>
-                    <div className="ml-6 flex-shrink-0">
-                      <span className={`font-medium ${getMatchScoreClass(grant.match_score)}`}>
-                        {grant.match_score}% Match
-                      </span>
-                    </div>
-                  </div>
+                  </Link>
                 ))}
               </div>
             ) : (
