@@ -1,9 +1,9 @@
 import os
 
-def is_live():
-    """Check if the application is in live mode"""
-    return os.environ.get("MODE", "DEMO").upper() == "LIVE"
+def is_live() -> bool:
+    return os.getenv("APP_DATA_MODE", "LIVE").upper() == "LIVE"
 
-def get_mode():
-    """Get the current application mode"""
-    return os.environ.get("MODE", "DEMO").upper()
+def require_live_or_404(live: bool):
+    if not live:
+        from flask import abort
+        abort(404, description="Feature unavailable in DEMO mode")
