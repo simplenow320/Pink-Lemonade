@@ -46,9 +46,13 @@ def create_app():
     flask_app.register_blueprint(opportunities_bp)
     flask_app.register_blueprint(admin_bp)
     flask_app.register_blueprint(scrape_bp, url_prefix='/api/scrape')
-    flask_app.register_blueprint(ai_test_bp, url_prefix='/api/ai')
+    flask_app.register_blueprint(ai_test_bp, url_prefix='/api/ai-test')
     flask_app.register_blueprint(writing_bp, url_prefix='/api/writing')
     flask_app.register_blueprint(exports_bp, url_prefix='/api/exports')
+    
+    # Register new AI endpoints
+    from app.api.ai_endpoints import bp as ai_endpoints_bp
+    flask_app.register_blueprint(ai_endpoints_bp)
     
     # Add template context processor for global template variables
     @flask_app.context_processor

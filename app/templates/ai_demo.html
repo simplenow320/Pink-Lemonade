@@ -1,0 +1,196 @@
+{% extends "base.html" %}
+
+{% block title %}AI Features Demo - Pink Lemonade{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-6">
+    <h1 class="text-3xl font-bold mb-6" style="color: #4A4A4A;">AI Features Demo</h1>
+    
+    <!-- Grant Extraction Section -->
+    <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+        <h2 class="text-xl font-semibold mb-4" style="color: #4A4A4A;">Extract Grant from Text/URL</h2>
+        
+        <div class="mb-4">
+            <label class="block text-sm font-medium mb-2">Source Type</label>
+            <select id="sourceType" class="w-full px-3 py-2 border rounded-md">
+                <option value="text">Plain Text</option>
+                <option value="url">URL</option>
+            </select>
+        </div>
+        
+        <div class="mb-4">
+            <label class="block text-sm font-medium mb-2">Content</label>
+            <textarea id="extractContent" rows="5" class="w-full px-3 py-2 border rounded-md" 
+                placeholder="Paste grant text or enter URL...">The Ford Foundation announces a new grant opportunity for community organizations. The Community Resilience Grant offers $25,000 to $100,000 for programs addressing social justice and equity. Applications are due April 15, 2025. Focus areas include racial justice, economic mobility, and civic engagement.</textarea>
+        </div>
+        
+        <button onclick="extractGrant()" class="px-6 py-2 text-white rounded-md" style="background-color: #F8D7DA; color: #4A4A4A;">
+            Extract Grant Information
+        </button>
+        
+        <div id="extractResult" class="mt-4"></div>
+    </div>
+    
+    <!-- Narrative Generation Section -->
+    <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+        <h2 class="text-xl font-semibold mb-4" style="color: #4A4A4A;">Generate Grant Narrative</h2>
+        
+        <div class="mb-4">
+            <label class="block text-sm font-medium mb-2">Section</label>
+            <select id="narrativeSection" class="w-full px-3 py-2 border rounded-md">
+                <option value="executive_summary">Executive Summary</option>
+                <option value="statement_of_need">Statement of Need</option>
+                <option value="project_description">Project Description</option>
+                <option value="evaluation_plan">Evaluation Plan</option>
+                <option value="organizational_capacity">Organizational Capacity</option>
+                <option value="sustainability">Sustainability Plan</option>
+            </select>
+        </div>
+        
+        <div class="mb-4">
+            <label class="block text-sm font-medium mb-2">Custom Instructions (Optional)</label>
+            <input type="text" id="customPrompt" class="w-full px-3 py-2 border rounded-md" 
+                placeholder="e.g., Focus on youth programs...">
+        </div>
+        
+        <button onclick="generateNarrative()" class="px-6 py-2 text-white rounded-md" style="background-color: #F8D7DA; color: #4A4A4A;">
+            Generate Narrative
+        </button>
+        
+        <div id="narrativeResult" class="mt-4"></div>
+    </div>
+    
+    <!-- Text Improvement Section -->
+    <div class="bg-white rounded-lg shadow-md p-6">
+        <h2 class="text-xl font-semibold mb-4" style="color: #4A4A4A;">Improve Text</h2>
+        
+        <div class="mb-4">
+            <label class="block text-sm font-medium mb-2">Original Text</label>
+            <textarea id="originalText" rows="3" class="w-full px-3 py-2 border rounded-md" 
+                placeholder="Enter text to improve...">Our organization helps people in the community by doing various programs.</textarea>
+        </div>
+        
+        <div class="mb-4">
+            <label class="block text-sm font-medium mb-2">Improvement Type</label>
+            <select id="improvementType" class="w-full px-3 py-2 border rounded-md">
+                <option value="clarity">Clarity</option>
+                <option value="professional">Professional</option>
+                <option value="concise">Concise</option>
+                <option value="expand">Expand</option>
+                <option value="persuasive">Persuasive</option>
+            </select>
+        </div>
+        
+        <button onclick="improveText()" class="px-6 py-2 text-white rounded-md" style="background-color: #F8D7DA; color: #4A4A4A;">
+            Improve Text
+        </button>
+        
+        <div id="improveResult" class="mt-4"></div>
+    </div>
+</div>
+
+<script>
+async function extractGrant() {
+    const sourceType = document.getElementById('sourceType').value;
+    const content = document.getElementById('extractContent').value;
+    const resultDiv = document.getElementById('extractResult');
+    
+    resultDiv.innerHTML = '<p class="text-gray-500">Processing...</p>';
+    
+    try {
+        const response = await fetch('/api/ai/extract-grant', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ source_type: sourceType, content: content })
+        });
+        
+        const data = await response.json();
+        
+        if (data.success && data.grant) {
+            const grant = data.grant;
+            resultDiv.innerHTML = `
+                <div class="border rounded-md p-4 mt-4">
+                    <h3 class="font-semibold mb-2">${grant.title || 'Untitled'}</h3>
+                    <p class="text-sm mb-1"><strong>Funder:</strong> ${grant.funder || 'Unknown'}</p>
+                    <p class="text-sm mb-1"><strong>Amount:</strong> $${grant.amount_min || 0} - $${grant.amount_max || 0}</p>
+                    <p class="text-sm mb-1"><strong>Deadline:</strong> ${grant.deadline || 'Not specified'}</p>
+                    <p class="text-sm mb-1"><strong>Focus:</strong> ${grant.focus_areas || 'Not specified'}</p>
+                    ${grant.fit_score ? `
+                        <div class="mt-3 p-3" style="background-color: #FFF5F5;">
+                            <p class="text-sm font-semibold">Match Score: ${grant.fit_score}/5</p>
+                            <p class="text-sm">${grant.fit_reason}</p>
+                        </div>
+                    ` : ''}
+                </div>
+            `;
+        } else {
+            resultDiv.innerHTML = `<p class="text-red-500">Error: ${data.error || 'Failed to extract grant'}</p>`;
+        }
+    } catch (error) {
+        resultDiv.innerHTML = `<p class="text-red-500">Error: ${error.message}</p>`;
+    }
+}
+
+async function generateNarrative() {
+    const section = document.getElementById('narrativeSection').value;
+    const customPrompt = document.getElementById('customPrompt').value;
+    const resultDiv = document.getElementById('narrativeResult');
+    
+    resultDiv.innerHTML = '<p class="text-gray-500">Generating narrative...</p>';
+    
+    try {
+        const response = await fetch('/api/ai/generate-narrative', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ section: section, custom_prompt: customPrompt })
+        });
+        
+        const data = await response.json();
+        
+        if (data.success && data.narrative) {
+            resultDiv.innerHTML = `
+                <div class="border rounded-md p-4 mt-4">
+                    <h3 class="font-semibold mb-2">${section.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}</h3>
+                    <div class="prose text-sm">${data.narrative.replace(/\n/g, '<br>')}</div>
+                </div>
+            `;
+        } else {
+            resultDiv.innerHTML = `<p class="text-red-500">Error: ${data.error || 'Failed to generate narrative'}</p>`;
+        }
+    } catch (error) {
+        resultDiv.innerHTML = `<p class="text-red-500">Error: ${error.message}</p>`;
+    }
+}
+
+async function improveText() {
+    const text = document.getElementById('originalText').value;
+    const type = document.getElementById('improvementType').value;
+    const resultDiv = document.getElementById('improveResult');
+    
+    resultDiv.innerHTML = '<p class="text-gray-500">Improving text...</p>';
+    
+    try {
+        const response = await fetch('/api/ai/improve-text', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ text: text, type: type })
+        });
+        
+        const data = await response.json();
+        
+        if (data.success && data.improved) {
+            resultDiv.innerHTML = `
+                <div class="border rounded-md p-4 mt-4">
+                    <h3 class="font-semibold mb-2">Improved Text (${type})</h3>
+                    <p class="text-sm">${data.improved}</p>
+                </div>
+            `;
+        } else {
+            resultDiv.innerHTML = `<p class="text-red-500">Error: ${data.error || 'Failed to improve text'}</p>`;
+        }
+    } catch (error) {
+        resultDiv.innerHTML = `<p class="text-red-500">Error: ${error.message}</p>`;
+    }
+}
+</script>
+{% endblock %}

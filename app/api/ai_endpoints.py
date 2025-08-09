@@ -1,278 +1,319 @@
 """
-AI API Endpoints for Grant Management
-Handles matching, extraction, and narrative generation
+AI-powered endpoints for grant extraction, matching, and narrative generation
 """
 
-from flask import Blueprint, request, jsonify
-from app.models import Organization, Grant, Narrative
+from flask import Blueprint, request, jsonify, session
 from app import db
+from app.models import Grant, Organization, Org
 from app.services.ai_service import ai_service
 import logging
 import requests
+from bs4 import BeautifulSoup
 from datetime import datetime
+import re
 
 logger = logging.getLogger(__name__)
 
 bp = Blueprint('ai_endpoints', __name__, url_prefix='/api/ai')
 
-@bp.route('/status', methods=['GET'])
-def get_ai_status():
-    """Check if AI service is enabled"""
-    return jsonify({
-        "enabled": ai_service.is_enabled(),
-        "message": "AI features enabled" if ai_service.is_enabled() else "No API key configured - Add your OpenAI API key in Settings"
-    })
-
-@bp.route('/match', methods=['POST'])
-def match_grant():
-    """
-    Match a grant with organization profile
-    Request body: { grant_id: int, org_id: int (optional) }
-    """
+@bp.route('/extract-grant', methods=['POST'])
+def extract_grant_from_text():
+    """Extract grant information from URL or plain text using AI"""
     try:
         data = request.json
-        grant_id = data.get('grant_id')
-        org_id = data.get('org_id', 1)  # Default to first org
+        source_type = data.get('source_type', 'text')  # 'url' or 'text'
+        content = data.get('content', '')
         
-        if not grant_id:
-            return jsonify({"error": "grant_id required"}), 400
+        if not content:
+            return jsonify({'error': 'No content provided'}), 400
         
-        # Get grant and org from database
-        grant = Grant.query.get(grant_id)
-        if not grant:
-            return jsonify({"error": "Grant not found"}), 404
-            
-        org = Organization.query.get(org_id)
-        if not org:
-            return jsonify({"error": "Organization not found"}), 404
-        
-        # Perform matching
-        score, reason = ai_service.match_grant(org.to_dict(), grant.to_dict())
-        
-        if score is None:
-            return jsonify({
-                "fit_score": None,
-                "fit_reason": None,
-                "message": "AI features disabled - Add OpenAI API key in Settings"
-            })
-        
-        # Update grant with match score
-        grant.match_score = score
-        grant.match_reason = reason
-        db.session.commit()
-        
-        return jsonify({
-            "fit_score": score,
-            "fit_reason": reason,
-            "grant_id": grant_id
-        })
-        
-    except Exception as e:
-        logger.error(f"Error in match_grant: {e}")
-        return jsonify({"error": str(e)}), 500
-
-@bp.route('/explain-match', methods=['POST'])
-def explain_match():
-    """Get detailed explanation for grant match"""
-    try:
-        data = request.json
-        grant_id = data.get('grant_id')
-        org_id = data.get('org_id', 1)
-        
-        grant = Grant.query.get(grant_id)
-        org = Organization.query.get(org_id)
-        
-        if not grant or not org:
-            return jsonify({"error": "Grant or organization not found"}), 404
-        
-        explanation = ai_service.explain_match(org.to_dict(), grant.to_dict())
-        
-        if not explanation:
-            return jsonify({
-                "explanation": "AI features disabled - Add OpenAI API key in Settings"
-            })
-        
-        return jsonify({"explanation": explanation})
-        
-    except Exception as e:
-        logger.error(f"Error in explain_match: {e}")
-        return jsonify({"error": str(e)}), 500
-
-@bp.route('/extract', methods=['POST'])
-def extract_grant():
-    """
-    Extract grant information from URL or text
-    Request body: { url: string OR text: string, org_id: int (optional) }
-    """
-    try:
-        data = request.json
-        url = data.get('url')
-        text = data.get('text')
-        org_id = data.get('org_id', 1)
-        
-        if not url and not text:
-            return jsonify({"error": "Either url or text required"}), 400
-        
-        # Fetch content if URL provided
-        if url:
+        # If URL, fetch the content
+        if source_type == 'url':
             try:
-                response = requests.get(url, timeout=30)
-                text = response.text
+                response = requests.get(content, timeout=10)
+                soup = BeautifulSoup(response.text, 'html.parser')
+                
+                # Extract text from HTML
+                # Remove script and style elements
+                for script in soup(["script", "style"]):
+                    script.decompose()
+                
+                # Get text
+                text_content = soup.get_text()
+                # Clean up whitespace
+                lines = (line.strip() for line in text_content.splitlines())
+                chunks = (phrase.strip() for line in lines for phrase in line.split("  "))
+                text_content = ' '.join(chunk for chunk in chunks if chunk)
+                
+                # Limit to 8000 characters for API
+                text_content = text_content[:8000]
+                
             except Exception as e:
-                return jsonify({"error": f"Failed to fetch URL: {e}"}), 400
+                logger.error(f"Error fetching URL content: {e}")
+                return jsonify({'error': f'Failed to fetch URL: {str(e)}'}), 400
+        else:
+            text_content = content[:8000]  # Limit text input
         
-        # Extract grant information
-        grant_data = ai_service.extract_grant_from_text(text, url)
+        # Use AI to extract grant information
+        extracted = ai_service.extract_grant_info(text_content)
         
-        if not grant_data:
-            return jsonify({
-                "error": "AI extraction disabled - Add OpenAI API key in Settings"
-            }), 400
+        if not extracted:
+            return jsonify({'error': 'Failed to extract grant information'}), 500
         
-        # Save as new grant if extraction successful
-        grant = Grant(
-            title=grant_data['title'],
-            funder=grant_data['funder'],
-            description=grant_data.get('description', ''),
-            amount_min=grant_data.get('amount_min', 0),
-            amount_max=grant_data.get('amount_max', 0),
-            due_date=grant_data.get('deadline'),
-            focus_areas=grant_data.get('focus_areas', ''),
-            geography=grant_data.get('geography', ''),
-            link=grant_data.get('link', ''),
-            contact_name=grant_data.get('contact_name', ''),
-            contact_email=grant_data.get('contact_email', ''),
-            contact_phone=grant_data.get('contact_phone', ''),
-            source_name='AI Extraction',
-            discovered_at=datetime.now(),
-            org_id=org_id,
-            status='prospect'
-        )
-        
-        db.session.add(grant)
-        db.session.commit()
+        # Get organization for matching
+        org = Organization.query.first()
+        if org and extracted:
+            # Calculate fit score
+            grant_dict = {
+                'title': extracted.get('title'),
+                'description': extracted.get('description'),
+                'funder': extracted.get('funder'),
+                'focus_areas': extracted.get('focus_areas'),
+                'amount_min': extracted.get('amount_min'),
+                'amount_max': extracted.get('amount_max'),
+                'deadline': extracted.get('deadline'),
+                'eligibility_criteria': extracted.get('eligibility_criteria')
+            }
+            
+            org_dict = org.to_dict() if hasattr(org, 'to_dict') else {
+                'name': org.name,
+                'mission': getattr(org, 'mission', ''),
+                'focus_areas': getattr(org, 'focus_areas', '').split(',') if getattr(org, 'focus_areas', '') else [],
+                'keywords': getattr(org, 'keywords', '').split(',') if getattr(org, 'keywords', '') else [],
+                'geographic_focus': getattr(org, 'geographic_focus', ''),
+                'target_population': getattr(org, 'target_population', '')
+            }
+            
+            fit_score, fit_reason = ai_service.match_grant(org_dict, grant_dict)
+            extracted['fit_score'] = fit_score
+            extracted['fit_reason'] = fit_reason
         
         return jsonify({
-            "grant": grant.to_dict(),
-            "message": "Grant extracted and saved successfully"
+            'success': True,
+            'grant': extracted,
+            'source': source_type
         })
         
     except Exception as e:
-        logger.error(f"Error in extract_grant: {e}")
-        db.session.rollback()
-        return jsonify({"error": str(e)}), 500
+        logger.error(f"Error in extract_grant_from_text: {e}")
+        return jsonify({'error': str(e)}), 500
 
-@bp.route('/narrative', methods=['POST'])
+@bp.route('/generate-narrative', methods=['POST'])
 def generate_narrative():
-    """
-    Generate narrative sections for a grant
-    Request body: { grant_id: int, sections: [string], org_id: int (optional) }
-    """
+    """Generate grant proposal narrative using AI"""
     try:
         data = request.json
         grant_id = data.get('grant_id')
-        sections = data.get('sections', ['need', 'program', 'outcomes', 'budget_rationale'])
-        org_id = data.get('org_id', 1)
+        section = data.get('section', 'executive_summary')
+        custom_prompt = data.get('custom_prompt', '')
         
-        if not grant_id:
-            return jsonify({"error": "grant_id required"}), 400
+        # Get grant and organization
+        grant = Grant.query.get(grant_id) if grant_id else None
+        org = Organization.query.first()
         
-        # Get grant and org
-        grant = Grant.query.get(grant_id)
-        org = Organization.query.get(org_id)
+        if not org:
+            return jsonify({'error': 'Organization not found'}), 404
         
-        if not grant or not org:
-            return jsonify({"error": "Grant or organization not found"}), 404
+        # Prepare context
+        grant_dict = None
+        if grant:
+            grant_dict = {
+                'title': grant.title,
+                'funder': grant.funder,
+                'description': getattr(grant, 'description', grant.eligibility or ''),
+                'amount_min': grant.amount_min,
+                'amount_max': grant.amount_max,
+                'deadline': grant.deadline.isoformat() if grant.deadline else None,
+                'focus_areas': getattr(grant, 'focus_areas', grant.eligibility or '')
+            }
+        
+        org_dict = {
+            'name': org.name,
+            'mission': getattr(org, 'mission', ''),
+            'website': getattr(org, 'website', ''),
+            'description': getattr(org, 'description', ''),
+            'focus_areas': getattr(org, 'focus_areas', ''),
+            'programs': getattr(org, 'programs', ''),
+            'achievements': getattr(org, 'achievements', '')
+        }
         
         # Generate narrative
-        narrative_data = ai_service.generate_narrative(
-            grant.to_dict(),
-            org.to_dict(),
-            sections
+        narrative = ai_service.generate_grant_narrative(
+            org_profile=org_dict,
+            grant=grant_dict,
+            section=section,
+            custom_instructions=custom_prompt
         )
         
-        if not narrative_data:
-            return jsonify({
-                "error": "AI narrative generation disabled - Add OpenAI API key in Settings"
-            }), 400
+        if not narrative:
+            return jsonify({'error': 'Failed to generate narrative'}), 500
         
-        # Check for existing narrative (versioning)
-        existing = Narrative.query.filter_by(grant_id=grant_id).first()
-        version = 1
-        
-        if existing:
-            # Create new version instead of overwriting
-            version = (existing.version or 1) + 1
-            
-        # Save narrative
-        narrative = Narrative(
-            grant_id=grant_id,
-            org_id=org_id,
-            content=narrative_data,
-            version=version,
-            created_at=datetime.now(),
-            updated_at=datetime.now()
-        )
-        
-        db.session.add(narrative)
-        db.session.commit()
+        # Save to database if grant exists
+        if grant:
+            # You could save this to a Narrative model here
+            pass
         
         return jsonify({
-            "narrative": {
-                "id": narrative.id,
-                "grant_id": grant_id,
-                "sections": narrative_data.get('sections', {}),
-                "version": version,
-                "created_at": narrative.created_at.isoformat()
-            },
-            "message": f"Narrative version {version} generated successfully"
+            'success': True,
+            'narrative': narrative,
+            'section': section,
+            'grant_id': grant_id
         })
         
     except Exception as e:
-        logger.error(f"Error in generate_narrative: {e}")
-        db.session.rollback()
-        return jsonify({"error": str(e)}), 500
+        logger.error(f"Error generating narrative: {e}")
+        return jsonify({'error': str(e)}), 500
 
-@bp.route('/batch-match', methods=['POST'])
-def batch_match_grants():
-    """Match multiple grants at once"""
+@bp.route('/improve-text', methods=['POST'])
+def improve_text():
+    """Improve/rewrite text using AI"""
+    try:
+        data = request.json
+        original_text = data.get('text', '')
+        improvement_type = data.get('type', 'clarity')  # clarity, professional, concise, expand
+        
+        if not original_text:
+            return jsonify({'error': 'No text provided'}), 400
+        
+        improved = ai_service.improve_text(original_text, improvement_type)
+        
+        if not improved:
+            return jsonify({'error': 'Failed to improve text'}), 500
+        
+        return jsonify({
+            'success': True,
+            'original': original_text,
+            'improved': improved,
+            'type': improvement_type
+        })
+        
+    except Exception as e:
+        logger.error(f"Error improving text: {e}")
+        return jsonify({'error': str(e)}), 500
+
+@bp.route('/match-grants', methods=['POST'])
+def match_grants_bulk():
+    """Match multiple grants to organization profile"""
     try:
         data = request.json
         grant_ids = data.get('grant_ids', [])
-        org_id = data.get('org_id', 1)
         
-        org = Organization.query.get(org_id)
+        # Get organization
+        org = Organization.query.first()
         if not org:
-            return jsonify({"error": "Organization not found"}), 404
+            return jsonify({'error': 'Organization not found'}), 404
+        
+        org_dict = {
+            'name': org.name,
+            'mission': getattr(org, 'mission', ''),
+            'focus_areas': getattr(org, 'focus_areas', '').split(',') if getattr(org, 'focus_areas', '') else [],
+            'keywords': getattr(org, 'keywords', '').split(',') if getattr(org, 'keywords', '') else [],
+            'geographic_focus': getattr(org, 'geographic_focus', ''),
+            'target_population': getattr(org, 'target_population', '')
+        }
         
         results = []
-        for grant_id in grant_ids:
-            grant = Grant.query.get(grant_id)
-            if grant:
-                score, reason = ai_service.match_grant(org.to_dict(), grant.to_dict())
-                if score:
-                    grant.match_score = score
-                    grant.match_reason = reason
-                    results.append({
-                        "grant_id": grant_id,
-                        "fit_score": score,
-                        "fit_reason": reason
-                    })
-                else:
-                    results.append({
-                        "grant_id": grant_id,
-                        "fit_score": None,
-                        "fit_reason": "AI disabled"
-                    })
+        
+        # Process grants
+        if grant_ids:
+            grants = Grant.query.filter(Grant.id.in_(grant_ids)).all()
+        else:
+            # Get all grants without match scores
+            grants = Grant.query.filter(
+                db.or_(Grant.match_score == None, Grant.match_score == 0)
+            ).limit(10).all()
+        
+        for grant in grants:
+            grant_dict = {
+                'title': grant.title,
+                'funder': grant.funder,
+                'description': grant.eligibility or '',
+                'focus_areas': grant.eligibility or '',
+                'amount_min': grant.amount_min,
+                'amount_max': grant.amount_max,
+                'deadline': grant.deadline.isoformat() if grant.deadline else None,
+                'eligibility_criteria': grant.eligibility or ''
+            }
+            
+            fit_score, fit_reason = ai_service.match_grant(org_dict, grant_dict)
+            
+            if fit_score:
+                # Update grant in database
+                grant.match_score = fit_score
+                grant.match_reason = fit_reason
+                db.session.add(grant)
+                
+                results.append({
+                    'grant_id': grant.id,
+                    'title': grant.title,
+                    'fit_score': fit_score,
+                    'fit_reason': fit_reason
+                })
         
         db.session.commit()
         
         return jsonify({
-            "results": results,
-            "message": f"Matched {len(results)} grants"
+            'success': True,
+            'matched': len(results),
+            'results': results
         })
         
     except Exception as e:
-        logger.error(f"Error in batch_match: {e}")
+        logger.error(f"Error in bulk matching: {e}")
         db.session.rollback()
-        return jsonify({"error": str(e)}), 500
+        return jsonify({'error': str(e)}), 500
+
+@bp.route('/analyze-success', methods=['POST'])
+def analyze_grant_success():
+    """Analyze factors for grant success using AI"""
+    try:
+        data = request.json
+        grant_id = data.get('grant_id')
+        
+        grant = Grant.query.get(grant_id)
+        if not grant:
+            return jsonify({'error': 'Grant not found'}), 404
+        
+        # Get organization
+        org = Organization.query.first()
+        
+        analysis = ai_service.analyze_grant_success_factors(
+            grant_data={
+                'title': grant.title,
+                'funder': grant.funder,
+                'status': grant.status,
+                'amount_requested': grant.amount_max,
+                'match_score': grant.match_score
+            },
+            org_data={
+                'name': org.name if org else 'Unknown',
+                'mission': getattr(org, 'mission', '') if org else ''
+            }
+        )
+        
+        if not analysis:
+            return jsonify({'error': 'Failed to analyze grant'}), 500
+        
+        return jsonify({
+            'success': True,
+            'analysis': analysis,
+            'grant_id': grant_id
+        })
+        
+    except Exception as e:
+        logger.error(f"Error analyzing grant success: {e}")
+        return jsonify({'error': str(e)}), 500
+
+@bp.route('/status', methods=['GET'])
+def ai_status():
+    """Check AI service status"""
+    return jsonify({
+        'enabled': ai_service.is_enabled(),
+        'model': ai_service.model if ai_service.is_enabled() else None,
+        'features': {
+            'grant_extraction': ai_service.is_enabled(),
+            'grant_matching': ai_service.is_enabled(),
+            'narrative_generation': ai_service.is_enabled(),
+            'text_improvement': ai_service.is_enabled()
+        }
+    })

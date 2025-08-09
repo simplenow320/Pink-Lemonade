@@ -41,3 +41,8 @@ def settings():
 @pages.get("/writing")
 def writing():
     return render_template("writing.html", active="writing")
+
+@pages.get("/ai-demo")
+def ai_demo():
+    """AI Features Demo Page"""
+    return render_template("ai_demo.html", active="ai")
