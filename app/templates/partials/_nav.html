@@ -1,10 +1,10 @@
 <nav class="nav" role="navigation" aria-label="Primary">
   <img src="{{ url_for('static', filename='img/logo.png') }}" alt="Logo" style="height:32px;width:auto;border-radius:6px" />
-  <a href="/" class="{{ 'active' if request.endpoint=='index' else '' }}">Home</a>
-  <a href="/dashboard" class="{{ 'active' if request.endpoint=='dashboard' else '' }}">Dashboard</a>
-  <a href="/opportunities" class="{{ 'active' if request.endpoint=='opportunities' else '' }}">Opportunities</a>
-  <a href="/saved" class="{{ 'active' if request.endpoint=='saved' else '' }}">Saved</a>
-  <a href="/applications" class="{{ 'active' if request.endpoint=='applications' else '' }}">Applications</a>
-  <a href="/settings" class="{{ 'active' if request.endpoint=='settings' else '' }}">Settings</a>
+  <a href="/" class="{{ 'active' if active=='home' else '' }}">Home</a>
+  <a href="/dashboard" class="{{ 'active' if active=='dashboard' else '' }}">Dashboard</a>
+  <a href="/opportunities" class="{{ 'active' if active=='opps' else '' }}">Opportunities</a>
+  <a href="/saved" class="{{ 'active' if active=='saved' else '' }}">Saved</a>
+  <a href="/applications" class="{{ 'active' if active=='apps' else '' }}">Applications</a>
+  <a href="/settings" class="{{ 'active' if active=='settings' else '' }}">Settings</a>
   <span class="badge">{{ 'LIVE' if env_mode=='LIVE' else 'DEMO' }}</span>
 </nav>

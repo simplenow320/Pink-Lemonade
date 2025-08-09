@@ -9,7 +9,7 @@ bp = Blueprint('routes', __name__)
 @bp.route('/')
 def index():
     """Home page - show landing page"""
-    return render_template('landing.html')
+    return render_template('index.html', active='home')
 
 @bp.route('/dashboard')
 def dashboard():
@@ -73,46 +73,46 @@ def dashboard():
             # If database error, keep empty data
             print(f"Dashboard data error: {e}")
     
-    return render_template('dashboard.html', stats=stats, top_matches=top_matches)
+    return render_template('dashboard.html', stats=stats, top_matches=top_matches, active='dashboard')
 
 @bp.route('/opportunities')
 def opportunities():
     """Render the opportunities page"""
-    return render_template('opportunities.html')
+    return render_template('opportunities.html', active='opps')
 
 @bp.route('/profile')
 def profile():
     """Render the profile page"""
-    return render_template('profile.html')
+    return render_template('profile.html', active='profile')
 
 @bp.route('/settings')
 def settings():
     """Settings page"""
-    return render_template('settings.html')
+    return render_template('settings.html', active='settings')
 
 @bp.route('/saved')
 def saved():
     """Saved grants page"""
-    return render_template('saved.html')
+    return render_template('saved.html', active='saved')
 
 @bp.route('/applications')
 def applications():
     """Applications page"""
-    return render_template('applications.html')
+    return render_template('applications.html', active='apps')
 
 @bp.route('/login')
 def login():
     """Login page"""
-    return render_template('login.html')
+    return render_template('login.html', active=None)
 
 @bp.route('/register')
 def register():
     """Register page"""
-    return render_template('register.html')
+    return render_template('register.html', active=None)
 
 @bp.route('/reset-password')
 def reset_password():
     """Password reset page"""
-    return render_template('reset_password.html')
+    return render_template('reset_password.html', active=None)
 
 # Add other page routes as needed

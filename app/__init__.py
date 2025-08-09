@@ -50,8 +50,8 @@ def create_app():
         return {
             "env_mode": env_mode,
             "current_year": datetime.datetime.utcnow().year,
-            "logo_url": os.getenv("APP_LOGO_URL"),  # set to your uploaded logo URL
-            "active": None
+            "logo_url": os.getenv("APP_LOGO_URL")  # set to your uploaded logo URL
+            # Note: Do not set 'active' here as it should come from individual routes
         }
     
 
