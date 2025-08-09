@@ -78,6 +78,83 @@ class User(db.Model):
             'created_at': self.created_at.isoformat() if self.created_at else None
         }
 
+class UserProgress(db.Model):
+    __tablename__ = "user_progress"
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey("users.id"), unique=True, nullable=False)
+    total_xp = db.Column(db.Integer, default=0)
+    current_level = db.Column(db.Integer, default=1)
+    completed_steps = db.Column(db.Text)  # JSON array of completed step IDs
+    achievements = db.Column(db.Text)  # JSON array of achievement IDs
+    streak_days = db.Column(db.Integer, default=0)
+    last_login = db.Column(db.DateTime)
+    onboarding_complete = db.Column(db.Boolean, default=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'user_id': self.user_id,
+            'total_xp': self.total_xp,
+            'current_level': self.current_level,
+            'completed_steps': self.completed_steps,
+            'achievements': self.achievements,
+            'streak_days': self.streak_days,
+            'last_login': self.last_login.isoformat() if self.last_login else None,
+            'onboarding_complete': self.onboarding_complete,
+            'created_at': self.created_at.isoformat() if self.created_at else None,
+            'updated_at': self.updated_at.isoformat() if self.updated_at else None
+        }
+
+class Achievement(db.Model):
+    __tablename__ = "achievements"
+    id = db.Column(db.Integer, primary_key=True)
+    code = db.Column(db.String(50), unique=True, nullable=False)
+    name = db.Column(db.String(100), nullable=False)
+    description = db.Column(db.Text)
+    xp_reward = db.Column(db.Integer, default=0)
+    icon = db.Column(db.String(10))
+    category = db.Column(db.String(50))
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'code': self.code,
+            'name': self.name,
+            'description': self.description,
+            'xp_reward': self.xp_reward,
+            'icon': self.icon,
+            'category': self.category
+        }
+
+class OnboardingStep(db.Model):
+    __tablename__ = "onboarding_steps"
+    id = db.Column(db.Integer, primary_key=True)
+    code = db.Column(db.String(50), unique=True, nullable=False)
+    title = db.Column(db.String(100), nullable=False)
+    description = db.Column(db.Text)
+    order = db.Column(db.Integer, default=0)
+    xp_reward = db.Column(db.Integer, default=0)
+    icon = db.Column(db.String(10))
+    category = db.Column(db.String(50))
+    tasks = db.Column(db.Text)  # JSON array of tasks
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'code': self.code,
+            'title': self.title,
+            'description': self.description,
+            'order': self.order,
+            'xp_reward': self.xp_reward,
+            'icon': self.icon,
+            'category': self.category,
+            'tasks': self.tasks
+        }
+
 class UserInvite(db.Model):
     __tablename__ = "user_invites"
     id = db.Column(db.Integer, primary_key=True)
@@ -207,6 +284,49 @@ class OrgVoiceProfile(db.Model):
             'common_phrases': self.common_phrases or [],
             'preferred_proof_points': self.preferred_proof_points or [],
             'updated_at': self.updated_at.isoformat() if self.updated_at else None
+        }
+
+class GrantActivity(db.Model):
+    __tablename__ = "grant_activities"
+    id = db.Column(db.Integer, primary_key=True)
+    grant_id = db.Column(db.Integer, db.ForeignKey("grants.id"), nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey("users.id"))
+    action = db.Column(db.String(50))  # status_change, document_added, note_added, etc.
+    details = db.Column(db.JSON)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'grant_id': self.grant_id,
+            'user_id': self.user_id,
+            'action': self.action,
+            'details': self.details,
+            'created_at': self.created_at.isoformat() if self.created_at else None
+        }
+
+class GrantDocument(db.Model):
+    __tablename__ = "grant_documents"
+    id = db.Column(db.Integer, primary_key=True)
+    grant_id = db.Column(db.Integer, db.ForeignKey("grants.id"), nullable=False)
+    filename = db.Column(db.String(255))
+    file_path = db.Column(db.String(500))
+    file_size = db.Column(db.Integer)
+    document_type = db.Column(db.String(50))  # proposal, budget, letter_of_support, etc.
+    description = db.Column(db.Text)
+    uploaded_by = db.Column(db.Integer, db.ForeignKey("users.id"))
+    uploaded_at = db.Column(db.DateTime, default=datetime.utcnow)
+    
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'grant_id': self.grant_id,
+            'filename': self.filename,
+            'file_size': self.file_size,
+            'document_type': self.document_type,
+            'description': self.description,
+            'uploaded_by': self.uploaded_by,
+            'uploaded_at': self.uploaded_at.isoformat() if self.uploaded_at else None
         }
 
 class Grant(db.Model):

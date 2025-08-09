@@ -58,6 +58,10 @@ def create_app():
     from app.api.live_data import bp as live_data_bp
     flask_app.register_blueprint(live_data_bp)
     
+    # Register onboarding journey endpoints
+    from app.api.onboarding import onboarding_bp
+    flask_app.register_blueprint(onboarding_bp)
+    
     # Add template context processor for global template variables
     @flask_app.context_processor
     def inject_globals():

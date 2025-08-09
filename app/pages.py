@@ -51,3 +51,8 @@ def ai_demo():
 def live_data():
     """Live Data Integration Page"""
     return render_template("live_data.html", active="live")
+
+@pages.get("/journey")
+def journey():
+    """Interactive Onboarding Journey Page"""
+    return render_template("onboarding.html", active="journey")

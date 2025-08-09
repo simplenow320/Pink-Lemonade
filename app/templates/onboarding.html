@@ -1,0 +1,394 @@
+{% extends "base.html" %}
+
+{% block title %}Your Journey - Pink Lemonade{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-6">
+    <!-- Character Progress Header -->
+    <div class="bg-white rounded-lg shadow-lg p-6 mb-6" style="background: linear-gradient(135deg, #FFF5F5 0%, #FFFFFF 100%);">
+        <div class="flex items-center justify-between mb-4">
+            <div class="flex items-center gap-4">
+                <div id="characterIcon" class="text-6xl">🌱</div>
+                <div>
+                    <h1 id="characterTitle" class="text-3xl font-bold" style="color: #4A4A4A;">Grant Seeker</h1>
+                    <p class="text-lg" style="color: #6B7280;">Level <span id="currentLevel">1</span></p>
+                </div>
+            </div>
+            <div class="text-right">
+                <p class="text-2xl font-bold" style="color: #F8D7DA;"><span id="totalXP">0</span> XP</p>
+                <p class="text-sm" style="color: #6B7280;">🔥 <span id="streakDays">0</span> day streak</p>
+            </div>
+        </div>
+        
+        <!-- XP Progress Bar -->
+        <div class="mt-4">
+            <div class="flex justify-between text-sm mb-1">
+                <span style="color: #6B7280;">Progress to Level <span id="nextLevelNum">2</span></span>
+                <span style="color: #6B7280;"><span id="currentXP">0</span> / <span id="nextLevelXP">100</span> XP</span>
+            </div>
+            <div class="w-full bg-gray-200 rounded-full h-4">
+                <div id="xpProgressBar" class="h-4 rounded-full transition-all duration-500" 
+                    style="background-color: #F8D7DA; width: 0%;"></div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Journey Steps -->
+    <div class="mb-6">
+        <h2 class="text-2xl font-bold mb-4" style="color: #4A4A4A;">Your Onboarding Journey</h2>
+        <div id="journeySteps" class="space-y-4">
+            <!-- Steps will be loaded here -->
+        </div>
+    </div>
+    
+    <!-- Achievements -->
+    <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+        <h2 class="text-2xl font-bold mb-4" style="color: #4A4A4A;">Achievements</h2>
+        <div id="achievements" class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
+            <!-- Achievements will be loaded here -->
+        </div>
+    </div>
+    
+    <!-- Leaderboard -->
+    <div class="bg-white rounded-lg shadow-md p-6">
+        <h2 class="text-2xl font-bold mb-4" style="color: #4A4A4A;">Community Leaderboard</h2>
+        <div id="leaderboard" class="space-y-2">
+            <!-- Leaderboard will be loaded here -->
+        </div>
+    </div>
+</div>
+
+<!-- Level Up Modal -->
+<div id="levelUpModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+    <div class="bg-white rounded-lg p-8 max-w-md animate-bounce">
+        <div class="text-center">
+            <div class="text-6xl mb-4">🎉</div>
+            <h2 class="text-3xl font-bold mb-2" style="color: #F8D7DA;">Level Up!</h2>
+            <p class="text-xl mb-4" style="color: #4A4A4A;">You've reached Level <span id="newLevel"></span></p>
+            <p class="text-lg mb-6" style="color: #6B7280;">New Title: <span id="newTitle" class="font-bold"></span></p>
+            <button onclick="closeLevelUpModal()" class="px-6 py-2 rounded-md text-white" 
+                style="background-color: #F8D7DA;">Continue Journey</button>
+        </div>
+    </div>
+</div>
+
+<!-- Achievement Modal -->
+<div id="achievementModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+    <div class="bg-white rounded-lg p-8 max-w-md animate-pulse">
+        <div class="text-center">
+            <div id="achievementIcon" class="text-6xl mb-4">🏆</div>
+            <h2 class="text-2xl font-bold mb-2" style="color: #F8D7DA;">Achievement Unlocked!</h2>
+            <p id="achievementName" class="text-xl mb-2" style="color: #4A4A4A;"></p>
+            <p id="achievementDesc" class="text-sm mb-4" style="color: #6B7280;"></p>
+            <p class="text-lg mb-6" style="color: #10B981;">+<span id="achievementXP"></span> XP</p>
+            <button onclick="closeAchievementModal()" class="px-6 py-2 rounded-md text-white" 
+                style="background-color: #F8D7DA;">Awesome!</button>
+        </div>
+    </div>
+</div>
+
+<style>
+.step-card {
+    transition: all 0.3s ease;
+}
+.step-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+}
+.task-item {
+    transition: all 0.2s ease;
+}
+.task-item:hover {
+    background-color: #FFF5F5;
+}
+.task-complete {
+    text-decoration: line-through;
+    opacity: 0.6;
+}
+.achievement-badge {
+    transition: all 0.3s ease;
+}
+.achievement-badge:hover {
+    transform: scale(1.1);
+}
+.achievement-locked {
+    filter: grayscale(100%);
+    opacity: 0.4;
+}
+</style>
+
+<script>
+let userProgress = {};
+let onboardingSteps = [];
+
+// Load everything on page load
+document.addEventListener('DOMContentLoaded', () => {
+    loadProgress();
+    loadSteps();
+    loadLeaderboard();
+    updateLoginStreak();
+});
+
+async function loadProgress() {
+    try {
+        const response = await fetch('/api/onboarding/progress');
+        const data = await response.json();
+        
+        if (data.success) {
+            userProgress = data.progress;
+            updateProgressDisplay();
+            loadAchievements();
+        }
+    } catch (error) {
+        console.error('Error loading progress:', error);
+    }
+}
+
+function updateProgressDisplay() {
+    // Update character info
+    document.getElementById('characterIcon').textContent = userProgress.character.icon;
+    document.getElementById('characterTitle').textContent = userProgress.character.title;
+    document.getElementById('currentLevel').textContent = userProgress.current_level.level;
+    document.getElementById('totalXP').textContent = userProgress.total_xp;
+    document.getElementById('streakDays').textContent = userProgress.streak_days;
+    
+    // Update XP progress bar
+    if (userProgress.next_level) {
+        const currentForLevel = userProgress.total_xp - userProgress.current_level.xp_required;
+        const neededForNext = userProgress.next_level.xp_required - userProgress.current_level.xp_required;
+        
+        document.getElementById('nextLevelNum').textContent = userProgress.next_level.level;
+        document.getElementById('currentXP').textContent = currentForLevel;
+        document.getElementById('nextLevelXP').textContent = neededForNext;
+        document.getElementById('xpProgressBar').style.width = `${userProgress.progress_percentage}%`;
+    } else {
+        // Max level reached
+        document.getElementById('xpProgressBar').style.width = '100%';
+    }
+}
+
+async function loadSteps() {
+    try {
+        const response = await fetch('/api/onboarding/steps');
+        const data = await response.json();
+        
+        if (data.success) {
+            onboardingSteps = data.steps;
+            displaySteps();
+        }
+    } catch (error) {
+        console.error('Error loading steps:', error);
+    }
+}
+
+function displaySteps() {
+    const container = document.getElementById('journeySteps');
+    container.innerHTML = '';
+    
+    onboardingSteps.forEach(step => {
+        const stepCard = document.createElement('div');
+        stepCard.className = 'bg-white rounded-lg shadow-md p-6 step-card';
+        
+        const completedTasks = step.tasks.filter(t => t.completed).length;
+        const totalTasks = step.tasks.length;
+        
+        stepCard.innerHTML = `
+            <div class="flex items-center justify-between mb-4">
+                <div class="flex items-center gap-3">
+                    <span class="text-3xl">${step.icon}</span>
+                    <div>
+                        <h3 class="text-xl font-semibold">${step.title}</h3>
+                        <p class="text-sm text-gray-500">${step.description}</p>
+                    </div>
+                </div>
+                <div class="text-right">
+                    <p class="text-sm font-semibold" style="color: #F8D7DA;">
+                        ${completedTasks}/${totalTasks} tasks
+                    </p>
+                    <p class="text-xs text-gray-500">+${step.xp_reward} XP</p>
+                </div>
+            </div>
+            
+            <div class="mb-3">
+                <div class="w-full bg-gray-200 rounded-full h-2">
+                    <div class="h-2 rounded-full" style="background-color: #F8D7DA; width: ${step.progress}%;"></div>
+                </div>
+            </div>
+            
+            <div class="space-y-2">
+                ${step.tasks.map(task => `
+                    <div class="flex items-center justify-between p-2 rounded task-item ${task.completed ? 'task-complete' : ''}"
+                        onclick="${!task.completed ? `completeTask('${step.id}', '${task.id}')` : ''}">
+                        <div class="flex items-center gap-2">
+                            <input type="checkbox" ${task.completed ? 'checked' : ''} disabled 
+                                class="rounded" style="accent-color: #F8D7DA;">
+                            <span>${task.title}</span>
+                        </div>
+                        <span class="text-sm text-gray-500">+${task.xp} XP</span>
+                    </div>
+                `).join('')}
+            </div>
+        `;
+        
+        container.appendChild(stepCard);
+    });
+}
+
+async function completeTask(stepId, taskId) {
+    try {
+        const response = await fetch('/api/onboarding/complete-task', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ step_id: stepId, task_id: taskId })
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            // Show XP animation
+            showXPAnimation(data.xp_earned);
+            
+            // Check if leveled up
+            if (data.leveled_up) {
+                showLevelUpModal(data.new_level);
+            }
+            
+            // Reload data
+            loadProgress();
+            loadSteps();
+        }
+    } catch (error) {
+        console.error('Error completing task:', error);
+    }
+}
+
+function loadAchievements() {
+    const container = document.getElementById('achievements');
+    container.innerHTML = '';
+    
+    const allAchievements = [
+        {id: 'first_login', name: 'Welcome Aboard', icon: '🎉'},
+        {id: 'profile_complete', name: 'Identity Established', icon: '✅'},
+        {id: 'first_save', name: 'Grant Collector', icon: '📌'},
+        {id: 'five_saves', name: 'Grant Curator', icon: '📚'},
+        {id: 'first_ai_use', name: 'AI Pioneer', icon: '🤖'},
+        {id: 'first_submission', name: 'Application Submitted', icon: '✉️'},
+        {id: 'week_streak', name: 'Dedicated Seeker', icon: '🔥'},
+        {id: 'high_match', name: 'Perfect Match', icon: '💯'},
+        {id: 'document_master', name: 'Document Master', icon: '📄'},
+        {id: 'speed_reader', name: 'Speed Reader', icon: '⚡'}
+    ];
+    
+    allAchievements.forEach(achievement => {
+        const earned = userProgress.achievements && userProgress.achievements.includes(achievement.id);
+        
+        const badge = document.createElement('div');
+        badge.className = `text-center achievement-badge ${!earned ? 'achievement-locked' : ''}`;
+        badge.innerHTML = `
+            <div class="text-4xl mb-1">${achievement.icon}</div>
+            <p class="text-xs">${achievement.name}</p>
+        `;
+        
+        container.appendChild(badge);
+    });
+}
+
+async function loadLeaderboard() {
+    try {
+        const response = await fetch('/api/onboarding/leaderboard');
+        const data = await response.json();
+        
+        if (data.success) {
+            const container = document.getElementById('leaderboard');
+            container.innerHTML = '';
+            
+            data.leaderboard.forEach((user, index) => {
+                const row = document.createElement('div');
+                row.className = 'flex items-center justify-between p-3 bg-gray-50 rounded';
+                
+                let medal = '';
+                if (index === 0) medal = '🥇';
+                else if (index === 1) medal = '🥈';
+                else if (index === 2) medal = '🥉';
+                else medal = `#${index + 1}`;
+                
+                row.innerHTML = `
+                    <div class="flex items-center gap-3">
+                        <span class="text-xl font-bold" style="min-width: 30px;">${medal}</span>
+                        <span class="text-2xl">${user.icon}</span>
+                        <div>
+                            <p class="font-semibold">${user.username}</p>
+                            <p class="text-sm text-gray-500">${user.title}</p>
+                        </div>
+                    </div>
+                    <div class="text-right">
+                        <p class="font-bold" style="color: #F8D7DA;">${user.total_xp} XP</p>
+                        <p class="text-sm text-gray-500">Level ${user.level}</p>
+                    </div>
+                `;
+                
+                container.appendChild(row);
+            });
+        }
+    } catch (error) {
+        console.error('Error loading leaderboard:', error);
+    }
+}
+
+async function updateLoginStreak() {
+    try {
+        const response = await fetch('/api/onboarding/update-streak', {
+            method: 'POST'
+        });
+        
+        const data = await response.json();
+        
+        if (data.success && data.achievement_awarded) {
+            showAchievementModal(data.achievement_awarded);
+        }
+    } catch (error) {
+        console.error('Error updating streak:', error);
+    }
+}
+
+function showXPAnimation(xp) {
+    // Create floating XP text
+    const xpText = document.createElement('div');
+    xpText.className = 'fixed text-2xl font-bold animate-bounce';
+    xpText.style.color = '#10B981';
+    xpText.style.top = '50%';
+    xpText.style.left = '50%';
+    xpText.style.transform = 'translate(-50%, -50%)';
+    xpText.style.zIndex = '100';
+    xpText.textContent = `+${xp} XP`;
+    
+    document.body.appendChild(xpText);
+    
+    setTimeout(() => {
+        xpText.remove();
+    }, 2000);
+}
+
+function showLevelUpModal(newLevel) {
+    document.getElementById('newLevel').textContent = newLevel.level;
+    document.getElementById('newTitle').textContent = newLevel.title;
+    document.getElementById('levelUpModal').classList.remove('hidden');
+}
+
+function closeLevelUpModal() {
+    document.getElementById('levelUpModal').classList.add('hidden');
+}
+
+function showAchievementModal(achievement) {
+    document.getElementById('achievementIcon').textContent = achievement.icon;
+    document.getElementById('achievementName').textContent = achievement.name;
+    document.getElementById('achievementDesc').textContent = achievement.description;
+    document.getElementById('achievementXP').textContent = achievement.xp;
+    document.getElementById('achievementModal').classList.remove('hidden');
+}
+
+function closeAchievementModal() {
+    document.getElementById('achievementModal').classList.add('hidden');
+}
+</script>
+{% endblock %}
