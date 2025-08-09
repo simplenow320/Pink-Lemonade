@@ -2,10 +2,18 @@
 
 {% block title %}Pink Lemonade - Grant Management{% endblock %}
 
+{% block navigation %}
+<div class="container">
+    {% set active = 'home' %}
+    {% set logo_url = url_for('static', filename='img/logo.png') %}
+    {% include 'partials/_nav.html' %}
+</div>
+{% endblock %}
+
 {% block content %}
 <div class="container mx-auto px-4 py-8">
     <div class="text-center">
-        <img src="{{ url_for('static', filename='img/logo.png') }}" alt="Pink Lemonade" class="h-32 mx-auto mb-6">
+        <h1 class="text-4xl font-bold text-gray-900 mb-4">Welcome to Pink Lemonade</h1>
         <p class="text-xl text-gray-600 mb-8">AI-Powered Grant Management Platform</p>
         
         <div class="bg-white rounded-lg shadow-lg p-8 max-w-2xl mx-auto">

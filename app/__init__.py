@@ -56,6 +56,22 @@ def create_app():
     def dashboard():
         return render_template('dashboard.html')
     
+    @flask_app.route('/opportunities')
+    def opportunities():
+        return render_template('opportunities.html')
+    
+    @flask_app.route('/saved')
+    def saved():
+        return render_template('saved.html')
+    
+    @flask_app.route('/applications')
+    def applications():
+        return render_template('applications.html')
+    
+    @flask_app.route('/settings')
+    def settings():
+        return render_template('settings.html')
+    
     # Start scheduler only in production
     if os.environ.get('FLASK_ENV') == 'production':
         from app.utils.scheduler import start_scheduler

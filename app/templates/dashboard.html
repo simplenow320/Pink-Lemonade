@@ -2,20 +2,16 @@
 
 {% block title %}Dashboard - Pink Lemonade{% endblock %}
 
+{% block navigation %}
+<div class="container">
+    {% set active = 'dashboard' %}
+    {% set logo_url = url_for('static', filename='img/logo.png') %}
+    {% include 'partials/_nav.html' %}
+</div>
+{% endblock %}
+
 {% block content %}
 <div class="container mx-auto px-4 py-8">
-    <!-- Header with Logo and Navigation -->
-    <div class="flex items-center justify-between mb-8">
-        <div class="flex items-center gap-4">
-            <img src="{{ url_for('static', filename='img/logo.png') }}" alt="Pink Lemonade" class="h-12">
-        </div>
-        <nav class="nav">
-            <a href="/" class="hover:bg-pink-100">Home</a>
-            <a href="/dashboard" class="active">Dashboard</a>
-            <a href="/api/opportunities" class="hover:bg-pink-100">Opportunities</a>
-        </nav>
-    </div>
-    
     <div class="mb-8">
         <h1 class="text-3xl font-bold text-gray-900 mb-2">Grant Management Dashboard</h1>
         <p class="text-gray-600">Monitor your grant opportunities and applications</p>

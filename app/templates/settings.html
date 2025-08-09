@@ -1,0 +1,145 @@
+{% extends "base.html" %}
+
+{% block title %}Settings - Pink Lemonade{% endblock %}
+
+{% block navigation %}
+<div class="container">
+    {% set active = 'settings' %}
+    {% set logo_url = url_for('static', filename='img/logo.png') %}
+    {% include 'partials/_nav.html' %}
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+    <div class="mb-8">
+        <h1 class="text-3xl font-bold text-gray-900 mb-2">Settings</h1>
+        <p class="text-gray-600">Manage your organization profile and preferences</p>
+    </div>
+    
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <!-- Navigation Sidebar -->
+        <div class="bg-white rounded-lg shadow p-4">
+            <nav class="space-y-2">
+                <a href="#profile" class="block px-4 py-2 rounded hover:bg-pink-50 text-gray-700">Organization Profile</a>
+                <a href="#focus" class="block px-4 py-2 rounded hover:bg-pink-50 text-gray-700">Focus Areas</a>
+                <a href="#keywords" class="block px-4 py-2 rounded hover:bg-pink-50 text-gray-700">Keywords</a>
+                <a href="#documents" class="block px-4 py-2 rounded hover:bg-pink-50 text-gray-700">Documents</a>
+                <a href="#ai" class="block px-4 py-2 rounded hover:bg-pink-50 text-gray-700">AI Settings</a>
+            </nav>
+        </div>
+        
+        <!-- Main Settings Content -->
+        <div class="md:col-span-2">
+            <!-- Organization Profile -->
+            <div id="profile" class="bg-white rounded-lg shadow p-6 mb-6">
+                <h2 class="text-xl font-semibold text-gray-900 mb-4">Organization Profile</h2>
+                <form>
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Organization Name</label>
+                        <input type="text" id="org-name" class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:border-pink-400" placeholder="Your Organization">
+                    </div>
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Mission Statement</label>
+                        <textarea id="mission" rows="4" class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:border-pink-400" placeholder="Describe your organization's mission..."></textarea>
+                    </div>
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">City</label>
+                        <input type="text" id="city" class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:border-pink-400" placeholder="Atlanta">
+                    </div>
+                    <button type="submit" class="btn-primary">Save Profile</button>
+                </form>
+            </div>
+            
+            <!-- Focus Areas -->
+            <div id="focus" class="bg-white rounded-lg shadow p-6 mb-6">
+                <h2 class="text-xl font-semibold text-gray-900 mb-4">Focus Areas</h2>
+                <div class="space-y-2">
+                    <label class="flex items-center">
+                        <input type="checkbox" class="mr-2"> Youth Development
+                    </label>
+                    <label class="flex items-center">
+                        <input type="checkbox" class="mr-2"> Education
+                    </label>
+                    <label class="flex items-center">
+                        <input type="checkbox" class="mr-2"> Community Service
+                    </label>
+                    <label class="flex items-center">
+                        <input type="checkbox" class="mr-2"> Faith-Based Programs
+                    </label>
+                    <label class="flex items-center">
+                        <input type="checkbox" class="mr-2"> Health & Wellness
+                    </label>
+                </div>
+                <button class="btn-primary mt-4">Update Focus Areas</button>
+            </div>
+            
+            <!-- Documents -->
+            <div id="documents" class="bg-white rounded-lg shadow p-6 mb-6">
+                <h2 class="text-xl font-semibold text-gray-900 mb-4">Documents</h2>
+                <p class="text-sm text-gray-600 mb-4">Upload key documents to enhance AI grant matching and narrative generation</p>
+                <div class="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
+                    <svg class="w-12 h-12 mx-auto mb-2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
+                    </svg>
+                    <p class="text-gray-600">Drop files here or click to upload</p>
+                    <p class="text-xs text-gray-500 mt-2">PDF, DOC, DOCX up to 10MB</p>
+                </div>
+            </div>
+            
+            <!-- AI Settings -->
+            <div id="ai" class="bg-white rounded-lg shadow p-6">
+                <h2 class="text-xl font-semibold text-gray-900 mb-4">AI Settings</h2>
+                <div class="space-y-4">
+                    <div>
+                        <label class="flex items-center justify-between">
+                            <span class="text-sm font-medium text-gray-700">Enable AI Grant Matching</span>
+                            <input type="checkbox" checked class="toggle">
+                        </label>
+                        <p class="text-xs text-gray-500 mt-1">Use AI to analyze grant fit scores</p>
+                    </div>
+                    <div>
+                        <label class="flex items-center justify-between">
+                            <span class="text-sm font-medium text-gray-700">Automated Narrative Generation</span>
+                            <input type="checkbox" checked class="toggle">
+                        </label>
+                        <p class="text-xs text-gray-500 mt-1">Generate proposal drafts with AI assistance</p>
+                    </div>
+                    <div>
+                        <label class="flex items-center justify-between">
+                            <span class="text-sm font-medium text-gray-700">Learn from Edits</span>
+                            <input type="checkbox" checked class="toggle">
+                        </label>
+                        <p class="text-xs text-gray-500 mt-1">Improve AI outputs based on your edits</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Load organization profile
+    fetch('/api/organization/profile')
+        .then(response => response.json())
+        .then(data => {
+            if (data.organization) {
+                document.getElementById('org-name').value = data.organization.name || '';
+                document.getElementById('mission').value = data.organization.mission || '';
+                document.getElementById('city').value = data.organization.city || '';
+            }
+        })
+        .catch(error => {
+            console.error('Error loading profile:', error);
+        });
+    
+    // Handle form submission
+    document.querySelector('form').addEventListener('submit', (e) => {
+        e.preventDefault();
+        // Save profile logic here
+        alert('Profile saved!');
+    });
+</script>
+{% endblock %}

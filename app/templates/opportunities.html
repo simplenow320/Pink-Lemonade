@@ -1,10 +1,16 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Opportunities - Pink Lemonade</title>
-    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+{% extends "base.html" %}
+
+{% block title %}Opportunities - Pink Lemonade{% endblock %}
+
+{% block navigation %}
+<div class="container">
+    {% set active = 'opps' %}
+    {% set logo_url = url_for('static', filename='img/logo.png') %}
+    {% include 'partials/_nav.html' %}
+</div>
+{% endblock %}
+
+{% block extra_css %}
     <style>
         :root {
             --pink: #db2777;
@@ -159,24 +165,11 @@
             }
         }
     </style>
-</head>
-<body>
-    <!-- Demo Badge (shown in mock mode) -->
-    <div id="demo-badge" class="demo-badge hidden">DEMO MODE</div>
+{% endblock %}
 
-    <!-- Header -->
-    <div class="header-bar">
-        <div class="max-w-7xl mx-auto flex items-center justify-between">
-            <div class="flex items-center space-x-4">
-                
-                <h1 class="text-xl font-semibold">Grant Opportunities</h1>
-            </div>
-            <a href="/dashboard" class="text-sm hover:underline" style="color: var(--pink-matte);">← Back to Dashboard</a>
-        </div>
-    </div>
-
+{% block content %}
     <!-- Main Content -->
-    <div class="max-w-7xl mx-auto px-4 py-6">
+    <div class="container mx-auto px-4 py-6">
         <!-- Search and Filters -->
         <div class="filter-section">
             <div class="mb-4">
@@ -533,5 +526,8 @@
             setTimeout(() => notification.remove(), 3000);
         }
     </script>
-</body>
-</html>
+{% endblock %}
+
+{% block extra_js %}
+    <!-- Additional JS can be added here if needed -->
+{% endblock %}

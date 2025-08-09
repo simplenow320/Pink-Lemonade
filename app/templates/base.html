@@ -9,21 +9,15 @@
     {% block extra_css %}{% endblock %}
 </head>
 <body class="bg-gray-50 min-h-screen">
+    {% block navigation %}
+    <!-- Navigation will be included on pages that need it -->
+    {% endblock %}
+    
     <div class="min-h-screen">
         {% block content %}{% endblock %}
     </div>
     
-    <!-- Footer with mode badge -->
-    <footer class="fixed bottom-4 right-4">
-        <div class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium
-                    {% if env_mode == 'LIVE' %}
-                        bg-green-100 text-green-800
-                    {% else %}
-                        bg-yellow-100 text-yellow-800
-                    {% endif %}">
-            {{ env_mode }}
-        </div>
-    </footer>
+    <!-- Optional footer, mode badge is now in navigation -->
     
     {% block extra_js %}{% endblock %}
 </body>
