@@ -1,342 +1,317 @@
+"""
+AI Service Layer for Grant Management
+Handles all OpenAI API interactions for matching, extraction, and narrative generation
+"""
+
 import os
-import logging
 import json
-import requests
-from bs4 import BeautifulSoup
+import logging
+import time
+from typing import Dict, List, Optional, Tuple, Any
 from datetime import datetime
-import trafilatura
+import openai
+from openai import OpenAI
 
-# Initialize OpenAI client if API key is available
-OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY")
-openai = None
+logger = logging.getLogger(__name__)
 
-# Only initialize OpenAI if API key is provided
-if OPENAI_API_KEY:
-    from openai import OpenAI
-    openai = OpenAI(api_key=OPENAI_API_KEY)
-
-def extract_grant_info(content):
-    """
-    Extract structured grant information from text using OpenAI
+class AIService:
+    """Central AI service for grant-related AI operations"""
     
-    Args:
-        content (str): The text content containing grant information
+    def __init__(self):
+        """Initialize AI service with API key from environment"""
+        self.api_key = os.environ.get("OPENAI_API_KEY")
+        self.client = None
+        self.model = "gpt-4o"  # Latest OpenAI model as of 2024
+        self.max_retries = 3
+        self.retry_delay = 2  # seconds
         
-    Returns:
-        dict: Structured grant information
-    """
-    try:
-        # Check if OpenAI is available
-        if not openai:
-            return {
-                "error": "OpenAI API key not configured",
-                "title": "Unknown Grant",
-                "funder": "Unknown",
-                "description": "Grant information unavailable without OpenAI API key",
-                "requires_api_key": True
-            }
-            
-        system_prompt = """You are an AI data extractor specializing in grant information. Extract the following from the provided text:
-1. title (string): The name of the grant program
-2. funder (string): The organization offering the grant
-3. description (string): A brief description of the grant purpose
-4. amount (number or string): The grant amount or range if specified
-5. due_date (string in YYYY-MM-DD format if possible): The application deadline
-6. eligibility (string): Who can apply for this grant
-7. focus_areas (array of strings): The program areas or sectors this grant targets
-8. contact_info (string): General contact information for inquiries
-9. website (string): The grant's website if mentioned
-10. contact_name (string): Name of the specific contact person for the grant
-11. contact_email (string): Email address for grant inquiries
-12. contact_phone (string): Phone number for grant inquiries
-13. submission_url (string): Specific URL for submitting the grant application
-14. application_process (string): Description of how to apply for the grant
-15. grant_cycle (string): Information about grant cycles (annual, quarterly, etc.)
-
-Return as a JSON object with these fields. If information is not found for a field, include the field with a null value."""
-        
-        response = openai.chat.completions.create(
-            model="gpt-4o",
-            messages=[
-                {"role": "system", "content": system_prompt},
-                {"role": "user", "content": content}
-            ],
-            response_format={"type": "json_object"}
-        )
-        
-        content = response.choices[0].message.content
-        result = json.loads(content if content else "{}")
-        
-        return result
+        if self.api_key:
+            self.client = OpenAI(api_key=self.api_key)
+            logger.info("AI Service initialized with API key")
+        else:
+            logger.warning("AI Service initialized without API key - AI features disabled")
     
-    except Exception as e:
-        logging.error(f"Error extracting grant information: {str(e)}")
-        return {
-            "error": "Could not extract grant information",
-            "title": "Unknown Grant",
-            "funder": "Unknown",
-            "description": f"Error: {str(e)}"
-        }
-
-def extract_grant_info_from_url(url):
-    """
-    Extract grant information from a URL
+    def is_enabled(self) -> bool:
+        """Check if AI service is enabled (has API key)"""
+        return self.client is not None
     
-    Args:
-        url (str): The URL to extract grant information from
+    def _make_request(self, messages: List[Dict], 
+                     response_format: Optional[Dict] = None,
+                     max_tokens: int = 1000) -> Optional[Dict]:
+        """Make request to OpenAI with retry logic"""
+        if not self.client:
+            logger.warning("AI Service not enabled - no API key")
+            return None
         
-    Returns:
-        dict: Structured grant information
-    """
-    try:
-        logging.info(f"Extracting grant information from URL: {url}")
-        
-        # Fetch web content
-        downloaded = trafilatura.fetch_url(url)
-        if not downloaded:
-            logging.warning(f"Failed to download URL with trafilatura: {url}")
-            # Fallback to direct requests
-            response = requests.get(url, headers={
-                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
-            }, timeout=15)
-            downloaded = response.text
-        
-        # Extract main content
-        text = trafilatura.extract(downloaded)
-        if not text or len(text) < 100:  # If text is too short, it's likely incomplete
-            logging.warning(f"Trafilatura extraction failed or returned minimal text for {url}, falling back to HTML parsing")
-            # Fallback to simple HTML parsing
-            response = requests.get(url, headers={
-                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
-            }, timeout=15)
-            soup = BeautifulSoup(response.content, 'html.parser')
-            
-            # Remove script and style elements
-            for script in soup(["script", "style"]):
-                script.extract()
-            
-            # Get text
-            text = soup.get_text(separator=' ', strip=True)
-        
-        logging.info(f"Extracted {len(text)} characters of text from {url}")
-        
-        # Add source information to the text to help the AI understand context
-        source_domain = url.split('/')[2] if len(url.split('/')) > 2 else "unknown"
-        text_with_context = f"Grant information from {source_domain}:\n\n{text}"
-        
-        # Process with the AI
-        grant_info = extract_grant_info(text_with_context)
-        
-        # Add the source URL if not already present
-        if 'website' not in grant_info or not grant_info['website']:
-            grant_info['website'] = url
-        
-        # Add the organization name as funder if not present
-        if ('funder' not in grant_info or not grant_info['funder']) and source_domain:
-            grant_info['funder'] = source_domain.replace('www.', '').split('.')[0].title()
-        
-        logging.info(f"Successfully extracted grant information: {grant_info.get('title', 'Untitled')} from {url}")
-        return grant_info
-    
-    except Exception as e:
-        logging.error(f"Error extracting grant from URL {url}: {str(e)}")
-        return {
-            "error": f"Could not extract grant information from URL: {str(e)}",
-            "title": "Unknown Grant",
-            "funder": "Unknown",
-            "website": url
-        }
-
-def analyze_grant_match(grant, organization):
-    """
-    Analyze how well a grant matches the organization profile
-    
-    Args:
-        grant (dict): The grant information
-        organization (dict): The organization profile
-        
-    Returns:
-        dict: Match analysis with score and explanation
-    """
-    try:
-        # Check if OpenAI is available
-        if not openai:
-            return {
-                "score": 0,
-                "explanation": "OpenAI API key not configured",
-                "error": "OpenAI API key required for grant matching",
-                "requires_api_key": True
-            }
-        
-        # Create a serializable copy of grant data
-        serializable_grant = {}
-        for key, value in grant.items():
-            # Convert date objects to strings
-            if hasattr(value, 'isoformat'):  # Check if it's a date-like object
-                serializable_grant[key] = value.isoformat()
-            else:
-                serializable_grant[key] = value
-        
-        # Create a serializable copy of organization data
-        serializable_org = {}
-        for key, value in organization.items():
-            # Convert date objects to strings
-            if hasattr(value, 'isoformat'):  # Check if it's a date-like object
-                serializable_org[key] = value.isoformat()
-            else:
-                serializable_org[key] = value
-            
-        system_prompt = """
-        You are an expert grant consultant for nonprofits. Your task is to analyze how well a grant opportunity 
-        matches a nonprofit organization's profile and provide a match score and detailed explanation.
-        
-        Consider the following factors:
-        1. Alignment of focus areas - How well do the organization's focus areas match the grant's focus areas?
-        2. Mission alignment - Does the grant purpose align with the organization's mission?
-        3. Eligibility - Does the organization meet the grant's eligibility requirements?
-        4. Organization history - Does the organization have relevant experience and past programs?
-        5. Grant amount - Is the grant amount appropriate for the organization's size and capacity?
-        
-        Provide the following in your response as a JSON object:
-        1. score: A numeric score from 0-100 indicating the match percentage
-        2. explanation: A detailed explanation of why the grant does or doesn't match the organization
-        3. strengths: Key organizational strengths in relation to this grant
-        4. weaknesses: Areas where the organization may be less competitive
-        5. recommendations: Suggestions for strengthening an application
-        """
-        
-        user_prompt = f"""
-        Analyze the match between this grant and organization and respond with a JSON object:
-        
-        Grant: {json.dumps(serializable_grant)}
-        
-        Organization: {json.dumps(serializable_org)}
-        """
-        
-        response = openai.chat.completions.create(
-            model="gpt-4o",  # the newest OpenAI model is "gpt-4o" which was released May 13, 2024
-            messages=[
-                {"role": "system", "content": system_prompt},
-                {"role": "user", "content": user_prompt}
-            ],
-            response_format={"type": "json_object"}
-        )
-        
-        content = response.choices[0].message.content
-        result = json.loads(content if content else "{}")
-        
-        # Ensure score is within 0-100 range
-        if 'score' in result:
-            result['score'] = max(0, min(100, result['score']))
-        
-        return result
-    
-    except Exception as e:
-        logging.error(f"Error analyzing grant match: {str(e)}")
-        return {
-            "score": 0,
-            "explanation": "An error occurred while analyzing the match",
-            "error": str(e)
-        }
-
-def generate_grant_narrative(grant, organization, case_for_support=""):
-    """
-    Generate a grant narrative based on the grant requirements and organization profile
-    
-    Args:
-        grant (dict): The grant information
-        organization (dict): The organization profile
-        case_for_support (str): Additional case for support text
-        
-    Returns:
-        str: Generated narrative text
-    """
-    try:
-        # Check if OpenAI is available
-        if not openai:
-            return "OpenAI API key not configured. Please provide an API key to use the narrative generation feature."
-        
-        # Create serializable copies with date handling
-        serializable_grant = {}
-        for key, value in grant.items():
-            # Convert date objects to strings
-            if hasattr(value, 'isoformat'):
-                serializable_grant[key] = value.isoformat()
-            else:
-                serializable_grant[key] = value
+        for attempt in range(self.max_retries):
+            try:
+                kwargs = {
+                    "model": self.model,
+                    "messages": messages,
+                    "max_tokens": max_tokens,
+                    "temperature": 0.7
+                }
                 
-        serializable_org = {}
-        for key, value in organization.items():
-            # Convert date objects to strings
-            if hasattr(value, 'isoformat'):
-                serializable_org[key] = value.isoformat()
-            else:
-                serializable_org[key] = value
+                if response_format:
+                    kwargs["response_format"] = response_format
                 
-        # Format due date for display if available
-        due_date_display = ""
-        if grant.get('due_date'):
-            if hasattr(grant['due_date'], 'strftime'):
-                due_date_display = grant['due_date'].strftime('%B %d, %Y')
-            else:
-                due_date_display = str(grant['due_date'])
-            
-        system_prompt = """
-        You are an expert grant writer for nonprofits. Your task is to create a compelling 
-        grant narrative that connects the nonprofit's strengths and mission with the 
-        funder's priorities. Use specific language that aligns with the funder's interests 
-        while authentically representing the organization.
+                response = self.client.chat.completions.create(**kwargs)
+                content = response.choices[0].message.content
+                
+                # Parse JSON if response format was JSON
+                if response_format and response_format.get("type") == "json_object":
+                    return json.loads(content)
+                return {"content": content}
+                
+            except Exception as e:
+                logger.error(f"OpenAI API error (attempt {attempt + 1}): {e}")
+                if attempt < self.max_retries - 1:
+                    time.sleep(self.retry_delay * (attempt + 1))
+                else:
+                    return None
         
-        Follow these guidelines:
-        1. Begin with a strong, engaging opening that establishes the need
-        2. Clearly state the organization's qualifications to address the need
-        3. Describe the proposed project/program with specific details
-        4. Include measurable outcomes and evaluation methods
-        5. Explain how the project aligns with the funder's priorities
-        6. Use concise, active language without jargon
-        7. Include specific data points and examples from the organization's history
-        8. Address any specific questions or sections required by the grant
-        
-        The tone should be professional but passionate, demonstrating both expertise 
-        and commitment to the mission.
+        return None
+    
+    def match_grant(self, org_profile: Dict, grant: Dict) -> Tuple[Optional[int], Optional[str]]:
         """
-        
-        user_content = f"""
-        Organization Information:
-        Name: {serializable_org.get('name')}
-        Mission: {serializable_org.get('mission')}
-        Focus Areas: {', '.join(serializable_org.get('focus_areas', []))}
-        Past Programs: {json.dumps(serializable_org.get('past_programs', []))}
-        Team: {json.dumps(serializable_org.get('team', []))}
-        
-        Grant Information:
-        Title: {serializable_grant.get('title')}
-        Funder: {serializable_grant.get('funder')}
-        Due Date: {due_date_display}
-        Focus Areas: {', '.join(serializable_grant.get('focus_areas', []))}
-        Requirements: {serializable_grant.get('eligibility')}
-        Description: {serializable_grant.get('description')}
-        
-        Case for Support:
-        {case_for_support}
-        
-        Please write a compelling grant narrative (750-1000 words) that connects the organization's 
-        strengths with the funder's priorities. Include a strong opening, clear description of the 
-        proposed work, explanation of the organization's qualifications, and expected outcomes.
+        Match a grant to an organization profile
+        Returns: (fit_score: 1-5, reason: str) or (None, None) if disabled
         """
+        if not self.is_enabled():
+            return None, None
         
-        response = openai.chat.completions.create(
-            model="gpt-4o",  # the newest OpenAI model is "gpt-4o" which was released May 13, 2024
-            messages=[
-                {"role": "system", "content": system_prompt},
-                {"role": "user", "content": user_content}
-            ],
-            temperature=0.7,
-            max_tokens=2000
+        # Build prompt
+        prompt = f"""Analyze the fit between this organization and grant opportunity.
+
+Organization Profile:
+- Name: {org_profile.get('name', 'Unknown')}
+- Mission: {org_profile.get('mission', 'Not specified')}
+- Focus Areas: {', '.join(org_profile.get('focus_areas', []))}
+- Keywords: {', '.join(org_profile.get('keywords', []))}
+- Geographic Focus: {org_profile.get('geographic_focus', 'Not specified')}
+- Target Population: {org_profile.get('target_population', 'Not specified')}
+
+Grant Opportunity:
+- Title: {grant.get('title', 'Unknown')}
+- Funder: {grant.get('funder', 'Unknown')}
+- Description: {grant.get('description', 'Not specified')}
+- Focus Areas: {grant.get('focus_areas', 'Not specified')}
+- Amount Range: ${grant.get('amount_min', 0):,} - ${grant.get('amount_max', 0):,}
+- Deadline: {grant.get('deadline', 'Not specified')}
+- Eligibility: {grant.get('eligibility_criteria', 'Not specified')}
+
+Provide a JSON response with:
+1. "fit_score": integer from 1-5 (1=poor fit, 5=excellent fit)
+2. "reason": one concise sentence explaining the score
+3. "explanation": 2-3 sentences with specific details about alignment or gaps
+
+Focus on mission alignment, geographic match, focus area overlap, and eligibility requirements."""
+
+        messages = [
+            {"role": "system", "content": "You are an expert grant advisor analyzing grant-organization fit."},
+            {"role": "user", "content": prompt}
+        ]
+        
+        result = self._make_request(
+            messages, 
+            response_format={"type": "json_object"},
+            max_tokens=500
         )
         
-        return response.choices[0].message.content
+        if result:
+            try:
+                score = max(1, min(5, result.get("fit_score", 3)))  # Clamp to 1-5
+                reason = result.get("reason", "Unable to determine fit")
+                explanation = result.get("explanation", reason)
+                
+                # Store explanation in result for future reference
+                result["full_explanation"] = explanation
+                
+                return score, reason
+            except Exception as e:
+                logger.error(f"Error parsing match result: {e}")
+                return None, None
+        
+        return None, None
     
-    except Exception as e:
-        logging.error(f"Error generating grant narrative: {str(e)}")
-        return "Error generating narrative: " + str(e)
+    def explain_match(self, org_profile: Dict, grant: Dict) -> Optional[str]:
+        """Get detailed explanation of grant match"""
+        if not self.is_enabled():
+            return None
+        
+        # Try to get cached explanation from last match
+        score, reason = self.match_grant(org_profile, grant)
+        if score:
+            # Make another request for detailed explanation
+            prompt = f"""Provide a detailed 2-3 sentence explanation of why this organization 
+            (mission: {org_profile.get('mission', 'Unknown')}) 
+            is a fit score {score} for this grant ({grant.get('title', 'Unknown')}).
+            Focus on specific alignment points or gaps."""
+            
+            messages = [
+                {"role": "system", "content": "You are an expert grant advisor."},
+                {"role": "user", "content": prompt}
+            ]
+            
+            result = self._make_request(messages, max_tokens=200)
+            if result:
+                return result.get("content", reason)
+        
+        return None
+    
+    def extract_grant_from_text(self, text: str, url: Optional[str] = None) -> Optional[Dict]:
+        """
+        Extract structured grant information from text or URL content
+        Returns: Dictionary with grant fields or None if extraction fails
+        """
+        if not self.is_enabled():
+            return None
+        
+        prompt = f"""Extract grant opportunity information from the following text.
+        
+{text[:4000]}  # Limit text to avoid token limits
+
+Extract and return a JSON object with these fields:
+- "title": Grant program name
+- "funder": Organization offering the grant
+- "description": Brief description (1-2 sentences)
+- "amount_min": Minimum award amount (number, 0 if not specified)
+- "amount_max": Maximum award amount (number, 0 if not specified)  
+- "deadline": Application deadline (ISO date format if possible, or text)
+- "eligibility_criteria": Who can apply (1-2 sentences)
+- "focus_areas": Main focus areas or priorities (comma-separated)
+- "geography": Geographic restrictions or preferences
+- "link": Application URL (use provided URL if given: {url})
+- "contact_name": Contact person if mentioned
+- "contact_email": Contact email if provided
+- "contact_phone": Contact phone if provided
+
+If information is not available for a field, use null or empty string as appropriate."""
+
+        messages = [
+            {"role": "system", "content": "You are an expert at extracting structured grant information from unstructured text."},
+            {"role": "user", "content": prompt}
+        ]
+        
+        result = self._make_request(
+            messages,
+            response_format={"type": "json_object"},
+            max_tokens=1000
+        )
+        
+        if result:
+            try:
+                # Clean and validate the extracted data
+                grant_data = {
+                    "title": result.get("title", "Untitled Grant"),
+                    "funder": result.get("funder", "Unknown Funder"),
+                    "description": result.get("description", ""),
+                    "amount_min": int(result.get("amount_min", 0)) if result.get("amount_min") else 0,
+                    "amount_max": int(result.get("amount_max", 0)) if result.get("amount_max") else 0,
+                    "deadline": result.get("deadline", ""),
+                    "eligibility_criteria": result.get("eligibility_criteria", ""),
+                    "focus_areas": result.get("focus_areas", ""),
+                    "geography": result.get("geography", ""),
+                    "link": result.get("link", url or ""),
+                    "contact_name": result.get("contact_name", ""),
+                    "contact_email": result.get("contact_email", ""),
+                    "contact_phone": result.get("contact_phone", ""),
+                    "source_name": "AI Extraction",
+                    "discovered_at": datetime.now().isoformat()
+                }
+                
+                return grant_data
+                
+            except Exception as e:
+                logger.error(f"Error parsing extraction result: {e}")
+                return None
+        
+        return None
+    
+    def generate_narrative(self, grant: Dict, org_profile: Dict, 
+                          sections: List[str]) -> Optional[Dict]:
+        """
+        Generate narrative sections for a grant proposal
+        Returns: Dictionary with section content or None if generation fails
+        """
+        if not self.is_enabled():
+            return None
+        
+        # Map section names to prompts
+        section_prompts = {
+            "need": "Write a compelling statement of need that demonstrates why this project is necessary",
+            "program": "Describe the program approach and activities that will address the need", 
+            "outcomes": "Explain the expected outcomes, impact metrics, and evaluation methods",
+            "budget_rationale": "Provide a budget narrative explaining how funds will be used effectively"
+        }
+        
+        narratives = {}
+        
+        for section in sections:
+            if section not in section_prompts:
+                continue
+            
+            prompt = f"""Generate a grant proposal section for the following:
+
+Grant: {grant.get('title', 'Unknown Grant')}
+Funder: {grant.get('funder', 'Unknown Funder')}
+Amount: ${grant.get('amount_max', 0):,}
+Focus: {grant.get('focus_areas', 'General')}
+
+Organization: {org_profile.get('name', 'Unknown Organization')}
+Mission: {org_profile.get('mission', 'Not specified')}
+Focus Areas: {', '.join(org_profile.get('focus_areas', []))}
+Target Population: {org_profile.get('target_population', 'Not specified')}
+
+Section to write: {section_prompts[section]}
+
+Write in a professional, compelling grant proposal style. Be specific to this organization's mission and the grant's priorities. 
+Limit response to 2-3 paragraphs."""
+
+            messages = [
+                {"role": "system", "content": "You are an expert grant writer creating compelling proposal narratives."},
+                {"role": "user", "content": prompt}
+            ]
+            
+            result = self._make_request(messages, max_tokens=800)
+            
+            if result:
+                narratives[section] = {
+                    "content": result.get("content", ""),
+                    "generated_at": datetime.now().isoformat(),
+                    "version": 1
+                }
+        
+        if narratives:
+            return {
+                "grant_id": grant.get("id"),
+                "sections": narratives,
+                "created_at": datetime.now().isoformat(),
+                "is_draft": True
+            }
+        
+        return None
+    
+    def batch_match_grants(self, org_profile: Dict, grants: List[Dict]) -> List[Dict]:
+        """
+        Match multiple grants efficiently
+        Returns: List of grants with fit_score and reason added
+        """
+        if not self.is_enabled():
+            # Return grants unchanged if AI is disabled
+            return [{**g, "fit_score": None, "fit_reason": None} for g in grants]
+        
+        results = []
+        for grant in grants:
+            score, reason = self.match_grant(org_profile, grant)
+            results.append({
+                **grant,
+                "fit_score": score,
+                "fit_reason": reason
+            })
+        
+        return results
+
+
+# Singleton instance
+ai_service = AIService()

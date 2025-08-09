@@ -3,19 +3,14 @@ from app.models.organization import Organization
 from app.models.grant import Grant
 from app.models.narrative import Narrative
 from app import db
-from app.services.ai_service import (
-    analyze_grant_match, 
-    generate_grant_narrative,
-    extract_grant_info,
-    extract_grant_info_from_url,
-    openai
-)
+from app.services.ai_service import ai_service
 from app.api import log_request, log_response
 from sqlalchemy.exc import SQLAlchemyError, NoResultFound, IntegrityError
 import logging
 import os
+import requests
 from datetime import datetime
-from typing import Dict, Any, Union, Tuple
+from typing import Dict, Any, Union, Tuple, List
 
 bp = Blueprint('ai', __name__, url_prefix='/api/ai')
 
@@ -33,7 +28,7 @@ def get_api_status() -> Response:
     log_request(request.method, endpoint)
     
     try:
-        is_configured = openai is not None
+        is_configured = ai_service.is_enabled()
         message = "OpenAI API key is properly configured" if is_configured else "OpenAI API key is not configured"
         
         log_response(endpoint, 200)

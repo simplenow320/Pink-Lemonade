@@ -4,9 +4,7 @@ from app.models.organization import Organization
 from app import db
 from app.utils.helpers import parse_grant_data
 from app.api import log_request, log_response
-from app.services.ai_service import extract_grant_info, extract_grant_info_from_url
-from app.services.match_service import match_grants
-from app.services.writing_assistant_service import generate_narrative
+# AI services will be imported when needed
 from sqlalchemy.exc import SQLAlchemyError, NoResultFound, DataError
 from sqlalchemy.orm.exc import MultipleResultsFound
 import logging
@@ -360,9 +358,10 @@ def upload_grant():
             return jsonify({"error": "Only PDF files are supported"}), 400
         
         # Parse the grant data from the file
-        from app.services.ai_service import extract_grant_info
+        from app.services.ai_service import ai_service
         file_content = file.read()
-        grant_data = extract_grant_info(file_content)
+        text_content = file_content.decode('utf-8', errors='ignore')
+        grant_data = ai_service.extract_grant_from_text(text_content) if ai_service.is_enabled() else None
         
         return jsonify(grant_data), 200
     
@@ -381,8 +380,12 @@ def process_grant_url():
             return jsonify({"error": "No URL provided"}), 400
         
         # Parse the grant data from the URL
-        from app.services.ai_service import extract_grant_info_from_url
-        grant_data = extract_grant_info_from_url(url)
+        from app.services.ai_service import ai_service
+        import requests
+        
+        # Fetch URL content
+        response = requests.get(url, timeout=30)
+        grant_data = ai_service.extract_grant_from_text(response.text, url) if ai_service.is_enabled() else None
         
         return jsonify(grant_data), 200
     

@@ -22,7 +22,7 @@ from app import db
 from app.models.scraper import ScraperSource, ScraperHistory
 from app.models.grant import Grant
 from app.models.organization import Organization
-from app.services.ai_service import extract_grant_info, analyze_grant_match, extract_grant_info_from_url
+# AI service methods imported when needed
 from app.services.discovery_service import discover_grants
 from app.utils.http_utils import fetch_url, extract_main_content, with_retry
 
@@ -46,7 +46,15 @@ def scrape_grants(url_list):
     try:
         for url in url_list:
             logger.info(f"Scraping URL: {url}")
-            grant_data = extract_grant_info_from_url(url)
+            # Extract grant info from URL using AI if available
+            from app.services.ai_service import ai_service
+            
+            # Fetch the content from URL first
+            content = fetch_url(url)
+            if content:
+                grant_data = ai_service.extract_grant_from_text(content, url)
+            else:
+                grant_data = None
             
             if grant_data.get('title') and grant_data.get('funder'):
                 grants.append(grant_data)

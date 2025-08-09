@@ -231,8 +231,8 @@ def scrape_grants_endpoint():
                 if org:
                     try:
                         # Try to calculate match score using AI if available
-                        from app.services.ai_service import analyze_grant_match
-                        match_result = analyze_grant_match(grant_data, org.to_dict())
+                        from app.services.ai_service import ai_service
+                        match_result = ai_service.match_grant(org.to_dict(), grant_data)
                         if isinstance(match_result, dict):
                             match_score = match_result.get('score', 75)
                             match_explanation = match_result.get('explanation', match_explanation)

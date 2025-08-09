@@ -6,7 +6,7 @@ from app import db
 from app.models.narrative import Narrative
 from app.models.grant import Grant
 from app.models.organization import Organization
-from app.services.ai_service import generate_grant_narrative
+from app.services.ai_service import ai_service
 import docx
 from io import BytesIO
 
@@ -38,11 +38,14 @@ def create_or_update_narrative(grant_id, additional_content=None):
         
         # Generate the narrative content
         case_for_support = additional_content or org.case_for_support
-        narrative_content = generate_grant_narrative(
+        # Generate narrative using AI service
+        sections = ['need', 'program', 'outcomes', 'budget_rationale']
+        narrative_result = ai_service.generate_narrative(
             grant.to_dict(), 
             org.to_dict(), 
-            case_for_support
+            sections
         )
+        narrative_content = narrative_result if narrative_result else {}
         
         if narrative:
             # Update existing narrative
