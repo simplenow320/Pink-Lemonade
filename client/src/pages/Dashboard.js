@@ -12,6 +12,7 @@ const Dashboard = () => {
   const { grants, loading, error, dashboardData } = useGrants({ includeDashboard: true });
   const [upcomingGrants, setUpcomingGrants] = useState([]);
   const [topMatchingGrants, setTopMatchingGrants] = useState([]);
+  const [expandedGrants, setExpandedGrants] = useState({});
 
   useEffect(() => {
     if (grants && grants.length > 0) {
@@ -251,19 +252,60 @@ const Dashboard = () => {
         {grants.length > 0 ? (
           <div className="divide-y divide-gray-200">
             {grants.slice(0, 5).map((grant) => (
-              <Link 
+              <div 
                 key={grant.id} 
-                to={`/grants/${grant.id}`} 
+                onClick={() => setExpandedGrants(prev => ({ ...prev, [grant.id]: !prev[grant.id] }))}
                 className="block px-6 py-4 hover:bg-gray-50 transition-colors cursor-pointer"
               >
                 <div className="flex items-start justify-between">
                   <div className="flex-1 min-w-0 pr-4">
-                    <h3 className="text-base font-medium text-gray-900 mb-1">
+                    <h3 className="text-base font-medium text-gray-900 mb-1 flex items-center">
                       {grant.title}
+                      <svg 
+                        className={`ml-2 h-4 w-4 transform transition-transform ${expandedGrants[grant.id] ? 'rotate-90' : ''}`} 
+                        fill="currentColor" 
+                        viewBox="0 0 20 20"
+                      >
+                        <path fillRule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clipRule="evenodd" />
+                      </svg>
                     </h3>
-                    <p className="text-sm text-gray-600 line-clamp-2 mb-2">
+                    <p className={`text-sm text-gray-600 mb-2 ${!expandedGrants[grant.id] ? 'line-clamp-2' : ''}`}>
                       {grant.description || 'No description available'}
                     </p>
+                    {expandedGrants[grant.id] && (
+                      <div className="mt-3 space-y-2 border-t pt-3">
+                        <div className="text-sm">
+                          <span className="font-medium text-gray-700">Eligibility:</span>
+                          <span className="ml-2 text-gray-600">{grant.eligibility || 'Not specified'}</span>
+                        </div>
+                        {grant.website && (
+                          <div className="text-sm">
+                            <span className="font-medium text-gray-700">Website:</span>
+                            <a href={grant.website} target="_blank" rel="noopener noreferrer" className="ml-2 text-pink-600 hover:text-pink-700">
+                              Visit Grant Page →
+                            </a>
+                          </div>
+                        )}
+                        {grant.match_explanation && (
+                          <div className="text-sm">
+                            <span className="font-medium text-gray-700">Match Reason:</span>
+                            <span className="ml-2 text-gray-600">{grant.match_explanation}</span>
+                          </div>
+                        )}
+                        <div className="text-sm">
+                          <span className="font-medium text-gray-700">Status:</span>
+                          <span className="ml-2 text-gray-600">{grant.status || 'Not Started'}</span>
+                        </div>
+                        <div className="flex gap-2 mt-3">
+                          <button className="px-3 py-1 bg-pink-600 text-white text-sm rounded-md hover:bg-pink-700">
+                            Apply Now
+                          </button>
+                          <button className="px-3 py-1 bg-gray-200 text-gray-700 text-sm rounded-md hover:bg-gray-300">
+                            Save to Library
+                          </button>
+                        </div>
+                      </div>
+                    )}
                     <div className="flex items-center text-xs text-gray-500 space-x-3">
                       <span className="flex items-center">
                         <svg className="mr-1 h-3 w-3" fill="currentColor" viewBox="0 0 20 20">
@@ -287,7 +329,7 @@ const Dashboard = () => {
                     </div>
                   )}
                 </div>
-              </Link>
+              </div>
             ))}
           </div>
         ) : (

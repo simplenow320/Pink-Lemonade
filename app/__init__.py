@@ -103,6 +103,40 @@ def create_app(test_config=None):
         from app import routes
         app.register_blueprint(routes.bp)
         
+        # Serve React app for non-API routes
+        @app.route('/', defaults={'path': ''})
+        @app.route('/<path:path>')
+        def serve_react_app(path):
+            import os
+            from flask import send_from_directory
+            
+            # Skip API routes
+            if path.startswith('api/'):
+                from flask import abort
+                abort(404)
+            
+            # Serve React build files
+            react_build_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'client', 'build')
+            
+            if path and os.path.exists(os.path.join(react_build_dir, path)):
+                return send_from_directory(react_build_dir, path)
+            else:
+                # For React routing, always serve index.html
+                if os.path.exists(os.path.join(react_build_dir, 'index.html')):
+                    return send_from_directory(react_build_dir, 'index.html')
+                else:
+                    # Fallback message
+                    return '''
+                    <html>
+                    <body style="font-family: system-ui; text-align: center; padding: 50px;">
+                        <h1>Pink Lemonade</h1>
+                        <p>React app is not built. Building now...</p>
+                        <p>Please run: cd client && npm install && npm run build</p>
+                        <p>Or for development: cd client && npm start (on port 3000)</p>
+                    </body>
+                    </html>
+                    '''
+        
         # Initialize the scheduler for automated scraping
         if not app.config.get('TESTING', False):
             from app.utils.scheduler import initialize_scheduler
