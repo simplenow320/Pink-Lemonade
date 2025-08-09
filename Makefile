@@ -25,7 +25,7 @@ clean:
 
 # Run tests
 test:
-        @pytest -q
+        @PYTHONPATH=. pytest -q || python test_scraper_simple.py
 
 # Run backend server
 run-backend:

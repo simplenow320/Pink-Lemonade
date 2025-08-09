@@ -22,6 +22,7 @@ dependencies = [
 
 [project.scripts]
 smoke-test = "tests.smoke_test:main"
+test = "run_tests:run_tests"
 
 [tool.poetry]
 name = "workspace"
