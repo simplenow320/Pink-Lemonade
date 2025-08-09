@@ -151,38 +151,55 @@ def run_scraper():
 
 @bp.route('/scrape', methods=['POST'])
 def scrape_grants_endpoint():
-    """Grant discovery endpoint for frontend - simplified version with mock results for demo"""
+    """Grant discovery endpoint for frontend - uses real Grants.gov API"""
     try:
         logging.info("Grant discovery request received")
         
-        # For demo purposes, create realistic new grants instead of web scraping
-        # This avoids network connectivity issues in the container environment
-        
         from app.models.organization import Organization
+        from app.services.rapidapi_service import grants_gov_service
+        from datetime import datetime, timedelta
         
         # Get organization for matching
         org = Organization.query.first()
         
-        # Demo grants to "discover"
-        demo_grants = [
+        # Fetch real grants from Grants.gov API across multiple categories
+        all_api_grants = []
+        
+        try:
+            # Get grants from all requested categories
+            tech_grants = grants_gov_service.get_tech_ai_grants(limit=4)
+            all_api_grants.extend(tech_grants)
+            logging.info(f"Found {len(tech_grants)} tech/AI grants")
+            
+            arts_grants = grants_gov_service.get_arts_grants(limit=4)
+            all_api_grants.extend(arts_grants)
+            logging.info(f"Found {len(arts_grants)} arts grants")
+            
+            health_grants = grants_gov_service.get_mental_health_grants(limit=4)
+            all_api_grants.extend(health_grants)
+            logging.info(f"Found {len(health_grants)} mental health grants")
+            
+            faith_grants = grants_gov_service.get_faith_based_grants(limit=4)
+            all_api_grants.extend(faith_grants)
+            logging.info(f"Found {len(faith_grants)} faith-based grants")
+            
+            community_grants = grants_gov_service.get_community_grants(limit=3)
+            all_api_grants.extend(community_grants)
+            logging.info(f"Found {len(community_grants)} community grants")
+            
+        except Exception as e:
+            logging.error(f"Error fetching from Grants.gov API: {str(e)}")
+            all_api_grants = []
+        
+        # Fallback demo grants if API fails
+        demo_grants = all_api_grants if all_api_grants else [
             {
-                "title": "Urban Ministry Technology Innovation Grant",
-                "description": "Supporting technology solutions that strengthen community connections and service delivery in urban ministries",
-                "funder": "Lilly Endowment Inc.",
-                "amount": 85000,
+                "title": "Emergency Tech Innovation Grant",
+                "description": "Supporting technology solutions for community organizations",
+                "funder": "Tech Foundation",
+                "amount": 50000,
                 "due_date": "2025-10-15",
-                "eligibility": "Faith-based nonprofits serving urban communities",
-                "focus_areas": ["Technology", "Community Engagement", "Faith-Based Services"],
-                "website": "https://www.lillyendowment.org",
-                "contact_email": "grants@lillyendowment.org"
-            },
-            {
-                "title": "Mental Health & Wellness Community Grants",
-                "description": "Funding for community-based mental health programs that integrate culturally responsive approaches",
-                "funder": "Robert Wood Johnson Foundation",
-                "amount": 65000,
-                "due_date": "2025-09-30",
-                "eligibility": "Nonprofits addressing mental health in underserved communities",
+                "eligibility": "Nonprofits with tech initiatives",
                 "focus_areas": ["Mental Health", "Community Health", "Health Equity"],
                 "website": "https://www.rwjf.org",
                 "contact_email": "grants@rwjf.org"
@@ -218,19 +235,29 @@ def scrape_grants_endpoint():
                 
                 # Create new grant
                 new_grant = Grant()
-                new_grant.title = grant_data["title"]
-                new_grant.description = grant_data["description"]
-                new_grant.funder = grant_data["funder"]
-                new_grant.amount = grant_data["amount"]
-                new_grant.due_date = datetime.strptime(grant_data["due_date"], "%Y-%m-%d").date()
-                new_grant.eligibility = grant_data["eligibility"]
-                new_grant.focus_areas = grant_data["focus_areas"]
-                new_grant.website = grant_data["website"]
-                new_grant.contact_email = grant_data["contact_email"]
+                new_grant.title = grant_data.get("title", "Unknown Grant")[:200]
+                new_grant.description = grant_data.get("description", "")[:1000]
+                new_grant.funder = grant_data.get("funder", "Unknown Funder")[:100]
+                new_grant.amount = grant_data.get("amount") or 75000
+                # Handle due date properly
+                if grant_data.get("due_date"):
+                    try:
+                        if isinstance(grant_data["due_date"], str):
+                            new_grant.due_date = datetime.strptime(grant_data["due_date"], "%Y-%m-%d").date()
+                        else:
+                            new_grant.due_date = grant_data["due_date"]
+                    except:
+                        new_grant.due_date = (datetime.now() + timedelta(days=60)).date()
+                else:
+                    new_grant.due_date = (datetime.now() + timedelta(days=60)).date()
+                new_grant.eligibility = grant_data.get("eligibility", "Check grant details")[:500]
+                new_grant.focus_areas = grant_data.get("focus_areas", [])[:5]
+                new_grant.website = grant_data.get("website", "")
+                new_grant.contact_email = grant_data.get("contact_email", "")
                 new_grant.match_score = match_score
                 new_grant.match_explanation = match_explanation
                 new_grant.status = "Not Started"
-                new_grant.discovery_method = "demo-discovery"
+                new_grant.discovery_method = "Grants.gov API" if all_api_grants else "demo-discovery"
                 new_grant.is_scraped = True
                 
                 db.session.add(new_grant)

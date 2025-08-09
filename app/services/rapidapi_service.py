@@ -97,6 +97,51 @@ class GrantsGovAPIService:
         
         return self.search_grants(faith_keywords, limit=limit)
     
+    def get_tech_ai_grants(self, limit: int = 10) -> List[Dict[str, Any]]:
+        """
+        Get AI and technology grants for nonprofits
+        
+        Returns:
+            List of tech/AI grant dictionaries
+        """
+        tech_keywords = [
+            'artificial intelligence', 'AI', 'technology', 'digital', 
+            'innovation', 'software', 'data science', 'machine learning',
+            'tech nonprofit', 'digital transformation'
+        ]
+        
+        return self.search_grants(tech_keywords, limit=limit)
+    
+    def get_arts_grants(self, limit: int = 10) -> List[Dict[str, Any]]:
+        """
+        Get arts and cultural grants
+        
+        Returns:
+            List of arts grant dictionaries
+        """
+        arts_keywords = [
+            'arts', 'culture', 'creative', 'music', 'visual arts',
+            'performing arts', 'theater', 'dance', 'artistic expression',
+            'cultural programs', 'community arts'
+        ]
+        
+        return self.search_grants(arts_keywords, limit=limit)
+    
+    def get_mental_health_grants(self, limit: int = 10) -> List[Dict[str, Any]]:
+        """
+        Get mental health focused grants
+        
+        Returns:
+            List of mental health grant dictionaries
+        """
+        health_keywords = [
+            'mental health', 'behavioral health', 'wellness', 'counseling',
+            'therapy', 'psychological services', 'emotional support',
+            'trauma care', 'crisis intervention', 'mental wellness'
+        ]
+        
+        return self.search_grants(health_keywords, limit=limit)
+    
     def get_community_grants(self, limit: int = 10) -> List[Dict[str, Any]]:
         """
         Get community-focused grants

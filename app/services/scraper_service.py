@@ -362,23 +362,52 @@ def run_scraping_job(include_web_search=True):
             result["end_time"] = datetime.now()
             return result
         
-        # Step 1: First try federal grants API discovery 
+        # Step 1: First try federal grants API discovery - multi-category search
         discovered_grants = []
         try:
-            logger.info("Starting federal grants API discovery...")
+            logger.info("Starting comprehensive federal grants API discovery...")
             from app.services.rapidapi_service import grants_gov_service
             
-            # Get faith-based grants from Grants.gov API
-            api_grants = grants_gov_service.get_faith_based_grants(limit=8)
-            api_grants.extend(grants_gov_service.get_community_grants(limit=5))
+            # Get grants from multiple categories as requested by user
+            api_grants = []
+            
+            # Faith-based and community grants
+            faith_grants = grants_gov_service.get_faith_based_grants(limit=5)
+            if faith_grants:
+                api_grants.extend(faith_grants)
+                logger.info(f"Found {len(faith_grants)} faith-based grants")
+            
+            # Tech and AI grants
+            tech_grants = grants_gov_service.get_tech_ai_grants(limit=5)
+            if tech_grants:
+                api_grants.extend(tech_grants)
+                logger.info(f"Found {len(tech_grants)} tech/AI grants")
+            
+            # Arts grants
+            arts_grants = grants_gov_service.get_arts_grants(limit=5)
+            if arts_grants:
+                api_grants.extend(arts_grants)
+                logger.info(f"Found {len(arts_grants)} arts grants")
+            
+            # Mental health grants
+            health_grants = grants_gov_service.get_mental_health_grants(limit=5)
+            if health_grants:
+                api_grants.extend(health_grants)
+                logger.info(f"Found {len(health_grants)} mental health grants")
+            
+            # Community development grants
+            community_grants = grants_gov_service.get_community_grants(limit=3)
+            if community_grants:
+                api_grants.extend(community_grants)
+                logger.info(f"Found {len(community_grants)} community grants")
             
             if api_grants:
-                logger.info(f"Found {len(api_grants)} grants from Grants.gov API")
+                logger.info(f"Total: Found {len(api_grants)} grants from Grants.gov API across all categories")
                 discovered_grants.extend(api_grants)
                 result["grants_found"] += len(api_grants)
                 
                 # Log grant titles for debugging
-                for grant in api_grants[:3]:
+                for grant in api_grants[:5]:
                     logger.info(f"API Grant: {grant.get('title', 'No title')[:60]}...")
             else:
                 logger.info("No grants found from Grants.gov API")
