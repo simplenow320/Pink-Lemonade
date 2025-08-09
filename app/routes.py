@@ -9,7 +9,12 @@ def index():
 
 @bp.route('/dashboard')
 def dashboard():
-    """Access the main application dashboard"""
+    """CRM Dashboard page - main landing after login"""
+    return render_template('crm-dashboard.html')
+
+@bp.route('/dashboard-old')
+def dashboard_old():
+    """Original dashboard page (kept for reference)"""
     return render_template('dashboard.html')
 
 @bp.route('/landing')
@@ -42,9 +47,7 @@ def scraper():
     """Render the scraper page"""
     return render_template('scraper.html')
 
-@bp.route('/grants')
 @bp.route('/organization')
-@bp.route('/dashboard')
 @bp.route('/funders')
 def spa_routes():
     """Route any SPA paths back to the index"""

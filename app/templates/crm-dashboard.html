@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fundraising CRM Dashboard - GrantFlow</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        :root {
+            --pink: #ec4899;
+            --pink-light: #f9a8d4;
+            --pink-dark: #be185d;
+            --white: #ffffff;
+            --black: #000000;
+            --grey-light: #f3f4f6;
+            --grey: #6b7280;
+            --grey-dark: #374151;
+            --border: #e5e7eb;
+            --matte-pink: #e8a5c0;
+            --matte-grey: #9ca3af;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #f9fafb 0%, #f3f4f6 100%);
+            color: var(--black);
+        }
+
+        .nav-bar {
+            background-color: var(--white);
+            border-bottom: 1px solid var(--border);
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+        }
+
+        .nav-item {
+            padding: 1rem 1.5rem;
+            color: var(--grey-dark);
+            font-weight: 500;
+            border-bottom: 2px solid transparent;
+            transition: all 0.2s;
+            cursor: pointer;
+        }
+
+        .nav-item:hover {
+            color: var(--pink);
+        }
+
+        .nav-item.active {
+            color: var(--pink);
+            border-bottom-color: var(--pink);
+        }
+
+        .hero-section {
+            background: linear-gradient(135deg, rgba(236, 72, 153, 0.05) 0%, rgba(249, 168, 212, 0.05) 100%);
+            border-radius: 1rem;
+            padding: 3rem;
+            margin-bottom: 2rem;
+        }
+
+        .metric-card {
+            background-color: var(--white);
+            border-radius: 0.75rem;
+            padding: 1.5rem;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .metric-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .metric-value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--pink);
+        }
+
+        .metric-label {
+            font-size: 0.875rem;
+            color: var(--grey);
+            margin-top: 0.25rem;
+        }
+
+        .activity-item {
+            padding: 1rem;
+            border-left: 3px solid var(--pink-light);
+            background-color: var(--white);
+            margin-bottom: 0.5rem;
+            border-radius: 0.5rem;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--pink), var(--pink-dark));
+            color: var(--white);
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.5rem;
+            font-weight: 600;
+            transition: transform 0.2s, box-shadow 0.2s;
+            display: inline-block;
+            text-decoration: none;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 6px rgba(236, 72, 153, 0.3);
+        }
+
+        .btn-secondary {
+            background-color: var(--white);
+            color: var(--grey-dark);
+            padding: 0.75rem 1.5rem;
+            border: 1px solid var(--border);
+            border-radius: 0.5rem;
+            font-weight: 500;
+            transition: all 0.2s;
+            display: inline-block;
+            text-decoration: none;
+        }
+
+        .btn-secondary:hover {
+            background-color: var(--grey-light);
+        }
+
+        .section-card {
+            background-color: var(--white);
+            border-radius: 0.75rem;
+            padding: 1.5rem;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+
+        .table-row {
+            border-bottom: 1px solid var(--border);
+            transition: background-color 0.2s;
+        }
+
+        .table-row:hover {
+            background-color: var(--grey-light);
+        }
+
+        .status-badge {
+            padding: 0.25rem 0.75rem;
+            border-radius: 1rem;
+            font-size: 0.75rem;
+            font-weight: 600;
+            display: inline-block;
+        }
+
+        .status-idea {
+            background: linear-gradient(135deg, #fef3c7, #fde68a);
+            color: #92400e;
+        }
+
+        .status-researching {
+            background: linear-gradient(135deg, #dbeafe, #bfdbfe);
+            color: #1e3a8a;
+        }
+
+        .status-writing {
+            background: linear-gradient(135deg, #e9d5ff, #d8b4fe);
+            color: #581c87;
+        }
+
+        .status-submitted {
+            background: linear-gradient(135deg, #fed7e2, #fbb6ce);
+            color: #881337;
+        }
+
+        .status-won {
+            background: linear-gradient(135deg, var(--pink-light), var(--pink));
+            color: var(--white);
+        }
+
+        .watchlist-item {
+            padding: 0.75rem;
+            background: linear-gradient(135deg, #f9fafb, #f3f4f6);
+            border-radius: 0.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .new-badge {
+            background-color: var(--pink);
+            color: var(--white);
+            padding: 0.125rem 0.5rem;
+            border-radius: 1rem;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .logo-container {
+            max-width: 250px;
+            height: auto;
+        }
+
+        @media (max-width: 768px) {
+            .hero-section {
+                padding: 2rem 1rem;
+            }
+            
+            .metric-card {
+                margin-bottom: 1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation Bar -->
+    <nav class="nav-bar">
+        <div class="container mx-auto px-4">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-6">
+                    <a href="/" class="text-xl font-bold text-pink-600">GrantFlow</a>
+                    <div class="hidden md:flex space-x-1">
+                        <a href="/dashboard" class="nav-item active">Dashboard</a>
+                        <a href="/discovery" class="nav-item">Opportunities</a>
+                        <a href="/discovery#watchlists" class="nav-item">Watchlists</a>
+                        <a href="/grants" class="nav-item">Saved Grants</a>
+                        <a href="/analytics" class="nav-item">Reports</a>
+                        <a href="/profile" class="nav-item">Settings</a>
+                    </div>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <span class="text-sm text-gray-600" id="user-name">Welcome</span>
+                    <button class="text-sm text-gray-600 hover:text-pink-600" onclick="logout()">Logout</button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Dashboard Content -->
+    <div class="container mx-auto px-4 py-6">
+        <!-- Hero Section -->
+        <div class="hero-section">
+            <div class="flex flex-col md:flex-row items-center">
+                <div class="logo-container mb-4 md:mb-0 md:mr-8">
+                    <img src="/static/images/logo.png" alt="Organization Logo" id="org-logo" class="w-full h-auto" onerror="this.style.display='none'">
+                    <svg class="w-32 h-32" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg" id="fallback-logo">
+                        <circle cx="100" cy="100" r="80" fill="#ec4899" opacity="0.2"/>
+                        <circle cx="100" cy="100" r="60" fill="#ec4899" opacity="0.3"/>
+                        <circle cx="100" cy="100" r="40" fill="#ec4899"/>
+                        <path d="M85 100 L115 100 M100 85 L100 115" stroke="white" stroke-width="6" stroke-linecap="round"/>
+                    </svg>
+                </div>
+                <div class="flex-1 text-center md:text-left">
+                    <h1 class="text-3xl font-bold text-gray-900 mb-2">
+                        Welcome, <span id="org-name">Your Organization</span>
+                    </h1>
+                    <p class="text-lg text-gray-600 mb-6">
+                        Your fundraising command center — track, discover, and win grants.
+                    </p>
+                    <div class="flex flex-col sm:flex-row gap-3 justify-center md:justify-start">
+                        <a href="/grants?action=add" class="btn-primary">
+                            <span class="mr-2">+</span> Add New Grant
+                        </a>
+                        <a href="/discovery" class="btn-secondary">
+                            View Opportunities
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Key Metrics Row -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+            <div class="metric-card" onclick="filterGrantsByStatus('all')">
+                <div class="metric-value" id="total-grants">0</div>
+                <div class="metric-label">Total Grants in Pipeline</div>
+            </div>
+            <div class="metric-card" onclick="filterGrantsByStatus('applied')">
+                <div class="metric-value" id="funds-applied">$0</div>
+                <div class="metric-label">Total Funds Applied For</div>
+            </div>
+            <div class="metric-card" onclick="filterGrantsByStatus('won')">
+                <div class="metric-value" id="funds-won">$0</div>
+                <div class="metric-label">Total Funds Won</div>
+            </div>
+            <div class="metric-card" onclick="showWinRateDetails()">
+                <div class="metric-value" id="win-rate">0%</div>
+                <div class="metric-label">Win Rate</div>
+            </div>
+        </div>
+
+        <!-- Main Content Grid -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <!-- Left Column: Recent Activity + Watchlists -->
+            <div class="lg:col-span-1">
+                <!-- Recent Activity Feed -->
+                <div class="section-card mb-6">
+                    <h2 class="text-xl font-bold text-gray-900 mb-4">Recent Activity</h2>
+                    <div id="activity-feed" class="max-h-96 overflow-y-auto">
+                        <!-- Activity items will be loaded here -->
+                        <div class="text-center py-4 text-gray-500">
+                            Loading activity...
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Watchlist Overview -->
+                <div class="section-card">
+                    <div class="flex justify-between items-center mb-4">
+                        <h2 class="text-xl font-bold text-gray-900">Watchlists</h2>
+                        <a href="/discovery#watchlists" class="text-sm text-pink-600 hover:underline">
+                            Manage →
+                        </a>
+                    </div>
+                    <div id="watchlist-overview">
+                        <!-- Watchlist items will be loaded here -->
+                        <div class="text-center py-4 text-gray-500">
+                            Loading watchlists...
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Column: Saved Grants Snapshot -->
+            <div class="lg:col-span-2">
+                <div class="section-card">
+                    <div class="flex justify-between items-center mb-4">
+                        <h2 class="text-xl font-bold text-gray-900">Upcoming Deadlines</h2>
+                        <a href="/grants" class="text-sm text-pink-600 hover:underline">
+                            View All →
+                        </a>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full">
+                            <thead>
+                                <tr class="border-b border-gray-200">
+                                    <th class="text-left py-2 px-3 text-sm font-medium text-gray-700">Title</th>
+                                    <th class="text-left py-2 px-3 text-sm font-medium text-gray-700">Funder</th>
+                                    <th class="text-left py-2 px-3 text-sm font-medium text-gray-700">Amount</th>
+                                    <th class="text-left py-2 px-3 text-sm font-medium text-gray-700">Status</th>
+                                    <th class="text-left py-2 px-3 text-sm font-medium text-gray-700">Deadline</th>
+                                </tr>
+                            </thead>
+                            <tbody id="grants-snapshot">
+                                <!-- Grant rows will be loaded here -->
+                                <tr>
+                                    <td colspan="5" class="text-center py-4 text-gray-500">
+                                        Loading grants...
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="/static/js/crm-dashboard.js"></script>
+</body>
+</html>
