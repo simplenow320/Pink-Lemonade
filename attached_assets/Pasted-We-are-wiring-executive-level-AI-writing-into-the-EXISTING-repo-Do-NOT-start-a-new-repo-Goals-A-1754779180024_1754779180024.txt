@@ -1,0 +1,246 @@
+We are wiring executive-level AI writing into the EXISTING repo. Do NOT start a new repo.
+
+Goals
+- Add safe API routes for Case for Support, Grant Pitch, Impact Report using ai_prompter.run_prompt().
+- Add a Writing page with three “Generate” buttons; show copy-ready output and Source Notes.
+- Store outputs in case_support_docs, grant_pitch_docs, impact_reports.
+- Enforce “no invented facts” and brand rules (matte pink, white, grey, black).
+- Add minimal tests.
+
+Assumptions
+- /app/services/ai_prompter.py exists (as provided earlier).
+- JSON prompt files exist in /app/prompts (global_guardrails, case_support, grant_pitch, impact_report).
+- Read-only data reader will be stubbed for now.
+
+Tasks
+
+A) Create app/services/ai_data_reader.py (stubbed read-only pack)
+---BEGIN FILE app/services/ai_data_reader.py---
+from typing import Dict, Any
+# In production, pull real org data, programs, KPIs, budgets, stories, etc.
+def build_data_pack(org_id: int) -> Dict[str, Any]:
+    return {
+        "org_profile": {"name":"Org "+str(org_id)},
+        "programs": [],
+        "kpis": [],
+        "budget": [],
+        "stories": [],
+        "assets": []
+    }
+---END FILE---
+
+B) Create API routes for writing
+---BEGIN FILE app/api/writing.py---
+from flask import Blueprint, request, jsonify
+from werkzeug.exceptions import BadRequest
+from app import db
+from app.models import CaseSupportDoc, GrantPitchDoc, ImpactReport
+from app.services.ai_prompter import run_prompt
+from app.services.ai_data_reader import build_data_pack
+
+bp = Blueprint("writing", __name__)
+
+def _json():
+    data = request.get_json(silent=True)
+    if not data:
+        raise BadRequest("JSON body required")
+    return data
+
+@bp.post("/case-support")
+def create_case_support():
+    body = _json()
+    org_id = int(body.get("orgId") or 1)
+    tokens = {
+        "org_name": body.get("orgName") or "Your Organization",
+        "audience_type": body.get("audience") or "individual and foundation donors",
+        "word_count_range": body.get("length") or "600-900"
+    }
+    data_pack = build_data_pack(org_id)
+    result = run_prompt("case_support", tokens, data_pack)
+    content = result["content"]
+    needs = _extract_missing(content)
+    doc = CaseSupportDoc(org_id=org_id, title=body.get("title") or "Case for Support", sections={"body": content}, needs_input=needs, sources={})
+    db.session.add(doc); db.session.commit()
+    return jsonify({"id": doc.id, "needsInput": needs, "content": content}), 200
+
+@bp.post("/grant-pitch")
+def create_grant_pitch():
+    body = _json()
+    org_id = int(body.get("orgId") or 1)
+    tokens = {
+        "org_name": body.get("orgName") or "Your Organization",
+        "funder_name": body.get("funder") or "Target Funder",
+        "alignment_points": body.get("alignment") or "youth, AI literacy, community impact",
+        "per_section_word_limits": body.get("limits") or "120"
+    }
+    data_pack = build_data_pack(org_id)
+    result = run_prompt("grant_pitch", tokens, data_pack)
+    content = result["content"]
+    needs = _extract_missing(content)
+    doc = GrantPitchDoc(org_id=org_id, funder=tokens["funder_name"], sections={"body": content}, needs_input=needs, sources={})
+    db.session.add(doc); db.session.commit()
+    return jsonify({"id": doc.id, "needsInput": needs, "content": content}), 200
+
+@bp.post("/impact-report")
+def create_impact_report():
+    body = _json()
+    org_id = int(body.get("orgId") or 1)
+    tokens = {
+        "org_name": body.get("orgName") or "Your Organization",
+        "template_sections": body.get("templateSections") or "Grant Summary; Objectives & Activities; Outputs; Outcomes; Financial Report; Challenges & Learnings; Next Steps",
+        "start_date": body.get("startDate") or "2025-01-01",
+        "end_date": body.get("endDate") or "2025-06-30"
+    }
+    data_pack = build_data_pack(org_id)
+    result = run_prompt("impact_report", tokens, data_pack)
+    content = result["content"]
+    needs = _extract_missing(content)
+    doc = ImpactReport(org_id=org_id, grant_id=body.get("grantId"), period_start=None, period_end=None, sections={"body": content}, needs_update=needs, sources={})
+    db.session.add(doc); db.session.commit()
+    return jsonify({"id": doc.id, "needsUpdate": needs, "content": content}), 200
+
+def _extract_missing(text: str):
+    # If the model followed our prompts, it lists "Missing Info" or "Needs Update" when data is absent.
+    import re
+    m = re.search(r"(?i)(Missing Info|Needs Update)\s*:\s*(.+)$", text, re.DOTALL)
+    if not m:
+        return []
+    section = m.group(2).strip()
+    items = [ln.strip("-• ").strip() for ln in section.splitlines() if ln.strip()]
+    return items[:20]
+---END FILE---
+
+Register blueprint in app/__init__.py:
+---BEGIN PATCH app/__init__.py---
+from app.api.writing import bp as writing_bp
+app.register_blueprint(writing_bp, url_prefix="/api/writing")
+---END PATCH---
+
+C) Add a Writing page with brand-safe buttons and viewer
+Create app/templates/writing.html:
+---BEGIN FILE app/templates/writing.html---
+{% extends "base.html" %}
+{% block title %}Writing · Pink Lemonade{% endblock %}
+{% block content %}
+  <h1>Writing</h1>
+
+  <section class="card">
+    <h2>Create documents</h2>
+    <div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:12px">
+      <button class="btn btn-primary" id="btnCase">Generate Case for Support</button>
+      <button class="btn" id="btnPitch">Generate Grant Pitch</button>
+      <button class="btn" id="btnReport">Generate Impact Report</button>
+    </div>
+    <div id="toast" class="card" style="display:none;padding:10px;margin-top:12px;background:var(--pink);color:var(--black)"></div>
+  </section>
+
+  <section id="output" class="card" style="margin-top:24px;display:none">
+    <h2>Output</h2>
+    <div id="doc" style="white-space:pre-wrap"></div>
+  </section>
+
+  <script>
+    const t = document.getElementById('toast');
+    const out = document.getElementById('output');
+    const docDiv = document.getElementById('doc');
+
+    async function postJSON(url, payload){
+      const res = await fetch(url, {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload)});
+      if(!res.ok){ throw new Error(await res.text()); }
+      return res.json();
+    }
+    function show(msg){ t.style.display='block'; t.textContent=msg; }
+
+    const common = { orgId: 1, orgName: 'Pink Lemonade' };
+
+    document.getElementById('btnCase').onclick = async () => {
+      try {
+        show('Generating Case for Support…');
+        const data = await postJSON('/api/writing/case-support', {...common, audience:'foundations and individual donors', length:'700-900', title:'Case for Support'});
+        out.style.display='block'; docDiv.textContent = data.content;
+        show(data.needsInput?.length ? 'Needs input: '+data.needsInput.join(', ') : 'Done. Copy ready.');
+      } catch(e){ show('Error: '+e.message); }
+    };
+
+    document.getElementById('btnPitch').onclick = async () => {
+      try {
+        show('Generating Grant Pitch…');
+        const data = await postJSON('/api/writing/grant-pitch', {...common, funder:'Target Funder', alignment:'AI literacy; workforce; community; digital divide', limits:'120'});
+        out.style.display='block'; docDiv.textContent = data.content;
+        show(data.needsInput?.length ? 'Needs input: '+data.needsInput.join(', ') : 'Done. Copy ready.');
+      } catch(e){ show('Error: '+e.message); }
+    };
+
+    document.getElementById('btnReport').onclick = async () => {
+      try {
+        show('Generating Impact Report…');
+        const data = await postJSON('/api/writing/impact-report', {...common, startDate:'2025-01-01', endDate:'2025-06-30'});
+        out.style.display='block'; docDiv.textContent = data.content;
+        show(data.needsUpdate?.length ? 'Needs update: '+data.needsUpdate.join(', ') : 'Done. Copy ready.');
+      } catch(e){ show('Error: '+e.message); }
+    };
+  </script>
+{% endblock %}
+---END FILE---
+
+Add a nav link and route page
+- In app/pages.py, add:
+
+@pages.get("/writing")
+def writing():
+    return render_template("writing.html", active="writing")
+
+- In app/templates/partials/_nav.html add:
+<a href="/writing" class="{{ 'active' if active=='writing' else '' }}">Writing</a>
+
+D) Tests (smoke)
+---BEGIN FILE tests/test_writing_api.py---
+import json, os, pytest
+from app import create_app, db
+from app.models import Org
+
+@pytest.fixture
+def app_ctx():
+    os.environ["OPENAI_API_KEY"] = os.getenv("OPENAI_API_KEY","sk-test")  # model will be mocked by OpenAI lib or fail gracefully
+    os.environ["SQLALCHEMY_DATABASE_URI"] = "sqlite://"
+    os.environ["SQLALCHEMY_TRACK_MODIFICATIONS"] = "false"
+    app = create_app()
+    with app.app_context():
+        db.create_all()
+        db.session.add(Org(name="Test Org")); db.session.commit()
+        yield app
+        db.session.remove(); db.drop_all()
+
+def test_case_support_route(app_ctx, monkeypatch):
+    # Monkeypatch run_prompt to avoid a real model call
+    from app.api import writing as w
+    monkeypatch.setattr(w, "run_prompt", lambda name, tokens, pack: {"content":"Executive Summary\\n...\\nSource Notes: org_profile", "model":"mock"})
+    client = app_ctx.test_client()
+    r = client.post("/api/writing/case-support", data=json.dumps({"orgId":1}), content_type="application/json")
+    assert r.status_code == 200
+    assert "content" in r.get_json()
+
+def test_grant_pitch_route(app_ctx, monkeypatch):
+    from app.api import writing as w
+    monkeypatch.setattr(w, "run_prompt", lambda name, tokens, pack: {"content":"Personal Impact\\n...\\nSource Notes: fields", "model":"mock"})
+    client = app_ctx.test_client()
+    r = client.post("/api/writing/grant-pitch", data=json.dumps({"orgId":1}), content_type="application/json")
+    assert r.status_code == 200
+
+def test_impact_report_route(app_ctx, monkeypatch):
+    from app.api import writing as w
+    monkeypatch.setattr(w, "run_prompt", lambda name, tokens, pack: {"content":"Grant Summary\\n...\\nSource Notes: KPIs", "model":"mock"})
+    client = app_ctx.test_client()
+    r = client.post("/api/writing/impact-report", data=json.dumps({"orgId":1}), content_type="application/json")
+    assert r.status_code == 200
+---END FILE---
+
+Brand guardrails
+- Do NOT add new colors. Only matte pink, white, grey, black via brand.css.
+- Do NOT duplicate logo or name.
+
+Test Debug Verify
+- Add “Writing” to the nav and load /writing: buttons present.
+- Click each button; if OPENAI_API_KEY is present, content should render. If not, the API should still return JSON or a clear error.
+- Run pytest; ensure test_writing_api passes (it mocks model calls).
+- Report file changes and any follow-ups needed.

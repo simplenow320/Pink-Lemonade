@@ -1,0 +1,40 @@
+from flask import Blueprint, render_template
+from app.services.stats_service import get_dashboard_stats, get_top_matches
+from app.models import Grant
+
+pages = Blueprint("pages", __name__)
+
+@pages.get("/")
+def home():
+    return render_template("index.html", active="home")
+
+@pages.get("/dashboard")
+def dashboard():
+    org_id = 1
+    stats = get_dashboard_stats(org_id)
+    top_matches = [{
+        "title": g.title,
+        "funder": g.funder,
+        "link": g.link,
+        "fit": getattr(g, "match_score", None),
+        "deadline": g.deadline.isoformat() if g.deadline else None
+    } for g in get_top_matches(org_id)]
+    return render_template("dashboard.html", active="dashboard", stats=stats, top_matches=top_matches, org_id=org_id)
+
+@pages.get("/opportunities")
+def opportunities():
+    org_id = 1
+    grants = Grant.query.order_by(Grant.created_at.desc()).limit(20).all()
+    return render_template("opportunities.html", active="opps", grants=grants, org_id=org_id)
+
+@pages.get("/saved")
+def saved():
+    return render_template("saved.html", active="saved")
+
+@pages.get("/applications")
+def applications():
+    return render_template("applications.html", active="apps")
+
+@pages.get("/settings")
+def settings():
+    return render_template("settings.html", active="settings")
