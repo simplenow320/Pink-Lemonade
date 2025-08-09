@@ -1,0 +1,47 @@
+We are REBUILDING in the existing repo — do NOT start a new repo.
+
+Goal
+Install executive-level prompt templates and a minimal AI service so the app produces publication-ready outputs in each org’s voice with math/date validation, no guessing, and Source Notes.
+
+Tasks
+1) Create /app/prompts/*.json files exactly as provided:
+   - global_guardrails.json
+   - case_support.json
+   - grant_pitch.json
+   - impact_report.json
+   - contribution_intake.json
+   - edit_learning.json
+   - voice_profile.json
+
+2) Add /app/services/ai_prompter.py exactly as provided. Use OPENAI_API_KEY from secrets. Model default gpt-4o.
+
+3) Concatenate prompts at runtime:
+   - When a module runs, load global_guardrails.json and append its system string into the module’s "system" (replace <GLOBAL_GUARDRAILS>).
+   - Fill tokens from request (org_name, funder_name, limits, dates, etc.).
+   - Build data_pack via the read-only ai_data_reader service.
+   - Call run_prompt(module_name, tokens, data_pack).
+   - Save outputs to the corresponding table (case_support_docs, grant_pitch_docs, impact_reports, contributions, edit_learning_events).
+
+4) Validation behavior:
+   - If output contains a "Missing Info" or "Missing Assets" checklist, do not save as final. Store it as needs_input[] and surface a UI checklist.
+   - For impact reports and budgets, reject outputs where budget sums don’t match stored totals in LIVE.
+
+5) Branding:
+   - No UI color changes. Keep matte pink, white, grey, black only.
+   - No duplicate logo. Keep existing rules.
+
+6) Testing:
+   - Add a simple route /api/ai/selftest that:
+     a) Builds a tiny data_pack from the current org (profile + 1 KPI + 1 budget line).
+     b) Runs the case_support prompt with 300–500 word target.
+     c) Verifies output contains "Source Notes" and no "Missing Info".
+     d) Writes /web/tests/PROMPTS_TEST_REPORT.md with PASS/FAIL and any errors.
+
+Deliverables
+- New prompt files present.
+- ai_prompter.py present.
+- /api/ai/selftest route and test report created.
+
+Test Debug Verify
+- Run selftest. If FAIL, fix token filling or data_pack wiring. Re-run until PASS.
+- Print a one-paragraph summary of files added/changed.
