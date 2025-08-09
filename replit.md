@@ -89,6 +89,14 @@ Preferred communication style: Simple, everyday language.
 
 ## Recent Updates (August 2025)
 
+### Template Global Variables Implementation (August 9, 2025)
+- **Context Processor**: Added inject_globals() to provide env_mode, current_year, logo_url, and active variables to all templates
+- **Dashboard Data**: Fixed dashboard route to provide stats and top_matches data with proper Grant model integration
+- **Placeholder Pages**: Created saved.html, applications.html, and settings.html with "Coming soon" cards
+- **Route Consolidation**: Moved all page routes to app/routes.py blueprint, removed duplicates from app/__init__.py
+
+## Previous Updates
+
 ### Clean Architecture Implementation (August 9, 2025)
 - **Main Entry Point**: Replaced main.py with clean entrypoint (no import loops, no 404s)
 - **App Factory**: Replaced app/__init__.py with clean factory pattern (removed React catch-all)
