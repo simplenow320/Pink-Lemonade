@@ -75,6 +75,11 @@ def create_app(test_config=None):
         app.register_blueprint(dashboard.dashboard_bp)
         app.register_blueprint(integration.integration_bp)
         
+        # Add mode indicator to templates
+        from app.utils.mode_indicator import get_mode_badge_html, get_data_mode
+        app.jinja_env.globals['get_mode_badge'] = get_mode_badge_html
+        app.jinja_env.globals['data_mode'] = get_data_mode
+        
         # Import and register main routes
         from app import routes
         app.register_blueprint(routes.bp)

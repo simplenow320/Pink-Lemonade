@@ -65,5 +65,7 @@
     <!-- Load React App -->
     <script src="{{ url_for('static', filename='js/main.js') }}"></script>
     <script src="{{ url_for('static', filename='js/grantflow-app.js') }}"></script>
+    <!-- Data Mode Indicator -->
+    {{ get_mode_badge() | safe }}
 </body>
 </html>

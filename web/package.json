@@ -1,0 +1,23 @@
+{
+  "name": "pink-lemonade-tests",
+  "version": "1.0.0",
+  "description": "E2E tests for Pink Lemonade Grant Management Platform",
+  "scripts": {
+    "test:e2e": "tsx tests/run-tests.ts",
+    "test:mock": "APP_DATA_MODE=MOCK tsx tests/run-tests.ts",
+    "test:live": "APP_DATA_MODE=LIVE tsx tests/run-tests.ts",
+    "lint": "eslint --ext .ts,.tsx src tests",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "@typescript-eslint/eslint-plugin": "^6.0.0",
+    "@typescript-eslint/parser": "^6.0.0",
+    "eslint": "^8.0.0",
+    "jsdom": "^24.0.0",
+    "node-fetch": "^3.3.2",
+    "tsx": "^4.0.0",
+    "typescript": "^5.0.0"
+  },
+  "dependencies": {}
+}
