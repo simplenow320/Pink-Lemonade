@@ -1,0 +1,70 @@
+We are REBUILDING in the existing repo. Do NOT start a new repo.
+
+Goal
+Run an end-to-end test and verification for Prompts 1–7, ensuring:
+1) All functionality works as intended.
+2) The app adheres 100% to our branding guidelines.
+3) No placeholder data is passed off as real.
+4) No duplicate logos or brand names appear in the UI.
+
+Branding Guidelines (MANDATORY)
+- Primary palette: Matte pink, white, grey, black
+- No additional or random colors allowed
+- Matte finishes only — no glossy gradients or neon tones
+- Use exact logo file provided by me; do NOT regenerate or alter it
+- Logo appears once in hero section only; not in nav, sidebar, or repeated on pages
+
+Scope to Verify
+1) Landing page with hero logo, pain-point copy, and correct colors
+2) Dashboard with KPIs and activity that respect branding
+3) Foundation Directory with search, filters, and correct branding
+4) Saved Grants and My Applications CRUD with branded UI elements
+5) Discovery Connectors with daily schedule and Run Now actions
+6) Watchlists by city
+7) API and Data Integration Layer
+
+Branding Checks
+1) Every UI element (buttons, cards, backgrounds, borders, text) uses only matte pink, white, grey, or black
+2) No inline styles or random color hex codes outside brand palette
+3) Global theme tokens are set once and applied consistently
+4) Components match minimalist, clean, modern, muted look
+
+Add a test harness
+1) Create /web/tests/run-tests.ts using Playwright or Puppeteer
+2) Include brand palette test: scan DOM for colors outside approved list and fail if found
+3) Add npm scripts in package.json for "test:e2e", "lint", and "typecheck"
+
+Create mode indicators
+1) APP_DATA_MODE=LIVE or MOCK
+2) Footer badge shows LIVE when calling real endpoints or DEMO when in mock mode
+
+Landing Page Tests
+1) Logo placement in hero only
+2) Branding palette check passes
+3) Headline, subheadline, CTA buttons load correctly
+
+Dashboard Tests
+1) KPIs are real in LIVE mode or "N/A" in mock mode
+2) Branding check passes
+3) No placeholder numbers without DEMO badge
+
+Directory, Grants, Connectors, Watchlists Tests
+(As previously described in Prompts 1–7, now with branding compliance checks included for every component)
+
+API Layer Tests
+1) All API calls go through central API Manager
+2) No hardcoded secrets
+3) LIVE vs MOCK mode respected
+
+Acceptance Criteria
+1) TEST_REPORT.md lists PASS, FAIL, or SKIPPED for each branding and functional check
+2) No unapproved colors appear anywhere in code or DOM
+3) All lint and type checks pass
+4) All brand rules are enforced globally
+5) No duplicate logos or brand names outside allowed location
+
+Run Sequence
+1) Test in MOCK mode, fix issues
+2) Test in LIVE mode, fix issues
+3) Verify branding compliance in both modes
+4) Deliver final TEST_REPORT.md with any failing branding checks flagged in **red**

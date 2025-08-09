@@ -32,6 +32,11 @@ def applications():
     """My applications page"""
     return render_template('applications.html')
 
+@bp.route('/discovery')
+def discovery():
+    """Discovery and watchlists page"""
+    return render_template('discovery.html')
+
 @bp.route('/scraper')
 def scraper():
     """Render the scraper page"""

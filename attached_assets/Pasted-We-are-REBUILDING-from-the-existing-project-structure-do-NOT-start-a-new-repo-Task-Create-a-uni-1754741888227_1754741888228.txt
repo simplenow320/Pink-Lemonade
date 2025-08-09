@@ -1,0 +1,63 @@
+We are REBUILDING from the existing project structure — do NOT start a new repo.
+
+Task:
+Create a unified **API & Data Integration Layer** for the Fundraising CRM platform that:
+- Makes it easy to plug in future paid APIs (like Candid).
+- Supports current free/ethical grant data sources.
+- Serves all modules (Dashboard, Opportunities, Watchlists, Saved Grants).
+- Uses existing backend architecture and keeps all sites/pages intact.
+
+Integration Requirements:
+1) **API Manager**
+   - Create a single /services/apiManager.js (or similar) file to handle all API calls.
+   - Functions:
+     - getGrantsFromSource(sourceName, params)
+     - searchOpportunities(query, filters)
+     - fetchGrantDetails(grantId)
+     - getWatchlistUpdates(watchlistId)
+   - Each function should handle both live APIs and mock/demo data.
+
+2) **Supported Free Sources (initial)**
+   - Grants.gov API
+   - Foundation Directory Online (free tier if available)
+   - Philanthropy News Digest RSS
+   - GrantWatch (free listings)
+   - State/local open data portals (MI, GA, NC, SC)
+   - Include placeholder connectors for future APIs.
+
+3) **Ethical Data Fetching**
+   - For sites without official APIs:
+     - Use server-side scraping with public endpoints only.
+     - Obey robots.txt and rate limits.
+     - Implement caching to avoid over-fetching.
+
+4) **Configuration**
+   - Central config file: /config/apiConfig.js with:
+     - Base URLs
+     - API keys from secrets (note: OpenAI key already in secrets)
+     - Rate limits
+     - Status flags (enabled/disabled per source)
+
+5) **Integration With Existing UI**
+   - Dashboard metrics pull from API Manager instead of direct DB queries where applicable.
+   - Watchlist system uses API Manager to refresh opportunities.
+   - Opportunities page can fetch from multiple sources via API Manager in parallel.
+
+Testing / Debug / Verify (MANDATORY):
+1) TEST:
+   - Verify data can be fetched from at least one free API and displayed in Opportunities.
+   - Confirm mock/demo mode works if API key missing.
+   - Ensure dashboard and watchlists use new API Manager.
+2) DEBUG:
+   - Fix issues with rate limiting, null data, and connection errors.
+   - Ensure fallback to mock data doesn’t break UI.
+3) VERIFY:
+   - All API keys read securely from Replit secrets.
+   - API Manager fully documented in /docs/apiManager.md with instructions for adding new sources.
+   - One-paragraph summary of files changed and where to edit config.
+
+Deliverables:
+- Centralized API & Data Integration Layer in /services/apiManager.js.
+- Config file for easy future API additions.
+- At least one free grant data source integrated and visible in UI.
+- Documentation for adding new APIs.

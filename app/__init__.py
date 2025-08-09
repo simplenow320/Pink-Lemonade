@@ -51,6 +51,7 @@ def create_app(test_config=None):
     with app.app_context():
         # Import models
         from app.models import grant, organization, scraper, narrative, analytics
+        from app.models import watchlist
         
         # Create all tables in the database
         db.create_all()
@@ -61,6 +62,7 @@ def create_app(test_config=None):
         
         # Import and register blueprints
         from app.api import grants, organization, scraper, ai, analytics, writing_assistant, profile, admin
+        from app.api import discovery
         app.register_blueprint(grants.bp)
         app.register_blueprint(organization.bp)
         app.register_blueprint(scraper.bp)
@@ -69,6 +71,7 @@ def create_app(test_config=None):
         app.register_blueprint(writing_assistant.bp)
         app.register_blueprint(profile.bp)
         app.register_blueprint(admin.bp)  # Register the admin blueprint for data clearing
+        app.register_blueprint(discovery.discovery_bp)
         
         # Import and register main routes
         from app import routes

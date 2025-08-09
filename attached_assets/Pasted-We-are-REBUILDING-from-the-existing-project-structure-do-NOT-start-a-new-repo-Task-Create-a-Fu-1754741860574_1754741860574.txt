@@ -1,0 +1,72 @@
+We are REBUILDING from the existing project structure — do NOT start a new repo.
+
+Task:
+Create a “Fundraising CRM Dashboard” as the main landing page after login:
+- Central hub for grant tracking, KPIs, and quick actions.
+- MUST feature uploaded logo (provided later) prominently in the hero area ONLY — never duplicated elsewhere.
+- Style: minimalist, clean, modern muted matte look.
+
+Sections:
+1) **Hero / Welcome**
+   - Large prominent uploaded logo in center-left hero area.
+   - Text greeting with org name (from user profile).
+   - Subtitle: “Your fundraising command center — track, discover, and win grants.”
+   - “Add New Grant” quick button.
+   - “View Opportunities” quick button.
+
+2) **Key Metrics Row**
+   - Cards showing:
+     - Total Grants in Pipeline
+     - Total Funds Applied For
+     - Total Funds Won
+     - Win Rate %
+   - Each card clickable → filters Grants table by relevant status.
+
+3) **Recent Activity Feed**
+   - Scrollable list of:
+     - Grants added/updated
+     - Deadlines approaching
+     - Notes/comments
+   - Show 5 most recent items with timestamps.
+
+4) **Watchlist Overview**
+   - Small panel listing current watchlists + number of new opportunities found since last login.
+   - “Manage Watchlists” link.
+
+5) **Saved Grants Snapshot**
+   - Table preview of top 5 grants by nearest deadline.
+   - Columns: Title, Funder, Amount, Status, Deadline.
+   - “View All” button → full Saved Grants page.
+
+Routing & Navigation:
+- Dashboard is default post-login route (/dashboard).
+- Nav bar includes: Dashboard, Opportunities, Watchlists, Saved Grants, Reports, Settings.
+- Nav styling follows muted matte palette — highlight active tab.
+
+Backend:
+- Create /api/dashboard/metrics endpoint to return KPI data.
+- Create /api/dashboard/recent-activity to return latest updates.
+- Use existing Grants + Watchlists collections for data.
+- Cache metrics for faster load.
+
+Testing / Debug / Verify (MANDATORY):
+1) TEST:
+   - Verify dashboard loads with mock + live data.
+   - Metrics match underlying grants data.
+   - Recent activity updates in real-time or on refresh.
+   - Logo loads in hero area only.
+2) DEBUG:
+   - Fix missing metrics, UI misalignment, and data fetch delays.
+   - Resolve any null values in KPI cards.
+3) VERIFY:
+   - Minimalist matte look is applied consistently.
+   - Logo is not duplicated in nav bar or elsewhere.
+   - All buttons route correctly.
+   - Dashboard responsive on mobile/tablet.
+   - Provide one-paragraph summary of files added/changed and where to adjust KPI logic.
+
+Deliverables:
+- Fully functional Fundraising CRM Dashboard.
+- Live metrics and activity feed.
+- Logo placement rules respected.
+- Documentation: web/docs/dashboard.md explaining each section, how KPIs are calculated, and how to adjust dashboard layout.

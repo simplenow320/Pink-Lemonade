@@ -19,6 +19,8 @@ MIGRATIONS = [
     'app.db_migrations.fix_search_columns',
     'app.db_migrations.add_funder_contact_columns',
     'app.db_migrations.add_grant_contact_details',
+    'app.db_migrations.add_org_id_to_grants',
+    'app.db_migrations.add_discovery_fields_to_grants',
     # Temporarily removed 'app.db_migrations.add_scraper_history_columns',
 ]
 

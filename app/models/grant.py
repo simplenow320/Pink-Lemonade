@@ -12,6 +12,7 @@ class Grant(db.Model):
     __tablename__ = 'grants'
     
     id = db.Column(db.Integer, primary_key=True)
+    org_id = db.Column(db.String(100), nullable=True)  # Organization ID for scoping
     title = db.Column(db.String(200), nullable=False)
     funder = db.Column(db.String(200), nullable=False)
     description = db.Column(db.Text)
@@ -42,6 +43,16 @@ class Grant(db.Model):
     # Search tracking fields
     search_query = db.Column(db.String(255), nullable=True)  # The search query that found this grant
     discovery_method = db.Column(db.String(50), nullable=True)  # web-search, focused-search, manual
+    
+    # Discovery fields
+    source_name = db.Column(db.String(200), nullable=True)  # Name of the discovery source
+    source_url = db.Column(db.String(500), nullable=True)  # URL of the discovery source
+    discovered_at = db.Column(db.DateTime, nullable=True)  # When the grant was discovered
+    tags = db.Column(JSON, nullable=True)  # Tags associated with the grant
+    amount_min = db.Column(db.Float, nullable=True)  # Minimum grant amount
+    amount_max = db.Column(db.Float, nullable=True)  # Maximum grant amount
+    link = db.Column(db.String(500), nullable=True)  # Direct link to grant opportunity
+    deadline = db.Column(db.DateTime, nullable=True)  # Grant application deadline
     
     # Relationships
     narrative = db.relationship('Narrative', back_populates='grant', uselist=False, cascade="all, delete-orphan")
@@ -78,7 +89,15 @@ class Grant(db.Model):
             'date_submitted': self.date_submitted.isoformat() if self.date_submitted else None,
             'date_decision': self.date_decision.isoformat() if self.date_decision else None,
             'search_query': self.search_query,
-            'discovery_method': self.discovery_method
+            'discovery_method': self.discovery_method,
+            'source_name': self.source_name,
+            'source_url': self.source_url,
+            'discovered_at': self.discovered_at.isoformat() if self.discovered_at else None,
+            'tags': self.tags,
+            'amount_min': self.amount_min,
+            'amount_max': self.amount_max,
+            'link': self.link,
+            'deadline': self.deadline.isoformat() if self.deadline else None
         }
     
     def update_status(self, new_status, metadata=None):
