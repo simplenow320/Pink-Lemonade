@@ -1,0 +1,537 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Opportunities - Pink Lemonade</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --pink: #ec4899;
+            --pink-matte: #db2777;
+            --white: #ffffff;
+            --black: #000000;
+            --grey-light: #f3f4f6;
+            --grey: #6b7280;
+            --grey-dark: #374151;
+            --border: #e5e7eb;
+        }
+
+        body {
+            background-color: var(--grey-light);
+            color: var(--black);
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        }
+
+        .header-bar {
+            background: var(--white);
+            border-bottom: 1px solid var(--border);
+            padding: 1rem 1.5rem;
+        }
+
+        .filter-section {
+            background: var(--white);
+            border-radius: 0.5rem;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        .opportunities-grid {
+            background: var(--white);
+            border-radius: 0.5rem;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .opportunity-row {
+            border-bottom: 1px solid var(--border);
+            padding: 1rem 1.5rem;
+            transition: background 0.2s;
+        }
+
+        .opportunity-row:hover {
+            background: var(--grey-light);
+        }
+
+        .fit-score {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            border-radius: 1rem;
+            font-size: 0.875rem;
+            font-weight: 600;
+        }
+
+        .fit-score-5 { background: #10b981; color: var(--white); }
+        .fit-score-4 { background: #84cc16; color: var(--white); }
+        .fit-score-3 { background: #eab308; color: var(--white); }
+        .fit-score-2 { background: #f97316; color: var(--white); }
+        .fit-score-1 { background: #ef4444; color: var(--white); }
+        .fit-score-na { background: var(--grey); color: var(--white); }
+
+        .btn-primary {
+            background: var(--pink-matte);
+            color: var(--white);
+            padding: 0.5rem 1rem;
+            border-radius: 0.375rem;
+            font-weight: 500;
+            transition: opacity 0.2s;
+        }
+
+        .btn-primary:hover {
+            opacity: 0.9;
+        }
+
+        .btn-secondary {
+            background: var(--white);
+            color: var(--grey-dark);
+            border: 1px solid var(--border);
+            padding: 0.5rem 1rem;
+            border-radius: 0.375rem;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+
+        .btn-secondary:hover {
+            background: var(--grey-light);
+        }
+
+        .filter-input, .filter-select {
+            width: 100%;
+            padding: 0.5rem 0.75rem;
+            border: 1px solid var(--border);
+            border-radius: 0.375rem;
+            background: var(--white);
+            color: var(--black);
+        }
+
+        .filter-input:focus, .filter-select:focus {
+            outline: none;
+            border-color: var(--pink-matte);
+            box-shadow: 0 0 0 3px rgba(219, 39, 119, 0.1);
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 4rem 2rem;
+            color: var(--grey);
+        }
+
+        .demo-badge {
+            position: fixed;
+            top: 1rem;
+            right: 1rem;
+            background: var(--grey-dark);
+            color: var(--white);
+            padding: 0.5rem 1rem;
+            border-radius: 0.375rem;
+            font-weight: 600;
+            z-index: 1000;
+        }
+
+        .source-badge {
+            display: inline-block;
+            padding: 0.125rem 0.5rem;
+            background: var(--grey-light);
+            color: var(--grey-dark);
+            border-radius: 0.25rem;
+            font-size: 0.75rem;
+            font-weight: 500;
+        }
+
+        /* Mobile responsiveness */
+        @media (max-width: 768px) {
+            .opportunities-table {
+                display: block;
+            }
+
+            .opportunity-row {
+                display: block;
+                padding: 1rem;
+            }
+
+            .opportunity-row > div {
+                margin-bottom: 0.5rem;
+            }
+
+            .filter-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Demo Badge (shown in mock mode) -->
+    <div id="demo-badge" class="demo-badge hidden">DEMO MODE</div>
+
+    <!-- Header -->
+    <div class="header-bar">
+        <div class="max-w-7xl mx-auto flex items-center justify-between">
+            <div class="flex items-center space-x-4">
+                <img src="/static/images/logo.png" alt="Pink Lemonade" class="h-8">
+                <h1 class="text-xl font-semibold">Grant Opportunities</h1>
+            </div>
+            <a href="/dashboard" class="text-sm hover:underline" style="color: var(--pink-matte);">← Back to Dashboard</a>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="max-w-7xl mx-auto px-4 py-6">
+        <!-- Search and Filters -->
+        <div class="filter-section">
+            <div class="mb-4">
+                <input type="text" id="search-input" placeholder="Search opportunities..." class="filter-input">
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-5 gap-4 filter-grid">
+                <div>
+                    <label class="block text-sm font-medium mb-1" style="color: var(--grey-dark);">City</label>
+                    <select id="city-filter" class="filter-select">
+                        <option value="">All Cities</option>
+                        <option value="Atlanta">Atlanta</option>
+                        <option value="National">National</option>
+                        <option value="Georgia">Georgia</option>
+                        <option value="Southeast">Southeast</option>
+                    </select>
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium mb-1" style="color: var(--grey-dark);">Focus Area</label>
+                    <select id="focus-filter" class="filter-select">
+                        <option value="">All Areas</option>
+                        <option value="Youth">Youth Development</option>
+                        <option value="Education">Education</option>
+                        <option value="Community">Community Service</option>
+                        <option value="Faith">Faith-Based</option>
+                        <option value="Health">Health & Wellness</option>
+                    </select>
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium mb-1" style="color: var(--grey-dark);">Deadline</label>
+                    <select id="deadline-filter" class="filter-select">
+                        <option value="">All Deadlines</option>
+                        <option value="7">Next 7 days</option>
+                        <option value="30">Next 30 days</option>
+                        <option value="60">Next 60 days</option>
+                        <option value="90">Next 90 days</option>
+                    </select>
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium mb-1" style="color: var(--grey-dark);">Source</label>
+                    <select id="source-filter" class="filter-select">
+                        <option value="">All Sources</option>
+                        <option value="grants_gov">Grants.gov</option>
+                        <option value="philanthropy_news">Philanthropy News</option>
+                        <option value="federal_register">Federal Register</option>
+                        <option value="govinfo">GovInfo</option>
+                        <option value="michigan_portal">Michigan Portal</option>
+                        <option value="georgia_portal">Georgia Portal</option>
+                    </select>
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium mb-1 opacity-0">Actions</label>
+                    <button onclick="applyFilters()" class="btn-primary w-full">Apply Filters</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Results Count -->
+        <div class="mb-4 text-sm" style="color: var(--grey-dark);">
+            <span id="results-count">Loading opportunities...</span>
+        </div>
+
+        <!-- Opportunities List -->
+        <div class="opportunities-grid">
+            <!-- Table Header (Desktop) -->
+            <div class="hidden md:grid grid-cols-12 gap-4 px-6 py-3 bg-gray-50 text-xs font-medium uppercase tracking-wider" style="color: var(--grey-dark);">
+                <div class="col-span-3">Title</div>
+                <div class="col-span-2">Funder</div>
+                <div class="col-span-1">Fit</div>
+                <div class="col-span-2">Amount</div>
+                <div class="col-span-1">Deadline</div>
+                <div class="col-span-1">Source</div>
+                <div class="col-span-2">Actions</div>
+            </div>
+            
+            <!-- Opportunities Container -->
+            <div id="opportunities-container">
+                <!-- Opportunities will be loaded here -->
+            </div>
+            
+            <!-- Empty State -->
+            <div id="empty-state" class="empty-state hidden">
+                <svg class="w-16 h-16 mx-auto mb-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                </svg>
+                <h3 class="text-lg font-medium mb-2">No opportunities found</h3>
+                <p class="text-sm mb-4">Try adjusting your filters or search terms</p>
+                <button onclick="clearFilters()" class="btn-secondary">Clear Filters</button>
+            </div>
+        </div>
+
+        <!-- Pagination -->
+        <div id="pagination" class="mt-6 flex justify-center space-x-2">
+            <!-- Pagination buttons will be added here -->
+        </div>
+    </div>
+
+    <script>
+        let currentPage = 1;
+        let totalPages = 1;
+        let opportunities = [];
+        let isLiveMode = true;
+
+        // Initialize page
+        document.addEventListener('DOMContentLoaded', () => {
+            loadOpportunities();
+            setupEventListeners();
+        });
+
+        function setupEventListeners() {
+            document.getElementById('search-input').addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    applyFilters();
+                }
+            });
+        }
+
+        async function loadOpportunities(page = 1) {
+            currentPage = page;
+            const searchQuery = document.getElementById('search-input').value;
+            const city = document.getElementById('city-filter').value;
+            const focusArea = document.getElementById('focus-filter').value;
+            const deadlineDays = document.getElementById('deadline-filter').value;
+            const source = document.getElementById('source-filter').value;
+
+            const params = new URLSearchParams({
+                page: page,
+                search: searchQuery,
+                city: city,
+                focus_area: focusArea,
+                deadline_days: deadlineDays,
+                source: source
+            });
+
+            try {
+                const response = await fetch(`/api/opportunities?${params}`);
+                const data = await response.json();
+                
+                opportunities = data.opportunities || [];
+                totalPages = data.total_pages || 1;
+                isLiveMode = data.mode === 'live';
+                
+                displayOpportunities();
+                updateResultsCount(data.total || 0);
+                updatePagination();
+                updateDemoBadge();
+                
+            } catch (error) {
+                console.error('Error loading opportunities:', error);
+                showError('Failed to load opportunities. Please try again.');
+            }
+        }
+
+        function displayOpportunities() {
+            const container = document.getElementById('opportunities-container');
+            const emptyState = document.getElementById('empty-state');
+            
+            if (opportunities.length === 0) {
+                container.innerHTML = '';
+                emptyState.classList.remove('hidden');
+            } else {
+                emptyState.classList.add('hidden');
+                container.innerHTML = opportunities.map(opp => createOpportunityRow(opp)).join('');
+            }
+        }
+
+        function createOpportunityRow(opp) {
+            const fitScoreClass = opp.fit_score ? `fit-score-${opp.fit_score}` : 'fit-score-na';
+            const fitScoreText = opp.fit_score ? `${opp.fit_score}/5` : 'N/A';
+            
+            return `
+                <div class="opportunity-row grid grid-cols-1 md:grid-cols-12 gap-4 items-center">
+                    <div class="col-span-3">
+                        <div class="font-medium">${escapeHtml(opp.title)}</div>
+                        <div class="text-sm text-gray-500 md:hidden">
+                            ${escapeHtml(opp.funder || 'Unknown Funder')}
+                        </div>
+                    </div>
+                    <div class="col-span-2 hidden md:block">
+                        ${escapeHtml(opp.funder || 'Unknown Funder')}
+                    </div>
+                    <div class="col-span-1">
+                        <span class="fit-score ${fitScoreClass}">${fitScoreText}</span>
+                    </div>
+                    <div class="col-span-2">
+                        ${formatAmount(opp.amount_min, opp.amount_max)}
+                    </div>
+                    <div class="col-span-1">
+                        ${formatDeadline(opp.deadline)}
+                    </div>
+                    <div class="col-span-1">
+                        <span class="source-badge">${formatSource(opp.source)}</span>
+                    </div>
+                    <div class="col-span-2 flex space-x-2">
+                        <button onclick="saveOpportunity(${opp.id})" class="btn-secondary text-sm">Save</button>
+                        <button onclick="addToApplications(${opp.id})" class="btn-primary text-sm">Apply</button>
+                    </div>
+                </div>
+            `;
+        }
+
+        async function saveOpportunity(id) {
+            try {
+                const response = await fetch('/api/opportunities/save', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({opportunity_id: id})
+                });
+                
+                if (response.ok) {
+                    showSuccess('Opportunity saved to Saved Grants');
+                } else {
+                    showError('Failed to save opportunity');
+                }
+            } catch (error) {
+                console.error('Error saving opportunity:', error);
+                showError('Failed to save opportunity');
+            }
+        }
+
+        async function addToApplications(id) {
+            try {
+                const response = await fetch('/api/opportunities/apply', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({opportunity_id: id})
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    showSuccess('Added to My Applications');
+                    window.location.href = `/applications/${data.application_id}`;
+                } else {
+                    showError('Failed to add to applications');
+                }
+            } catch (error) {
+                console.error('Error adding to applications:', error);
+                showError('Failed to add to applications');
+            }
+        }
+
+        function applyFilters() {
+            loadOpportunities(1);
+        }
+
+        function clearFilters() {
+            document.getElementById('search-input').value = '';
+            document.getElementById('city-filter').value = '';
+            document.getElementById('focus-filter').value = '';
+            document.getElementById('deadline-filter').value = '';
+            document.getElementById('source-filter').value = '';
+            loadOpportunities(1);
+        }
+
+        function updateResultsCount(total) {
+            document.getElementById('results-count').textContent = 
+                `Found ${total} ${total === 1 ? 'opportunity' : 'opportunities'}`;
+        }
+
+        function updatePagination() {
+            const container = document.getElementById('pagination');
+            if (totalPages <= 1) {
+                container.innerHTML = '';
+                return;
+            }
+            
+            let html = '';
+            
+            // Previous button
+            if (currentPage > 1) {
+                html += `<button onclick="loadOpportunities(${currentPage - 1})" class="btn-secondary">Previous</button>`;
+            }
+            
+            // Page numbers
+            for (let i = 1; i <= Math.min(totalPages, 5); i++) {
+                const isActive = i === currentPage;
+                html += `<button onclick="loadOpportunities(${i})" class="${isActive ? 'btn-primary' : 'btn-secondary'}">${i}</button>`;
+            }
+            
+            // Next button
+            if (currentPage < totalPages) {
+                html += `<button onclick="loadOpportunities(${currentPage + 1})" class="btn-secondary">Next</button>`;
+            }
+            
+            container.innerHTML = html;
+        }
+
+        function updateDemoBadge() {
+            const badge = document.getElementById('demo-badge');
+            if (!isLiveMode) {
+                badge.classList.remove('hidden');
+            } else {
+                badge.classList.add('hidden');
+            }
+        }
+
+        function formatAmount(min, max) {
+            if (!min && !max) return 'Not specified';
+            if (min === max) return `$${min.toLocaleString()}`;
+            return `$${(min || 0).toLocaleString()} - $${(max || 0).toLocaleString()}`;
+        }
+
+        function formatDeadline(deadline) {
+            if (!deadline) return 'Ongoing';
+            const date = new Date(deadline);
+            const today = new Date();
+            const days = Math.ceil((date - today) / (1000 * 60 * 60 * 24));
+            
+            if (days < 0) return 'Expired';
+            if (days === 0) return 'Today';
+            if (days === 1) return 'Tomorrow';
+            if (days <= 7) return `${days} days`;
+            
+            return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+        }
+
+        function formatSource(source) {
+            const sourceNames = {
+                'grants_gov': 'Grants.gov',
+                'philanthropy_news': 'PND',
+                'federal_register': 'Fed Register',
+                'govinfo': 'GovInfo',
+                'michigan_portal': 'Michigan',
+                'georgia_portal': 'Georgia'
+            };
+            return sourceNames[source] || source;
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text || '';
+            return div.innerHTML;
+        }
+
+        function showSuccess(message) {
+            // Simple success notification
+            const notification = document.createElement('div');
+            notification.className = 'fixed top-4 right-4 bg-green-100 text-green-800 px-4 py-2 rounded shadow-lg z-50';
+            notification.textContent = message;
+            document.body.appendChild(notification);
+            setTimeout(() => notification.remove(), 3000);
+        }
+
+        function showError(message) {
+            // Simple error notification
+            const notification = document.createElement('div');
+            notification.className = 'fixed top-4 right-4 bg-red-100 text-red-800 px-4 py-2 rounded shadow-lg z-50';
+            notification.textContent = message;
+            document.body.appendChild(notification);
+            setTimeout(() => notification.remove(), 3000);
+        }
+    </script>
+</body>
+</html>

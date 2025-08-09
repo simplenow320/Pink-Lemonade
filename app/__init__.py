@@ -62,7 +62,7 @@ def create_app(test_config=None):
         
         # Import and register blueprints
         from app.api import grants, organization, scraper, ai, analytics, writing_assistant, profile, admin
-        from app.api import discovery, dashboard, integration, ai_endpoints
+        from app.api import discovery, dashboard, integration, ai_endpoints, opportunities
         app.register_blueprint(grants.bp)
         app.register_blueprint(organization.bp)
         app.register_blueprint(scraper.bp)
@@ -75,6 +75,7 @@ def create_app(test_config=None):
         app.register_blueprint(dashboard.dashboard_bp)
         app.register_blueprint(integration.integration_bp)
         app.register_blueprint(ai_endpoints.bp, url_prefix='/api/ai-v2')  # New AI endpoints
+        app.register_blueprint(opportunities.bp)  # Opportunities page
         
         # Add mode indicator to templates
         from app.utils.mode_indicator import get_mode_badge_html, get_data_mode
