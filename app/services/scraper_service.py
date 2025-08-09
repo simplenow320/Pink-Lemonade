@@ -1,397 +1,331 @@
-"""
-Scraper Service - Safe, LIVE/DEMO aware grant discovery with deduplication
-Handles multiple grant sources including Grants.gov with proper error handling
-"""
-
+# app/services/scraper_service.py
 from __future__ import annotations
+
 import os
 import logging
-from typing import Dict, Any, List, Optional, Tuple
-from datetime import datetime, timedelta
-import hashlib
-import json
+from datetime import datetime, date
+from typing import Dict, Any, Iterable, List, Optional
+
 import requests
-from urllib.parse import urlencode
+from sqlalchemy import and_
 
 from app import db
-from app.models import Grant, Watchlist, WatchlistSource, ScraperSource
-from app.services.mode import is_live, get_mode
+from app.models import Grant, Watchlist, WatchlistSource
+from app.services.mode import is_live
 
-# Configure logging
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
+log = logging.getLogger(__name__)
 
-class ScraperService:
-    """Main scraper service coordinating grant discovery from multiple sources"""
-    
-    def __init__(self):
-        self.mode = get_mode()
-        self.is_live = is_live()
-        self.sources = self._initialize_sources()
-        logger.info(f"ScraperService initialized in {self.mode} mode")
-        
-    def _initialize_sources(self) -> Dict[str, Any]:
-        """Initialize available grant sources"""
-        sources = {}
-        
-        if self.is_live:
-            # Initialize live sources only if API keys are available
-            if os.getenv("GRANTS_GOV_API_KEY"):
-                sources["grants_gov"] = GrantsGovConnector()
-                logger.info("Grants.gov connector initialized")
-            else:
-                logger.warning("Grants.gov API key not found - source disabled")
-                
-            # Add other live sources here as needed
-            # if os.getenv("FOUNDATION_API_KEY"):
-            #     sources["foundation_directory"] = FoundationDirectoryConnector()
-                
-        else:
-            # Demo mode - use mock data
-            sources["demo"] = DemoDataConnector()
-            logger.info("Demo data connector initialized for testing")
-            
-        return sources
-    
-    def discover_grants(self, org_id: int, limit: int = 50) -> Tuple[List[Grant], Dict[str, Any]]:
-        """
-        Discover new grants from all configured sources
-        
-        Returns:
-            Tuple of (grants_list, statistics_dict)
-        """
-        all_grants = []
-        stats = {
-            "total_discovered": 0,
-            "new_grants": 0,
-            "duplicates_skipped": 0,
-            "sources_checked": len(self.sources),
-            "errors": []
-        }
-        
-        logger.info(f"Starting grant discovery for org {org_id} with {len(self.sources)} sources")
-        
-        for source_name, connector in self.sources.items():
-            try:
-                logger.info(f"Fetching from {source_name}...")
-                grants = connector.fetch_grants(limit=limit // len(self.sources) or 10)
-                
-                # Process and deduplicate grants
-                for grant_data in grants:
-                    grant = self._process_grant(grant_data, org_id, source_name)
-                    if grant:
-                        all_grants.append(grant)
-                        stats["new_grants"] += 1
-                    else:
-                        stats["duplicates_skipped"] += 1
-                        
-                stats["total_discovered"] += len(grants)
-                logger.info(f"Processed {len(grants)} grants from {source_name}")
-                
-            except Exception as e:
-                error_msg = f"Error fetching from {source_name}: {str(e)}"
-                logger.error(error_msg)
-                stats["errors"].append(error_msg)
-                
-        logger.info(f"Discovery complete: {stats['new_grants']} new, {stats['duplicates_skipped']} duplicates")
-        return all_grants, stats
-    
-    def _process_grant(self, grant_data: Dict[str, Any], org_id: int, source: str) -> Optional[Grant]:
-        """Process and deduplicate a single grant"""
+# ------------------------------
+# Configuration (env-overridable)
+# ------------------------------
+GRANTSGOV_BASE = os.getenv("GRANTSGOV_BASE", "https://www.grants.gov/grantsws/rest/opportunities/search")
+GRANTSGOV_PAGE_SIZE = int(os.getenv("GRANTSGOV_PAGE_SIZE", "50"))
+HTTP_TIMEOUT = int(os.getenv("SCRAPER_HTTP_TIMEOUT", "25"))  # seconds
+USER_AGENT = os.getenv("SCRAPER_UA", "PinkLemonade/1.0 (+contact admin)")
+
+# ------------------------------
+# Public entry points
+# ------------------------------
+def scheduled_scraping_job() -> None:
+    """
+    Runs on a schedule (e.g., daily at 05:00).
+    - In LIVE mode: fetches from real connectors and upserts results.
+    - In DEMO mode: skip (never fabricate data).
+    """
+    if not is_live():
+        log.info("scheduled_scraping_job: DEMO mode detected; skipping live scraping.")
+        return
+
+    try:
+        total = run_all_connectors_for_all_orgs()
+        log.info("scheduled_scraping_job: finished. upserted_or_updated=%s", total)
+    except Exception:
+        log.exception("scheduled_scraping_job: unexpected error")
+
+
+def run_now_for_org(org_id: int, query: Optional[str] = None) -> int:
+    """
+    Manual trigger (e.g., 'Run Now' button). Returns number of upserted/updated records.
+    """
+    if not is_live():
+        log.info("run_now_for_org: DEMO mode detected; skipping live scraping for org_id=%s", org_id)
+        return 0
+    return run_all_connectors_for_org(org_id=org_id, query=query)
+
+# ------------------------------
+# Core orchestration
+# ------------------------------
+def run_all_connectors_for_all_orgs() -> int:
+    """
+    Iterate orgs that have watchlists and run all enabled connectors.
+    """
+    count = 0
+    org_ids = [row[0] for row in db.session.query(Watchlist.org_id).distinct().all()]
+    for org_id in org_ids:
         try:
-            # Generate unique hash for deduplication
-            unique_key = self._generate_grant_hash(grant_data)
-            
-            # Check for existing grant using title and funder
-            existing = Grant.query.filter_by(
-                org_id=org_id,
-                title=grant_data.get("title", ""),
-                funder=grant_data.get("funder", "")
-            ).first()
-            
-            if existing:
-                logger.debug(f"Duplicate grant found: {grant_data.get('title', 'Unknown')}")
-                # Update last_seen timestamp
-                existing.updated_at = datetime.utcnow()
-                db.session.commit()
-                return None
-                
-            # Create new grant
-            grant = Grant()
-            grant.org_id = org_id
-            grant.title = grant_data.get("title", "Untitled Grant")
-            grant.funder = grant_data.get("funder", "Unknown Funder")
-            grant.link = grant_data.get("url", "")
-            grant.amount_min = grant_data.get("amount_min")
-            grant.amount_max = grant_data.get("amount_max")
-            grant.deadline = self._parse_deadline(grant_data.get("deadline"))
-            grant.geography = grant_data.get("geographic_focus", "")
-            grant.eligibility = grant_data.get("eligibility", "")
-            grant.status = "idea"  # Default status from model
-            grant.source_name = source
-            grant.source_url = grant_data.get("url", "")
-            grant.match_score = None  # Will be calculated later
-            grant.match_reason = None
-            grant.created_at = datetime.utcnow()
-            grant.updated_at = datetime.utcnow()
-            
-            # Store focus areas in eligibility if provided
-            if "focus_areas" in grant_data:
-                focus_areas_text = f"Focus Areas: {', '.join(grant_data['focus_areas'])}"
-                if grant.eligibility:
-                    grant.eligibility = f"{grant.eligibility}\n{focus_areas_text}"
-                else:
-                    grant.eligibility = focus_areas_text
-                
-            db.session.add(grant)
-            db.session.commit()
-            
-            logger.info(f"Added new grant: {grant.title} from {source}")
-            return grant
-            
-        except Exception as e:
-            logger.error(f"Error processing grant: {str(e)}")
-            db.session.rollback()
-            return None
-    
-    def _generate_grant_hash(self, grant_data: Dict[str, Any]) -> str:
-        """Generate unique hash for grant deduplication"""
-        # Use title, funder, and deadline for uniqueness
-        key_parts = [
-            grant_data.get("title", "").lower().strip(),
-            grant_data.get("funder", "").lower().strip(),
-            str(grant_data.get("deadline", ""))
-        ]
-        key_string = "|".join(key_parts)
-        return hashlib.md5(key_string.encode()).hexdigest()
-    
-    def _parse_deadline(self, deadline_str: Any) -> Optional[datetime]:
-        """Parse various deadline formats"""
-        if not deadline_str:
-            return None
-            
-        if isinstance(deadline_str, datetime):
-            return deadline_str
-            
+            count += run_all_connectors_for_org(org_id)
+        except Exception:
+            log.exception("run_all_connectors_for_all_orgs: failure for org_id=%s", org_id)
+    return count
+
+
+def run_all_connectors_for_org(org_id: int, query: Optional[str] = None) -> int:
+    """
+    Pulls enabled sources for the org's watchlists and upserts results.
+    """
+    total = 0
+    watchlists: List[Watchlist] = Watchlist.query.filter_by(org_id=org_id).all()
+
+    # Build simple terms from watchlists (e.g., cities)
+    cities = [w.city for w in watchlists if (w.city or "").strip()]
+    if query:
+        # explicit query overrides city terms
+        cities = [query]
+
+    # For now: Grants.gov connector (federal). You can add more connectors below.
+    for term in cities or ["nonprofit"]:
         try:
-            # Try common date formats
-            from dateutil import parser
-            return parser.parse(str(deadline_str))
-        except:
-            logger.warning(f"Could not parse deadline: {deadline_str}")
-            return None
-    
-    def update_watchlist_grants(self, watchlist_id: int) -> Dict[str, Any]:
-        """Update grants for a specific watchlist based on its criteria"""
-        watchlist = Watchlist.query.get(watchlist_id)
-        if not watchlist:
-            return {"error": "Watchlist not found"}
-            
-        stats = {
-            "watchlist": watchlist.name,
-            "grants_matched": 0,
-            "sources_checked": 0
-        }
-        
-        # Get watchlist sources
-        sources = WatchlistSource.query.filter_by(watchlist_id=watchlist_id).all()
-        
-        for source in sources:
-            # Fetch grants from this source
-            # Match against watchlist criteria
-            # Update associations
-            stats["sources_checked"] += 1
-            
-        return stats
+            records = fetch_from_grants_gov(search_term=term, limit=GRANTSGOV_PAGE_SIZE)
+            total += upsert_many(records, org_id=org_id)
+        except Exception:
+            log.exception("run_all_connectors_for_org: connector failed for org_id=%s term=%s", org_id, term)
 
+    # Example: custom WatchlistSource URLs (future adapters)
+    # sources = (db.session.query(WatchlistSource)
+    #            .join(Watchlist, WatchlistSource.watchlist_id == Watchlist.id)
+    #            .filter(Watchlist.org_id == org_id, WatchlistSource.enabled.is_(True))
+    #            .all())
+    # for src in sources:
+    #     try:
+    #         # normalize vendor by src.name, call matching adapter here
+    #         pass
+    #     except Exception:
+    #         log.exception("Adapter error for source %s (%s)", src.name, src.url)
 
-class GrantsGovConnector:
-    """Connector for Grants.gov REST API"""
-    
-    def __init__(self):
-        self.api_key = os.getenv("GRANTS_GOV_API_KEY")
-        self.base_url = "https://api.grants.gov/v2/opportunities/search"
-        self.headers = {
-            "Authorization": f"Bearer {self.api_key}",
-            "Content-Type": "application/json"
-        }
-        
-    def fetch_grants(self, limit: int = 25, keywords: Optional[str] = None) -> List[Dict[str, Any]]:
-        """Fetch grants from Grants.gov API"""
-        grants = []
-        
-        try:
-            # Build query parameters
-            params = {
-                "limit": min(limit, 100),  # API max is 100
-                "offset": 0,
-                "sortBy": "postedDate|desc"
-            }
-            
-            if keywords:
-                params["keywords"] = keywords
-                
-            # Make API request
-            response = requests.get(
-                self.base_url,
-                headers=self.headers,
-                params=params,
-                timeout=30
-            )
-            
-            if response.status_code == 200:
-                data = response.json()
-                opportunities = data.get("opportunities", [])
-                
-                for opp in opportunities:
-                    grant = self._parse_opportunity(opp)
-                    if grant:
-                        grants.append(grant)
-                        
-                logger.info(f"Fetched {len(grants)} grants from Grants.gov")
-                
-            else:
-                logger.error(f"Grants.gov API error: {response.status_code} - {response.text}")
-                
-        except requests.exceptions.Timeout:
-            logger.error("Grants.gov API timeout")
-        except Exception as e:
-            logger.error(f"Error fetching from Grants.gov: {str(e)}")
-            
-        return grants
-    
-    def _parse_opportunity(self, opp: Dict[str, Any]) -> Optional[Dict[str, Any]]:
-        """Parse Grants.gov opportunity into standard grant format"""
-        try:
-            # Extract deadline
-            close_date = opp.get("closeDate")
-            deadline = None
-            if close_date:
-                try:
-                    deadline = datetime.strptime(close_date, "%Y-%m-%d")
-                except:
-                    deadline = close_date
-                    
-            return {
-                "title": opp.get("oppTitle", "Untitled"),
-                "funder": opp.get("agencyName", "Federal Agency"),
-                "description": opp.get("description", opp.get("synopsis", "")),
-                "amount_min": opp.get("awardFloor"),
-                "amount_max": opp.get("awardCeiling"),
-                "deadline": deadline,
-                "url": f"https://grants.gov/search-results-detail/{opp.get('id')}",
-                "opportunity_number": opp.get("oppNumber"),
-                "eligibility": opp.get("eligibilityCodes", []),
-                "focus_areas": opp.get("categories", []),
-                "geographic_focus": opp.get("geographicScope", "National"),
-                "posted_date": opp.get("postedDate"),
-                "modified_date": opp.get("modifiedDate"),
-                "source_id": opp.get("id")
-            }
-        except Exception as e:
-            logger.error(f"Error parsing Grants.gov opportunity: {str(e)}")
-            return None
+    return total
 
+# ------------------------------
+# Connectors
+# ------------------------------
+def fetch_from_grants_gov(search_term: str, limit: int = 50, offset: int = 0) -> List[Dict[str, Any]]:
+    """
+    Minimal Grants.gov search. Returns a list of normalized grant dicts for upsert.
+    Docs: https://www.grants.gov/api/api-guide (search2 endpoint pattern)
 
-class DemoDataConnector:
-    """Demo data connector for testing without live APIs"""
-    
-    def fetch_grants(self, limit: int = 10, **kwargs) -> List[Dict[str, Any]]:
-        """Return demo grant data for testing"""
-        demo_grants = [
-            {
-                "title": f"Demo Community Development Grant {i+1}",
-                "funder": "Demo Foundation",
-                "description": "This is a demo grant for testing purposes. In LIVE mode, real grants will appear here.",
-                "amount_min": 5000 * (i+1),
-                "amount_max": 10000 * (i+1),
-                "deadline": datetime.utcnow() + timedelta(days=30+i*7),
-                "url": f"https://example.com/demo-grant-{i+1}",
-                "focus_areas": ["Education", "Community Development"],
-                "geographic_focus": "Michigan"
-            }
-            for i in range(min(limit, 5))
-        ]
-        
-        logger.info(f"Generated {len(demo_grants)} demo grants for testing")
-        return demo_grants
+    We request open opportunities where eligibility includes nonprofits if possible.
+    """
+    if not is_live():
+        # Never fabricate in DEMO. Return empty list.
+        return []
 
-
-class ScraperScheduler:
-    """Scheduler for automated grant discovery"""
-    
-    def __init__(self):
-        self.service = ScraperService()
-        self.is_running = False
-        
-    def run_discovery(self, org_id: int):
-        """Run grant discovery for an organization"""
-        if not self.is_running:
-            self.is_running = True
-            try:
-                logger.info(f"Starting scheduled discovery for org {org_id}")
-                grants, stats = self.service.discover_grants(org_id)
-                logger.info(f"Discovery complete: {stats}")
-                
-                # Update scraper sources status
-                self._update_source_status(stats)
-                
-            finally:
-                self.is_running = False
-                
-    def _update_source_status(self, stats: Dict[str, Any]):
-        """Update source status in database"""
-        try:
-            for source_name in self.service.sources.keys():
-                source = ScraperSource.query.filter_by(name=source_name).first()
-                if source:
-                    source.last_run = datetime.utcnow()
-                    source.status = "active" if source_name not in [e.split(":")[0] for e in stats.get("errors", [])] else "error"
-                    db.session.commit()
-        except Exception as e:
-            logger.error(f"Error updating source status: {str(e)}")
-            db.session.rollback()
-
-
-# Convenience functions for API usage
-def discover_grants_for_org(org_id: int, limit: int = 50) -> Tuple[List[Grant], Dict[str, Any]]:
-    """Convenience function to discover grants for an organization"""
-    service = ScraperService()
-    return service.discover_grants(org_id, limit)
-
-def get_scraper_status() -> Dict[str, Any]:
-    """Get current scraper status and configuration"""
-    return {
-        "mode": get_mode(),
-        "is_live": is_live(),
-        "sources_available": list(ScraperService().sources.keys()),
-        "last_run": None  # Would need to query from database
+    # Build basic payload for search2
+    payload = {
+        "startRecordNum": offset + 1,
+        "keyword": search_term,
+        "oppStatuses": "forecasted|posted",  # broaden a bit; adjust as you like
+        "rows": min(max(1, limit), 100)
     }
 
-# Legacy functions for backward compatibility with existing API
+    headers = {"User-Agent": USER_AGENT, "Content-Type": "application/json"}
+
+    try:
+        resp = requests.post(GRANTSGOV_BASE, json=payload, headers=headers, timeout=HTTP_TIMEOUT)
+        resp.raise_for_status()
+        data = resp.json() or {}
+
+        opportunities = data.get("oppHits", []) or data.get("opportunities", []) or []
+        results: List[Dict[str, Any]] = []
+
+        for item in opportunities:
+            # Grants.gov responses vary slightly by endpoint version, we guard with .get()
+            title = item.get("title") or item.get("oppTitle") or "Untitled Opportunity"
+            cfda = item.get("cfdaList") or item.get("cfdaNumbers") or []
+            opp_number = item.get("number") or item.get("oppNumber") or ""
+            agency = item.get("agency") or item.get("agencyCode") or item.get("agencyName") or "Unknown Agency"
+            close_date_str = item.get("closeDate") or item.get("closeDateStr") or item.get("postedDate") or None
+            link = item.get("url") or item.get("oppLink") or f"https://www.grants.gov/search-results-detail/{opp_number}"
+
+            results.append(normalize_grant_record({
+                "title": title,
+                "funder": agency,
+                "link": link,
+                "deadline": close_date_str,
+                "amount_min": None,
+                "amount_max": None,
+                "geography": "US",
+                "eligibility": f"Eligibility per Grants.gov; CFDA: {', '.join(cfda) if isinstance(cfda, list) else cfda}",
+                "source_name": "Grants.gov",
+                "source_url": "https://www.grants.gov"
+            }))
+
+        log.info("fetch_from_grants_gov: term=%s fetched=%s", search_term, len(results))
+        return results
+
+    except requests.HTTPError as e:
+        log.warning("Grants.gov HTTP error: %s | payload=%s | text=%s", e, payload, getattr(e.response, "text", ""))
+        return []
+    except Exception:
+        log.exception("fetch_from_grants_gov: unexpected error for term=%s", search_term)
+        return []
+
+# ------------------------------
+# Normalization & Upsert
+# ------------------------------
+def normalize_grant_record(rec: Dict[str, Any]) -> Dict[str, Any]:
+    """
+    Ensure a consistent schema for upsert_grant().
+    """
+    norm = {
+        "title": (rec.get("title") or "").strip(),
+        "funder": (rec.get("funder") or "").strip(),
+        "link": rec.get("link"),
+        "amount_min": _to_decimal(rec.get("amount_min")),
+        "amount_max": _to_decimal(rec.get("amount_max")),
+        "deadline": _to_iso_date(rec.get("deadline")),
+        "geography": rec.get("geography"),
+        "eligibility": rec.get("eligibility"),
+        "source_name": rec.get("source_name") or "Unknown",
+        "source_url": rec.get("source_url"),
+    }
+    return norm
+
+
+def upsert_many(records: Iterable[Dict[str, Any]], org_id: Optional[int] = None) -> int:
+    count = 0
+    for r in records:
+        if upsert_grant(r, org_id=org_id):
+            count += 1
+    return count
+
+
+def upsert_grant(record: Dict[str, Any], org_id: Optional[int] = None) -> Optional[Grant]:
+    """
+    Insert or update a grant using a dedupe key of (title, funder, deadline).
+    record fields (normalized): title, funder, link, amount_min, amount_max, deadline(ISO), geography, eligibility, source_name, source_url
+    """
+    try:
+        if not record.get("title"):
+            log.debug("upsert_grant: skipped record with empty title: %s", record)
+            return None
+
+        deadline_date: Optional[date] = None
+        if record.get("deadline"):
+            deadline_date = _parse_date(record["deadline"])
+
+        existing = Grant.query.filter(
+            and_(
+                Grant.title == record["title"],
+                Grant.funder == (record.get("funder") or None),
+                Grant.deadline == deadline_date
+            )
+        ).first()
+
+        if existing:
+            existing.amount_min = record.get("amount_min")
+            existing.amount_max = record.get("amount_max")
+            existing.source_name = record.get("source_name")
+            existing.source_url = record.get("source_url")
+            existing.link = record.get("link")
+            existing.geography = record.get("geography")
+            existing.eligibility = record.get("eligibility")
+            db.session.commit()
+            return existing
+
+        g = Grant(
+            org_id=org_id,
+            title=record["title"],
+            funder=record.get("funder"),
+            link=record.get("link"),
+            amount_min=record.get("amount_min"),
+            amount_max=record.get("amount_max"),
+            deadline=deadline_date,
+            geography=record.get("geography"),
+            eligibility=record.get("eligibility"),
+            source_name=record.get("source_name"),
+            source_url=record.get("source_url"),
+            status="idea",
+        )
+        db.session.add(g)
+        db.session.commit()
+        return g
+
+    except Exception:
+        db.session.rollback()
+        log.exception("upsert_grant: failed for record=%s", record)
+        return None
+
+# ------------------------------
+# Helpers
+# ------------------------------
+def _to_iso_date(val: Any) -> Optional[str]:
+    """Accepts ISO-like strings or date/datetime and returns YYYY-MM-DD or None."""
+    if not val:
+        return None
+    if isinstance(val, date):
+        return val.isoformat()
+    if isinstance(val, datetime):
+        return val.date().isoformat()
+    s = str(val).strip()
+    for fmt in ("%Y-%m-%d", "%Y-%m-%dT%H:%M:%S", "%m/%d/%Y", "%Y/%m/%d"):
+        try:
+            return datetime.strptime(s, fmt).date().isoformat()
+        except Exception:
+            continue
+    # last resort: try python fromisoformat
+    try:
+        return datetime.fromisoformat(s).date().isoformat()
+    except Exception:
+        return None
+
+
+def _parse_date(s: Optional[str]) -> Optional[date]:
+    if not s:
+        return None
+    try:
+        return datetime.fromisoformat(s).date()
+    except Exception:
+        pass
+    # try common alt formats
+    for fmt in ("%Y-%m-%d", "%m/%d/%Y", "%Y/%m/%d", "%Y-%m-%dT%H:%M:%S"):
+        try:
+            return datetime.strptime(s, fmt).date()
+        except Exception:
+            continue
+    return None
+
+
+def _to_decimal(val: Any) -> Optional[float]:
+    if val is None or val == "":
+        return None
+    try:
+        return float(val)
+    except Exception:
+        return None
+
+
+# ------------------------------
+# Legacy API compatibility functions
+# ------------------------------
 def run_scraping_job(org_id: int = 1) -> Dict[str, Any]:
-    """Run a scraping job for an organization (legacy function)"""
-    grants, stats = discover_grants_for_org(org_id)
+    """Legacy function for backward compatibility with existing API"""
+    count = run_now_for_org(org_id)
     return {
         "status": "completed",
-        "grants_discovered": stats["new_grants"],
-        "duplicates_skipped": stats["duplicates_skipped"],
-        "sources_checked": stats["sources_checked"],
-        "errors": stats.get("errors", [])
+        "grants_discovered": count,
+        "message": f"Upserted {count} grants for org {org_id}"
     }
 
+
 def scrape_grants(source_url: str = None, limit: int = 10) -> List[Dict[str, Any]]:
-    """Scrape grants from sources (legacy function)"""
-    service = ScraperService()
-    all_grants = []
+    """Legacy function for backward compatibility with existing API"""
+    if not is_live():
+        return []
     
-    # Use demo or live sources
-    for source_name, connector in service.sources.items():
-        try:
-            grants = connector.fetch_grants(limit=limit)
-            for grant_data in grants:
-                all_grants.append(grant_data)
-        except Exception as e:
-            logger.error(f"Error in legacy scrape_grants from {source_name}: {str(e)}")
+    # Use a default search term if none provided
+    search_term = "nonprofit"
+    if source_url:
+        # Extract search term from URL if possible
+        search_term = source_url
     
-    return all_grants
+    records = fetch_from_grants_gov(search_term=search_term, limit=limit)
+    return records
