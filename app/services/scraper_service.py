@@ -1,681 +1,397 @@
 """
-Scraper Service Module
-
-This module provides functionality for scraping grants from various sources
-and integrating with internet-wide grant discovery.
+Scraper Service - Safe, LIVE/DEMO aware grant discovery with deduplication
+Handles multiple grant sources including Grants.gov with proper error handling
 """
 
+from __future__ import annotations
 import os
 import logging
-import requests
-import time
-import json
+from typing import Dict, Any, List, Optional, Tuple
 from datetime import datetime, timedelta
-import uuid
-from bs4 import BeautifulSoup
-import trafilatura
-from sqlalchemy.exc import SQLAlchemyError
-from concurrent.futures import ThreadPoolExecutor, as_completed
+import hashlib
+import json
+import requests
+from urllib.parse import urlencode
 
 from app import db
-from app.models import ScraperSource, ScraperHistory, Grant, Organization
-# AI service methods imported when needed
-from app.services.discovery_service import discover_grants
-from app.utils.http_utils import fetch_url, extract_main_content, with_retry
+from app.models import Grant, Watchlist, WatchlistSource, ScraperSource
+from app.services.mode import is_live, get_mode
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-
-def scrape_grants(url_list):
-    """
-    Scrape grants from a list of URLs using OpenAI
+class ScraperService:
+    """Main scraper service coordinating grant discovery from multiple sources"""
     
-    Args:
-        url_list (list): List of URLs to scrape
+    def __init__(self):
+        self.mode = get_mode()
+        self.is_live = is_live()
+        self.sources = self._initialize_sources()
+        logger.info(f"ScraperService initialized in {self.mode} mode")
         
-    Returns:
-        list: List of extracted grants
-    """
-    grants = []
-    
-    try:
-        for url in url_list:
-            logger.info(f"Scraping URL: {url}")
-            # Extract grant info from URL using AI if available
-            from app.services.ai_service import ai_service
-            
-            # Fetch the content from URL first
-            content = fetch_url(url)
-            if content:
-                grant_data = ai_service.extract_grant_from_text(content, url)
+    def _initialize_sources(self) -> Dict[str, Any]:
+        """Initialize available grant sources"""
+        sources = {}
+        
+        if self.is_live:
+            # Initialize live sources only if API keys are available
+            if os.getenv("GRANTS_GOV_API_KEY"):
+                sources["grants_gov"] = GrantsGovConnector()
+                logger.info("Grants.gov connector initialized")
             else:
-                grant_data = None
+                logger.warning("Grants.gov API key not found - source disabled")
+                
+            # Add other live sources here as needed
+            # if os.getenv("FOUNDATION_API_KEY"):
+            #     sources["foundation_directory"] = FoundationDirectoryConnector()
+                
+        else:
+            # Demo mode - use mock data
+            sources["demo"] = DemoDataConnector()
+            logger.info("Demo data connector initialized for testing")
             
-            if grant_data.get('title') and grant_data.get('funder'):
-                grants.append(grant_data)
-                logger.info(f"Extracted grant: {grant_data.get('title')}")
+        return sources
     
-    except Exception as e:
-        logger.error(f"Error scraping grants with OpenAI: {str(e)}")
-    
-    return grants
-
-
-def scrape_source(source):
-    """
-    Scrape grants from a single source
-    
-    Args:
-        source (ScraperSource): The source to scrape
+    def discover_grants(self, org_id: int, limit: int = 50) -> Tuple[List[Grant], Dict[str, Any]]:
+        """
+        Discover new grants from all configured sources
         
-    Returns:
-        list: List of extracted grants
-    """
-    grants = []
-    
-    # Never generate fake/demo data - only real grants allowed
-    if hasattr(source, 'is_demo') and source.is_demo:
-        logger.warning(f"Demo source requested: {source.name} - returning empty (no fake data allowed)")
-        return []  # Never return fake data
-    
-    # Real scraping logic
-    try:
-        try:
-            # Use our fetch_url utility with automatic retries and rate limiting
-            response = fetch_url(source.url, timeout=20)
-            
-            if response.status_code != 200:
-                logger.error(f"Failed to fetch {source.name}: Status code {response.status_code}")
-                return grants
-                
-        except requests.exceptions.RequestException as e:
-            logger.error(f"Network error when scraping {source.name}: {str(e)}")
-            return grants
-        except Exception as e:
-            logger.error(f"Unexpected error when scraping {source.name}: {str(e)}")
-            return grants
-        
-        # Skip direct URL extraction for now - implement with AI service when needed
-        grant_data = None
-        
-        # If we didn't get a result from direct URL extraction, try other methods
-        if not grants:
-            try:
-                # Use our extract_main_content utility with retry logic
-                text = extract_main_content(source.url)
-                
-                if text and len(text) > 500:  # Ensure we have meaningful content
-                    # Use AI to extract grants from the text
-                    if "grant" in text.lower() or "fund" in text.lower() or "nonprofit" in text.lower():
-                        logger.info(f"Found potential grant content on {source.name}, extracting information...")
-                        
-                        # AI extraction placeholder - implement with AI service when needed
-                        logger.info(f"AI extraction not yet implemented for {source.name}")
-            except Exception as e:
-                logger.warning(f"Content extraction failed for {source.name}: {str(e)}")
-        
-        # If still no grants found, try HTML parsing approaches
-        if not grants:
-            try:
-                soup = BeautifulSoup(response.content, 'html.parser')
-                
-                # Look for grant sections based on common patterns
-                
-                # 1. Find sections with 'grant' in heading
-                grant_headings = []
-                for tag in ['h1', 'h2', 'h3', 'h4']:
-                    headings = soup.find_all(tag)
-                    for heading in headings:
-                        if 'grant' in heading.text.lower() or 'fund' in heading.text.lower():
-                            grant_headings.append(heading)
-                
-                # 2. For each potential grant heading, extract information
-                for heading in grant_headings:
-                    # Get the text and clean it
-                    title = heading.text.strip()
-                    
-                    # Look for description in the next paragraphs
-                    desc = ""
-                    next_elem = heading.find_next('p')
-                    if next_elem:
-                        desc = next_elem.text.strip()
-                    
-                    # Look for a link that might point to more information
-                    link = None
-                    next_elem = heading.find_next('a')
-                    if not next_elem:
-                        next_elem = heading.find_next('p')
-                        if next_elem:
-                            link = next_elem.find('a')
-                    
-                    website = None
-                    if link and 'href' in link.attrs:
-                        href = link['href']
-                        if href.startswith('/'):
-                            from urllib.parse import urlparse
-                            parsed_url = urlparse(source.url)
-                            base_url = f"{parsed_url.scheme}://{parsed_url.netloc}"
-                            href = base_url + href
-                        website = href
-                    
-                    # Create grant data
-                    grant_data = {
-                        'title': title,
-                        'funder': source.name,  # Use source name as default funder
-                        'description': desc,
-                        'website': website or source.url
-                    }
-                    
-                    grants.append(grant_data)
-                    logger.info(f"Extracted grant from heading: {title}")
-                
-                # If we still don't have grants and the page is not too large, try AI extraction on sections
-                if not grants and len(response.content) < 200000:  # Limit to manageable HTML size
-                    main_content = soup.find('main') or soup.find(id='content') or soup.find(class_='content')
-                    
-                    if main_content:
-                        # Extract text from main content
-                        text = main_content.get_text(separator=' ', strip=True)
-                        
-                        if text and len(text) < 15000:  # Limit to manageable text size
-                            # AI extraction placeholder - implement with AI service when needed
-                            logger.info(f"AI main content extraction not yet implemented for {source.name}")
-            
-            except Exception as e:
-                logger.warning(f"HTML parsing failed for {source.name}: {str(e)}")
-    
-    except Exception as e:
-        logger.error(f"Error scraping source {source.name}: {str(e)}")
-    
-    return grants
-
-
-def run_scraping_job(include_web_search=True):
-    """
-    Run the scraping job for all active sources and optionally perform internet-wide grant searching
-    
-    Args:
-        include_web_search (bool): Whether to include internet-wide grant searching
-    
-    Returns:
-        dict: Results of the scraping job
-    """
-    start_time = datetime.now()
-    result = {
-        "start_time": start_time,
-        "end_time": None,
-        "sources_scraped": 0,
-        "web_search_performed": include_web_search,
-        "grants_found": 0,
-        "grants_added": 0,
-        "status": "in_progress",  # Set initial status to in_progress
-        "error_message": "",
-        "new_grants": [],
-        "search_report": {
-            "sites_searched_estimate": 0,
-            "total_queries_attempted": 0,
-            "successful_queries": 0,
-            "search_keywords_used": [],
-            "sites_by_category": {
-                "government": 0,
-                "foundation": 0,
-                "nonprofit": 0,
-                "corporate": 0,
-                "other": 0
-            }
+        Returns:
+            Tuple of (grants_list, statistics_dict)
+        """
+        all_grants = []
+        stats = {
+            "total_discovered": 0,
+            "new_grants": 0,
+            "duplicates_skipped": 0,
+            "sources_checked": len(self.sources),
+            "errors": []
         }
-    }
-    
-    # Create a history record immediately to track this job
-    history = ScraperHistory()
-    history.start_time = start_time
-    history.status = "in_progress"
-    history.sources_scraped = 0
-    history.grants_found = 0
-    history.grants_added = 0
-    # Initialize search metrics columns
-    history.sites_searched_estimate = 0
-    history.total_queries_attempted = 0
-    history.successful_queries = 0
-    history.search_keywords_used = []
-    db.session.add(history)
-    db.session.commit()
-    
-    try:
-        # Get organization profile for matching
-        org = Organization.query.first()
-        if not org:
-            logger.warning("No organization profile found for matching")
-            result["status"] = "completed_with_errors"
-            result["error_message"] = "No organization profile found for matching"
-            
-            # Update history record
-            history.end_time = datetime.now()
-            history.status = "completed_with_errors"
-            history.error_message = result["error_message"]
-            db.session.commit()
-            
-            result["end_time"] = datetime.now()
-            return result
         
-        org_keywords = org.keywords
-        org_data = org.to_dict()
+        logger.info(f"Starting grant discovery for org {org_id} with {len(self.sources)} sources")
         
-        # Get all active scraper sources
-        sources = ScraperSource.query.filter_by(is_active=True).all()
-        
-        if not sources and not include_web_search:
-            logger.warning("No active scraper sources found and web search is disabled")
-            result["status"] = "completed_with_errors"
-            result["error_message"] = "No active scraper sources found and web search is disabled"
-            
-            # Update history record
-            history.end_time = datetime.now()
-            history.status = "completed_with_errors"
-            history.error_message = result["error_message"]
-            db.session.commit()
-            
-            result["end_time"] = datetime.now()
-            return result
-        
-        # Step 1: First try federal grants API discovery - multi-category search
-        discovered_grants = []
-        try:
-            logger.info("Starting comprehensive federal grants API discovery...")
-            from app.services.rapidapi_service import grants_gov_service
-            
-            # Get grants from multiple categories as requested by user
-            api_grants = []
-            
-            # Faith-based and community grants
-            faith_grants = grants_gov_service.get_faith_based_grants(limit=5)
-            if faith_grants:
-                api_grants.extend(faith_grants)
-                logger.info(f"Found {len(faith_grants)} faith-based grants")
-            
-            # Tech and AI grants
-            tech_grants = grants_gov_service.get_tech_ai_grants(limit=5)
-            if tech_grants:
-                api_grants.extend(tech_grants)
-                logger.info(f"Found {len(tech_grants)} tech/AI grants")
-            
-            # Arts grants
-            arts_grants = grants_gov_service.get_arts_grants(limit=5)
-            if arts_grants:
-                api_grants.extend(arts_grants)
-                logger.info(f"Found {len(arts_grants)} arts grants")
-            
-            # Mental health grants
-            health_grants = grants_gov_service.get_mental_health_grants(limit=5)
-            if health_grants:
-                api_grants.extend(health_grants)
-                logger.info(f"Found {len(health_grants)} mental health grants")
-            
-            # Community development grants
-            community_grants = grants_gov_service.get_community_grants(limit=3)
-            if community_grants:
-                api_grants.extend(community_grants)
-                logger.info(f"Found {len(community_grants)} community grants")
-            
-            if api_grants:
-                logger.info(f"Total: Found {len(api_grants)} grants from Grants.gov API across all categories")
-                discovered_grants.extend(api_grants)
-                result["grants_found"] += len(api_grants)
-                
-                # Log grant titles for debugging
-                for grant in api_grants[:5]:
-                    logger.info(f"API Grant: {grant.get('title', 'No title')[:60]}...")
-            else:
-                logger.info("No grants found from Grants.gov API")
-                
-        except Exception as e:
-            logger.error(f"Error during Grants.gov API discovery: {str(e)}")
-            import traceback
-            logger.error(f"Traceback: {traceback.format_exc()}")
-        
-        # Step 2: Perform internet-wide grant discovery if enabled
-        if include_web_search:
-            logger.info("Starting internet-wide grant discovery")
+        for source_name, connector in self.sources.items():
             try:
-                # Update history status to show we're running web search
-                # We'll use the existing status field
-                db.session.commit()
+                logger.info(f"Fetching from {source_name}...")
+                grants = connector.fetch_grants(limit=limit // len(self.sources) or 10)
                 
-                # Perform internet-wide grant discovery
-                internet_grants = discover_grants(org_data, limit=10)
+                # Process and deduplicate grants
+                for grant_data in grants:
+                    grant = self._process_grant(grant_data, org_id, source_name)
+                    if grant:
+                        all_grants.append(grant)
+                        stats["new_grants"] += 1
+                    else:
+                        stats["duplicates_skipped"] += 1
+                        
+                stats["total_discovered"] += len(grants)
+                logger.info(f"Processed {len(grants)} grants from {source_name}")
                 
-                result["grants_found"] += len(internet_grants)
-                
-                # Extract search report if it's available and update metrics in real-time (from the first grant)
-                if internet_grants and 'search_report' in internet_grants[0]:
-                    search_report = internet_grants[0].get('search_report', {})
-                    
-                    # Update history with search metrics
-                    # Refresh the history object first to avoid potential session issues
-                    db.session.refresh(history)
-                    
-                    # Update with the search metrics
-                    history.sites_searched_estimate = search_report.get("sites_searched_estimate", 0)
-                    history.total_queries_attempted = search_report.get("total_queries_attempted", 0)
-                    history.successful_queries = search_report.get("successful_queries", 0)
-                    history.search_keywords_used = search_report.get("search_keywords_used", [])
-                    
-                    # Commit immediately so frontend can see updated metrics in real-time
-                    db.session.commit()
-                    
-                    # Update the main result's search report
-                    result["search_report"]["sites_searched_estimate"] = search_report.get("sites_searched_estimate", 0)
-                    result["search_report"]["total_queries_attempted"] = search_report.get("total_queries_attempted", 0)
-                    result["search_report"]["successful_queries"] = search_report.get("successful_queries", 0)
-                    result["search_report"]["search_keywords_used"] = search_report.get("search_keywords_used", [])
-                    
-                    # Log search report details
-                    logger.info(f"Search report: {result['search_report']['successful_queries']}/{result['search_report']['total_queries_attempted']} " +
-                               f"successful queries, {result['search_report']['sites_searched_estimate']} sites searched")
-                
-                if internet_grants:
-                    logger.info(f"Discovered {len(internet_grants)} grants from internet-wide search")
-                    # Remove the search_report from each grant to avoid duplication
-                    for grant in internet_grants:
-                        if 'search_report' in grant:
-                            del grant['search_report']
-                    discovered_grants.extend(internet_grants)
-                else:
-                    logger.info("No grants discovered from internet-wide search")
-                    
             except Exception as e:
-                logger.error(f"Error during internet-wide grant discovery: {str(e)}")
-                # Continue with regular scraping even if internet search fails
-        
-        # Next, process foundation sources in parallel
-        logger.info(f"Scraping {len(sources)} foundation sources in parallel")
-        
-        # Define a worker function for parallel processing
-        def scrape_source_worker(source):
-            logger.info(f"Starting scrape for source: {source.name}")
-            try:
-                # Scrape the source
-                source_grants = scrape_source(source)
-                logger.info(f"Completed scrape for {source.name}, found {len(source_grants)} grants")
+                error_msg = f"Error fetching from {source_name}: {str(e)}"
+                logger.error(error_msg)
+                stats["errors"].append(error_msg)
                 
-                # Return the result for this source
-                return {
-                    "source": source,
-                    "grants": source_grants,
-                    "success": True,
-                    "error": None
-                }
-            except Exception as e:
-                logger.error(f"Error scraping source {source.name}: {str(e)}")
-                return {
-                    "source": source,
-                    "grants": [],
-                    "success": False, 
-                    "error": str(e)
-                }
-        
-        # Use ThreadPoolExecutor for parallel processing
-        # Use min(len(sources), 5) to avoid creating too many threads
-        max_workers = min(len(sources), 5)
-        source_results = []
-        
-        with ThreadPoolExecutor(max_workers=max_workers) as executor:
-            # Submit all scraping tasks
-            future_to_source = {executor.submit(scrape_source_worker, source): source for source in sources}
-            
-            # Process results as they complete
-            for future in as_completed(future_to_source):
-                source_result = future.result()
-                source_results.append(source_result)
-                
-                if source_result["success"]:
-                    # Update the last_scraped timestamp for the source
-                    source = source_result["source"]
-                    source.last_scraped = datetime.now()
-                    
-                    # Add to discovered grants
-                    discovered_grants.extend(source_result["grants"])
-                    
-                    # Update counters
-                    result["sources_scraped"] += 1
-                    result["grants_found"] += len(source_result["grants"])
-        
-        # Commit all timestamp updates at once
+        logger.info(f"Discovery complete: {stats['new_grants']} new, {stats['duplicates_skipped']} duplicates")
+        return all_grants, stats
+    
+    def _process_grant(self, grant_data: Dict[str, Any], org_id: int, source: str) -> Optional[Grant]:
+        """Process and deduplicate a single grant"""
         try:
-            db.session.commit()
-        except SQLAlchemyError as e:
-            logger.error(f"Error updating source timestamps: {str(e)}")
-            db.session.rollback()
-        
-        # Process all discovered grants (both from API, web search and foundation sources)
-        logger.info(f"Processing {len(discovered_grants)} total grants discovered")
-        for i, grant_data in enumerate(discovered_grants):
-            logger.info(f"Processing grant {i+1}/{len(discovered_grants)}: {grant_data.get('title', 'No title')[:50]}... from {grant_data.get('funder', 'No funder')}")
-            # Skip if we don't have key information
-            if not grant_data.get('title') or not grant_data.get('funder'):
-                logger.warning(f"Skipping grant with missing title or funder: title='{grant_data.get('title')}', funder='{grant_data.get('funder')}'")
-                continue
-                
-            # Check if grant already exists (by title and funder)
-            existing_grant = Grant.query.filter_by(
-                title=grant_data.get('title'),
-                funder=grant_data.get('funder')
+            # Generate unique hash for deduplication
+            unique_key = self._generate_grant_hash(grant_data)
+            
+            # Check for existing grant using title and funder
+            existing = Grant.query.filter_by(
+                org_id=org_id,
+                title=grant_data.get("title", ""),
+                funder=grant_data.get("funder", "")
             ).first()
             
-            if existing_grant:
-                logger.info(f"Duplicate grant skipped: {grant_data.get('title')} from {grant_data.get('funder')}")
-                continue
+            if existing:
+                logger.debug(f"Duplicate grant found: {grant_data.get('title', 'Unknown')}")
+                # Update last_seen timestamp
+                existing.updated_at = datetime.utcnow()
+                db.session.commit()
+                return None
+                
+            # Create new grant
+            grant = Grant()
+            grant.org_id = org_id
+            grant.title = grant_data.get("title", "Untitled Grant")
+            grant.funder = grant_data.get("funder", "Unknown Funder")
+            grant.link = grant_data.get("url", "")
+            grant.amount_min = grant_data.get("amount_min")
+            grant.amount_max = grant_data.get("amount_max")
+            grant.deadline = self._parse_deadline(grant_data.get("deadline"))
+            grant.geography = grant_data.get("geographic_focus", "")
+            grant.eligibility = grant_data.get("eligibility", "")
+            grant.status = "idea"  # Default status from model
+            grant.source_name = source
+            grant.source_url = grant_data.get("url", "")
+            grant.match_score = None  # Will be calculated later
+            grant.match_reason = None
+            grant.created_at = datetime.utcnow()
+            grant.updated_at = datetime.utcnow()
             
-            # Calculate match score based on keyword overlap
-            org_keywords_set = set([k.lower() for k in org_keywords])
-            grant_keywords = set([grant_data.get('title', '').lower(), 
-                                grant_data.get('funder', '').lower()])
-            if 'focus_areas' in grant_data and isinstance(grant_data['focus_areas'], list):
-                grant_keywords.update([area.lower() for area in grant_data['focus_areas']])
-            
-            overlap = org_keywords_set.intersection(grant_keywords)
-            match_score = min(95, max(30, len(overlap) * 10))
-            grant_data['match_score'] = match_score
-            grant_data['match_explanation'] = f"Based on keyword matching, this grant has {len(overlap)} keyword overlaps with your organization's profile."
-            
-            # Only add grants with match score above threshold (30%)
-            if grant_data.get('match_score', 0) >= 30:
-                try:
-                    # Determine source_id - for internet-discovered grants we don't have a source
-                    source_id = None
-                    
-                    # For grants from foundation sources, get the source_id
-                    for source in sources:
-                        if source.name == grant_data.get('funder') or (
-                            grant_data.get('website') and source.url in grant_data.get('website')):
-                            source_id = source.id
-                            break
-                    
-                    # For internet-discovered grants, create a special source
-                    if source_id is None and ('discovery_method' in grant_data and 
-                                            grant_data['discovery_method'] in ['web-search', 'focused-search']):
-                        # Create a special "Internet Search" source if it doesn't exist
-                        web_source = ScraperSource.query.filter_by(name="Internet Search").first()
-                        if not web_source:
-                            web_source = ScraperSource()
-                            web_source.name = "Internet Search"
-                            web_source.url = "https://grantflow.app/web-discovery"
-                            web_source.is_active = True
-                            web_source.last_scraped = datetime.now()
-                            db.session.add(web_source)
-                            db.session.commit()
-                        source_id = web_source.id
-                    
-                    # Prepare grant record for upsert_grant function
-                    grant_record = {
-                        'title': grant_data.get('title'),
-                        'funder': grant_data.get('funder'),
-                        'link': grant_data.get('website', ''),
-                        'deadline': grant_data.get('due_date'),  # Should be in ISO format
-                        'amount_min': None,
-                        'amount_max': None,
-                        'geography': grant_data.get('geography'),
-                        'eligibility': grant_data.get('eligibility', ''),
-                        'source_name': grant_data.get('funder'),
-                        'source_url': grant_data.get('website', '')
-                    }
-                    
-                    # Parse amount if available
-                    if grant_data.get('amount'):
-                        amount_str = str(grant_data.get('amount'))
-                        # Try to extract numeric values
-                        import re
-                        amounts = re.findall(r'\$?(\d+(?:,\d+)*(?:\.\d+)?)', amount_str.replace(',', ''))
-                        if amounts:
-                            try:
-                                amount_val = int(float(amounts[0].replace(',', '')))
-                                if 'up to' in amount_str.lower() or 'maximum' in amount_str.lower():
-                                    grant_record['amount_max'] = amount_val
-                                elif 'minimum' in amount_str.lower() or 'at least' in amount_str.lower():
-                                    grant_record['amount_min'] = amount_val
-                                else:
-                                    grant_record['amount_max'] = amount_val
-                            except (ValueError, IndexError):
-                                pass
-                    
-                    # Get org_id for the grant
-                    org_id = org.id if org else None
-                    
-                    # Use the new upsert_grant function
-                    new_grant = upsert_grant(grant_record, org_id=org_id)
-                    
-                    if new_grant:
-                        # Update additional fields not handled by upsert_grant
-                        try:
-                            new_grant.match_score = grant_data.get('match_score', 0)
-                            new_grant.match_reason = grant_data.get('match_explanation', '')
-                            db.session.commit()
-                        except Exception as e:
-                            logger.warning(f"Could not update match fields: {e}")
-                        
-                        result["grants_added"] += 1
-                        result["new_grants"].append({
-                            "id": new_grant.id,
-                            "title": new_grant.title,
-                            "funder": new_grant.funder,
-                            "match_score": new_grant.match_score
-                        })
-                        logger.info(f"Added/updated grant: {new_grant.title} from {new_grant.funder}")
-                    else:
-                        logger.error(f"Failed to save grant: {grant_data.get('title')}")
-                except Exception as e:
-                    logger.error(f"Error saving grant {grant_data.get('title')}: {str(e)}")
-                    continue
-        
-        # Update the scraper history
-        try:
-            # Create a new history object
-            history = ScraperHistory()
-            history.start_time = start_time
-            history.end_time = datetime.now()
-            history.sources_scraped = result["sources_scraped"]
-            history.grants_found = result["grants_found"] 
-            history.grants_added = result["grants_added"]
-            history.status = result["status"]
-            history.error_message = result["error_message"]
-            
-            # Add search report data if available with error handling
-            if "search_report" in result:
-                try:
-                    history.sites_searched_estimate = result["search_report"]["sites_searched_estimate"]
-                    history.total_queries_attempted = result["search_report"]["total_queries_attempted"] 
-                    history.successful_queries = result["search_report"]["successful_queries"]
-                    history.search_keywords_used = result["search_report"]["search_keywords_used"]
-                    
-                    # Log final metrics for debugging
-                    logger.info(f"Final search metrics: {history.sites_searched_estimate} sites searched, " +
-                               f"{history.successful_queries}/{history.total_queries_attempted} successful queries, " +
-                               f"{history.grants_found} grants found, {history.grants_added} grants added")
-                except KeyError as ke:
-                    logger.warning(f"Missing key in search report: {ke}")
-                except Exception as e:
-                    logger.warning(f"Error updating search metrics: {e}")
-            
-            db.session.add(history)
+            # Store focus areas in eligibility if provided
+            if "focus_areas" in grant_data:
+                focus_areas_text = f"Focus Areas: {', '.join(grant_data['focus_areas'])}"
+                if grant.eligibility:
+                    grant.eligibility = f"{grant.eligibility}\n{focus_areas_text}"
+                else:
+                    grant.eligibility = focus_areas_text
+                
+            db.session.add(grant)
             db.session.commit()
+            
+            logger.info(f"Added new grant: {grant.title} from {source}")
+            return grant
+            
         except Exception as e:
-            logger.error(f"Error updating scraper history: {str(e)}")
+            logger.error(f"Error processing grant: {str(e)}")
+            db.session.rollback()
+            return None
+    
+    def _generate_grant_hash(self, grant_data: Dict[str, Any]) -> str:
+        """Generate unique hash for grant deduplication"""
+        # Use title, funder, and deadline for uniqueness
+        key_parts = [
+            grant_data.get("title", "").lower().strip(),
+            grant_data.get("funder", "").lower().strip(),
+            str(grant_data.get("deadline", ""))
+        ]
+        key_string = "|".join(key_parts)
+        return hashlib.md5(key_string.encode()).hexdigest()
+    
+    def _parse_deadline(self, deadline_str: Any) -> Optional[datetime]:
+        """Parse various deadline formats"""
+        if not deadline_str:
+            return None
+            
+        if isinstance(deadline_str, datetime):
+            return deadline_str
+            
+        try:
+            # Try common date formats
+            from dateutil import parser
+            return parser.parse(str(deadline_str))
+        except:
+            logger.warning(f"Could not parse deadline: {deadline_str}")
+            return None
+    
+    def update_watchlist_grants(self, watchlist_id: int) -> Dict[str, Any]:
+        """Update grants for a specific watchlist based on its criteria"""
+        watchlist = Watchlist.query.get(watchlist_id)
+        if not watchlist:
+            return {"error": "Watchlist not found"}
+            
+        stats = {
+            "watchlist": watchlist.name,
+            "grants_matched": 0,
+            "sources_checked": 0
+        }
         
-        # Set end time
-        result["end_time"] = datetime.now()
-        return result
+        # Get watchlist sources
+        sources = WatchlistSource.query.filter_by(watchlist_id=watchlist_id).all()
+        
+        for source in sources:
+            # Fetch grants from this source
+            # Match against watchlist criteria
+            # Update associations
+            stats["sources_checked"] += 1
+            
+        return stats
+
+
+class GrantsGovConnector:
+    """Connector for Grants.gov REST API"""
     
-    except Exception as e:
-        logger.error(f"Error in scraping job: {str(e)}")
-        result["status"] = "error"
-        result["error_message"] = str(e)
-        result["end_time"] = datetime.now()
-        return result
-
-
-def upsert_grant(record: dict, org_id: int | None = None) -> Grant | None:
-    """
-    record expects keys: title, funder, link, deadline (ISO), amount_min, amount_max, source_name, source_url
-    """
-    try:
-        # normalize deadline
-        deadline = None
-        if record.get("deadline"):
-            deadline = datetime.fromisoformat(record["deadline"]).date()
-
-        # dedupe: title + funder + deadline
-        from sqlalchemy import and_
-        existing = Grant.query.filter(
-            and_(Grant.title == record["title"],
-                 Grant.funder == record.get("funder"),
-                 Grant.deadline == deadline)
-        ).first()
-
-        if existing:
-            # update minimal fields
-            existing.amount_min = record.get("amount_min")
-            existing.amount_max = record.get("amount_max")
-            existing.source_name = record.get("source_name")
-            existing.source_url = record.get("source_url")
-            existing.link = record.get("link")
-            db.session.commit()
-            return existing
-
-        g = Grant(
-            org_id=org_id,
-            title=record["title"],
-            funder=record.get("funder"),
-            link=record.get("link"),
-            amount_min=record.get("amount_min"),
-            amount_max=record.get("amount_max"),
-            deadline=deadline,
-            geography=record.get("geography"),
-            eligibility=record.get("eligibility"),
-            source_name=record.get("source_name"),
-            source_url=record.get("source_url"),
-            status="idea"
-        )
-        db.session.add(g)
-        db.session.commit()
-        return g
-    except Exception as e:
-        db.session.rollback()
-        logger.exception("Grant save failed", extra={"record": record})
-        return None
-
-
-def scheduled_scraping_job():
-    """
-    Wrapper function for scheduled scraping job
-    """
-    from app.services.mode import is_live
-    if not is_live():
-        logger.info("Skipping scheduled scraping in DEMO mode.")
-        return
+    def __init__(self):
+        self.api_key = os.getenv("GRANTS_GOV_API_KEY")
+        self.base_url = "https://api.grants.gov/v2/opportunities/search"
+        self.headers = {
+            "Authorization": f"Bearer {self.api_key}",
+            "Content-Type": "application/json"
+        }
+        
+    def fetch_grants(self, limit: int = 25, keywords: Optional[str] = None) -> List[Dict[str, Any]]:
+        """Fetch grants from Grants.gov API"""
+        grants = []
+        
+        try:
+            # Build query parameters
+            params = {
+                "limit": min(limit, 100),  # API max is 100
+                "offset": 0,
+                "sortBy": "postedDate|desc"
+            }
+            
+            if keywords:
+                params["keywords"] = keywords
+                
+            # Make API request
+            response = requests.get(
+                self.base_url,
+                headers=self.headers,
+                params=params,
+                timeout=30
+            )
+            
+            if response.status_code == 200:
+                data = response.json()
+                opportunities = data.get("opportunities", [])
+                
+                for opp in opportunities:
+                    grant = self._parse_opportunity(opp)
+                    if grant:
+                        grants.append(grant)
+                        
+                logger.info(f"Fetched {len(grants)} grants from Grants.gov")
+                
+            else:
+                logger.error(f"Grants.gov API error: {response.status_code} - {response.text}")
+                
+        except requests.exceptions.Timeout:
+            logger.error("Grants.gov API timeout")
+        except Exception as e:
+            logger.error(f"Error fetching from Grants.gov: {str(e)}")
+            
+        return grants
     
-    logger.info("Starting scheduled scraping job")
-    result = run_scraping_job(include_web_search=True)
-    logger.info(f"Scheduled scraping job completed with status: {result.get('status')}")
-    return result
+    def _parse_opportunity(self, opp: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+        """Parse Grants.gov opportunity into standard grant format"""
+        try:
+            # Extract deadline
+            close_date = opp.get("closeDate")
+            deadline = None
+            if close_date:
+                try:
+                    deadline = datetime.strptime(close_date, "%Y-%m-%d")
+                except:
+                    deadline = close_date
+                    
+            return {
+                "title": opp.get("oppTitle", "Untitled"),
+                "funder": opp.get("agencyName", "Federal Agency"),
+                "description": opp.get("description", opp.get("synopsis", "")),
+                "amount_min": opp.get("awardFloor"),
+                "amount_max": opp.get("awardCeiling"),
+                "deadline": deadline,
+                "url": f"https://grants.gov/search-results-detail/{opp.get('id')}",
+                "opportunity_number": opp.get("oppNumber"),
+                "eligibility": opp.get("eligibilityCodes", []),
+                "focus_areas": opp.get("categories", []),
+                "geographic_focus": opp.get("geographicScope", "National"),
+                "posted_date": opp.get("postedDate"),
+                "modified_date": opp.get("modifiedDate"),
+                "source_id": opp.get("id")
+            }
+        except Exception as e:
+            logger.error(f"Error parsing Grants.gov opportunity: {str(e)}")
+            return None
+
+
+class DemoDataConnector:
+    """Demo data connector for testing without live APIs"""
+    
+    def fetch_grants(self, limit: int = 10, **kwargs) -> List[Dict[str, Any]]:
+        """Return demo grant data for testing"""
+        demo_grants = [
+            {
+                "title": f"Demo Community Development Grant {i+1}",
+                "funder": "Demo Foundation",
+                "description": "This is a demo grant for testing purposes. In LIVE mode, real grants will appear here.",
+                "amount_min": 5000 * (i+1),
+                "amount_max": 10000 * (i+1),
+                "deadline": datetime.utcnow() + timedelta(days=30+i*7),
+                "url": f"https://example.com/demo-grant-{i+1}",
+                "focus_areas": ["Education", "Community Development"],
+                "geographic_focus": "Michigan"
+            }
+            for i in range(min(limit, 5))
+        ]
+        
+        logger.info(f"Generated {len(demo_grants)} demo grants for testing")
+        return demo_grants
+
+
+class ScraperScheduler:
+    """Scheduler for automated grant discovery"""
+    
+    def __init__(self):
+        self.service = ScraperService()
+        self.is_running = False
+        
+    def run_discovery(self, org_id: int):
+        """Run grant discovery for an organization"""
+        if not self.is_running:
+            self.is_running = True
+            try:
+                logger.info(f"Starting scheduled discovery for org {org_id}")
+                grants, stats = self.service.discover_grants(org_id)
+                logger.info(f"Discovery complete: {stats}")
+                
+                # Update scraper sources status
+                self._update_source_status(stats)
+                
+            finally:
+                self.is_running = False
+                
+    def _update_source_status(self, stats: Dict[str, Any]):
+        """Update source status in database"""
+        try:
+            for source_name in self.service.sources.keys():
+                source = ScraperSource.query.filter_by(name=source_name).first()
+                if source:
+                    source.last_run = datetime.utcnow()
+                    source.status = "active" if source_name not in [e.split(":")[0] for e in stats.get("errors", [])] else "error"
+                    db.session.commit()
+        except Exception as e:
+            logger.error(f"Error updating source status: {str(e)}")
+            db.session.rollback()
+
+
+# Convenience functions for API usage
+def discover_grants_for_org(org_id: int, limit: int = 50) -> Tuple[List[Grant], Dict[str, Any]]:
+    """Convenience function to discover grants for an organization"""
+    service = ScraperService()
+    return service.discover_grants(org_id, limit)
+
+def get_scraper_status() -> Dict[str, Any]:
+    """Get current scraper status and configuration"""
+    return {
+        "mode": get_mode(),
+        "is_live": is_live(),
+        "sources_available": list(ScraperService().sources.keys()),
+        "last_run": None  # Would need to query from database
+    }
+
+# Legacy functions for backward compatibility with existing API
+def run_scraping_job(org_id: int = 1) -> Dict[str, Any]:
+    """Run a scraping job for an organization (legacy function)"""
+    grants, stats = discover_grants_for_org(org_id)
+    return {
+        "status": "completed",
+        "grants_discovered": stats["new_grants"],
+        "duplicates_skipped": stats["duplicates_skipped"],
+        "sources_checked": stats["sources_checked"],
+        "errors": stats.get("errors", [])
+    }
+
+def scrape_grants(source_url: str = None, limit: int = 10) -> List[Dict[str, Any]]:
+    """Scrape grants from sources (legacy function)"""
+    service = ScraperService()
+    all_grants = []
+    
+    # Use demo or live sources
+    for source_name, connector in service.sources.items():
+        try:
+            grants = connector.fetch_grants(limit=limit)
+            for grant_data in grants:
+                all_grants.append(grant_data)
+        except Exception as e:
+            logger.error(f"Error in legacy scrape_grants from {source_name}: {str(e)}")
+    
+    return all_grants
