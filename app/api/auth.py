@@ -6,21 +6,9 @@ Handles user registration, login, logout, and password reset functionality.
 
 from flask import Blueprint, request, jsonify, session, render_template, redirect, url_for, flash
 from werkzeug.security import generate_password_hash
-try:
-    from flask_login import LoginManager, login_user, logout_user, login_required, current_user
-except ImportError:
-    # Flask-Login not installed, create dummy decorators
-    LoginManager = None
-    login_user = lambda user, remember=False: None
-    logout_user = lambda: None
-    login_required = lambda f: f
-    class current_user:
-        is_authenticated = False
-        email = None
-        def to_dict(self):
-            return {}
+from functools import wraps
 from app import db
-from app.models.user import User, UserInvite
+from app.models import User, UserInvite
 from datetime import datetime, timedelta
 import secrets
 import re
@@ -30,34 +18,27 @@ logger = logging.getLogger(__name__)
 
 bp = Blueprint('auth', __name__, url_prefix='/api/auth')
 
-# Initialize login manager
-login_manager = None
+# Session-based authentication helpers
+def get_current_user():
+    """Get the current logged-in user from session"""
+    if 'user_id' in session:
+        return User.query.get(session['user_id'])
+    return None
+
+def login_required(f):
+    """Decorator to require login for a route"""
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if 'user_id' not in session:
+            return jsonify({'error': 'Authentication required'}), 401
+        return f(*args, **kwargs)
+    return decorated_function
 
 def init_auth(app):
     """Initialize authentication with the app"""
-    global login_manager
-    
-    if LoginManager is not None:
-        # Flask-Login is available
-        login_manager = LoginManager()
-        login_manager.init_app(app)
-        login_manager.login_view = 'auth.login'
-        login_manager.login_message = 'Please log in to access this page.'
-        
-        @login_manager.user_loader
-        def load_user(user_id):
-            return User.query.get(int(user_id))
-    else:
-        # Flask-Login not available, use session-based auth
-        app.config['SESSION_TYPE'] = 'filesystem'
-        
-        @app.before_request
-        def load_user_from_session():
-            """Load user from session if logged in"""
-            from flask import g, session
-            g.user = None
-            if 'user_id' in session:
-                g.user = User.query.get(session['user_id'])
+    # Session-based auth configuration
+    app.config['SESSION_TYPE'] = 'filesystem'
+    app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(days=7)
 
 
 def validate_email(email):
@@ -112,14 +93,13 @@ def register():
             return jsonify({'error': 'Username already taken'}), 409
         
         # Create new user
-        user = User(
-            email=email,
-            username=username,
-            first_name=first_name,
-            last_name=last_name,
-            is_active=True,
-            is_verified=False  # Email verification required
-        )
+        user = User()
+        user.email = email
+        user.username = username
+        user.first_name = first_name
+        user.last_name = last_name
+        user.is_active = True
+        user.is_verified = False  # Email verification required
         user.set_password(password)
         user.generate_verification_token()
         
@@ -137,7 +117,9 @@ def register():
         
         # Auto-login if first user
         if user.role == 'admin' and user.is_verified:
-            login_user(user)
+            session['user_id'] = user.id
+            session['user_email'] = user.email
+            session.permanent = True
         
         logger.info(f"New user registered: {email}")
         
@@ -189,13 +171,9 @@ def login():
         db.session.commit()
         
         # Log the user in
-        if LoginManager is not None:
-            login_user(user, remember=remember)
-        else:
-            # Session-based login
-            session['user_id'] = user.id
-            session['user_email'] = user.email
-            session.permanent = remember
+        session['user_id'] = user.id
+        session['user_email'] = user.email
+        session.permanent = remember
         
         logger.info(f"User logged in: {user.email}")
         
@@ -213,12 +191,8 @@ def login():
 def logout():
     """Log out the current user"""
     try:
-        if LoginManager is not None and current_user.is_authenticated:
-            user_email = current_user.email
-            logout_user()
-        else:
-            user_email = session.get('user_email', 'unknown')
-            session.clear()
+        user_email = session.get('user_email', 'unknown')
+        session.clear()
         
         logger.info(f"User logged out: {user_email}")
         return jsonify({'message': 'Logout successful'}), 200
@@ -229,11 +203,9 @@ def logout():
 
 
 @bp.route('/me', methods=['GET'])
-def get_current_user():
+def me():
     """Get current user information"""
-    if LoginManager is not None and current_user.is_authenticated:
-        return jsonify({'user': current_user.to_dict()}), 200
-    elif 'user_id' in session:
+    if 'user_id' in session:
         user = User.query.get(session['user_id'])
         if user:
             return jsonify({'user': user.to_dict()}), 200
@@ -358,27 +330,31 @@ def update_profile():
     """Update user profile"""
     try:
         data = request.get_json()
+        user = get_current_user()
+        
+        if not user:
+            return jsonify({'error': 'User not found'}), 404
         
         # Update allowed fields
         if 'first_name' in data:
-            current_user.first_name = data['first_name'].strip()
+            user.first_name = data['first_name'].strip()
         if 'last_name' in data:
-            current_user.last_name = data['last_name'].strip()
+            user.last_name = data['last_name'].strip()
         if 'phone' in data:
-            current_user.phone = data['phone'].strip()
+            user.phone = data['phone'].strip()
         if 'timezone' in data:
-            current_user.timezone = data['timezone']
+            user.timezone = data['timezone']
         if 'notification_preferences' in data:
-            current_user.notification_preferences = data['notification_preferences']
+            user.notification_preferences = data['notification_preferences']
         
-        current_user.updated_at = datetime.now()
+        user.updated_at = datetime.now()
         db.session.commit()
         
-        logger.info(f"Profile updated for user: {current_user.email}")
+        logger.info(f"Profile updated for user: {user.email}")
         
         return jsonify({
             'message': 'Profile updated successfully',
-            'user': current_user.to_dict()
+            'user': user.to_dict()
         }), 200
         
     except Exception as e:
@@ -390,10 +366,11 @@ def update_profile():
 @bp.route('/check-session', methods=['GET'])
 def check_session():
     """Check if user is logged in"""
-    if current_user and current_user.is_authenticated:
+    user = get_current_user()
+    if user:
         return jsonify({
             'authenticated': True,
-            'user': current_user.to_dict()
+            'user': user.to_dict()
         }), 200
     else:
         return jsonify({

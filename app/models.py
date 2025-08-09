@@ -1,5 +1,118 @@
 from app import db
-from datetime import datetime, date
+from datetime import datetime, date, timedelta
+from werkzeug.security import generate_password_hash, check_password_hash
+import secrets
+
+# User authentication models
+class User(db.Model):
+    __tablename__ = "users"
+    id = db.Column(db.Integer, primary_key=True)
+    email = db.Column(db.String(120), unique=True, nullable=False)
+    username = db.Column(db.String(80), unique=True, nullable=False)
+    password_hash = db.Column(db.String(256))
+    first_name = db.Column(db.String(100))
+    last_name = db.Column(db.String(100))
+    phone = db.Column(db.String(20))
+    role = db.Column(db.String(20), default='member')  # admin, manager, member
+    org_id = db.Column(db.String(50))
+    is_active = db.Column(db.Boolean, default=True)
+    is_verified = db.Column(db.Boolean, default=False)
+    verification_token = db.Column(db.String(100))
+    reset_token = db.Column(db.String(100))
+    reset_token_expiry = db.Column(db.DateTime)
+    timezone = db.Column(db.String(50), default='UTC')
+    notification_preferences = db.Column(db.JSON, default=dict)
+    last_login = db.Column(db.DateTime)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    
+    # Flask-Login properties
+    @property
+    def is_authenticated(self):
+        return True
+    
+    @property
+    def is_anonymous(self):
+        return False
+    
+    def get_id(self):
+        return str(self.id)
+    
+    def set_password(self, password):
+        self.password_hash = generate_password_hash(password)
+    
+    def check_password(self, password):
+        return check_password_hash(self.password_hash, password)
+    
+    def generate_verification_token(self):
+        self.verification_token = secrets.token_urlsafe(32)
+        return self.verification_token
+    
+    def generate_reset_token(self):
+        self.reset_token = secrets.token_urlsafe(32)
+        self.reset_token_expiry = datetime.utcnow() + timedelta(hours=24)
+        return self.reset_token
+    
+    def verify_reset_token(self, token):
+        if not self.reset_token or self.reset_token != token:
+            return False
+        if self.reset_token_expiry and self.reset_token_expiry < datetime.utcnow():
+            return False
+        return True
+    
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'email': self.email,
+            'username': self.username,
+            'first_name': self.first_name,
+            'last_name': self.last_name,
+            'phone': self.phone,
+            'role': self.role,
+            'org_id': self.org_id,
+            'is_active': self.is_active,
+            'is_verified': self.is_verified,
+            'timezone': self.timezone,
+            'notification_preferences': self.notification_preferences or {},
+            'last_login': self.last_login.isoformat() if self.last_login else None,
+            'created_at': self.created_at.isoformat() if self.created_at else None
+        }
+
+class UserInvite(db.Model):
+    __tablename__ = "user_invites"
+    id = db.Column(db.Integer, primary_key=True)
+    email = db.Column(db.String(120), nullable=False)
+    org_id = db.Column(db.String(50))
+    role = db.Column(db.String(20), default='member')
+    invite_token = db.Column(db.String(100), unique=True)
+    invited_by = db.Column(db.Integer, db.ForeignKey("users.id"))
+    accepted = db.Column(db.Boolean, default=False)
+    expires_at = db.Column(db.DateTime)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    
+    def generate_token(self):
+        self.invite_token = secrets.token_urlsafe(32)
+        self.expires_at = datetime.utcnow() + timedelta(days=7)
+        return self.invite_token
+    
+    def is_valid(self):
+        if self.accepted:
+            return False
+        if self.expires_at and self.expires_at < datetime.utcnow():
+            return False
+        return True
+    
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'email': self.email,
+            'org_id': self.org_id,
+            'role': self.role,
+            'invited_by': self.invited_by,
+            'accepted': self.accepted,
+            'expires_at': self.expires_at.isoformat() if self.expires_at else None,
+            'created_at': self.created_at.isoformat() if self.created_at else None
+        }
 
 class Org(db.Model):
     __tablename__ = "orgs"
