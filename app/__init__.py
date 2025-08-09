@@ -33,5 +33,22 @@ def create_app():
     app.register_blueprint(ai_bp, url_prefix="/api/ai")
     app.register_blueprint(watchlists_bp, url_prefix="/api/watchlists")
 
+    # Add template context processor for env_mode
+    @app.context_processor
+    def inject_env_mode():
+        from app.services.mode import is_live
+        return {'env_mode': 'LIVE' if is_live() else 'DEMO'}
+
+    # Add basic routes for serving templates
+    from flask import render_template
+    
+    @app.route('/')
+    def index():
+        return render_template('index.html')
+    
+    @app.route('/dashboard')
+    def dashboard():
+        return render_template('dashboard.html')
+
     # remove any "serve React for all routes" logic until the new React app is ready
     return app

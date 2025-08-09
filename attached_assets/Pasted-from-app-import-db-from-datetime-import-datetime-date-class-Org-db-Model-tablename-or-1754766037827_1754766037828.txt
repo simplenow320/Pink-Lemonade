@@ -1,0 +1,156 @@
+from app import db
+from datetime import datetime, date
+
+class Org(db.Model):
+    __tablename__ = "orgs"
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(255), nullable=False, unique=True)
+    mission = db.Column(db.Text)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+class Module(db.Model):
+    __tablename__ = "modules"
+    key = db.Column(db.String(50), primary_key=True)  # e.g., 'case_support'
+    name = db.Column(db.String(120), nullable=False)
+    description = db.Column(db.Text)
+    enabled_default = db.Column(db.Boolean, default=False)
+
+class OrgModule(db.Model):
+    __tablename__ = "org_modules"
+    id = db.Column(db.Integer, primary_key=True)
+    org_id = db.Column(db.Integer, db.ForeignKey("orgs.id"), nullable=False)
+    module_key = db.Column(db.String(50), db.ForeignKey("modules.key"), nullable=False)
+    enabled = db.Column(db.Boolean, default=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+class OrgAsset(db.Model):
+    __tablename__ = "org_assets"
+    id = db.Column(db.Integer, primary_key=True)
+    org_id = db.Column(db.Integer, db.ForeignKey("orgs.id"), nullable=False)
+    type = db.Column(db.String(20))  # 'web'|'pdf'|'text'
+    title = db.Column(db.String(255))
+    url_or_path = db.Column(db.Text)
+    approved = db.Column(db.Boolean, default=False)
+    added_by = db.Column(db.String(120))
+    added_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+class OrgVoiceProfile(db.Model):
+    __tablename__ = "org_voice_profiles"
+    org_id = db.Column(db.Integer, db.ForeignKey("orgs.id"), primary_key=True)
+    reading_level = db.Column(db.String(50))
+    formality = db.Column(db.Integer)  # 1..5
+    faith_language = db.Column(db.Boolean)
+    sentence_length = db.Column(db.String(20))  # 'short'|'medium'|'long'
+    cta_style = db.Column(db.String(255))
+    common_phrases = db.Column(db.JSON, default=list)  # ["...","..."]
+    preferred_proof_points = db.Column(db.JSON, default=list)  # ["...","..."]
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+class Grant(db.Model):
+    __tablename__ = "grants"
+    id = db.Column(db.Integer, primary_key=True)
+    org_id = db.Column(db.Integer, db.ForeignKey("orgs.id"))
+    title = db.Column(db.String(500), nullable=False)
+    funder = db.Column(db.String(255))
+    link = db.Column(db.Text)
+    amount_min = db.Column(db.Numeric(14,2))
+    amount_max = db.Column(db.Numeric(14,2))
+    deadline = db.Column(db.Date)
+    geography = db.Column(db.String(255))
+    eligibility = db.Column(db.Text)
+    status = db.Column(db.String(30), default="idea")  # idea|researching|drafting|submitted|awarded|declined
+    source_name = db.Column(db.String(255))
+    source_url = db.Column(db.Text)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+class GrantNote(db.Model):
+    __tablename__ = "grant_notes"
+    id = db.Column(db.Integer, primary_key=True)
+    grant_id = db.Column(db.Integer, db.ForeignKey("grants.id"), nullable=False)
+    body = db.Column(db.Text, nullable=False)
+    author = db.Column(db.String(120))
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+class GrantContact(db.Model):
+    __tablename__ = "grant_contacts"
+    id = db.Column(db.Integer, primary_key=True)
+    grant_id = db.Column(db.Integer, db.ForeignKey("grants.id"), nullable=False)
+    name = db.Column(db.String(120))
+    role = db.Column(db.String(120))
+    email = db.Column(db.String(255))
+    phone = db.Column(db.String(50))
+    notes = db.Column(db.Text)
+
+class CaseSupportDoc(db.Model):
+    __tablename__ = "case_support_docs"
+    id = db.Column(db.Integer, primary_key=True)
+    org_id = db.Column(db.Integer, db.ForeignKey("orgs.id"), nullable=False)
+    title = db.Column(db.String(255))
+    sections = db.Column(db.JSON, default=dict)  # { "Executive Summary": "...", ... }
+    sources = db.Column(db.JSON, default=dict)   # source map
+    needs_input = db.Column(db.JSON, default=list)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+class GrantPitchDoc(db.Model):
+    __tablename__ = "grant_pitch_docs"
+    id = db.Column(db.Integer, primary_key=True)
+    org_id = db.Column(db.Integer, db.ForeignKey("orgs.id"), nullable=False)
+    funder = db.Column(db.String(255))
+    sections = db.Column(db.JSON, default=dict)
+    sources = db.Column(db.JSON, default=dict)
+    needs_input = db.Column(db.JSON, default=list)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+class ImpactReport(db.Model):
+    __tablename__ = "impact_reports"
+    id = db.Column(db.Integer, primary_key=True)
+    org_id = db.Column(db.Integer, db.ForeignKey("orgs.id"), nullable=False)
+    grant_id = db.Column(db.Integer, db.ForeignKey("grants.id"))
+    period_start = db.Column(db.Date)
+    period_end = db.Column(db.Date)
+    sections = db.Column(db.JSON, default=dict)
+    tables = db.Column(db.JSON, default=list)
+    charts = db.Column(db.JSON, default=list)
+    sources = db.Column(db.JSON, default=dict)
+    needs_update = db.Column(db.JSON, default=list)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+class Contribution(db.Model):
+    __tablename__ = "contributions"
+    id = db.Column(db.Integer, primary_key=True)
+    org_id = db.Column(db.Integer, db.ForeignKey("orgs.id"), nullable=False)
+    raw = db.Column(db.Text)
+    clean = db.Column(db.Text)
+    facts = db.Column(db.JSON, default=list)     # [{"key":"", "value":"", "date":"", ...}]
+    tags = db.Column(db.JSON, default=list)
+    confidence = db.Column(db.String(10))        # high|med|low
+    source = db.Column(db.String(255))
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+class EditLearningEvent(db.Model):
+    __tablename__ = "edit_learning_events"
+    id = db.Column(db.Integer, primary_key=True)
+    org_id = db.Column(db.Integer, db.ForeignKey("orgs.id"), nullable=False)
+    draft_type = db.Column(db.String(40))  # case_support|pitch|report
+    draft_id = db.Column(db.Integer)
+    phrases_added = db.Column(db.JSON, default=list)
+    proof_points_added = db.Column(db.JSON, default=list)
+    notes = db.Column(db.Text)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+class Watchlist(db.Model):
+    __tablename__ = "watchlists"
+    id = db.Column(db.Integer, primary_key=True)
+    org_id = db.Column(db.Integer, db.ForeignKey("orgs.id"), nullable=False)
+    city = db.Column(db.String(120))
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+class WatchlistSource(db.Model):
+    __tablename__ = "watchlist_sources"
+    id = db.Column(db.Integer, primary_key=True)
+    watchlist_id = db.Column(db.Integer, db.ForeignKey("watchlists.id"), nullable=False)
+    name = db.Column(db.String(255))
+    url = db.Column(db.Text)
+    enabled = db.Column(db.Boolean, default=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)

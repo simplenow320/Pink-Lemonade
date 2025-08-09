@@ -427,5 +427,9 @@
         // Initialize dashboard when page loads
         document.addEventListener('DOMContentLoaded', initDashboard);
     </script>
+    
+    <footer class="text-xs text-gray-500">
+      {{ "LIVE" if env_mode == "LIVE" else "DEMO" }}
+    </footer>
 </body>
 </html>

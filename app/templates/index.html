@@ -65,7 +65,9 @@
     <!-- Load React App -->
     <script src="{{ url_for('static', filename='js/main.js') }}"></script>
     <script src="{{ url_for('static', filename='js/grantflow-app.js') }}"></script>
-    <!-- Data Mode Indicator -->
-    {{ get_mode_badge() | safe }}
+    
+    <footer class="text-xs text-gray-500">
+      {{ "LIVE" if env_mode == "LIVE" else "DEMO" }}
+    </footer>
 </body>
 </html>
