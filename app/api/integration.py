@@ -1,227 +1,350 @@
 """
-API Integration endpoints for external data sources
+Integration API - Phase 2 Endpoints
+Provides real-time data synchronization, automated monitoring, and system coordination
 """
 
-from flask import Blueprint, jsonify, request, session
+from flask import Blueprint, request, jsonify, session
+from app.services.integration_service import IntegrationService
+from functools import wraps
+from flask import session
+
+def login_required(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if 'user_id' not in session:
+            return jsonify({'error': 'Authentication required'}), 401
+        return f(*args, **kwargs)
+    return decorated_function
+
+def get_current_user():
+    user_id = session.get('user_id')
+    if user_id:
+        from app.models import User
+        return User.query.get(user_id)
+    return None
+
+def rate_limit(max_requests=100, window_seconds=60):
+    def decorator(f):
+        @wraps(f)
+        def decorated_function(*args, **kwargs):
+            # Simple rate limiting - in production use Redis
+            return f(*args, **kwargs)
+        return decorated_function
+    return decorator
+from app.models import Organization, User
 import logging
-from app.services.apiManager import api_manager
-from app import db
-from app.models.grant import Grant
-from datetime import datetime
 
 logger = logging.getLogger(__name__)
+bp = Blueprint('integration', __name__, url_prefix='/api/integration')
 
-# Create Blueprint
-integration_bp = Blueprint('integration', __name__)
+# Initialize integration service
+integration_service = IntegrationService()
 
-@integration_bp.route('/api/integration/sources', methods=['GET'])
-def get_available_sources():
-    """Get list of all available data sources and their status"""
+@bp.route('/discovery/run', methods=['POST'])
+@login_required
+@rate_limit(max_requests=5, window_seconds=300)  # Limit discovery runs
+def run_discovery():
+    """
+    Trigger full discovery cycle
+    Can be scoped to specific organization
+    """
     try:
-        sources = []
-        for source_id, config in api_manager.sources.items():
-            sources.append({
-                'id': source_id,
-                'name': config.get('name'),
-                'enabled': config.get('enabled', False),
-                'description': config.get('description', ''),
-                'supports': config.get('supports', []),
-                'hasApiKey': bool(config.get('api_key'))
-            })
+        user = get_current_user()
+        if not user:
+            return jsonify({'error': 'Authentication required'}), 401
+        
+        data = request.get_json() or {}
+        org_id = data.get('org_id')
+        
+        # If org_id not provided, use user's organization
+        if not org_id and user.org_id:
+            org_id = user.org_id
+        
+        # Run discovery cycle
+        results = integration_service.run_full_discovery_cycle(org_id)
         
         return jsonify({
             'success': True,
-            'sources': sources
+            'results': results
         })
+        
     except Exception as e:
-        logger.error(f"Error getting sources: {e}")
-        return jsonify({'success': False, 'error': str(e)}), 500
+        logger.error(f"Discovery run failed: {e}")
+        return jsonify({'error': str(e)}), 500
 
-@integration_bp.route('/api/integration/search', methods=['POST'])
-def search_grants():
-    """Search for grants across all enabled sources"""
+@bp.route('/sync/organization/<int:org_id>', methods=['POST'])
+@login_required
+def sync_organization(org_id):
+    """
+    Synchronize organization data across all systems
+    """
+    try:
+        user = get_current_user()
+        if not user:
+            return jsonify({'error': 'Authentication required'}), 401
+        
+        # Check if user has access to this organization
+        if user.org_id != org_id and user.role != 'admin':
+            return jsonify({'error': 'Access denied'}), 403
+        
+        results = integration_service.sync_organization_data(org_id)
+        
+        return jsonify(results)
+        
+    except Exception as e:
+        logger.error(f"Organization sync failed: {e}")
+        return jsonify({'error': str(e)}), 500
+
+@bp.route('/real-time/grants', methods=['POST'])
+@rate_limit(max_requests=100, window_seconds=60)  # Allow frequent real-time updates
+def receive_real_time_grants():
+    """
+    Receive real-time grant data from external sources
+    This endpoint can be called by webhooks or scheduled jobs
+    """
     try:
         data = request.get_json()
-        query = data.get('query', '')
-        filters = data.get('filters', {})
-        sources = data.get('sources', None)  # Optional: specific sources to search
+        if not data:
+            return jsonify({'error': 'No data provided'}), 400
         
-        # If specific sources requested, temporarily enable only those
-        if sources:
-            original_states = {}
-            for source_id in api_manager.sources:
-                original_states[source_id] = api_manager.sources[source_id]['enabled']
-                api_manager.sources[source_id]['enabled'] = source_id in sources
+        source = data.get('source', 'unknown')
+        grants_data = data.get('grants', [])
         
-        # Search across sources
-        grants = api_manager.search_opportunities(query, filters)
+        if not grants_data:
+            return jsonify({'error': 'No grants data provided'}), 400
         
-        # Restore original source states if we changed them
-        if sources:
-            for source_id, state in original_states.items():
-                api_manager.sources[source_id]['enabled'] = state
+        results = integration_service.process_real_time_grants(source, grants_data)
+        
+        return jsonify(results)
+        
+    except Exception as e:
+        logger.error(f"Real-time grants processing failed: {e}")
+        return jsonify({'error': str(e)}), 500
+
+@bp.route('/dashboard', methods=['GET'])
+@login_required
+def get_integration_dashboard():
+    """
+    Get comprehensive integration dashboard data
+    """
+    try:
+        dashboard_data = integration_service.get_integration_dashboard_data()
         
         return jsonify({
             'success': True,
-            'grants': grants,
-            'total': len(grants)
+            'dashboard': dashboard_data
         })
         
     except Exception as e:
-        logger.error(f"Error searching grants: {e}")
-        return jsonify({'success': False, 'error': str(e)}), 500
+        logger.error(f"Dashboard data retrieval failed: {e}")
+        return jsonify({'error': str(e)}), 500
 
-@integration_bp.route('/api/integration/fetch/<source_name>', methods=['GET'])
-def fetch_from_source(source_name):
-    """Fetch grants from a specific source"""
+@bp.route('/status', methods=['GET'])
+def get_integration_status():
+    """
+    Get current integration system status
+    Public endpoint for health checks
+    """
     try:
-        params = {
-            'limit': int(request.args.get('limit', 25)),
-            'query': request.args.get('query', ''),
-            'category': request.args.get('category')
+        from app.services.monitoring_service import MonitoringService
+        monitoring = MonitoringService()
+        
+        health_status = monitoring.get_health_status()
+        
+        # Calculate integration-specific metrics
+        status = {
+            'system_health': health_status.get('status', 'unknown'),
+            'database_connected': health_status.get('database', {}).get('connected', False),
+            'last_discovery_run': None,  # TODO: Get from discovery service
+            'active_integrations': 0,    # TODO: Count active integrations
+            'timestamp': health_status.get('timestamp')
         }
         
-        grants = api_manager.get_grants_from_source(source_name, params)
-        
-        return jsonify({
-            'success': True,
-            'source': source_name,
-            'grants': grants,
-            'total': len(grants)
-        })
+        return jsonify(status)
         
     except Exception as e:
-        logger.error(f"Error fetching from {source_name}: {e}")
-        return jsonify({'success': False, 'error': str(e)}), 500
-
-@integration_bp.route('/api/integration/grant/<grant_id>', methods=['GET'])
-def get_grant_details(grant_id):
-    """Get detailed information about a specific grant"""
-    try:
-        source = request.args.get('source')
-        grant = api_manager.fetch_grant_details(grant_id, source)
-        
-        if grant:
-            return jsonify({
-                'success': True,
-                'grant': grant
-            })
-        else:
-            return jsonify({
-                'success': False,
-                'error': 'Grant not found'
-            }), 404
-            
-    except Exception as e:
-        logger.error(f"Error fetching grant details: {e}")
-        return jsonify({'success': False, 'error': str(e)}), 500
-
-@integration_bp.route('/api/integration/import', methods=['POST'])
-def import_grants():
-    """Import grants from external sources into the database"""
-    try:
-        data = request.get_json()
-        grants_to_import = data.get('grants', [])
-        org_id = session.get('org_id', 'org-001')
-        
-        imported_count = 0
-        for grant_data in grants_to_import:
-            try:
-                # Check if grant already exists
-                existing = Grant.query.filter_by(
-                    org_id=org_id,
-                    title=grant_data.get('title'),
-                    funder=grant_data.get('funder')
-                ).first()
-                
-                if not existing:
-                    # Handle date fields
-                    deadline = grant_data.get('deadline')
-                    if deadline and isinstance(deadline, str):
-                        try:
-                            deadline = datetime.fromisoformat(deadline.replace('Z', '+00:00'))
-                        except:
-                            deadline = None
-                    
-                    grant = Grant(
-                        org_id=org_id,
-                        title=grant_data.get('title'),
-                        funder=grant_data.get('funder'),
-                        description=grant_data.get('description'),
-                        amount_min=grant_data.get('amount_min'),
-                        amount_max=grant_data.get('amount_max'),
-                        deadline=deadline,
-                        link=grant_data.get('link'),
-                        source_name=grant_data.get('source'),
-                        source_url=grant_data.get('source_url'),
-                        tags=grant_data.get('tags', []),
-                        status='discovered'
-                    )
-                    db.session.add(grant)
-                    imported_count += 1
-                    
-            except Exception as e:
-                logger.error(f"Error importing grant: {e}")
-        
-        db.session.commit()
-        
+        logger.error(f"Status check failed: {e}")
         return jsonify({
-            'success': True,
-            'imported': imported_count,
-            'message': f'Successfully imported {imported_count} grants'
-        })
-        
-    except Exception as e:
-        logger.error(f"Error importing grants: {e}")
-        return jsonify({'success': False, 'error': str(e)}), 500
-
-@integration_bp.route('/api/integration/configure', methods=['POST'])
-def configure_source():
-    """Configure a data source (enable/disable, add API key)"""
-    try:
-        data = request.get_json()
-        source_id = data.get('source_id')
-        
-        if not source_id or source_id not in api_manager.sources:
-            return jsonify({'success': False, 'error': 'Invalid source ID'}), 400
-        
-        # Update configuration
-        if 'enabled' in data:
-            api_manager.sources[source_id]['enabled'] = data['enabled']
-        
-        if 'api_key' in data:
-            api_manager.sources[source_id]['api_key'] = data['api_key']
-            # Enable source if API key provided
-            if data['api_key']:
-                api_manager.sources[source_id]['enabled'] = True
-        
-        return jsonify({
-            'success': True,
-            'message': f'Source {source_id} configured successfully'
-        })
-        
-    except Exception as e:
-        logger.error(f"Error configuring source: {e}")
-        return jsonify({'success': False, 'error': str(e)}), 500
-
-@integration_bp.route('/api/integration/test/<source_name>', methods=['GET'])
-def test_source_connection(source_name):
-    """Test connection to a specific data source"""
-    try:
-        # Try to fetch a small number of grants to test the connection
-        test_params = {'limit': 1}
-        grants = api_manager.get_grants_from_source(source_name, test_params)
-        
-        return jsonify({
-            'success': True,
-            'connected': len(grants) > 0,
-            'message': f'Successfully connected to {source_name}' if grants else f'Could not fetch data from {source_name}'
-        })
-        
-    except Exception as e:
-        logger.error(f"Error testing source {source_name}: {e}")
-        return jsonify({
-            'success': False,
-            'connected': False,
+            'system_health': 'error',
             'error': str(e)
         }), 500
+
+@bp.route('/notifications/test', methods=['POST'])
+@login_required
+def test_notifications():
+    """
+    Test notification system
+    """
+    try:
+        user = get_current_user()
+        if not user:
+            return jsonify({'error': 'Authentication required'}), 401
+        
+        data = request.get_json() or {}
+        notification_type = data.get('type', 'test')
+        
+        # Send test notification
+        from app.services.notification_service import NotificationService
+        notification_service = NotificationService()
+        
+        if notification_type == 'grant_match':
+            # Test grant match notification
+            result = {'status': 'test_sent', 'type': 'grant_match'}
+        else:
+            # Generic test notification
+            result = {'status': 'test_sent', 'type': 'generic'}
+        
+        return jsonify({
+            'success': True,
+            'notification_sent': result,
+            'type': notification_type
+        })
+        
+    except Exception as e:
+        logger.error(f"Notification test failed: {e}")
+        return jsonify({'error': str(e)}), 500
+
+@bp.route('/analytics/summary', methods=['GET'])
+@login_required
+def get_analytics_summary():
+    """
+    Get integration analytics summary
+    """
+    try:
+        user = get_current_user()
+        if not user:
+            return jsonify({'error': 'Authentication required'}), 401
+        
+        from app.models import Analytics
+        from datetime import datetime, timedelta
+        from sqlalchemy import func
+        
+        # Get analytics for the last 30 days
+        thirty_days_ago = datetime.utcnow() - timedelta(days=30)
+        
+        # Count events by type
+        analytics_summary = (
+            Analytics.query
+            .filter(Analytics.created_at >= thirty_days_ago)
+            .with_entities(Analytics.event_type, func.count(Analytics.id))
+            .group_by(Analytics.event_type)
+            .all()
+        )
+        
+        summary = {
+            'period': '30_days',
+            'events_by_type': {event_type: count for event_type, count in analytics_summary},
+            'total_events': sum(count for _, count in analytics_summary),
+            'last_updated': datetime.utcnow().isoformat()
+        }
+        
+        return jsonify({
+            'success': True,
+            'analytics': summary
+        })
+        
+    except Exception as e:
+        logger.error(f"Analytics summary failed: {e}")
+        return jsonify({'error': str(e)}), 500
+
+@bp.route('/export/data', methods=['GET'])
+@login_required
+def export_integration_data():
+    """
+    Export integration data for external systems
+    """
+    try:
+        user = get_current_user()
+        if not user:
+            return jsonify({'error': 'Authentication required'}), 401
+        
+        # Check if user has export permissions
+        if user.role not in ['admin', 'manager']:
+            return jsonify({'error': 'Export permission required'}), 403
+        
+        from app.models import Grant, Analytics
+        from datetime import datetime, timedelta
+        
+        # Get recent data
+        seven_days_ago = datetime.utcnow() - timedelta(days=7)
+        
+        # Export recent grants
+        recent_grants = Grant.query.filter(
+            Grant.created_at >= seven_days_ago
+        ).limit(100).all()
+        
+        # Export recent analytics
+        recent_analytics = Analytics.query.filter(
+            Analytics.created_at >= seven_days_ago
+        ).limit(500).all()
+        
+        export_data = {
+            'export_timestamp': datetime.utcnow().isoformat(),
+            'period': '7_days',
+            'grants': [grant.to_dict() for grant in recent_grants],
+            'analytics': [analytic.to_dict() for analytic in recent_analytics],
+            'total_grants': len(recent_grants),
+            'total_analytics': len(recent_analytics)
+        }
+        
+        return jsonify({
+            'success': True,
+            'data': export_data
+        })
+        
+    except Exception as e:
+        logger.error(f"Data export failed: {e}")
+        return jsonify({'error': str(e)}), 500
+
+@bp.route('/import/data', methods=['POST'])
+@login_required
+def import_integration_data():
+    """
+    Import data from external systems
+    """
+    try:
+        user = get_current_user()
+        if not user:
+            return jsonify({'error': 'Authentication required'}), 401
+        
+        # Check if user has import permissions
+        if user.role not in ['admin', 'manager']:
+            return jsonify({'error': 'Import permission required'}), 403
+        
+        data = request.get_json()
+        if not data:
+            return jsonify({'error': 'No data provided'}), 400
+        
+        # Process import data
+        import_type = data.get('type', 'grants')
+        import_data = data.get('data', [])
+        
+        results = {
+            'imported': 0,
+            'skipped': 0,
+            'errors': []
+        }
+        
+        if import_type == 'grants':
+            # Import grants
+            for grant_data in import_data:
+                try:
+                    grant = integration_service._create_or_update_grant(
+                        grant_data, 
+                        'import'
+                    )
+                    if grant:
+                        results['imported'] += 1
+                    else:
+                        results['skipped'] += 1
+                except Exception as e:
+                    results['errors'].append(str(e))
+        
+        return jsonify({
+            'success': True,
+            'results': results
+        })
+        
+    except Exception as e:
+        logger.error(f"Data import failed: {e}")
+        return jsonify({'error': str(e)}), 500

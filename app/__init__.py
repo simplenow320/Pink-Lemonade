@@ -76,6 +76,18 @@ def create_app():
     from app.api.ai_matching import bp as ai_matching_bp
     flask_app.register_blueprint(ai_matching_bp)
     
+    # Register integration endpoints
+    from app.api.integration import bp as integration_bp
+    flask_app.register_blueprint(integration_bp)
+    
+    # Register automated monitoring endpoints
+    from app.api.automated_monitoring import bp as monitoring_bp
+    flask_app.register_blueprint(monitoring_bp)
+    
+    # Register notification enhancement endpoints
+    from app.api.notification_enhancement import bp as notification_enhancement_bp
+    flask_app.register_blueprint(notification_enhancement_bp)
+    
     # Register live data integration endpoints
     from app.api.live_data import bp as live_data_bp
     flask_app.register_blueprint(live_data_bp)

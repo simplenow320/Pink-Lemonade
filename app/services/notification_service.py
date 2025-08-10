@@ -4,8 +4,7 @@ Notification Service for alerts and reminders
 
 from datetime import datetime, timedelta
 from app import db
-from app.models.grant import Grant
-from app.models.user import User
+from app.models import Grant, User
 import logging
 import smtplib
 from email.mime.text import MIMEText
