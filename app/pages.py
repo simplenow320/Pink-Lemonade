@@ -8,6 +8,40 @@ pages = Blueprint("pages", __name__)
 def home():
     return render_template("index.html", active="home")
 
+@pages.get("/register")
+def register():
+    return render_template("auth/register.html")
+
+@pages.get("/login")
+def login():
+    return render_template("auth/login.html")
+
+@pages.get("/forgot-password")
+def forgot_password():
+    return render_template("auth/forgot_password.html")
+
+@pages.get("/reset-password")
+def reset_password():
+    return render_template("auth/reset_password.html")
+
+@pages.get("/verify-email")
+def verify_email():
+    from flask import request, redirect, url_for, flash
+    from app.services.auth_service import AuthService
+    
+    auth_service = AuthService()
+    token = request.args.get('token')
+    
+    if not token:
+        return redirect(url_for('pages.login'))
+    
+    result = auth_service.verify_email(token)
+    
+    if result['success']:
+        return redirect(url_for('pages.login') + '?verified=true')
+    else:
+        return redirect(url_for('pages.login'))
+
 @pages.get("/dashboard")
 def dashboard():
     org_id = 1

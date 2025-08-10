@@ -8,18 +8,21 @@ class User(db.Model):
     __tablename__ = "users"
     id = db.Column(db.Integer, primary_key=True)
     email = db.Column(db.String(120), unique=True, nullable=False)
-    username = db.Column(db.String(80), unique=True, nullable=False)
+    username = db.Column(db.String(80), unique=True, nullable=True)  # Made nullable for auth flow
     password_hash = db.Column(db.String(256))
     first_name = db.Column(db.String(100))
     last_name = db.Column(db.String(100))
     phone = db.Column(db.String(20))
+    org_name = db.Column(db.String(200))  # Added for organization name
     role = db.Column(db.String(20), default='member')  # admin, manager, member
     org_id = db.Column(db.String(50))
     is_active = db.Column(db.Boolean, default=True)
     is_verified = db.Column(db.Boolean, default=False)
     verification_token = db.Column(db.String(100))
+    verification_token_expires = db.Column(db.DateTime)  # Added for token expiry
     reset_token = db.Column(db.String(100))
-    reset_token_expiry = db.Column(db.DateTime)
+    reset_token_expires = db.Column(db.DateTime)  # Renamed from reset_token_expiry
+    verified_at = db.Column(db.DateTime)  # Added for tracking verification time
     timezone = db.Column(db.String(50), default='UTC')
     notification_preferences = db.Column(db.JSON, default=dict)
     last_login = db.Column(db.DateTime)

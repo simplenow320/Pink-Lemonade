@@ -18,6 +18,10 @@ logger = logging.getLogger(__name__)
 
 bp = Blueprint('auth', __name__, url_prefix='/api/auth')
 
+# Import the auth service
+from app.services.auth_service import AuthService
+auth_service = AuthService()
+
 # Session-based authentication helpers
 def get_current_user():
     """Get the current logged-in user from session"""
@@ -62,127 +66,78 @@ def validate_password(password):
 
 @bp.route('/register', methods=['POST'])
 def register():
-    """Register a new user"""
+    """Register a new user using the AuthService"""
     try:
         data = request.get_json()
         
-        # Validate required fields
+        # Extract registration data
         email = data.get('email', '').strip().lower()
-        username = data.get('username', '').strip()
         password = data.get('password', '')
+        org_name = data.get('org_name', '').strip()
         first_name = data.get('first_name', '').strip()
         last_name = data.get('last_name', '').strip()
         
-        if not email or not username or not password:
-            return jsonify({'error': 'Email, username, and password are required'}), 400
+        # Validate required fields
+        if not email or not password or not org_name or not first_name or not last_name:
+            return jsonify({'error': 'All fields are required'}), 400
         
-        # Validate email format
-        if not validate_email(email):
-            return jsonify({'error': 'Invalid email format'}), 400
+        # Use AuthService to register user
+        result = auth_service.register_user(
+            email=email,
+            password=password,
+            org_name=org_name,
+            first_name=first_name,
+            last_name=last_name
+        )
         
-        # Validate password strength
-        is_valid, message = validate_password(password)
-        if not is_valid:
-            return jsonify({'error': message}), 400
-        
-        # Check if user already exists
-        if User.query.filter_by(email=email).first():
-            return jsonify({'error': 'Email already registered'}), 409
-        
-        if User.query.filter_by(username=username).first():
-            return jsonify({'error': 'Username already taken'}), 409
-        
-        # Create new user
-        user = User()
-        user.email = email
-        user.username = username
-        user.first_name = first_name
-        user.last_name = last_name
-        user.is_active = True
-        user.is_verified = False  # Email verification required
-        user.set_password(password)
-        user.generate_verification_token()
-        
-        # Check if this is the first user (make them admin)
-        if User.query.count() == 0:
-            user.role = 'admin'
-            user.is_verified = True  # Auto-verify first user
-        
-        # Generate organization ID if not provided
-        if not user.org_id:
-            user.org_id = f"org_{secrets.token_hex(8)}"
-        
-        db.session.add(user)
-        db.session.commit()
-        
-        # Auto-login if first user
-        if user.role == 'admin' and user.is_verified:
-            session['user_id'] = user.id
-            session['user_email'] = user.email
-            session['user_org_id'] = user.org_id
-            session.permanent = True
-        
-        logger.info(f"New user registered: {email}")
-        
-        return jsonify({
-            'message': 'Registration successful',
-            'user': user.to_dict(),
-            'verification_required': not user.is_verified
-        }), 201
+        if result['success']:
+            return jsonify({
+                'message': 'Registration successful! Check your email to verify your account.',
+                'user': result['user']
+            }), 201
+        else:
+            return jsonify({'error': result['error']}), 400
         
     except Exception as e:
         logger.error(f"Registration error: {e}")
-        db.session.rollback()
         return jsonify({'error': 'Registration failed'}), 500
 
 
 @bp.route('/login', methods=['POST'])
 def login():
-    """Log in a user"""
+    """Log in a user using the AuthService"""
     try:
         data = request.get_json()
         
         # Get credentials
-        email_or_username = data.get('email', '').strip().lower()
+        email = data.get('email', '').strip().lower()
         password = data.get('password', '')
         remember = data.get('remember', False)
         
-        if not email_or_username or not password:
-            return jsonify({'error': 'Email/username and password are required'}), 400
+        if not email or not password:
+            return jsonify({'error': 'Email and password are required'}), 400
         
-        # Find user by email or username
-        user = User.query.filter(
-            (User.email == email_or_username) | 
-            (User.username == email_or_username)
-        ).first()
+        # Use AuthService to login user
+        result = auth_service.login_user(
+            email=email,
+            password=password,
+            remember=remember
+        )
         
-        if not user or not user.check_password(password):
-            return jsonify({'error': 'Invalid credentials'}), 401
-        
-        # Check if account is active
-        if not user.is_active:
-            return jsonify({'error': 'Account is disabled'}), 403
-        
-        # Check if email is verified (skip for admin)
-        if not user.is_verified and user.role != 'admin':
-            return jsonify({'error': 'Please verify your email before logging in'}), 403
-        
-        # Update last login
-        user.last_login = datetime.now()
-        db.session.commit()
-        
-        # Log the user in
-        session['user_id'] = user.id
-        session['user_email'] = user.email
-        session['user_org_id'] = user.org_id
-        session.permanent = remember
-        
-        logger.info(f"User logged in: {user.email}")
-        
-        return jsonify({
-            'message': 'Login successful',
-            'user': user.to_dict()
-        }), 200
+        if result['success']:
+            # Set session
+            session['user_id'] = result['user']['id']
+            session['user_email'] = result['user']['email']
+            session.permanent = remember
+            
+            return jsonify({
+                'message': 'Login successful',
+                'token': result['token'],
+                'user': result['user'],
+                'redirect': '/dashboard'
+            }), 200
+        else:
+            return jsonify({'error': result['error']}), 401
         
     except Exception as e:
         logger.error(f"Login error: {e}")
@@ -249,8 +204,8 @@ def verify_email():
         return jsonify({'error': 'Verification failed'}), 500
 
 
-@bp.route('/request-reset', methods=['POST'])
-def request_password_reset():
+@bp.route('/forgot-password', methods=['POST'])
+def forgot_password():
     """Request a password reset token"""
     try:
         data = request.get_json()
@@ -258,6 +213,14 @@ def request_password_reset():
         
         if not email:
             return jsonify({'error': 'Email is required'}), 400
+        
+        # Use AuthService to request password reset
+        result = auth_service.request_password_reset(email)
+        
+        # Always return success to not reveal if email exists
+        return jsonify({
+            'message': 'If an account exists with that email, reset instructions have been sent.'
+        }), 200
         
         # Find user by email
         user = User.query.filter_by(email=email).first()
