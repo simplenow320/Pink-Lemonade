@@ -127,4 +127,14 @@ def grant_detail(grant_id):
     grant = Grant.query.get_or_404(grant_id)
     return render_template('grant_detail.html', grant=grant, active='opportunities')
 
+@bp.route('/smart-tools')
+def smart_tools():
+    """Smart Tools Dashboard page"""
+    return render_template('smart_tools.html', active='smart-tools')
+
+@bp.route('/smart-tools/<tool_id>')
+def smart_tool_detail(tool_id):
+    """Individual Smart Tool page"""
+    return render_template('smart_tools.html', active='smart-tools', tool_id=tool_id)
+
 # Add other page routes as needed

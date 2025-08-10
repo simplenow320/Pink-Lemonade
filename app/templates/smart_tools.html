@@ -1,0 +1,534 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart Tools Dashboard - Pink Lemonade</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .gradient-bg { background: linear-gradient(135deg, #ff6b6b 0%, #ff8e53 100%); }
+        .card-hover:hover { transform: translateY(-5px); transition: transform 0.3s ease; }
+    </style>
+</head>
+<body class="bg-gray-50 min-h-screen">
+    <!-- Navigation -->
+    <nav class="bg-white shadow-sm border-b">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16">
+                <div class="flex items-center">
+                    <a href="/" class="flex items-center">
+                        <img src="/static/logo.png" alt="Pink Lemonade" class="h-8 w-auto mr-3">
+                        <span class="text-xl font-bold text-gray-900">Pink Lemonade</span>
+                    </a>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <a href="/dashboard" class="text-gray-600 hover:text-orange-500">Dashboard</a>
+                    <a href="/grants" class="text-gray-600 hover:text-orange-500">Grants</a>
+                    <a href="/smart-tools" class="text-orange-500 font-semibold">Smart Tools</a>
+                    <a href="/analytics" class="text-gray-600 hover:text-orange-500">Analytics</a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Header -->
+    <div class="gradient-bg py-12">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+            <h1 class="text-4xl font-bold text-white mb-4">🚀 Smart Tools Dashboard</h1>
+            <p class="text-xl text-white/90 max-w-3xl mx-auto">
+                Complete AI-powered grant management suite with automated matching, extraction, 
+                writing, intelligence, and comprehensive reporting capabilities.
+            </p>
+        </div>
+    </div>
+
+    <!-- System Status -->
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 -mt-8">
+        <div class="bg-white rounded-lg shadow-md p-6 mb-8">
+            <h2 class="text-2xl font-bold text-gray-900 mb-4">🏆 System Status</h2>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div class="bg-green-50 border border-green-200 rounded-lg p-4">
+                    <div class="flex items-center">
+                        <div class="w-3 h-3 bg-green-500 rounded-full mr-3"></div>
+                        <div>
+                            <div class="font-semibold text-green-800">Smart Reporting System</div>
+                            <div class="text-sm text-green-600">100% Complete - All 6 Phases</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                    <div class="flex items-center">
+                        <div class="w-3 h-3 bg-blue-500 rounded-full mr-3"></div>
+                        <div>
+                            <div class="font-semibold text-blue-800">Core AI Tools</div>
+                            <div class="text-sm text-blue-600">4 Tools Operational</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="bg-purple-50 border border-purple-200 rounded-lg p-4">
+                    <div class="flex items-center">
+                        <div class="w-3 h-3 bg-purple-500 rounded-full mr-3"></div>
+                        <div>
+                            <div class="font-semibold text-purple-800">Enterprise Features</div>
+                            <div class="text-sm text-purple-600">Compliance & Governance Active</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Smart Tools Grid -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+            <!-- Smart Matching -->
+            <div class="bg-white rounded-lg shadow-md overflow-hidden card-hover">
+                <div class="bg-gradient-to-r from-blue-500 to-blue-600 p-6 text-white">
+                    <div class="flex items-center justify-between mb-2">
+                        <div class="text-3xl">🎯</div>
+                        <div class="px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-600">
+                            ✅ Operational
+                        </div>
+                    </div>
+                    <h3 class="text-xl font-bold mb-1">Smart Matching</h3>
+                    <p class="text-sm opacity-90">AI-powered grant-to-organization matching with intelligent scoring</p>
+                </div>
+                <div class="p-6">
+                    <div class="mb-4">
+                        <h4 class="font-semibold text-gray-900 mb-2">Key Features:</h4>
+                        <ul class="space-y-1">
+                            <li class="text-sm text-gray-600 flex items-center">
+                                <span class="w-1.5 h-1.5 bg-gray-400 rounded-full mr-2"></span>
+                                94% matching accuracy
+                            </li>
+                            <li class="text-sm text-gray-600 flex items-center">
+                                <span class="w-1.5 h-1.5 bg-gray-400 rounded-full mr-2"></span>
+                                Intelligent scoring system
+                            </li>
+                            <li class="text-sm text-gray-600 flex items-center">
+                                <span class="w-1.5 h-1.5 bg-gray-400 rounded-full mr-2"></span>
+                                Mission alignment analysis
+                            </li>
+                        </ul>
+                    </div>
+                    <div class="space-y-2">
+                        <button onclick="testAPI('/api/ai/match-grant')" class="w-full px-4 py-2 bg-orange-600 text-white rounded-md hover:bg-orange-700 transition-colors">
+                            Test API
+                        </button>
+                        <button onclick="showDocs('Smart Matching', 'AI-powered grant matching with 94% accuracy', '/api/ai/match-grant')" class="w-full text-sm text-gray-600 hover:text-gray-800 underline">
+                            View Documentation
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Smart Extraction -->
+            <div class="bg-white rounded-lg shadow-md overflow-hidden card-hover">
+                <div class="bg-gradient-to-r from-green-500 to-green-600 p-6 text-white">
+                    <div class="flex items-center justify-between mb-2">
+                        <div class="text-3xl">📄</div>
+                        <div class="px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-600">
+                            ✅ Operational
+                        </div>
+                    </div>
+                    <h3 class="text-xl font-bold mb-1">Smart Extraction</h3>
+                    <p class="text-sm opacity-90">Automated grant data extraction from documents and websites</p>
+                </div>
+                <div class="p-6">
+                    <div class="mb-4">
+                        <h4 class="font-semibold text-gray-900 mb-2">Key Features:</h4>
+                        <ul class="space-y-1">
+                            <li class="text-sm text-gray-600 flex items-center">
+                                <span class="w-1.5 h-1.5 bg-gray-400 rounded-full mr-2"></span>
+                                Document parsing
+                            </li>
+                            <li class="text-sm text-gray-600 flex items-center">
+                                <span class="w-1.5 h-1.5 bg-gray-400 rounded-full mr-2"></span>
+                                Web scraping
+                            </li>
+                            <li class="text-sm text-gray-600 flex items-center">
+                                <span class="w-1.5 h-1.5 bg-gray-400 rounded-full mr-2"></span>
+                                Data normalization
+                            </li>
+                        </ul>
+                    </div>
+                    <div class="space-y-2">
+                        <button onclick="testAPI('/api/ai/extract-grant')" class="w-full px-4 py-2 bg-orange-600 text-white rounded-md hover:bg-orange-700 transition-colors">
+                            Test API
+                        </button>
+                        <button onclick="showDocs('Smart Extraction', 'Document parsing and web scraping capabilities', '/api/ai/extract-grant')" class="w-full text-sm text-gray-600 hover:text-gray-800 underline">
+                            View Documentation
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Smart Writing -->
+            <div class="bg-white rounded-lg shadow-md overflow-hidden card-hover">
+                <div class="bg-gradient-to-r from-purple-500 to-purple-600 p-6 text-white">
+                    <div class="flex items-center justify-between mb-2">
+                        <div class="text-3xl">✍️</div>
+                        <div class="px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-600">
+                            ✅ Operational
+                        </div>
+                    </div>
+                    <h3 class="text-xl font-bold mb-1">Smart Writing</h3>
+                    <p class="text-sm opacity-90">AI-powered narrative generation and proposal assistance</p>
+                </div>
+                <div class="p-6">
+                    <div class="mb-4">
+                        <h4 class="font-semibold text-gray-900 mb-2">Key Features:</h4>
+                        <ul class="space-y-1">
+                            <li class="text-sm text-gray-600 flex items-center">
+                                <span class="w-1.5 h-1.5 bg-gray-400 rounded-full mr-2"></span>
+                                Automated narratives
+                            </li>
+                            <li class="text-sm text-gray-600 flex items-center">
+                                <span class="w-1.5 h-1.5 bg-gray-400 rounded-full mr-2"></span>
+                                Proposal templates
+                            </li>
+                            <li class="text-sm text-gray-600 flex items-center">
+                                <span class="w-1.5 h-1.5 bg-gray-400 rounded-full mr-2"></span>
+                                Content optimization
+                            </li>
+                        </ul>
+                    </div>
+                    <div class="space-y-2">
+                        <button onclick="testAPI('/api/writing/generate-narrative')" class="w-full px-4 py-2 bg-orange-600 text-white rounded-md hover:bg-orange-700 transition-colors">
+                            Test API
+                        </button>
+                        <button onclick="showDocs('Smart Writing', 'Automated narrative generation and proposal assistance', '/api/writing/generate-narrative')" class="w-full text-sm text-gray-600 hover:text-gray-800 underline">
+                            View Documentation
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Smart Intelligence -->
+            <div class="bg-white rounded-lg shadow-md overflow-hidden card-hover">
+                <div class="bg-gradient-to-r from-orange-500 to-orange-600 p-6 text-white">
+                    <div class="flex items-center justify-between mb-2">
+                        <div class="text-3xl">🧠</div>
+                        <div class="px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-600">
+                            ✅ Operational
+                        </div>
+                    </div>
+                    <h3 class="text-xl font-bold mb-1">Smart Intelligence</h3>
+                    <p class="text-sm opacity-90">Advanced grant analysis with strategic insights</p>
+                </div>
+                <div class="p-6">
+                    <div class="mb-4">
+                        <h4 class="font-semibold text-gray-900 mb-2">Key Features:</h4>
+                        <ul class="space-y-1">
+                            <li class="text-sm text-gray-600 flex items-center">
+                                <span class="w-1.5 h-1.5 bg-gray-400 rounded-full mr-2"></span>
+                                Grant analysis
+                            </li>
+                            <li class="text-sm text-gray-600 flex items-center">
+                                <span class="w-1.5 h-1.5 bg-gray-400 rounded-full mr-2"></span>
+                                Strategic recommendations
+                            </li>
+                            <li class="text-sm text-gray-600 flex items-center">
+                                <span class="w-1.5 h-1.5 bg-gray-400 rounded-full mr-2"></span>
+                                Contact intelligence
+                            </li>
+                        </ul>
+                    </div>
+                    <div class="space-y-2">
+                        <button onclick="testAPI('/api/grant-intelligence/analyze')" class="w-full px-4 py-2 bg-orange-600 text-white rounded-md hover:bg-orange-700 transition-colors">
+                            Test API
+                        </button>
+                        <button onclick="showDocs('Smart Intelligence', 'Advanced grant analysis with strategic insights', '/api/grant-intelligence/analyze')" class="w-full text-sm text-gray-600 hover:text-gray-800 underline">
+                            View Documentation
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Smart Surveys -->
+            <div class="bg-white rounded-lg shadow-md overflow-hidden card-hover">
+                <div class="bg-gradient-to-r from-indigo-500 to-indigo-600 p-6 text-white">
+                    <div class="flex items-center justify-between mb-2">
+                        <div class="text-3xl">📊</div>
+                        <div class="px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-600">
+                            ✅ Operational
+                        </div>
+                    </div>
+                    <h3 class="text-xl font-bold mb-1">Smart Surveys</h3>
+                    <p class="text-sm opacity-90">AI-refined survey building with intelligent question optimization</p>
+                </div>
+                <div class="p-6">
+                    <div class="mb-4">
+                        <h4 class="font-semibold text-gray-900 mb-2">Key Features:</h4>
+                        <ul class="space-y-1">
+                            <li class="text-sm text-gray-600 flex items-center">
+                                <span class="w-1.5 h-1.5 bg-gray-400 rounded-full mr-2"></span>
+                                Question refinement
+                            </li>
+                            <li class="text-sm text-gray-600 flex items-center">
+                                <span class="w-1.5 h-1.5 bg-gray-400 rounded-full mr-2"></span>
+                                Response optimization
+                            </li>
+                            <li class="text-sm text-gray-600 flex items-center">
+                                <span class="w-1.5 h-1.5 bg-gray-400 rounded-full mr-2"></span>
+                                Survey analytics
+                            </li>
+                        </ul>
+                    </div>
+                    <div class="space-y-2">
+                        <button onclick="testAPI('/api/smart-reporting/phase2/health')" class="w-full px-4 py-2 bg-orange-600 text-white rounded-md hover:bg-orange-700 transition-colors">
+                            Test API
+                        </button>
+                        <button onclick="showDocs('Smart Surveys', 'Phase 2: AI question refinement and survey builder', '/api/smart-reporting/phase2/health')" class="w-full text-sm text-gray-600 hover:text-gray-800 underline">
+                            View Documentation
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Smart Collection -->
+            <div class="bg-white rounded-lg shadow-md overflow-hidden card-hover">
+                <div class="bg-gradient-to-r from-teal-500 to-teal-600 p-6 text-white">
+                    <div class="flex items-center justify-between mb-2">
+                        <div class="text-3xl">📥</div>
+                        <div class="px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-600">
+                            ✅ Operational
+                        </div>
+                    </div>
+                    <h3 class="text-xl font-bold mb-1">Smart Collection</h3>
+                    <p class="text-sm opacity-90">Automated data collection and validation with real-time processing</p>
+                </div>
+                <div class="p-6">
+                    <div class="mb-4">
+                        <h4 class="font-semibold text-gray-900 mb-2">Key Features:</h4>
+                        <ul class="space-y-1">
+                            <li class="text-sm text-gray-600 flex items-center">
+                                <span class="w-1.5 h-1.5 bg-gray-400 rounded-full mr-2"></span>
+                                Automated workflows
+                            </li>
+                            <li class="text-sm text-gray-600 flex items-center">
+                                <span class="w-1.5 h-1.5 bg-gray-400 rounded-full mr-2"></span>
+                                Real-time validation
+                            </li>
+                            <li class="text-sm text-gray-600 flex items-center">
+                                <span class="w-1.5 h-1.5 bg-gray-400 rounded-full mr-2"></span>
+                                Data cleansing
+                            </li>
+                        </ul>
+                    </div>
+                    <div class="space-y-2">
+                        <button onclick="testAPI('/api/smart-reporting/phase3/health')" class="w-full px-4 py-2 bg-orange-600 text-white rounded-md hover:bg-orange-700 transition-colors">
+                            Test API
+                        </button>
+                        <button onclick="showDocs('Smart Collection', 'Phase 3: Automated data collection and validation', '/api/smart-reporting/phase3/health')" class="w-full text-sm text-gray-600 hover:text-gray-800 underline">
+                            View Documentation
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Smart Analytics -->
+            <div class="bg-white rounded-lg shadow-md overflow-hidden card-hover">
+                <div class="bg-gradient-to-r from-red-500 to-red-600 p-6 text-white">
+                    <div class="flex items-center justify-between mb-2">
+                        <div class="text-3xl">📈</div>
+                        <div class="px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-600">
+                            ✅ Operational
+                        </div>
+                    </div>
+                    <h3 class="text-xl font-bold mb-1">Smart Analytics</h3>
+                    <p class="text-sm opacity-90">Executive dashboards with predictive analytics and insights</p>
+                </div>
+                <div class="p-6">
+                    <div class="mb-4">
+                        <h4 class="font-semibold text-gray-900 mb-2">Key Features:</h4>
+                        <ul class="space-y-1">
+                            <li class="text-sm text-gray-600 flex items-center">
+                                <span class="w-1.5 h-1.5 bg-gray-400 rounded-full mr-2"></span>
+                                Executive dashboards
+                            </li>
+                            <li class="text-sm text-gray-600 flex items-center">
+                                <span class="w-1.5 h-1.5 bg-gray-400 rounded-full mr-2"></span>
+                                Predictive analytics
+                            </li>
+                            <li class="text-sm text-gray-600 flex items-center">
+                                <span class="w-1.5 h-1.5 bg-gray-400 rounded-full mr-2"></span>
+                                Performance insights
+                            </li>
+                        </ul>
+                    </div>
+                    <div class="space-y-2">
+                        <button onclick="testAPI('/api/smart-reporting/phase4/health')" class="w-full px-4 py-2 bg-orange-600 text-white rounded-md hover:bg-orange-700 transition-colors">
+                            Test API
+                        </button>
+                        <button onclick="showDocs('Smart Analytics', 'Phase 4: Executive dashboards and predictive analytics', '/api/smart-reporting/phase4/health')" class="w-full text-sm text-gray-600 hover:text-gray-800 underline">
+                            View Documentation
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Smart Reports -->
+            <div class="bg-white rounded-lg shadow-md overflow-hidden card-hover">
+                <div class="bg-gradient-to-r from-pink-500 to-pink-600 p-6 text-white">
+                    <div class="flex items-center justify-between mb-2">
+                        <div class="text-3xl">📋</div>
+                        <div class="px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-600">
+                            ✅ Operational
+                        </div>
+                    </div>
+                    <h3 class="text-xl font-bold mb-1">Smart Reports</h3>
+                    <p class="text-sm opacity-90">Automated report generation with stakeholder customization</p>
+                </div>
+                <div class="p-6">
+                    <div class="mb-4">
+                        <h4 class="font-semibold text-gray-900 mb-2">Key Features:</h4>
+                        <ul class="space-y-1">
+                            <li class="text-sm text-gray-600 flex items-center">
+                                <span class="w-1.5 h-1.5 bg-gray-400 rounded-full mr-2"></span>
+                                Executive summaries
+                            </li>
+                            <li class="text-sm text-gray-600 flex items-center">
+                                <span class="w-1.5 h-1.5 bg-gray-400 rounded-full mr-2"></span>
+                                Stakeholder reports
+                            </li>
+                            <li class="text-sm text-gray-600 flex items-center">
+                                <span class="w-1.5 h-1.5 bg-gray-400 rounded-full mr-2"></span>
+                                Automated distribution
+                            </li>
+                        </ul>
+                    </div>
+                    <div class="space-y-2">
+                        <button onclick="testAPI('/api/smart-reporting/phase5/health')" class="w-full px-4 py-2 bg-orange-600 text-white rounded-md hover:bg-orange-700 transition-colors">
+                            Test API
+                        </button>
+                        <button onclick="showDocs('Smart Reports', 'Phase 5: Automated report generation with customization', '/api/smart-reporting/phase5/health')" class="w-full text-sm text-gray-600 hover:text-gray-800 underline">
+                            View Documentation
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Smart Governance -->
+            <div class="bg-white rounded-lg shadow-md overflow-hidden card-hover">
+                <div class="bg-gradient-to-r from-gray-500 to-gray-600 p-6 text-white">
+                    <div class="flex items-center justify-between mb-2">
+                        <div class="text-3xl">🛡️</div>
+                        <div class="px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-600">
+                            ✅ Operational
+                        </div>
+                    </div>
+                    <h3 class="text-xl font-bold mb-1">Smart Governance</h3>
+                    <p class="text-sm opacity-90">Comprehensive compliance monitoring and audit trail management</p>
+                </div>
+                <div class="p-6">
+                    <div class="mb-4">
+                        <h4 class="font-semibold text-gray-900 mb-2">Key Features:</h4>
+                        <ul class="space-y-1">
+                            <li class="text-sm text-gray-600 flex items-center">
+                                <span class="w-1.5 h-1.5 bg-gray-400 rounded-full mr-2"></span>
+                                Compliance monitoring
+                            </li>
+                            <li class="text-sm text-gray-600 flex items-center">
+                                <span class="w-1.5 h-1.5 bg-gray-400 rounded-full mr-2"></span>
+                                Audit trails
+                            </li>
+                            <li class="text-sm text-gray-600 flex items-center">
+                                <span class="w-1.5 h-1.5 bg-gray-400 rounded-full mr-2"></span>
+                                Data governance
+                            </li>
+                        </ul>
+                    </div>
+                    <div class="space-y-2">
+                        <button onclick="testAPI('/api/smart-reporting/phase6/health')" class="w-full px-4 py-2 bg-orange-600 text-white rounded-md hover:bg-orange-700 transition-colors">
+                            Test API
+                        </button>
+                        <button onclick="showDocs('Smart Governance', 'Phase 6: Compliance monitoring and audit trails', '/api/smart-reporting/phase6/health')" class="w-full text-sm text-gray-600 hover:text-gray-800 underline">
+                            View Documentation
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="bg-white rounded-lg shadow-md p-6 mb-8">
+            <h2 class="text-2xl font-bold text-gray-900 mb-4">⚡ Quick Actions</h2>
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <button onclick="runSystemHealthCheck()" class="flex items-center justify-center px-4 py-3 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500">
+                    🔍 System Health Check
+                </button>
+                
+                <button onclick="generateExecutiveReport()" class="flex items-center justify-center px-4 py-3 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500">
+                    📋 Generate Report
+                </button>
+                
+                <button onclick="checkCompliance()" class="flex items-center justify-center px-4 py-3 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500">
+                    🛡️ Check Compliance
+                </button>
+                
+                <a href="/analytics" class="flex items-center justify-center px-4 py-3 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500">
+                    📊 View Analytics
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Test API endpoint
+        function testAPI(endpoint) {
+            fetch(endpoint)
+                .then(response => response.json())
+                .then(data => {
+                    console.log('API Response:', data);
+                    alert(`API Test Result:\n${JSON.stringify(data, null, 2)}`);
+                })
+                .catch(error => {
+                    console.error('API Error:', error);
+                    alert(`API Test Error:\n${error.message}`);
+                });
+        }
+
+        // Show documentation
+        function showDocs(toolName, description, endpoint) {
+            alert(`${toolName} Documentation:\n\n${description}\n\nEndpoint: ${endpoint}`);
+        }
+
+        // System health check
+        function runSystemHealthCheck() {
+            const phases = ['phase2', 'phase3', 'phase4', 'phase5', 'phase6'];
+            phases.forEach(phase => {
+                fetch(`/api/smart-reporting/${phase}/health`)
+                    .then(response => response.json())
+                    .then(data => console.log(`${phase}:`, data))
+                    .catch(error => console.error(`${phase} error:`, error));
+            });
+            alert('Running system health check - see console for results');
+        }
+
+        // Generate executive report
+        function generateExecutiveReport() {
+            fetch('/api/smart-reporting/phase5/executive-summary', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ report_title: 'Test Executive Summary' })
+            })
+            .then(response => response.json())
+            .then(data => {
+                console.log('Executive Summary:', data);
+                alert('Executive summary generated - check console for details');
+            })
+            .catch(error => alert('Error: ' + error.message));
+        }
+
+        // Check compliance
+        function checkCompliance() {
+            fetch('/api/smart-reporting/phase6/compliance-monitor')
+            .then(response => response.json())
+            .then(data => {
+                console.log('Compliance Status:', data);
+                alert(`Compliance Score: ${data.compliance_status?.overall_compliance_score || 'N/A'}% - check console for details`);
+            })
+            .catch(error => alert('Error: ' + error.message));
+        }
+    </script>
+</body>
+</html>

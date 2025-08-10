@@ -31,6 +31,12 @@ const ModernLayout = ({ children }) => {
       icon: DashboardIcon,
     },
     {
+      name: 'Smart Tools',
+      path: '/smart-tools',
+      description: 'AI-powered grant management suite',
+      icon: WritingIcon,
+    },
+    {
       name: 'Grants',
       path: '/grants',
       description: 'Manage your grant opportunities',
@@ -59,12 +65,6 @@ const ModernLayout = ({ children }) => {
       path: '/analytics',
       description: 'Track your success metrics',
       icon: AnalyticsIcon,
-    },
-    {
-      name: 'Writing',
-      path: '/writing-assistant',
-      description: 'AI-powered grant writing',
-      icon: WritingIcon,
     },
   ];
 
