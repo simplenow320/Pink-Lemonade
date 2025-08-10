@@ -9,16 +9,16 @@
   --font:Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Arial, "Helvetica Neue", sans-serif;
 }
 
-/* Logo Styling - 4x Size */
-.logo-4x {
-  height: 128px; /* 4x standard 32px = 128px */
+/* Logo Styling - 5x Size */
+.logo-5x {
+  height: 160px; /* 5x standard 32px = 160px */
   width: auto;
   border-radius: 12px;
   background: transparent;
   padding: 8px;
   transition: transform 0.3s ease;
 }
-.logo-4x:hover {
+.logo-5x:hover {
   transform: scale(1.05);
 }
 *{box-sizing:border-box}
@@ -27,10 +27,8 @@ h1,h2,h3{color:var(--black);margin:0 0 var(--space)}
 a{text-decoration:none;color:var(--black)}
 .container{max-width:1100px;margin:0 auto;padding:24px}
 .card{background:var(--white);border:1px solid rgba(0,0,0,.08);border-radius:var(--radius);padding:var(--space-lg)}
-.nav{display:flex;gap:16px;align-items:center;margin-bottom:24px;flex-wrap:wrap}
-.nav a{padding:8px 10px;border-radius:6px;transition:background-color 0.2s ease}
-.nav a.active,.nav a:hover{background:var(--pink);transform:translateY(-1px)}
-.nav .logo-4x{margin-right:12px;flex-shrink:0}
+.nav-centered{display:flex;justify-content:center;align-items:center;margin-bottom:24px;padding:20px 0}
+.nav-centered .logo-5x{flex-shrink:0}
 .btn{display:inline-block;border-radius:var(--radius);padding:12px 18px;border:1px solid rgba(0,0,0,.1);background:var(--white);color:var(--black)}
 .btn-primary{background:var(--pink);border-color:var(--pink)}
 .badge{display:inline-block;padding:4px 10px;border-radius:999px;background:var(--pink);color:var(--black);font-size:12px}
@@ -49,14 +47,12 @@ footer.small{color:#777;font-size:12px;margin-top:24px;text-align:center;border-
 
 /* Responsive Design */
 @media (max-width: 768px) {
-  .logo-4x{height:80px} /* Smaller on mobile */
-  .nav{gap:12px}
-  .nav a{font-size:14px;padding:6px 8px}
+  .logo-5x{height:120px} /* Smaller on mobile */
   .grid-4{grid-template-columns:repeat(2,minmax(0,1fr))}
   .grid-2{grid-template-columns:1fr}
 }
 
 @media (max-width: 480px) {
-  .logo-4x{height:64px} /* Even smaller on very small screens */
+  .logo-5x{height:100px} /* Even smaller on very small screens */
   .container{padding:16px}
 }

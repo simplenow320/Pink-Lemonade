@@ -1,10 +1,3 @@
-<nav class="nav" role="navigation" aria-label="Primary">
-  <img src="{{ url_for('static', filename='images/pink-lemonade-logo.png') }}" alt="Pink Lemonade" class="logo-4x" />
-  <a href="/dashboard" class="{{ 'active' if active=='dashboard' else '' }}">Dashboard</a>
-  <a href="/opportunities" class="{{ 'active' if active=='opps' else '' }}">Opportunities</a>
-  <a href="/saved" class="{{ 'active' if active=='saved' else '' }}">Saved</a>
-  <a href="/applications" class="{{ 'active' if active=='apps' else '' }}">Applications</a>
-  <a href="/writing" class="{{ 'active' if active=='writing' else '' }}">Writing</a>
-  <a href="/settings" class="{{ 'active' if active=='settings' else '' }}">Settings</a>
-  <span class="badge">{{ 'LIVE' if env_mode=='LIVE' else 'DEMO' }}</span>
+<nav class="nav-centered" role="navigation" aria-label="Primary">
+  <img src="{{ url_for('static', filename='images/pink-lemonade-logo.png') }}" alt="Pink Lemonade" class="logo-5x" />
 </nav>
