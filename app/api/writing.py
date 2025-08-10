@@ -2,10 +2,59 @@ from flask import Blueprint, request, jsonify
 from werkzeug.exceptions import BadRequest
 from app import db
 from app.models import CaseSupportDoc, GrantPitchDoc, ImpactReport
-from app.services.ai_prompter import run_prompt
-from app.services.ai_data_reader import build_data_pack
+import logging
+import os
+
+logger = logging.getLogger(__name__)
 
 bp = Blueprint("writing", __name__)
+
+@bp.route('/improve', methods=['POST'])
+def improve_text():
+    """Improve text using AI"""
+    try:
+        data = request.get_json()
+        text = data.get('text', '')
+        improvement_type = data.get('improvement_type', 'professional')
+        
+        if not text:
+            return jsonify({'error': 'No text provided'}), 400
+            
+        # Use OpenAI for text improvement
+        from openai import OpenAI
+        client = OpenAI(api_key=os.environ.get('OPENAI_API_KEY'))
+        
+        # Define improvement prompts
+        prompts = {
+            'professional': 'Make this text more professional and polished while keeping the original meaning:',
+            'clarity': 'Improve the clarity and readability of this text:',
+            'concise': 'Make this text more concise while preserving all key information:',
+            'expand': 'Expand on this text with more detail and examples:',
+            'persuasive': 'Make this text more persuasive and compelling:'
+        }
+        
+        prompt = prompts.get(improvement_type, prompts['professional'])
+        
+        response = client.chat.completions.create(
+            model="gpt-4o",
+            messages=[
+                {"role": "system", "content": "You are a professional writing assistant helping with grant applications."},
+                {"role": "user", "content": f"{prompt}\n\n{text}"}
+            ],
+            max_tokens=1000
+        )
+        
+        improved_text = response.choices[0].message.content
+        
+        return jsonify({
+            'success': True,
+            'improved_text': improved_text,
+            'improvement_type': improvement_type
+        })
+        
+    except Exception as e:
+        logger.error(f"Error improving text: {e}")
+        return jsonify({'error': str(e)}), 500
 
 def _json():
     data = request.get_json(silent=True)
