@@ -24,9 +24,9 @@ a[style*="background:#B8899A"]:hover {
   box-shadow: 0 4px 12px rgba(184,137,154,0.15) !important;
 }
 
-/* Logo Styling - 1.25x bigger */
+/* Logo Styling - 5x bigger */
 .logo-5x {
-  height: 266px; /* 213px * 1.25 = 266px */
+  height: 500px; /* Increased to 5x size */
   width: auto;
   border-radius: 12px;
   background: transparent;
@@ -38,7 +38,7 @@ a[style*="background:#B8899A"]:hover {
 }
 
 .logo-4x {
-  height: 213px; /* 170px * 1.25 = 213px */
+  height: 400px; /* Increased to 5x size */
   width: auto;
   border-radius: 8px;
   background: transparent;
@@ -50,7 +50,7 @@ a[style*="background:#B8899A"]:hover {
 }
 
 .logo-3x {
-  height: 160px; /* 128px * 1.25 = 160px */
+  height: 300px; /* Increased to 5x size */
   width: auto;
   border-radius: 6px;
   background: transparent;
@@ -85,12 +85,16 @@ footer.small{color:var(--grey);font-size:11px;margin-top:24px;text-align:center;
 
 /* Responsive Design */
 @media (max-width: 768px) {
-  .logo-5x{height:200px} /* Proportionally sized for mobile */
+  .logo-5x{height:350px} /* Proportionally sized for mobile */
+  .logo-4x{height:280px}
+  .logo-3x{height:210px}
   .grid-4{grid-template-columns:repeat(2,minmax(0,1fr))}
   .grid-2{grid-template-columns:1fr}
 }
 
 @media (max-width: 480px) {
-  .logo-5x{height:166px} /* Proportionally sized for small screens */
+  .logo-5x{height:250px} /* Proportionally sized for small screens */
+  .logo-4x{height:200px}
+  .logo-3x{height:150px}
   .container{padding:16px}
 }
