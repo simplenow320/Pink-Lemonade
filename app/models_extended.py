@@ -550,6 +550,211 @@ class DataCleansingLog(db.Model):
 
 
 # =============================================================================
+# Survey Invitation & Respondent Management Models
+# =============================================================================
+
+class SurveyInvitation(db.Model):
+    """Survey invitation tracking and management"""
+    __tablename__ = "survey_invitations"
+    
+    id = db.Column(db.Integer, primary_key=True)
+    project_id = db.Column(db.Integer, db.ForeignKey("projects.id"), nullable=False)
+    
+    # Invitation details
+    invitation_token = db.Column(db.String(100), unique=True, nullable=False)
+    email = db.Column(db.String(255), nullable=False)
+    respondent_type = db.Column(db.String(50), nullable=False)  # staff, participant, community_member, partner
+    respondent_name = db.Column(db.String(200))  # Optional based on org preference
+    
+    # Survey configuration
+    survey_template_id = db.Column(db.Integer, nullable=True)  # Template ID, no FK for now
+    questions_assigned = db.Column(db.Text)  # JSON list of question IDs
+    language = db.Column(db.String(10), default="en")
+    
+    # Access control
+    requires_login = db.Column(db.Boolean, default=True)
+    anonymous_allowed = db.Column(db.Boolean, default=False)
+    single_use = db.Column(db.Boolean, default=True)
+    
+    # QR Code
+    qr_code_generated = db.Column(db.Boolean, default=False)
+    qr_code_path = db.Column(db.String(500))
+    
+    # Status tracking
+    status = db.Column(db.String(50), default="pending")  # pending, sent, opened, started, completed, expired
+    sent_at = db.Column(db.DateTime)
+    opened_at = db.Column(db.DateTime)
+    started_at = db.Column(db.DateTime)
+    completed_at = db.Column(db.DateTime)
+    
+    # Reminder tracking
+    reminder_count = db.Column(db.Integer, default=0)
+    last_reminder_at = db.Column(db.DateTime)
+    
+    # Expiration
+    expires_at = db.Column(db.DateTime)
+    
+    # Timestamps
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "project_id": self.project_id,
+            "email": self.email,
+            "respondent_type": self.respondent_type,
+            "respondent_name": self.respondent_name,
+            "status": self.status,
+            "requires_login": self.requires_login,
+            "anonymous_allowed": self.anonymous_allowed,
+            "qr_code_generated": self.qr_code_generated,
+            "expires_at": self.expires_at.isoformat() if self.expires_at else None,
+            "sent_at": self.sent_at.isoformat() if self.sent_at else None,
+            "completed_at": self.completed_at.isoformat() if self.completed_at else None
+        }
+
+
+class SurveyRespondent(db.Model):
+    """Registered survey respondents with login credentials"""
+    __tablename__ = "survey_respondents"
+    
+    id = db.Column(db.Integer, primary_key=True)
+    email = db.Column(db.String(255), unique=True, nullable=False)
+    password_hash = db.Column(db.String(256))  # Optional for email-only auth
+    
+    # Profile
+    first_name = db.Column(db.String(100))
+    last_name = db.Column(db.String(100))
+    organization_id = db.Column(db.Integer, db.ForeignKey("organizations.id"))
+    respondent_type = db.Column(db.String(50))  # staff, participant, community_member, partner
+    
+    # Authentication
+    email_verified = db.Column(db.Boolean, default=False)
+    verification_token = db.Column(db.String(100))
+    last_login = db.Column(db.DateTime)
+    
+    # Status
+    active = db.Column(db.Boolean, default=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "email": self.email,
+            "first_name": self.first_name,
+            "last_name": self.last_name,
+            "respondent_type": self.respondent_type,
+            "email_verified": self.email_verified,
+            "active": self.active
+        }
+
+
+class SurveyAccessLog(db.Model):
+    """Track survey access and completion attempts"""
+    __tablename__ = "survey_access_logs"
+    
+    id = db.Column(db.Integer, primary_key=True)
+    invitation_id = db.Column(db.Integer, db.ForeignKey("survey_invitations.id"))
+    respondent_id = db.Column(db.Integer, db.ForeignKey("survey_respondents.id"))
+    
+    # Access details
+    access_type = db.Column(db.String(50))  # email_click, qr_scan, direct_link
+    ip_address = db.Column(db.String(45))
+    user_agent = db.Column(db.String(500))
+    referrer = db.Column(db.String(500))
+    
+    # Session tracking
+    session_token = db.Column(db.String(100))
+    pages_viewed = db.Column(db.Integer, default=0)
+    questions_answered = db.Column(db.Integer, default=0)
+    time_spent_seconds = db.Column(db.Integer)
+    
+    # Completion status
+    completed = db.Column(db.Boolean, default=False)
+    abandoned = db.Column(db.Boolean, default=False)
+    abandon_reason = db.Column(db.String(200))
+    
+    # Timestamps
+    accessed_at = db.Column(db.DateTime, default=datetime.utcnow)
+    completed_at = db.Column(db.DateTime)
+    
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "invitation_id": self.invitation_id,
+            "respondent_id": self.respondent_id,
+            "access_type": self.access_type,
+            "completed": self.completed,
+            "abandoned": self.abandoned,
+            "questions_answered": self.questions_answered,
+            "time_spent_seconds": self.time_spent_seconds
+        }
+
+
+class SurveyDistribution(db.Model):
+    """Bulk survey distribution campaigns"""
+    __tablename__ = "survey_distributions"
+    
+    id = db.Column(db.Integer, primary_key=True)
+    project_id = db.Column(db.Integer, db.ForeignKey("projects.id"), nullable=False)
+    
+    # Campaign details
+    campaign_name = db.Column(db.String(200), nullable=False)
+    description = db.Column(db.Text)
+    
+    # Distribution settings
+    distribution_method = db.Column(db.String(50))  # email, sms, qr_code, link_share
+    recipient_list = db.Column(db.Text)  # JSON list of recipients
+    total_recipients = db.Column(db.Integer, default=0)
+    
+    # Anonymity settings
+    track_names = db.Column(db.Boolean, default=True)  # Organization choice
+    allow_anonymous = db.Column(db.Boolean, default=False)
+    
+    # Template assignment
+    use_different_templates = db.Column(db.Boolean, default=False)
+    template_assignments = db.Column(db.Text)  # JSON mapping of respondent_type to template_id
+    
+    # QR Code settings
+    generate_qr_codes = db.Column(db.Boolean, default=False)
+    qr_code_size = db.Column(db.String(20), default="medium")
+    qr_code_format = db.Column(db.String(20), default="png")
+    
+    # Status tracking
+    status = db.Column(db.String(50), default="draft")  # draft, scheduled, sending, sent, completed
+    scheduled_send_at = db.Column(db.DateTime)
+    started_at = db.Column(db.DateTime)
+    completed_at = db.Column(db.DateTime)
+    
+    # Metrics
+    invitations_sent = db.Column(db.Integer, default=0)
+    invitations_opened = db.Column(db.Integer, default=0)
+    surveys_started = db.Column(db.Integer, default=0)
+    surveys_completed = db.Column(db.Integer, default=0)
+    
+    # Timestamps
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "project_id": self.project_id,
+            "campaign_name": self.campaign_name,
+            "distribution_method": self.distribution_method,
+            "total_recipients": self.total_recipients,
+            "track_names": self.track_names,
+            "allow_anonymous": self.allow_anonymous,
+            "status": self.status,
+            "invitations_sent": self.invitations_sent,
+            "surveys_completed": self.surveys_completed,
+            "completion_rate": round(self.surveys_completed / self.invitations_sent * 100, 1) if self.invitations_sent > 0 else 0
+        }
+
+
+# =============================================================================
 # Smart Reporting Phase 4 Models - Dashboard & Analytics Integration
 # =============================================================================
 

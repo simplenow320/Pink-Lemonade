@@ -283,5 +283,9 @@ def init_monitoring(app):
             str(e),
             request.endpoint
         )
-        # Re-raise the exception for normal handling
-        raise e
+        # Let Flask handle the exception normally without re-raising
+        from werkzeug.exceptions import HTTPException
+        if isinstance(e, HTTPException):
+            return e
+        # For non-HTTP exceptions, return a generic error
+        return {"error": "Internal server error"}, 500

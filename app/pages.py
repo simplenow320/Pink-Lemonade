@@ -1,7 +1,8 @@
-from flask import Blueprint, render_template, session, redirect, url_for
+from flask import Blueprint, render_template, session, redirect, url_for, send_from_directory
 from functools import wraps
 from app.services.stats_service import get_dashboard_stats, get_top_matches
 from app.models import Grant
+import os
 
 # Simple login required decorator
 def login_required(f):
@@ -174,3 +175,16 @@ def grant_detail(grant_id):
     """Grant Detail Page"""
     grant = Grant.query.get_or_404(grant_id)
     return render_template("grant_detail.html", grant=grant, active="opportunities")
+
+# Serve React app for smart-tools and other React routes
+@pages.get("/smart-tools")
+def smart_tools():
+    """Smart Tools React Page"""
+    # Check if React build exists
+    build_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'client', 'build')
+    if os.path.exists(os.path.join(build_path, 'index.html')):
+        return send_from_directory(build_path, 'index.html')
+    else:
+        return render_template("index.html")
+
+# Remove duplicate static route since Flask is handling it now

@@ -11,6 +11,24 @@ logger = logging.getLogger(__name__)
 bp = Blueprint('organization', __name__)
 ai_service = AIService()
 
+@bp.route('/', methods=['GET'])
+def get_organization():
+    """Get current organization data"""
+    try:
+        # For now, return a default organization
+        # In production, this would check the session and return the user's org
+        org_data = {
+            'id': 1,
+            'name': 'My Organization',
+            'mission': 'Making a positive impact in our community',
+            'focus_areas': ['Education', 'Community Development'],
+            'created_at': datetime.now().isoformat()
+        }
+        return jsonify(org_data), 200
+    except Exception as e:
+        logger.error(f"Error getting organization: {str(e)}")
+        return jsonify({'error': 'Failed to get organization'}), 500
+
 @bp.route('/onboarding', methods=['POST'])
 @login_required
 def update_onboarding():

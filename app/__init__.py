@@ -6,7 +6,9 @@ from flask_cors import CORS
 db = SQLAlchemy()
 
 def create_app():
-    flask_app = Flask(__name__)
+    flask_app = Flask(__name__, 
+                      static_folder='../client/build',
+                      static_url_path='/')
     flask_app.config.from_object("app.config.settings")
     
     CORS(flask_app, supports_credentials=True)
@@ -72,6 +74,13 @@ def create_app():
     # Register new AI endpoints
     from app.api.ai_endpoints import bp as ai_endpoints_bp
     flask_app.register_blueprint(ai_endpoints_bp)
+    
+    # Register survey invitation endpoints
+    try:
+        from app.api.survey_invitations import bp as survey_invitations_bp
+        flask_app.register_blueprint(survey_invitations_bp)
+    except ImportError:
+        pass  # Survey invitations API not yet available
     
     # Register advanced AI matching endpoints
     from app.api.ai_matching import bp as ai_matching_bp

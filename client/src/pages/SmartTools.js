@@ -5,6 +5,7 @@ import { motion } from 'framer-motion';
 const SmartTools = () => {
   const [healthStatus, setHealthStatus] = useState({});
   const [loading, setLoading] = useState(true);
+  const [showSupportingTools, setShowSupportingTools] = useState(false);
 
   useEffect(() => {
     const checkSystemHealth = async () => {
@@ -41,8 +42,20 @@ const SmartTools = () => {
     checkSystemHealth();
   }, []);
 
-  const smartTools = [
-    // AI Writing & Document Generation
+  // Main featured tools - prominently displayed
+  const mainTools = [
+    {
+      id: 'grant-pitch',
+      name: 'Grant Pitch',
+      description: 'AI-powered pitch generator for presentations, emails, and verbal delivery to funders',
+      icon: '🎯',
+      color: 'from-green-500 to-green-600',
+      features: ['Multiple formats', 'Funder-specific', 'Presentation ready'],
+      endpoint: '/api/writing/grant-pitch',
+      route: '/grant-pitch',
+      phase: 'practical',
+      category: 'content'
+    },
     {
       id: 'case-support',
       name: 'Case for Support',
@@ -66,19 +79,11 @@ const SmartTools = () => {
       route: '/impact-report',
       phase: 'practical',
       category: 'reporting'
-    },
-    {
-      id: 'grant-pitch',
-      name: 'Grant Pitch',
-      description: 'AI-powered pitch generator for presentations, emails, and verbal delivery to funders',
-      icon: '🎯',
-      color: 'from-green-500 to-green-600',
-      features: ['Multiple formats', 'Funder-specific', 'Presentation ready'],
-      endpoint: '/api/writing/grant-pitch',
-      route: '/grant-pitch',
-      phase: 'practical',
-      category: 'content'
-    },
+    }
+  ];
+  
+  // Supporting tools - in expandable section
+  const supportingTools = [
     {
       id: 'writing-assistant',
       name: 'Writing Assistant',
@@ -319,46 +324,82 @@ const SmartTools = () => {
           </div>
         </motion.div>
 
-        {/* Smart Tools Grid - Organized by Categories */}
-        <div className="space-y-12">
-          {/* AI Writing & Document Generation */}
-          <div>
-            <h2 className="text-2xl font-bold text-gray-900 mb-2 flex items-center">
-              ✍️ AI Writing & Document Generation
-            </h2>
-            <p className="text-gray-600 mb-6">Professional proposal content and documentation tools</p>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {smartTools
-                .filter(tool => tool.category === 'content')
-                .map((tool, index) => renderToolCard(tool, index))}
+        {/* Main Featured Tools - Always Visible */}
+        <div className="mb-12">
+          <h2 className="text-2xl font-bold text-gray-900 mb-2">🌟 Featured Smart Tools</h2>
+          <p className="text-gray-600 mb-6">Essential AI-powered tools for grant success</p>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {mainTools.map((tool, index) => renderToolCard(tool, index))}
+          </div>
+        </div>
+
+        {/* Supporting Tools - Expandable Section */}
+        <div className="mb-12">
+          <div 
+            className="bg-white rounded-lg shadow-md p-6 cursor-pointer hover:shadow-lg transition-shadow"
+            onClick={() => setShowSupportingTools(!showSupportingTools)}
+          >
+            <div className="flex items-center justify-between">
+              <div>
+                <h2 className="text-2xl font-bold text-gray-900">🛠️ Comprehensive Supporting Tools</h2>
+                <p className="text-gray-600 mt-1">
+                  {supportingTools.length} additional tools for advanced reporting, analytics, and data management
+                </p>
+              </div>
+              <div className="text-2xl">
+                {showSupportingTools ? '▼' : '▶'}
+              </div>
             </div>
           </div>
 
-          {/* Comprehensive Reporting System */}
-          <div>
-            <h2 className="text-2xl font-bold text-gray-900 mb-2 flex items-center">
-              📊 Comprehensive Reporting & Analytics
-            </h2>
-            <p className="text-gray-600 mb-6">Advanced reporting, dashboards, and performance tracking</p>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {smartTools
-                .filter(tool => tool.category === 'reporting')
-                .map((tool, index) => renderToolCard(tool, index))}
-            </div>
-          </div>
+          {/* Expandable Content */}
+          {showSupportingTools && (
+            <motion.div 
+              className="space-y-12 mt-8"
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: 'auto' }}
+              transition={{ duration: 0.3 }}
+            >
+              {/* AI Writing & Document Generation */}
+              <div>
+                <h3 className="text-xl font-bold text-gray-900 mb-2 flex items-center">
+                  ✍️ Additional Writing Tools
+                </h3>
+                <p className="text-gray-600 mb-6">Professional proposal content and documentation tools</p>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {supportingTools
+                    .filter(tool => tool.category === 'content')
+                    .map((tool, index) => renderToolCard(tool, index))}
+                </div>
+              </div>
 
-          {/* Data Collection & Validation */}
-          <div>
-            <h2 className="text-2xl font-bold text-gray-900 mb-2 flex items-center">
-              📝 Data Collection & Validation
-            </h2>
-            <p className="text-gray-600 mb-6">Advanced survey tools, data validation, and impact measurement</p>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {smartTools
-                .filter(tool => tool.category === 'data')
-                .map((tool, index) => renderToolCard(tool, index))}
-            </div>
-          </div>
+              {/* Comprehensive Reporting System */}
+              <div>
+                <h3 className="text-xl font-bold text-gray-900 mb-2 flex items-center">
+                  📊 Comprehensive Reporting & Analytics
+                </h3>
+                <p className="text-gray-600 mb-6">Advanced reporting, dashboards, and performance tracking</p>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {supportingTools
+                    .filter(tool => tool.category === 'reporting')
+                    .map((tool, index) => renderToolCard(tool, index))}
+                </div>
+              </div>
+
+              {/* Data Collection & Validation */}
+              <div>
+                <h3 className="text-xl font-bold text-gray-900 mb-2 flex items-center">
+                  📝 Data Collection & Validation
+                </h3>
+                <p className="text-gray-600 mb-6">Advanced survey tools, data validation, and impact measurement</p>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {supportingTools
+                    .filter(tool => tool.category === 'data')
+                    .map((tool, index) => renderToolCard(tool, index))}
+                </div>
+              </div>
+            </motion.div>
+          )}
         </div>
       </div>
     </div>
