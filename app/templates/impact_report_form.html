@@ -1,0 +1,613 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Impact Report Generator - Pink Lemonade</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --pink: #F5F0F1;
+            --pink-matte: #B8899A;
+            --white: #FAFAFA;
+            --black: #2A2A2A;
+            --grey-light: #FAFAFA;
+            --grey: #6B6B6B;
+            --grey-dark: #2A2A2A;
+            --border: #E8E8E8;
+        }
+
+        body {
+            background-color: var(--grey-light);
+            color: var(--black);
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        }
+
+        .header-bar {
+            background: var(--white);
+            border-bottom: 1px solid var(--border);
+            padding: 1rem 1.5rem;
+        }
+
+        .form-section {
+            background: var(--white);
+            border-radius: 0.5rem;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            border: 1px solid var(--border);
+        }
+
+        .section-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            color: var(--black);
+            border-bottom: 2px solid var(--pink-matte);
+            padding-bottom: 0.5rem;
+        }
+
+        .form-input, .form-textarea, .form-select {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid var(--border);
+            border-radius: 0.375rem;
+            background: var(--white);
+            color: var(--black);
+            transition: border-color 0.2s;
+        }
+
+        .form-input:focus, .form-textarea:focus, .form-select:focus {
+            outline: none;
+            border-color: var(--pink-matte);
+            border-width: 2px;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+            color: var(--grey-dark);
+        }
+
+        .btn-primary {
+            background: var(--pink-matte);
+            color: var(--white);
+            padding: 0.75rem 2rem;
+            border-radius: 0.375rem;
+            font-weight: 500;
+            transition: opacity 0.2s;
+            border: none;
+            cursor: pointer;
+        }
+
+        .btn-primary:hover {
+            opacity: 0.9;
+        }
+
+        .btn-secondary {
+            background: var(--white);
+            color: var(--grey-dark);
+            border: 1px solid var(--border);
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.375rem;
+            font-weight: 500;
+            transition: all 0.2s;
+            cursor: pointer;
+        }
+
+        .btn-secondary:hover {
+            background: var(--grey-light);
+        }
+
+        .output-section {
+            background: var(--white);
+            border-radius: 0.5rem;
+            padding: 1.5rem;
+            border: 1px solid var(--border);
+            display: none;
+        }
+
+        .report-content {
+            white-space: pre-wrap;
+            font-family: 'Georgia', serif;
+            line-height: 1.6;
+            max-height: 600px;
+            overflow-y: auto;
+            border: 1px solid var(--border);
+            padding: 1rem;
+            border-radius: 0.375rem;
+            background: #fefefe;
+        }
+
+        .loading {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: var(--pink-matte);
+        }
+
+        .spinner {
+            border: 2px solid var(--border);
+            border-top: 2px solid var(--pink-matte);
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .notification {
+            position: fixed;
+            top: 1rem;
+            right: 1rem;
+            padding: 1rem 1.5rem;
+            border-radius: 0.375rem;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            z-index: 1000;
+            animation: slideIn 0.3s ease-out;
+        }
+
+        .notification-success {
+            background: var(--pink-matte);
+            color: var(--white);
+        }
+
+        .notification-error {
+            background: #DC2626;
+            color: var(--white);
+        }
+
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+
+        .file-upload-area {
+            border: 2px dashed var(--border);
+            border-radius: 0.5rem;
+            padding: 2rem;
+            text-align: center;
+            background: var(--grey-light);
+            transition: all 0.2s;
+        }
+
+        .file-upload-area:hover {
+            border-color: var(--pink-matte);
+            background: var(--pink);
+        }
+
+        .file-upload-area.dragover {
+            border-color: var(--pink-matte);
+            background: var(--pink);
+        }
+
+        .uploaded-file {
+            background: var(--pink);
+            padding: 0.5rem 1rem;
+            border-radius: 0.375rem;
+            margin: 0.5rem 0;
+            display: flex;
+            justify-content: between;
+            align-items: center;
+        }
+
+        .metrics-input-group {
+            display: grid;
+            grid-template-columns: 2fr 1fr 1fr;
+            gap: 0.5rem;
+            align-items: end;
+            margin-bottom: 0.5rem;
+        }
+
+        .add-metric-btn {
+            background: var(--pink-matte);
+            color: var(--white);
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 0.375rem;
+            cursor: pointer;
+            font-size: 0.875rem;
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <div class="header-bar">
+        <div class="max-w-7xl mx-auto flex items-center justify-between">
+            <div class="flex items-center space-x-4">
+                <h1 class="text-xl font-semibold">Impact Report Generator</h1>
+            </div>
+            <a href="/writing" class="text-sm hover:underline" style="color: var(--pink-matte);">← Back to Writing</a>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="max-w-4xl mx-auto px-4 py-6">
+        <div class="form-section">
+            <h2 class="section-title">Report Configuration</h2>
+            <p class="text-gray-600 mb-6">Configure your impact report settings</p>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                <div>
+                    <label class="form-label">Report Type *</label>
+                    <select id="report_type" class="form-select" required>
+                        <option value="quarterly">Quarterly Report</option>
+                        <option value="annual">Annual Report</option>
+                        <option value="grant-specific">Grant-Specific Report</option>
+                        <option value="program-evaluation">Program Evaluation</option>
+                        <option value="donor-update">Donor Update</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="form-label">Target Audience *</label>
+                    <select id="target_audience" class="form-select" required>
+                        <option value="foundations">Foundations</option>
+                        <option value="individual-donors">Individual Donors</option>
+                        <option value="board-members">Board Members</option>
+                        <option value="government">Government Agencies</option>
+                        <option value="corporate">Corporate Partners</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                <div>
+                    <label class="form-label">Report Period Start *</label>
+                    <input type="date" id="period_start" class="form-input" required>
+                </div>
+                <div>
+                    <label class="form-label">Report Period End *</label>
+                    <input type="date" id="period_end" class="form-input" required>
+                </div>
+            </div>
+        </div>
+
+        <div class="form-section">
+            <h2 class="section-title">Organization Information</h2>
+            <p class="text-gray-600 mb-6">Basic organization details for the report</p>
+            
+            <form id="impact-report-form">
+                <div class="mb-6">
+                    <label class="form-label">Organization Name *</label>
+                    <input type="text" id="org_name" class="form-input" required placeholder="Nitrogen Network">
+                </div>
+
+                <div class="mb-6">
+                    <label class="form-label">Programs/Services Covered *</label>
+                    <textarea id="programs_covered" class="form-textarea" rows="3" required placeholder="List the programs or services this report covers..."></textarea>
+                </div>
+            </form>
+        </div>
+
+        <div class="form-section">
+            <h2 class="section-title">Impact Metrics & Outcomes</h2>
+            <p class="text-gray-600 mb-6">Enter verified data and measurable outcomes only</p>
+            
+            <div class="mb-6">
+                <label class="form-label">Key Metrics *</label>
+                <div id="metrics-container">
+                    <div class="metrics-input-group">
+                        <input type="text" placeholder="Metric name (e.g., Youth served)" class="form-input metric-name">
+                        <input type="number" placeholder="Target" class="form-input metric-target">
+                        <input type="number" placeholder="Actual" class="form-input metric-actual">
+                    </div>
+                </div>
+                <button type="button" class="add-metric-btn mt-2" onclick="addMetricRow()">+ Add Metric</button>
+            </div>
+
+            <div class="mb-6">
+                <label class="form-label">Program Outcomes *</label>
+                <textarea id="program_outcomes" class="form-textarea" rows="4" required placeholder="Describe specific outcomes and achievements with numbers..."></textarea>
+            </div>
+
+            <div class="mb-6">
+                <label class="form-label">Impact Stories/Testimonials</label>
+                <textarea id="impact_stories" class="form-textarea" rows="4" placeholder="Include real testimonials or case studies (with permission)..."></textarea>
+            </div>
+        </div>
+
+        <div class="form-section">
+            <h2 class="section-title">Financial Information</h2>
+            <p class="text-gray-600 mb-6">Financial stewardship and accountability data</p>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                <div>
+                    <label class="form-label">Total Budget</label>
+                    <input type="number" id="total_budget" class="form-input" placeholder="50000" step="0.01">
+                </div>
+                <div>
+                    <label class="form-label">Total Expenses</label>
+                    <input type="number" id="total_expenses" class="form-input" placeholder="45000" step="0.01">
+                </div>
+            </div>
+
+            <div class="mb-6">
+                <label class="form-label">Budget Breakdown</label>
+                <textarea id="budget_breakdown" class="form-textarea" rows="3" placeholder="Program costs: $30,000; Administrative: $10,000; Fundraising: $5,000..."></textarea>
+            </div>
+
+            <div class="mb-6">
+                <label class="form-label">Funding Sources</label>
+                <textarea id="funding_sources" class="form-textarea" rows="3" placeholder="Grants: $25,000; Individual donations: $15,000; Events: $5,000..."></textarea>
+            </div>
+        </div>
+
+        <div class="form-section">
+            <h2 class="section-title">Data Upload (Optional)</h2>
+            <p class="text-gray-600 mb-6">Upload spreadsheets, reports, or data files to enhance the report</p>
+            
+            <div class="file-upload-area" id="file-upload-area">
+                <div class="text-gray-500 mb-2">📄 Drop files here or click to upload</div>
+                <div class="text-sm text-gray-400">Supported: Excel, CSV, PDF, Word documents</div>
+                <input type="file" id="file-input" multiple accept=".xlsx,.xls,.csv,.pdf,.doc,.docx" style="display: none;">
+            </div>
+            <div id="uploaded-files"></div>
+        </div>
+
+        <div class="form-section">
+            <div class="flex gap-4">
+                <button type="submit" class="btn-primary" id="generate-btn" onclick="generateImpactReport()">
+                    Generate Impact Report
+                </button>
+                <button type="button" class="btn-secondary" onclick="loadFromProfile()">
+                    Load from Profile
+                </button>
+            </div>
+        </div>
+
+        <!-- Output Section -->
+        <div id="output-section" class="output-section">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="section-title">Generated Impact Report</h2>
+                <div class="flex gap-2">
+                    <button onclick="copyReport()" class="btn-secondary">Copy Text</button>
+                    <button onclick="exportToPDF()" class="btn-secondary">Export PDF</button>
+                    <button onclick="exportToWord()" class="btn-secondary">Export Word</button>
+                </div>
+            </div>
+            <div id="loading" class="loading" style="display: none;">
+                <div class="spinner"></div>
+                <span>Creating your professional impact report...</span>
+            </div>
+            <div id="report-content" class="report-content"></div>
+        </div>
+    </div>
+
+    <script>
+        let generatedReport = '';
+        let uploadedFiles = [];
+
+        document.addEventListener('DOMContentLoaded', () => {
+            loadFromProfile();
+            setupFileUpload();
+            
+            // Set default dates (last quarter)
+            const today = new Date();
+            const endDate = new Date(today.getFullYear(), today.getMonth(), 0);
+            const startDate = new Date(today.getFullYear(), today.getMonth() - 3, 1);
+            
+            document.getElementById('period_end').value = endDate.toISOString().split('T')[0];
+            document.getElementById('period_start').value = startDate.toISOString().split('T')[0];
+        });
+
+        function setupFileUpload() {
+            const uploadArea = document.getElementById('file-upload-area');
+            const fileInput = document.getElementById('file-input');
+            
+            uploadArea.addEventListener('click', () => fileInput.click());
+            
+            uploadArea.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                uploadArea.classList.add('dragover');
+            });
+            
+            uploadArea.addEventListener('dragleave', () => {
+                uploadArea.classList.remove('dragover');
+            });
+            
+            uploadArea.addEventListener('drop', (e) => {
+                e.preventDefault();
+                uploadArea.classList.remove('dragover');
+                handleFiles(e.dataTransfer.files);
+            });
+            
+            fileInput.addEventListener('change', (e) => {
+                handleFiles(e.target.files);
+            });
+        }
+
+        function handleFiles(files) {
+            const filesContainer = document.getElementById('uploaded-files');
+            
+            Array.from(files).forEach(file => {
+                uploadedFiles.push(file);
+                
+                const fileDiv = document.createElement('div');
+                fileDiv.className = 'uploaded-file';
+                fileDiv.innerHTML = `
+                    <span>📄 ${file.name} (${(file.size / 1024).toFixed(1)}KB)</span>
+                    <button onclick="removeFile(${uploadedFiles.length - 1})" class="text-red-600 hover:text-red-800">✕</button>
+                `;
+                filesContainer.appendChild(fileDiv);
+            });
+        }
+
+        function removeFile(index) {
+            uploadedFiles.splice(index, 1);
+            const filesContainer = document.getElementById('uploaded-files');
+            filesContainer.innerHTML = '';
+            
+            uploadedFiles.forEach((file, i) => {
+                const fileDiv = document.createElement('div');
+                fileDiv.className = 'uploaded-file';
+                fileDiv.innerHTML = `
+                    <span>📄 ${file.name} (${(file.size / 1024).toFixed(1)}KB)</span>
+                    <button onclick="removeFile(${i})" class="text-red-600 hover:text-red-800">✕</button>
+                `;
+                filesContainer.appendChild(fileDiv);
+            });
+        }
+
+        function addMetricRow() {
+            const container = document.getElementById('metrics-container');
+            const newRow = document.createElement('div');
+            newRow.className = 'metrics-input-group';
+            newRow.innerHTML = `
+                <input type="text" placeholder="Metric name" class="form-input metric-name">
+                <input type="number" placeholder="Target" class="form-input metric-target">
+                <input type="number" placeholder="Actual" class="form-input metric-actual">
+            `;
+            container.appendChild(newRow);
+        }
+
+        function getMetrics() {
+            const metrics = [];
+            const metricRows = document.querySelectorAll('.metrics-input-group');
+            
+            metricRows.forEach(row => {
+                const name = row.querySelector('.metric-name').value;
+                const target = row.querySelector('.metric-target').value;
+                const actual = row.querySelector('.metric-actual').value;
+                
+                if (name && (target || actual)) {
+                    metrics.push({ name, target, actual });
+                }
+            });
+            
+            return metrics;
+        }
+
+        async function generateImpactReport() {
+            const metrics = getMetrics();
+            
+            const formData = {
+                org_name: document.getElementById('org_name').value,
+                report_type: document.getElementById('report_type').value,
+                target_audience: document.getElementById('target_audience').value,
+                period_start: document.getElementById('period_start').value,
+                period_end: document.getElementById('period_end').value,
+                programs_covered: document.getElementById('programs_covered').value,
+                program_outcomes: document.getElementById('program_outcomes').value,
+                impact_stories: document.getElementById('impact_stories').value,
+                total_budget: document.getElementById('total_budget').value,
+                total_expenses: document.getElementById('total_expenses').value,
+                budget_breakdown: document.getElementById('budget_breakdown').value,
+                funding_sources: document.getElementById('funding_sources').value,
+                metrics: metrics
+            };
+
+            // Validate required fields
+            const requiredFields = ['org_name', 'programs_covered', 'program_outcomes'];
+            for (const field of requiredFields) {
+                if (!formData[field].trim()) {
+                    showNotification(`${field.replace('_', ' ').toUpperCase()} is required`, 'error');
+                    return;
+                }
+            }
+
+            try {
+                document.getElementById('loading').style.display = 'flex';
+                document.getElementById('output-section').style.display = 'block';
+                document.getElementById('report-content').innerHTML = '';
+
+                const response = await fetch('/api/writing/impact-report', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify(formData)
+                });
+
+                if (!response.ok) {
+                    throw new Error('Failed to generate impact report');
+                }
+
+                const data = await response.json();
+                generatedReport = data.content;
+                
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('report-content').innerHTML = formatReportContent(data.content);
+                
+                showNotification('Impact report generated successfully!', 'success');
+
+            } catch (error) {
+                document.getElementById('loading').style.display = 'none';
+                console.error('Error generating impact report:', error);
+                showNotification('Error generating report. Please try again.', 'error');
+            }
+        }
+
+        async function loadFromProfile() {
+            try {
+                const response = await fetch('/api/profile/organization');
+                if (response.ok) {
+                    const data = await response.json();
+                    
+                    if (data.name) document.getElementById('org_name').value = data.name;
+                    
+                    showNotification('Profile data loaded', 'success');
+                }
+            } catch (error) {
+                console.error('Error loading profile:', error);
+            }
+        }
+
+        function formatReportContent(content) {
+            return content
+                .replace(/^# (.+)$/gm, '<h1>$1</h1>')
+                .replace(/^## (.+)$/gm, '<h2>$1</h2>')
+                .replace(/^### (.+)$/gm, '<h3>$1</h3>')
+                .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+                .replace(/\*(.+?)\*/g, '<em>$1</em>')
+                .replace(/^- (.+)$/gm, '<li>$1</li>')
+                .replace(/(<li>.*<\/li>)/gm, '<ul>$1</ul>')
+                .replace(/<\/ul>\s*<ul>/g, '')
+                .replace(/\n\n/g, '</p><p>')
+                .replace(/^(.+)$/gm, '<p>$1</p>')
+                .replace(/^<p><h/g, '<h')
+                .replace(/^<p><ul>/g, '<ul>')
+                .replace(/<\/h[1-6]><\/p>$/gm, '</h1>')
+                .replace(/<\/ul><\/p>$/gm, '</ul>');
+        }
+
+        function copyReport() {
+            navigator.clipboard.writeText(generatedReport).then(() => {
+                showNotification('Report copied to clipboard!', 'success');
+            }).catch(() => {
+                showNotification('Failed to copy report', 'error');
+            });
+        }
+
+        function exportToPDF() {
+            if (!generatedReport) {
+                showNotification('No report to export', 'error');
+                return;
+            }
+            
+            const blob = new Blob([generatedReport], { type: 'text/markdown' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'impact-report.md';
+            a.click();
+            URL.revokeObjectURL(url);
+            
+            showNotification('Report downloaded', 'success');
+        }
+
+        function exportToWord() {
+            exportToPDF(); // For now, export as markdown
+        }
+
+        function showNotification(message, type) {
+            const notification = document.createElement('div');
+            notification.className = `notification notification-${type}`;
+            notification.textContent = message;
+            document.body.appendChild(notification);
+            setTimeout(() => notification.remove(), 4000);
+        }
+    </script>
+</body>
+</html>

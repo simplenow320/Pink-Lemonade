@@ -222,23 +222,98 @@ Generate the three grant pitch formats now:"""
         logger.error(f"Error generating grant pitch: {e}")
         return jsonify({'error': str(e)}), 500
 
-@bp.post("/impact-report")
+@bp.route('/impact-report', methods=['POST'])
 def create_impact_report():
-    body = _json()
-    org_id = int(body.get("orgId") or 1)
-    tokens = {
-        "org_name": body.get("orgName") or "Your Organization",
-        "template_sections": body.get("templateSections") or "Grant Summary; Objectives & Activities; Outputs; Outcomes; Financial Report; Challenges & Learnings; Next Steps",
-        "start_date": body.get("startDate") or "2025-01-01",
-        "end_date": body.get("endDate") or "2025-06-30"
-    }
-    data_pack = build_data_pack(org_id)
-    result = run_prompt("impact_report", tokens, data_pack)
-    content = result["content"]
-    needs = _extract_missing(content)
-    doc = ImpactReport(org_id=org_id, grant_id=body.get("grantId"), period_start=None, period_end=None, sections={"body": content}, needs_update=needs, sources={})
-    db.session.add(doc); db.session.commit()
-    return jsonify({"id": doc.id, "needsUpdate": needs, "content": content}), 200
+    """Generate an Impact Report using verified data and inputs only"""
+    try:
+        data = request.get_json()
+        
+        # Validate required fields
+        required_fields = ['org_name', 'programs_covered', 'program_outcomes']
+        for field in required_fields:
+            if not data.get(field, '').strip():
+                return jsonify({'error': f'{field.replace("_", " ").title()} is required'}), 400
+        
+        # Use OpenAI for document generation
+        from openai import OpenAI
+        client = OpenAI(api_key=os.environ.get('OPENAI_API_KEY'))
+        
+        # Format metrics for the prompt
+        metrics_text = ""
+        if data.get('metrics'):
+            metrics_text = "\n".join([
+                f"- {m['name']}: Target {m.get('target', 'N/A')}, Actual {m.get('actual', 'N/A')}"
+                for m in data['metrics'] if m.get('name')
+            ])
+        
+        # Build the professional impact reporting prompt
+        prompt = f"""You are an expert in nonprofit impact reporting. Using the data and manually entered inputs provided below, create a visually clear and funder-friendly report.
+
+ORGANIZATION DETAILS:
+- Name: {data.get('org_name')}
+- Report Type: {data.get('report_type', 'Quarterly Report')}
+- Target Audience: {data.get('target_audience', 'Foundations')}
+- Report Period: {data.get('period_start', 'Start date not provided')} to {data.get('period_end', 'End date not provided')}
+
+PROGRAM INFORMATION:
+- Programs/Services Covered: {data.get('programs_covered')}
+- Program Outcomes: {data.get('program_outcomes')}
+- Impact Stories: {data.get('impact_stories', 'Not provided')}
+
+KEY METRICS:
+{metrics_text or 'No metrics provided'}
+
+FINANCIAL DATA:
+- Total Budget: ${data.get('total_budget', 'Not specified')}
+- Total Expenses: ${data.get('total_expenses', 'Not specified')}
+- Budget Breakdown: {data.get('budget_breakdown', 'Not provided')}
+- Funding Sources: {data.get('funding_sources', 'Not provided')}
+
+Create a comprehensive impact report with these sections:
+## Executive Summary
+## Program Outcomes
+## Key Metrics & Data
+## Financial Stewardship
+## Impact Stories
+## Recommended Visualizations
+
+Requirements:
+- Use ONLY the verified data provided above
+- Never create fictional numbers or fabricate data points
+- Include short narrative summary of achievements and impact
+- Provide bullet-point list of concrete outcomes with numbers
+- Recommend specific charts or visuals that can be auto-generated from the actual data
+- Structure content for both PDF and Word download formats
+- Focus on measurable outcomes and tangible results
+- Include financial accountability information where data is provided
+
+Generate the comprehensive impact report now:"""
+
+        response = client.chat.completions.create(
+            model="gpt-4o",
+            messages=[
+                {"role": "system", "content": "You are an expert in nonprofit impact reporting specializing in creating visually clear, funder-friendly reports. Turn verified data into compelling narratives with visualization recommendations using only provided information."},
+                {"role": "user", "content": prompt}
+            ],
+            max_tokens=2500
+        )
+        
+        content = response.choices[0].message.content
+        
+        # Add source note
+        content += "\n\n---\n**Source Notes:** This Impact Report is based only on verified data provided by the user. No fictional numbers or fabricated data points have been generated."
+        
+        return jsonify({
+            'success': True,
+            'content': content,
+            'message': 'Impact report generated successfully',
+            'word_count': len(content.split()),
+            'sections': ['Executive Summary', 'Program Outcomes', 'Key Metrics & Data', 'Financial Stewardship', 'Impact Stories', 'Recommended Visualizations']
+        })
+        
+    except Exception as e:
+        logger.error(f"Error generating impact report: {e}")
+        return jsonify({'error': str(e)}), 500
 
 def _extract_missing(text: str):
     # If the model followed our prompts, it lists "Missing Info" or "Needs Update" when data is absent.

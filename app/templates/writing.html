@@ -75,14 +75,8 @@
     };
 
     document.getElementById('btnReport').onclick = async () => {
-      try{
-        show('Generating Impact Report…');
-        const data = await postJSON('/api/writing/impact-report', {...common, startDate:'2025-01-01', endDate:'2025-06-30'});
-        out.style.display='block'; docDiv.textContent = data.content;
-        showNeeds(data.needsUpdate);
-        enableExports('impact-report', data.id);
-        show(data.needsUpdate?.length ? 'Needs update listed below.' : 'Done. Copy ready.');
-      }catch(e){ show('Error: '+e.message); }
+      // Redirect to the detailed form
+      window.location.href = '/impact-report';
     };
   </script>
 {% endblock %}

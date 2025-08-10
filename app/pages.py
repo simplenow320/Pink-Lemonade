@@ -69,6 +69,11 @@ def grant_pitch():
     """Grant Pitch Generator Form"""
     return render_template("grant_pitch_form.html", active="writing")
 
+@pages.get("/impact-report")
+def impact_report():
+    """Impact Report Generator Form"""
+    return render_template("impact_report_form.html", active="writing")
+
 @pages.get("/admin")
 def admin_dashboard():
     """Admin Dashboard Page"""
