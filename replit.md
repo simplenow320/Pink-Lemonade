@@ -89,6 +89,14 @@ Preferred communication style: Simple, everyday language.
 
 ## Recent Updates (August 2025)
 
+### Grant Detail Pages Fixed (August 10, 2025)
+- **Issue Resolved**: Fixed "/None" error when clicking on grants
+- **Solution**: Added `/grant/<id>` route and grant_detail.html template
+- **Features**: Grant titles are now clickable links to detail pages showing full information
+- **Status**: 5 real grants available in database for viewing and interaction
+
+## Previous Updates (August 2025)
+
 ### Phase 4 Completed: Live Data Integration (August 9, 2025)
 - **Live Sources**: Integrated 4 real grant APIs - Grants.gov, Federal Register, GovInfo, Philanthropy News Digest
 - **API Endpoints**: Full suite - `/api/live/sources/status`, `/api/live/fetch/<source>`, `/api/live/sync/all`

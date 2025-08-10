@@ -61,3 +61,9 @@ def journey():
 def admin_dashboard():
     """Admin Dashboard Page"""
     return render_template("admin_dashboard.html", active="admin")
+
+@pages.get("/grant/<int:grant_id>")
+def grant_detail(grant_id):
+    """Grant Detail Page"""
+    grant = Grant.query.get_or_404(grant_id)
+    return render_template("grant_detail.html", grant=grant, active="opportunities")
