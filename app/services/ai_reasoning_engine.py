@@ -637,3 +637,79 @@ class AIReasoningEngine:
                 'error': str(e),
                 'questions': []
             }
+    def refine_impact_questions(self, questions: List[Dict], feedback_data: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        Phase 2: Refine existing impact questions based on performance data and feedback
+        """
+        try:
+            prompt = f"""
+            As an expert in impact measurement, analyze these questions and improve them based on performance data.
+            
+            Current Questions: {json.dumps(questions, indent=2)}
+            
+            Performance Data:
+            - Average completion rate: {feedback_data.get("completion_rate", "N/A")}%
+            - Response quality score: {feedback_data.get("quality_score", "N/A")}/10
+            - Insight value rating: {feedback_data.get("insight_value", "N/A")}/10
+            
+            Return JSON with refined_questions, new_questions, and optimization_recommendations.
+            """
+            
+            response = self.openai_client.chat.completions.create(
+                model="gpt-4o",
+                messages=[{"role": "user", "content": prompt}],
+                response_format={"type": "json_object"},
+                temperature=0.3,
+                max_tokens=2500
+            )
+            
+            result = json.loads(response.choices[0].message.content)
+            
+            return {
+                "success": True,
+                "refined_questions": result.get("refined_questions", []),
+                "new_questions": result.get("new_questions", []),
+                "recommendations": result.get("optimization_recommendations", [])
+            }
+            
+        except Exception as e:
+            self.logger.error(f"Question refinement failed: {e}")
+            return {"success": False, "error": str(e)}
+
+    def generate_survey_template(self, project_context: Dict[str, Any], stakeholder_types: List[str]) -> Dict[str, Any]:
+        """
+        Phase 2: Generate comprehensive survey templates for different stakeholder groups
+        """
+        try:
+            prompt = f"""
+            Create comprehensive survey templates for a nonprofit impact measurement project.
+            
+            Project Context: {json.dumps(project_context, indent=2)}
+            Stakeholder Groups: {", ".join(stakeholder_types)}
+            
+            For each stakeholder group, create a survey with 8-12 strategic questions mixing quantitative and qualitative.
+            
+            Return JSON with survey_templates, cross_cutting_themes, and data_integration_notes.
+            """
+            
+            response = self.openai_client.chat.completions.create(
+                model="gpt-4o",
+                messages=[{"role": "user", "content": prompt}],
+                response_format={"type": "json_object"},
+                temperature=0.4,
+                max_tokens=3000
+            )
+            
+            result = json.loads(response.choices[0].message.content)
+            
+            return {
+                "success": True,
+                "survey_templates": result.get("survey_templates", {}),
+                "cross_cutting_themes": result.get("cross_cutting_themes", []),
+                "integration_notes": result.get("data_integration_notes", [])
+            }
+            
+        except Exception as e:
+            self.logger.error(f"Survey template generation failed: {e}")
+            return {"success": False, "error": str(e)}
+
