@@ -17,6 +17,7 @@ def create_app():
         # Import models so they are registered
         import app.models
         import app.models_extended
+
         
         # Create all tables
         db.create_all()
@@ -107,6 +108,10 @@ def create_app():
     # Register onboarding journey endpoints
     from app.api.onboarding import onboarding_bp
     flask_app.register_blueprint(onboarding_bp)
+    
+    # Register Smart Reporting endpoints
+    from app.api.smart_reporting import bp as smart_reporting_bp
+    flask_app.register_blueprint(smart_reporting_bp)
     
     # Initialize monitoring
     from app.services.monitoring_service import init_monitoring

@@ -550,3 +550,90 @@ class AIReasoningEngine:
             
         except Exception as e:
             logger.error(f"Error in learning from outcome: {e}")
+
+    def generate_impact_questions(self, context: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        Generate impact measurement questions for Smart Reporting
+        """
+        try:
+            # Prepare context for AI prompt
+            prompt = f"""
+            As an expert in nonprofit impact measurement and grant reporting, generate 7 meaningful impact questions for the following project:
+
+            GRANT INFORMATION:
+            - Title: {context.get('grant_title', 'Not specified')}
+            - Description: {context.get('grant_description', 'Not specified')}
+            - Focus Areas: {context.get('grant_focus_areas', 'Not specified')}
+            - Amount: {context.get('grant_amount', 'Not specified')}
+
+            PROJECT INFORMATION:
+            - Name: {context.get('project_name', 'Not specified')}
+            - Description: {context.get('project_description', 'Not specified')}
+            - Target Participants: {context.get('target_participants', 'Not specified')}
+            - Target Outcome: {context.get('target_outcome', 'Not specified')}
+
+            ORGANIZATION CONTEXT:
+            - Mission: {context.get('organization_mission', 'Not specified')}
+            - Focus Areas: {context.get('organization_focus_areas', [])}
+
+            Generate exactly 7 impact questions that will help measure the success of this project. For each question, provide:
+            1. The question text
+            2. Question type (quantitative, qualitative, or story)
+            3. Category (participants, outcomes, process, or satisfaction)
+            4. Response format (text, number, scale, or multiple_choice)
+            5. Reasoning for why this question is important
+            6. Confidence score (0.0 to 1.0)
+
+            Focus on questions that are:
+            - Specific to the project goals
+            - Measurable and actionable
+            - Relevant to funder interests
+            - Appropriate for the target population
+            - Aligned with best practices in impact measurement
+
+            Respond in JSON format with this structure:
+            {{
+                "questions": [
+                    {{
+                        "question": "Question text here",
+                        "type": "quantitative|qualitative|story",
+                        "category": "participants|outcomes|process|satisfaction",
+                        "format": "text|number|scale|multiple_choice",
+                        "reasoning": "Why this question is important",
+                        "confidence": 0.8,
+                        "tags": ["relevant", "tags", "for", "learning"]
+                    }}
+                ],
+                "overall_confidence": 0.85,
+                "suggestions": ["Additional customization suggestions"]
+            }}
+            """
+            
+            response = self.openai_client.chat.completions.create(
+                model="gpt-4o",
+                messages=[
+                    {"role": "system", "content": "You are an expert in nonprofit impact measurement and grant reporting. Generate thoughtful, measurable impact questions that will help organizations demonstrate their effectiveness to funders."},
+                    {"role": "user", "content": prompt}
+                ],
+                response_format={"type": "json_object"},
+                max_tokens=2000,
+                temperature=0.3
+            )
+            
+            result = json.loads(response.choices[0].message.content)
+            
+            return {
+                'success': True,
+                'questions': result.get('questions', []),
+                'overall_confidence': result.get('overall_confidence', 0.8),
+                'suggestions': result.get('suggestions', []),
+                'generation_method': 'ai_reasoning_engine'
+            }
+            
+        except Exception as e:
+            logger.error(f"Impact question generation failed: {e}")
+            return {
+                'success': False,
+                'error': str(e),
+                'questions': []
+            }
