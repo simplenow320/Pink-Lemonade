@@ -36,6 +36,7 @@ def create_app():
     from app.api.exports import bp as exports_bp
     from app.api.profile import bp as profile_bp
     from app.api.simple_org import bp as simple_org_bp
+    from app.api.user_settings import bp as user_settings_bp
     
     # Initialize authentication
     init_auth(flask_app)
@@ -54,6 +55,7 @@ def create_app():
     flask_app.register_blueprint(exports_bp, url_prefix='/api/exports')
     flask_app.register_blueprint(profile_bp)
     flask_app.register_blueprint(simple_org_bp)
+    flask_app.register_blueprint(user_settings_bp)
     
     # Register new AI endpoints
     from app.api.ai_endpoints import bp as ai_endpoints_bp

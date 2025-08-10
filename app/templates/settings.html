@@ -1,8 +1,710 @@
-{% extends "base.html" %}
-{% block title %}Settings · Pink Lemonade{% endblock %}
-{% block content %}
-  <h1>Settings</h1>
-  <section class="card">
-    <h2>Coming soon</h2>
-  </section>
-{% endblock %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Settings - Pink Lemonade</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --pink: #F5F0F1;
+            --pink-matte: #B8899A;
+            --white: #FAFAFA;
+            --black: #2A2A2A;
+            --grey-light: #FAFAFA;
+            --grey: #6B6B6B;
+            --grey-dark: #2A2A2A;
+            --border: #E8E8E8;
+        }
+
+        body {
+            background-color: var(--grey-light);
+            color: var(--black);
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        }
+
+        .header-bar {
+            background: var(--white);
+            border-bottom: 1px solid var(--border);
+            padding: 1rem 1.5rem;
+        }
+
+        .settings-section {
+            background: var(--white);
+            border-radius: 0.5rem;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            border: 1px solid var(--border);
+        }
+
+        .section-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            color: var(--black);
+            border-bottom: 2px solid var(--pink-matte);
+            padding-bottom: 0.5rem;
+        }
+
+        .form-input, .form-textarea, .form-select {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid var(--border);
+            border-radius: 0.375rem;
+            background: var(--white);
+            color: var(--black);
+            transition: border-color 0.2s;
+        }
+
+        .form-input:focus, .form-textarea:focus, .form-select:focus {
+            outline: none;
+            border-color: var(--pink-matte);
+            border-width: 2px;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+            color: var(--grey-dark);
+        }
+
+        .btn-primary {
+            background: var(--pink-matte);
+            color: var(--white);
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.375rem;
+            font-weight: 500;
+            transition: opacity 0.2s;
+            border: none;
+            cursor: pointer;
+        }
+
+        .btn-primary:hover {
+            opacity: 0.9;
+        }
+
+        .btn-danger {
+            background: #DC2626;
+            color: var(--white);
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.375rem;
+            font-weight: 500;
+            transition: opacity 0.2s;
+            border: none;
+            cursor: pointer;
+        }
+
+        .btn-danger:hover {
+            opacity: 0.9;
+        }
+
+        .btn-secondary {
+            background: var(--white);
+            color: var(--grey-dark);
+            border: 1px solid var(--border);
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.375rem;
+            font-weight: 500;
+            transition: all 0.2s;
+            cursor: pointer;
+        }
+
+        .btn-secondary:hover {
+            background: var(--grey-light);
+        }
+
+        .toggle-switch {
+            position: relative;
+            display: inline-block;
+            width: 50px;
+            height: 24px;
+        }
+
+        .toggle-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: var(--border);
+            transition: 0.4s;
+            border-radius: 24px;
+        }
+
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 18px;
+            width: 18px;
+            left: 3px;
+            bottom: 3px;
+            background-color: white;
+            transition: 0.4s;
+            border-radius: 50%;
+        }
+
+        input:checked + .slider {
+            background-color: var(--pink-matte);
+        }
+
+        input:checked + .slider:before {
+            transform: translateX(26px);
+        }
+
+        .notification {
+            position: fixed;
+            top: 1rem;
+            right: 1rem;
+            padding: 1rem 1.5rem;
+            border-radius: 0.375rem;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            z-index: 1000;
+            animation: slideIn 0.3s ease-out;
+        }
+
+        .notification-success {
+            background: var(--pink-matte);
+            color: var(--white);
+        }
+
+        .notification-error {
+            background: #DC2626;
+            color: var(--white);
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        .tab-button {
+            padding: 0.75rem 1.5rem;
+            background: var(--grey-light);
+            color: var(--grey);
+            border: none;
+            border-radius: 0.375rem 0.375rem 0 0;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .tab-button.active {
+            background: var(--white);
+            color: var(--black);
+            border-bottom: 2px solid var(--pink-matte);
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <div class="header-bar">
+        <div class="max-w-7xl mx-auto flex items-center justify-between">
+            <div class="flex items-center space-x-4">
+                <h1 class="text-xl font-semibold">Settings</h1>
+            </div>
+            <a href="/dashboard" class="text-sm hover:underline" style="color: var(--pink-matte);">← Back to Dashboard</a>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="max-w-4xl mx-auto px-4 py-6">
+        <!-- Tabs -->
+        <div class="flex space-x-1 mb-6">
+            <button class="tab-button active" data-tab="profile">Personal Info</button>
+            <button class="tab-button" data-tab="security">Security</button>
+            <button class="tab-button" data-tab="notifications">Notifications</button>
+            <button class="tab-button" data-tab="preferences">Preferences</button>
+        </div>
+
+        <!-- Profile Tab -->
+        <div id="profile-tab" class="tab-content active">
+            <div class="settings-section">
+                <h2 class="section-title">Personal Information</h2>
+                <p class="text-gray-600 mb-6">Update your personal details from onboarding here</p>
+                
+                <form id="profile-form">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                        <div>
+                            <label class="form-label">First Name *</label>
+                            <input type="text" id="first_name" class="form-input" required>
+                        </div>
+                        <div>
+                            <label class="form-label">Last Name *</label>
+                            <input type="text" id="last_name" class="form-input" required>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                        <div>
+                            <label class="form-label">Email Address *</label>
+                            <input type="email" id="email" class="form-input" required>
+                        </div>
+                        <div>
+                            <label class="form-label">Phone Number</label>
+                            <input type="tel" id="phone" class="form-input">
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                        <div>
+                            <label class="form-label">Job Title</label>
+                            <input type="text" id="title" class="form-input" placeholder="Grant Manager">
+                        </div>
+                        <div>
+                            <label class="form-label">Department</label>
+                            <input type="text" id="department" class="form-input" placeholder="Development">
+                        </div>
+                    </div>
+
+                    <div class="mb-6">
+                        <label class="form-label">Organization</label>
+                        <input type="text" id="organization" class="form-input" placeholder="Nitrogen Network">
+                    </div>
+
+                    <div class="mb-6">
+                        <label class="form-label">Bio</label>
+                        <textarea id="bio" class="form-textarea" rows="4" placeholder="Tell us about yourself and your role..."></textarea>
+                    </div>
+
+                    <button type="submit" class="btn-primary">Save Changes</button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Security Tab -->
+        <div id="security-tab" class="tab-content">
+            <div class="settings-section">
+                <h2 class="section-title">Password & Security</h2>
+                
+                <form id="password-form" class="mb-8">
+                    <div class="mb-6">
+                        <label class="form-label">Current Password *</label>
+                        <input type="password" id="current_password" class="form-input" required>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                        <div>
+                            <label class="form-label">New Password *</label>
+                            <input type="password" id="new_password" class="form-input" required>
+                            <small class="text-gray-500">At least 8 characters</small>
+                        </div>
+                        <div>
+                            <label class="form-label">Confirm New Password *</label>
+                            <input type="password" id="confirm_password" class="form-input" required>
+                        </div>
+                    </div>
+
+                    <button type="submit" class="btn-primary">Change Password</button>
+                </form>
+
+                <div class="border-t pt-6">
+                    <h3 class="font-semibold mb-4">Account Security</h3>
+                    <div class="space-y-4">
+                        <div class="flex justify-between items-center">
+                            <div>
+                                <p class="font-medium">Two-Factor Authentication</p>
+                                <p class="text-sm text-gray-600">Add an extra layer of security</p>
+                            </div>
+                            <button class="btn-secondary">Enable</button>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <div>
+                                <p class="font-medium">Login Sessions</p>
+                                <p class="text-sm text-gray-600">Manage your active sessions</p>
+                            </div>
+                            <button class="btn-secondary">View Sessions</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Notifications Tab -->
+        <div id="notifications-tab" class="tab-content">
+            <div class="settings-section">
+                <h2 class="section-title">Notification Preferences</h2>
+                <p class="text-gray-600 mb-6">Choose how you'd like to receive updates</p>
+
+                <form id="notifications-form">
+                    <div class="space-y-6">
+                        <div class="flex justify-between items-center">
+                            <div>
+                                <p class="font-medium">Email Updates</p>
+                                <p class="text-sm text-gray-600">General platform updates and news</p>
+                            </div>
+                            <label class="toggle-switch">
+                                <input type="checkbox" id="email_updates" checked>
+                                <span class="slider"></span>
+                            </label>
+                        </div>
+
+                        <div class="flex justify-between items-center">
+                            <div>
+                                <p class="font-medium">Grant Alerts</p>
+                                <p class="text-sm text-gray-600">New grants matching your profile</p>
+                            </div>
+                            <label class="toggle-switch">
+                                <input type="checkbox" id="grant_alerts" checked>
+                                <span class="slider"></span>
+                            </label>
+                        </div>
+
+                        <div class="flex justify-between items-center">
+                            <div>
+                                <p class="font-medium">Deadline Reminders</p>
+                                <p class="text-sm text-gray-600">Reminders before grant deadlines</p>
+                            </div>
+                            <label class="toggle-switch">
+                                <input type="checkbox" id="deadline_reminders" checked>
+                                <span class="slider"></span>
+                            </label>
+                        </div>
+
+                        <div class="flex justify-between items-center">
+                            <div>
+                                <p class="font-medium">Weekly Digest</p>
+                                <p class="text-sm text-gray-600">Weekly summary of activity</p>
+                            </div>
+                            <label class="toggle-switch">
+                                <input type="checkbox" id="weekly_digest">
+                                <span class="slider"></span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="mt-8">
+                        <button type="submit" class="btn-primary">Save Preferences</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Preferences Tab -->
+        <div id="preferences-tab" class="tab-content">
+            <div class="settings-section">
+                <h2 class="section-title">System Preferences</h2>
+                
+                <form id="preferences-form">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                        <div>
+                            <label class="form-label">Timezone</label>
+                            <select id="timezone" class="form-select">
+                                <option value="America/New_York">Eastern Time (ET)</option>
+                                <option value="America/Chicago">Central Time (CT)</option>
+                                <option value="America/Denver">Mountain Time (MT)</option>
+                                <option value="America/Los_Angeles">Pacific Time (PT)</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="form-label">Date Format</label>
+                            <select id="date_format" class="form-select">
+                                <option value="MM/DD/YYYY">MM/DD/YYYY</option>
+                                <option value="DD/MM/YYYY">DD/MM/YYYY</option>
+                                <option value="YYYY-MM-DD">YYYY-MM-DD</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                        <div>
+                            <label class="form-label">Currency Display</label>
+                            <select id="currency" class="form-select">
+                                <option value="USD">US Dollar ($)</option>
+                                <option value="EUR">Euro (€)</option>
+                                <option value="GBP">British Pound (£)</option>
+                                <option value="CAD">Canadian Dollar (C$)</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="form-label">Theme</label>
+                            <select id="theme" class="form-select">
+                                <option value="light">Light</option>
+                                <option value="dark">Dark</option>
+                                <option value="auto">Auto</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <button type="submit" class="btn-primary">Save Preferences</button>
+                </form>
+            </div>
+
+            <div class="settings-section">
+                <h2 class="section-title">Account Actions</h2>
+                <div class="space-y-4">
+                    <div class="flex justify-between items-center">
+                        <div>
+                            <p class="font-medium">Export Data</p>
+                            <p class="text-sm text-gray-600">Download all your account data</p>
+                        </div>
+                        <button onclick="exportData()" class="btn-secondary">Export</button>
+                    </div>
+                    <div class="flex justify-between items-center">
+                        <div>
+                            <p class="font-medium">Delete Account</p>
+                            <p class="text-sm text-gray-600">Permanently delete your account and data</p>
+                        </div>
+                        <button onclick="confirmDeleteAccount()" class="btn-danger">Delete</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Tab functionality
+        document.querySelectorAll('.tab-button').forEach(button => {
+            button.addEventListener('click', () => {
+                const tabName = button.getAttribute('data-tab');
+                
+                // Update active tab button
+                document.querySelectorAll('.tab-button').forEach(btn => btn.classList.remove('active'));
+                button.classList.add('active');
+                
+                // Update active tab content
+                document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+                document.getElementById(`${tabName}-tab`).classList.add('active');
+            });
+        });
+
+        // Initialize page
+        document.addEventListener('DOMContentLoaded', () => {
+            loadUserSettings();
+            setupEventListeners();
+        });
+
+        function setupEventListeners() {
+            // Profile form submission
+            document.getElementById('profile-form').addEventListener('submit', async (e) => {
+                e.preventDefault();
+                await saveProfile();
+            });
+
+            // Password form submission
+            document.getElementById('password-form').addEventListener('submit', async (e) => {
+                e.preventDefault();
+                await changePassword();
+            });
+
+            // Notifications form submission
+            document.getElementById('notifications-form').addEventListener('submit', async (e) => {
+                e.preventDefault();
+                await saveNotifications();
+            });
+
+            // Preferences form submission
+            document.getElementById('preferences-form').addEventListener('submit', async (e) => {
+                e.preventDefault();
+                await savePreferences();
+            });
+        }
+
+        async function loadUserSettings() {
+            try {
+                const response = await fetch('/api/settings/user');
+                if (response.ok) {
+                    const data = await response.json();
+                    
+                    // Populate profile fields
+                    document.getElementById('first_name').value = data.first_name || '';
+                    document.getElementById('last_name').value = data.last_name || '';
+                    document.getElementById('email').value = data.email || '';
+                    document.getElementById('phone').value = data.phone || '';
+                    document.getElementById('title').value = data.title || '';
+                    document.getElementById('department').value = data.department || '';
+                    document.getElementById('organization').value = data.organization || '';
+                    document.getElementById('bio').value = data.bio || '';
+                    
+                    // Populate notification preferences
+                    const notifications = data.notifications || {};
+                    document.getElementById('email_updates').checked = notifications.email_updates ?? true;
+                    document.getElementById('grant_alerts').checked = notifications.grant_alerts ?? true;
+                    document.getElementById('deadline_reminders').checked = notifications.deadline_reminders ?? true;
+                    document.getElementById('weekly_digest').checked = notifications.weekly_digest ?? false;
+                    
+                    // Populate preferences
+                    const preferences = data.preferences || {};
+                    document.getElementById('timezone').value = preferences.timezone || 'America/New_York';
+                    document.getElementById('date_format').value = preferences.date_format || 'MM/DD/YYYY';
+                    document.getElementById('currency').value = preferences.currency || 'USD';
+                    document.getElementById('theme').value = preferences.theme || 'light';
+                }
+            } catch (error) {
+                console.error('Error loading user settings:', error);
+            }
+        }
+
+        async function saveProfile() {
+            const profileData = {
+                first_name: document.getElementById('first_name').value,
+                last_name: document.getElementById('last_name').value,
+                email: document.getElementById('email').value,
+                phone: document.getElementById('phone').value,
+                title: document.getElementById('title').value,
+                department: document.getElementById('department').value,
+                organization: document.getElementById('organization').value,
+                bio: document.getElementById('bio').value
+            };
+
+            try {
+                const response = await fetch('/api/settings/user', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify(profileData)
+                });
+
+                if (response.ok) {
+                    showNotification('Profile updated successfully', 'success');
+                } else {
+                    const error = await response.json();
+                    showNotification(error.error || 'Failed to update profile', 'error');
+                }
+            } catch (error) {
+                console.error('Error saving profile:', error);
+                showNotification('Error updating profile', 'error');
+            }
+        }
+
+        async function changePassword() {
+            const passwordData = {
+                current_password: document.getElementById('current_password').value,
+                new_password: document.getElementById('new_password').value,
+                confirm_password: document.getElementById('confirm_password').value
+            };
+
+            try {
+                const response = await fetch('/api/settings/password', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify(passwordData)
+                });
+
+                if (response.ok) {
+                    showNotification('Password changed successfully', 'success');
+                    document.getElementById('password-form').reset();
+                } else {
+                    const error = await response.json();
+                    showNotification(error.error || 'Failed to change password', 'error');
+                }
+            } catch (error) {
+                console.error('Error changing password:', error);
+                showNotification('Error changing password', 'error');
+            }
+        }
+
+        async function saveNotifications() {
+            const notificationData = {
+                notifications: {
+                    email_updates: document.getElementById('email_updates').checked,
+                    grant_alerts: document.getElementById('grant_alerts').checked,
+                    deadline_reminders: document.getElementById('deadline_reminders').checked,
+                    weekly_digest: document.getElementById('weekly_digest').checked
+                }
+            };
+
+            try {
+                const response = await fetch('/api/settings/notifications', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify(notificationData)
+                });
+
+                if (response.ok) {
+                    showNotification('Notification preferences updated', 'success');
+                } else {
+                    showNotification('Failed to update notifications', 'error');
+                }
+            } catch (error) {
+                console.error('Error saving notifications:', error);
+                showNotification('Error updating notifications', 'error');
+            }
+        }
+
+        async function savePreferences() {
+            const preferencesData = {
+                preferences: {
+                    timezone: document.getElementById('timezone').value,
+                    date_format: document.getElementById('date_format').value,
+                    currency: document.getElementById('currency').value,
+                    theme: document.getElementById('theme').value
+                }
+            };
+
+            try {
+                const response = await fetch('/api/settings/user', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify(preferencesData)
+                });
+
+                if (response.ok) {
+                    showNotification('Preferences updated successfully', 'success');
+                } else {
+                    showNotification('Failed to update preferences', 'error');
+                }
+            } catch (error) {
+                console.error('Error saving preferences:', error);
+                showNotification('Error updating preferences', 'error');
+            }
+        }
+
+        async function exportData() {
+            try {
+                const response = await fetch('/api/profile/export');
+                if (response.ok) {
+                    const blob = await response.blob();
+                    const url = window.URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = `account-data-${new Date().toISOString().split('T')[0]}.json`;
+                    a.click();
+                    window.URL.revokeObjectURL(url);
+                    showNotification('Data export started', 'success');
+                } else {
+                    showNotification('Failed to export data', 'error');
+                }
+            } catch (error) {
+                console.error('Error exporting data:', error);
+                showNotification('Error exporting data', 'error');
+            }
+        }
+
+        function confirmDeleteAccount() {
+            if (confirm('Are you sure you want to delete your account? This action cannot be undone.')) {
+                if (confirm('This will permanently delete all your data. Are you absolutely sure?')) {
+                    showNotification('Account deletion is not available in this demo', 'error');
+                }
+            }
+        }
+
+        function showNotification(message, type) {
+            const notification = document.createElement('div');
+            notification.className = `notification notification-${type}`;
+            notification.textContent = message;
+            document.body.appendChild(notification);
+            setTimeout(() => notification.remove(), 4000);
+        }
+    </script>
+</body>
+</html>
