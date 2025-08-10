@@ -84,7 +84,7 @@ const ModernLayout = ({ children }) => {
             <div className="flex-shrink-0">
               <Link to="/" className="flex items-center">
                 <img 
-                  src="/attached_assets/Photoroom_20250810_075737_1754827233457.png" 
+                  src="/assets/pink-lemonade-logo.png" 
                   alt="Pink Lemonade" 
                   className="h-8 w-auto"
                 />

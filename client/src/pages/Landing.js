@@ -9,9 +9,9 @@ const Landing = () => {
       {/* Pink Lemonade Logo - 3.5x bigger, centered */}
       <div className="mb-12">
         <img 
-          src="/attached_assets/Photoroom_20250810_075737_1754827233457.png" 
+          src="/assets/pink-lemonade-logo.png" 
           alt="Pink Lemonade" 
-          className="h-80 w-auto mx-auto"
+          className="h-96 w-auto mx-auto"
         />
       </div>
 
