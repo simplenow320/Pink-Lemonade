@@ -42,6 +42,7 @@ const SmartTools = () => {
   }, []);
 
   const smartTools = [
+    // AI Writing & Document Generation
     {
       id: 'case-support',
       name: 'Case for Support',
@@ -51,7 +52,8 @@ const SmartTools = () => {
       features: ['Professional funding documents', 'Mission-driven narratives', 'Donor-ready content'],
       endpoint: '/api/writing/case-support',
       route: '/case-support',
-      phase: 'practical'
+      phase: 'practical',
+      category: 'content'
     },
     {
       id: 'impact-report',
@@ -62,7 +64,8 @@ const SmartTools = () => {
       features: ['Outcome tracking', 'Visual metrics', 'Stakeholder reports'],
       endpoint: '/api/writing/impact-report',
       route: '/impact-report',
-      phase: 'practical'
+      phase: 'practical',
+      category: 'reporting'
     },
     {
       id: 'grant-pitch',
@@ -73,7 +76,8 @@ const SmartTools = () => {
       features: ['Multiple formats', 'Funder-specific', 'Presentation ready'],
       endpoint: '/api/writing/grant-pitch',
       route: '/grant-pitch',
-      phase: 'practical'
+      phase: 'practical',
+      category: 'content'
     },
     {
       id: 'writing-assistant',
@@ -84,7 +88,96 @@ const SmartTools = () => {
       features: ['Text improvement', 'Professional polish', 'Content optimization'],
       endpoint: '/api/writing/improve',
       route: '/writing-assistant',
-      phase: 'practical'
+      phase: 'practical',
+      category: 'content'
+    },
+    
+    // Comprehensive Reporting System
+    {
+      id: 'executive-dashboard',
+      name: 'Executive Dashboard',
+      description: 'Real-time metrics display with predictive analytics and performance monitoring',
+      icon: '📈',
+      color: 'from-indigo-500 to-indigo-600',
+      features: ['Real-time KPIs', 'Predictive forecasting', 'Custom dashboards'],
+      endpoint: '/api/smart-reporting/phase4/executive-metrics',
+      route: '/analytics',
+      phase: 'phase4',
+      category: 'reporting'
+    },
+    {
+      id: 'data-visualization',
+      name: 'Data Visualization',
+      description: 'Advanced charts, graphs, and interactive visualizations for comprehensive analysis',
+      icon: '📊',
+      color: 'from-cyan-500 to-cyan-600',
+      features: ['Interactive charts', 'Custom visualizations', 'Trend analysis'],
+      endpoint: '/api/smart-reporting/phase4/data-visualization',
+      route: '/analytics?view=charts',
+      phase: 'phase4',
+      category: 'reporting'
+    },
+    {
+      id: 'automated-reports',
+      name: 'Automated Report Generation',
+      description: 'Scheduled executive summaries and stakeholder-specific reports with smart distribution',
+      icon: '🤖',
+      color: 'from-emerald-500 to-emerald-600',
+      features: ['Automated scheduling', 'Multi-audience reports', 'Smart distribution'],
+      endpoint: '/api/smart-reporting/phase5/executive-summary',
+      route: '/reports/automated',
+      phase: 'phase5',
+      category: 'reporting'
+    },
+    {
+      id: 'performance-tracking',
+      name: 'Performance Tracking',
+      description: 'Cross-tool data fusion with AI-powered insights and success prediction',
+      icon: '🎯',
+      color: 'from-orange-500 to-orange-600',
+      features: ['Success metrics', 'AI predictions', 'Cross-tool analysis'],
+      endpoint: '/api/smart-reporting/phase4/predictive-forecast',
+      route: '/analytics?view=performance',
+      phase: 'phase4',
+      category: 'reporting'
+    },
+    
+    // Data Collection & Validation
+    {
+      id: 'survey-builder',
+      name: 'AI Survey Builder',
+      description: 'Advanced survey generation with adaptive question refinement and conditional logic',
+      icon: '📝',
+      color: 'from-violet-500 to-violet-600',
+      features: ['AI question generation', 'Conditional logic', 'Multi-stakeholder surveys'],
+      endpoint: '/api/smart-reporting/phase2/survey-builder',
+      route: '/surveys/builder',
+      phase: 'phase2',
+      category: 'data'
+    },
+    {
+      id: 'data-validation',
+      name: 'Data Validation Engine',
+      description: 'Automated data quality checks with intelligent validation and cleansing',
+      icon: '✅',
+      color: 'from-teal-500 to-teal-600',
+      features: ['Quality scoring', 'Automated validation', 'Data cleansing'],
+      endpoint: '/api/smart-reporting/phase3/validation-engine',
+      route: '/data/validation',
+      phase: 'phase3',
+      category: 'data'
+    },
+    {
+      id: 'impact-measurement',
+      name: 'Impact Measurement',
+      description: 'AI-generated impact questions with automated scoring and trend analysis',
+      icon: '🎪',
+      color: 'from-rose-500 to-rose-600',
+      features: ['AI impact questions', 'Automated scoring', 'Trend identification'],
+      endpoint: '/api/smart-reporting/phase2/impact-questions',
+      route: '/impact/measurement',
+      phase: 'phase2',
+      category: 'data'
     }
   ];
 
@@ -111,6 +204,58 @@ const SmartTools = () => {
     }
   };
 
+  const renderToolCard = (tool, index) => {
+    const status = getToolStatus(tool);
+    
+    return (
+      <motion.div
+        key={tool.id}
+        className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-xl transition-shadow duration-300"
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.6, delay: 0.1 * index }}
+        whileHover={{ y: -5 }}
+      >
+        {/* Tool Header */}
+        <div className={`bg-gradient-to-r ${tool.color} p-6 text-white`}>
+          <div className="flex items-center justify-between mb-2">
+            <div className="text-3xl">{tool.icon}</div>
+            <div className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(status)}`}>
+              {getStatusText(status)}
+            </div>
+          </div>
+          <h3 className="text-xl font-bold mb-1">{tool.name}</h3>
+          <p className="text-sm opacity-90">{tool.description}</p>
+        </div>
+
+        {/* Tool Content */}
+        <div className="p-6">
+          <div className="mb-4">
+            <h4 className="font-semibold text-gray-900 mb-2">Key Features:</h4>
+            <ul className="space-y-1">
+              {tool.features.map((feature, idx) => (
+                <li key={idx} className="text-sm text-gray-600 flex items-center">
+                  <span className="w-1.5 h-1.5 bg-gray-400 rounded-full mr-2"></span>
+                  {feature}
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          {/* Action Buttons */}
+          <div className="space-y-2">
+            <Link
+              to={tool.route}
+              className="w-full inline-flex items-center justify-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-orange-600 hover:bg-orange-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500 transition-colors"
+            >
+              Launch Tool
+            </Link>
+          </div>
+        </div>
+      </motion.div>
+    );
+  };
+
   return (
     <div className="min-h-screen bg-gray-50 py-8">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -122,7 +267,7 @@ const SmartTools = () => {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6 }}
           >
-            🚀 Smart Tools Dashboard
+            🚀 Comprehensive Smart Tools Suite
           </motion.h1>
           <motion.p 
             className="text-xl text-gray-600 max-w-3xl mx-auto"
@@ -130,8 +275,8 @@ const SmartTools = () => {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.2 }}
           >
-            Complete AI-powered grant management suite with automated matching, extraction, 
-            writing, intelligence, and comprehensive reporting capabilities.
+            Complete AI-powered grant management with automated matching, extraction, 
+            writing intelligence, and comprehensive reporting capabilities.
           </motion.p>
         </div>
 
@@ -142,14 +287,14 @@ const SmartTools = () => {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, delay: 0.3 }}
         >
-          <h2 className="text-2xl font-bold text-gray-900 mb-4">📝 Practical Grant Writing Tools</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="bg-pink-50 border border-pink-200 rounded-lg p-4">
+          <h2 className="text-2xl font-bold text-gray-900 mb-4">📈 Comprehensive Grant Management Platform</h2>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="bg-green-50 border border-green-200 rounded-lg p-4">
               <div className="flex items-center">
-                <div className="w-3 h-3 bg-pink-500 rounded-full mr-3"></div>
+                <div className="w-3 h-3 bg-green-500 rounded-full mr-3"></div>
                 <div>
-                  <div className="font-semibold text-pink-800">Ready-to-Use Tools</div>
-                  <div className="text-sm text-pink-600">4 Practical Writing Tools Available</div>
+                  <div className="font-semibold text-green-800">AI Writing Tools</div>
+                  <div className="text-sm text-green-600">4 Professional Content Generators</div>
                 </div>
               </div>
             </div>
@@ -157,196 +302,64 @@ const SmartTools = () => {
               <div className="flex items-center">
                 <div className="w-3 h-3 bg-blue-500 rounded-full mr-3"></div>
                 <div>
-                  <div className="font-semibold text-blue-800">Real Grant Documents</div>
-                  <div className="text-sm text-blue-600">Professional, Donor-Ready Content</div>
+                  <div className="font-semibold text-blue-800">Reporting System</div>
+                  <div className="text-sm text-blue-600">Advanced Analytics & Dashboards</div>
+                </div>
+              </div>
+            </div>
+            <div className="bg-purple-50 border border-purple-200 rounded-lg p-4">
+              <div className="flex items-center">
+                <div className="w-3 h-3 bg-purple-500 rounded-full mr-3"></div>
+                <div>
+                  <div className="font-semibold text-purple-800">Data Collection</div>
+                  <div className="text-sm text-purple-600">Smart Surveys & Validation</div>
                 </div>
               </div>
             </div>
           </div>
         </motion.div>
 
-        {/* Smart Tools Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {smartTools.map((tool, index) => {
-            const status = getToolStatus(tool);
-            
-            return (
-              <motion.div
-                key={tool.id}
-                className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-xl transition-shadow duration-300"
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6, delay: 0.1 * index }}
-                whileHover={{ y: -5 }}
-              >
-                {/* Tool Header */}
-                <div className={`bg-gradient-to-r ${tool.color} p-6 text-white`}>
-                  <div className="flex items-center justify-between mb-2">
-                    <div className="text-3xl">{tool.icon}</div>
-                    <div className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(status)}`}>
-                      {getStatusText(status)}
-                    </div>
-                  </div>
-                  <h3 className="text-xl font-bold mb-1">{tool.name}</h3>
-                  <p className="text-sm opacity-90">{tool.description}</p>
-                </div>
-
-                {/* Tool Content */}
-                <div className="p-6">
-                  <div className="mb-4">
-                    <h4 className="font-semibold text-gray-900 mb-2">Key Features:</h4>
-                    <ul className="space-y-1">
-                      {tool.features.map((feature, idx) => (
-                        <li key={idx} className="text-sm text-gray-600 flex items-center">
-                          <span className="w-1.5 h-1.5 bg-gray-400 rounded-full mr-2"></span>
-                          {feature}
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-
-                  {/* Action Buttons */}
-                  <div className="space-y-2">
-                    {tool.phase === 'practical' ? (
-                      <a
-                        href={tool.route}
-                        className="w-full inline-flex items-center justify-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-orange-600 hover:bg-orange-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500 transition-colors"
-                      >
-                        Launch Tool
-                      </a>
-                    ) : (
-                      <button
-                        onClick={() => {
-                          // Test the API endpoint
-                          fetch(tool.endpoint)
-                            .then(response => response.json())
-                            .then(data => {
-                              alert(`${tool.name} Test Result:\n${JSON.stringify(data, null, 2)}`);
-                            })
-                            .catch(error => {
-                              alert(`${tool.name} Test Error:\n${error.message}`);
-                            });
-                        }}
-                        className="w-full inline-flex items-center justify-center px-4 py-2 border border-orange-600 rounded-md shadow-sm text-sm font-medium text-orange-600 bg-white hover:bg-orange-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500 transition-colors"
-                      >
-                        Test API
-                      </button>
-                    )}
-                    
-                    <button 
-                      onClick={() => {
-                        const docs = {
-                          'case-support': 'Create professional funding documents with compelling narratives for donors and foundations',
-                          'impact-report': 'Generate comprehensive reports showing program outcomes and community impact with visual metrics',
-                          'grant-pitch': 'AI-powered pitch generator for presentations, emails, and verbal delivery in multiple formats',
-                          'writing-assistant': 'Improve any grant content with AI-powered text enhancement and professional polish'
-                        };
-                        alert(`${tool.name} Documentation:\n\n${docs[tool.id]}\n\nEndpoint: ${tool.endpoint}`);
-                      }}
-                      className="w-full text-sm text-gray-600 hover:text-gray-800 underline transition-colors"
-                    >
-                      View Documentation
-                    </button>
-                  </div>
-                </div>
-              </motion.div>
-            );
-          })}
-        </div>
-
-        {/* Quick Actions */}
-        <motion.div 
-          className="mt-12 bg-white rounded-lg shadow-md p-6"
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.8 }}
-        >
-          <h2 className="text-2xl font-bold text-gray-900 mb-4">⚡ Quick Actions</h2>
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <button 
-              onClick={() => {
-                // Test all Smart Reporting phases
-                const phases = ['phase2', 'phase3', 'phase4', 'phase5', 'phase6'];
-                phases.forEach(phase => {
-                  fetch(`/api/smart-reporting/${phase}/health`)
-                    .then(response => response.json())
-                    .then(data => console.log(`${phase}:`, data))
-                    .catch(error => console.error(`${phase} error:`, error));
-                });
-                alert('Running system health check - see console for results');
-              }}
-              className="flex items-center justify-center px-4 py-3 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500"
-            >
-              🔍 System Health Check
-            </button>
-            
-            <button
-              onClick={() => {
-                fetch('/api/smart-reporting/phase5/executive-summary', {
-                  method: 'POST',
-                  headers: { 'Content-Type': 'application/json' },
-                  body: JSON.stringify({ report_title: 'Test Executive Summary' })
-                })
-                .then(response => response.json())
-                .then(data => {
-                  console.log('Executive Summary:', data);
-                  alert('Executive summary generated - check console for details');
-                })
-                .catch(error => alert('Error: ' + error.message));
-              }}
-              className="flex items-center justify-center px-4 py-3 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500"
-            >
-              📋 Generate Report
-            </button>
-            
-            <button
-              onClick={() => {
-                fetch('/api/smart-reporting/phase6/compliance-monitor')
-                .then(response => response.json())
-                .then(data => {
-                  console.log('Compliance Status:', data);
-                  alert(`Compliance Score: ${data.compliance_status?.overall_compliance_score || 'N/A'}% - check console for details`);
-                })
-                .catch(error => alert('Error: ' + error.message));
-              }}
-              className="flex items-center justify-center px-4 py-3 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500"
-            >
-              🛡️ Check Compliance
-            </button>
-            
-            <Link
-              to="/analytics"
-              className="flex items-center justify-center px-4 py-3 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500"
-            >
-              📊 View Analytics
-            </Link>
-          </div>
-        </motion.div>
-
-        {/* System Information */}
-        {!loading && Object.keys(healthStatus).length > 0 && (
-          <motion.div 
-            className="mt-8 bg-gray-800 text-white rounded-lg shadow-md p-6"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 1.0 }}
-          >
-            <h2 className="text-xl font-bold mb-4">🔧 System Information</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {Object.entries(healthStatus).map(([phase, info]) => (
-                <div key={phase} className="bg-gray-700 rounded p-3">
-                  <div className="font-semibold text-sm">{phase.toUpperCase()}</div>
-                  <div className={`text-xs ${info.status === 'operational' ? 'text-green-400' : 'text-red-400'}`}>
-                    {info.status === 'operational' ? '✅ Operational' : '❌ Error'}
-                  </div>
-                  {info.data?.phase && (
-                    <div className="text-xs text-gray-300 mt-1">{info.data.phase}</div>
-                  )}
-                </div>
-              ))}
+        {/* Smart Tools Grid - Organized by Categories */}
+        <div className="space-y-12">
+          {/* AI Writing & Document Generation */}
+          <div>
+            <h2 className="text-2xl font-bold text-gray-900 mb-2 flex items-center">
+              ✍️ AI Writing & Document Generation
+            </h2>
+            <p className="text-gray-600 mb-6">Professional proposal content and documentation tools</p>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {smartTools
+                .filter(tool => tool.category === 'content')
+                .map((tool, index) => renderToolCard(tool, index))}
             </div>
-          </motion.div>
-        )}
+          </div>
+
+          {/* Comprehensive Reporting System */}
+          <div>
+            <h2 className="text-2xl font-bold text-gray-900 mb-2 flex items-center">
+              📊 Comprehensive Reporting & Analytics
+            </h2>
+            <p className="text-gray-600 mb-6">Advanced reporting, dashboards, and performance tracking</p>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {smartTools
+                .filter(tool => tool.category === 'reporting')
+                .map((tool, index) => renderToolCard(tool, index))}
+            </div>
+          </div>
+
+          {/* Data Collection & Validation */}
+          <div>
+            <h2 className="text-2xl font-bold text-gray-900 mb-2 flex items-center">
+              📝 Data Collection & Validation
+            </h2>
+            <p className="text-gray-600 mb-6">Advanced survey tools, data validation, and impact measurement</p>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {smartTools
+                .filter(tool => tool.category === 'data')
+                .map((tool, index) => renderToolCard(tool, index))}
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   );

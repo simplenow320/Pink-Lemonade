@@ -27,44 +27,44 @@ const ModernLayout = ({ children }) => {
     {
       name: 'Dashboard',
       path: '/dashboard',
-      description: 'Overview of your grants',
+      description: 'Executive overview & real-time metrics',
       icon: DashboardIcon,
-    },
-    {
-      name: 'Smart Tools',
-      path: '/smart-tools',
-      description: 'AI-powered grant management suite',
-      icon: WritingIcon,
     },
     {
       name: 'Grants',
       path: '/grants',
-      description: 'Manage your grant opportunities',
+      description: 'Manage grant opportunities & applications',
       icon: GrantsIcon,
+    },
+    {
+      name: 'Smart Tools',
+      path: '/smart-tools',
+      description: 'AI-powered writing & document generation',
+      icon: WritingIcon,
+    },
+    {
+      name: 'Analytics',
+      path: '/analytics',
+      description: 'Comprehensive reporting & performance tracking',
+      icon: AnalyticsIcon,
+    },
+    {
+      name: 'Scraper',
+      path: '/scraper',
+      description: 'Intelligent grant discovery & matching',
+      icon: ScraperIcon,
     },
     {
       name: 'Organization',
       path: '/organization',
-      description: 'Your organization profile',
+      description: 'Organization profile & settings',
       icon: OrganizationIcon,
     },
     {
       name: 'Profile',
       path: '/profile',
-      description: 'Your personal profile',
+      description: 'Personal profile & preferences',
       icon: OrganizationIcon,
-    },
-    {
-      name: 'Scraper',
-      path: '/scraper',
-      description: 'Find new grant opportunities',
-      icon: ScraperIcon,
-    },
-    {
-      name: 'Analytics',
-      path: '/analytics',
-      description: 'Track your success metrics',
-      icon: AnalyticsIcon,
     },
   ];
 
