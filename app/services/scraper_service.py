@@ -47,9 +47,7 @@ def run_now_for_org(org_id: int, query: Optional[str] = None) -> int:
     """
     Manual trigger (e.g., 'Run Now' button). Returns number of upserted/updated records.
     """
-    if not is_live():
-        log.info("run_now_for_org: DEMO mode detected; skipping live scraping for org_id=%s", org_id)
-        return 0
+
     return run_all_connectors_for_org(org_id=org_id, query=query)
 
 # ------------------------------
@@ -114,9 +112,7 @@ def fetch_from_grants_gov(search_term: str, limit: int = 50, offset: int = 0) ->
 
     We request open opportunities where eligibility includes nonprofits if possible.
     """
-    if not is_live():
-        # Never fabricate in DEMO. Return empty list.
-        return []
+
 
     # Build basic payload for search2
     payload = {
@@ -231,20 +227,19 @@ def upsert_grant(record: Dict[str, Any], org_id: Optional[int] = None) -> Option
             db.session.commit()
             return existing
 
-        g = Grant(
-            org_id=org_id,
-            title=record["title"],
-            funder=record.get("funder"),
-            link=record.get("link"),
-            amount_min=record.get("amount_min"),
-            amount_max=record.get("amount_max"),
-            deadline=deadline_date,
-            geography=record.get("geography"),
-            eligibility=record.get("eligibility"),
-            source_name=record.get("source_name"),
-            source_url=record.get("source_url"),
-            status="idea",
-        )
+        g = Grant()
+        g.org_id = org_id
+        g.title = record["title"] 
+        g.funder = record.get("funder")
+        g.link = record.get("link")
+        g.amount_min = record.get("amount_min")
+        g.amount_max = record.get("amount_max")
+        g.deadline = deadline_date
+        g.geography = record.get("geography")
+        g.eligibility = record.get("eligibility")
+        g.source_name = record.get("source_name")
+        g.source_url = record.get("source_url")
+        g.status = "idea"
         db.session.add(g)
         db.session.commit()
         return g
@@ -316,10 +311,9 @@ def run_scraping_job(org_id: int = 1) -> Dict[str, Any]:
     }
 
 
-def scrape_grants(source_url: str = None, limit: int = 10) -> List[Dict[str, Any]]:
+def scrape_grants(source_url: Optional[str] = None, limit: int = 10) -> List[Dict[str, Any]]:
     """Legacy function for backward compatibility with existing API"""
-    if not is_live():
-        return []
+
     
     # Use a default search term if none provided
     search_term = "nonprofit"

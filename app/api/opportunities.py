@@ -88,8 +88,7 @@ def search_opportunities():
             'total': paginated.total,
             'page': page,
             'per_page': per_page,
-            'total_pages': paginated.pages,
-            'mode': 'live'
+            'total_pages': paginated.pages
         })
         
     except Exception as e:
@@ -100,7 +99,6 @@ def search_opportunities():
             'page': 1,
             'per_page': 20,
             'total_pages': 0,
-            'mode': 'live',
             'error': str(e)
         })
 
