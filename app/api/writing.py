@@ -62,20 +62,85 @@ def _json():
         raise BadRequest("JSON body required")
     return data
 
-@bp.post("/case-support")
+@bp.route('/case-support', methods=['POST'])
 def create_case_support():
-    body = _json()
-    org_id = int(body.get("orgId") or 1)
-    tokens = {
-        "org_name": body.get("orgName") or "Your Organization",
-        "audience_type": body.get("audience") or "individual and foundation donors",
-        "word_count_range": body.get("length") or "600-900"
-    }
-    data_pack = build_data_pack(org_id)
-    result = run_prompt("case_support", tokens, data_pack)
-    content = result["content"]
-    needs = _extract_missing(content)
-    doc = CaseSupportDoc(org_id=org_id, title=body.get("title") or "Case for Support", sections={"body": content}, needs_input=needs, sources={})
+    """Generate a Case for Support document using verified user inputs only"""
+    try:
+        data = request.get_json()
+        
+        # Validate required fields
+        required_fields = ['org_name', 'mission', 'programs', 'impact', 'financial_need']
+        for field in required_fields:
+            if not data.get(field, '').strip():
+                return jsonify({'error': f'{field.replace("_", " ").title()} is required'}), 400
+        
+        # Use OpenAI for document generation
+        from openai import OpenAI
+        client = OpenAI(api_key=os.environ.get('OPENAI_API_KEY'))
+        
+        # Build the professional grant writing prompt
+        prompt = f"""You are an expert nonprofit grant writer with extensive experience in fundraising and development. 
+
+Generate a polished, fact-checked Case for Support based ONLY on the verified user inputs provided below. Do not invent data, statistics, or history. Maintain the tone of a persuasive, professional funding document.
+
+ORGANIZATION DETAILS:
+- Name: {data.get('org_name')}
+- Mission: {data.get('mission')}
+- Vision: {data.get('vision', 'Not provided')}
+- Programs & Services: {data.get('programs')}
+- Community Impact: {data.get('impact')}
+- Financial Need: {data.get('financial_need')}
+- Target Population: {data.get('target_population', 'Not specified')}
+- Geographic Scope: {data.get('geographic_scope', 'Not specified')}
+- Founded Year: {data.get('founded_year', 'Not provided')}
+
+TARGET AUDIENCE: {data.get('audience_type', 'foundations and individual donors')}
+WORD COUNT: {data.get('word_count_range', '600-900')} words
+
+Structure the document with these exact sections:
+# Executive Summary
+## Organization Overview  
+## Mission & Vision
+## Programs & Services
+## Community Impact
+## Financial Need
+## Call to Action
+
+Requirements:
+- Use ONLY the verified facts provided above
+- Do not fabricate statistics, dates, or program details
+- Maintain persuasive, professional funding document tone throughout
+- Output in clean markdown format with proper headers
+- Each section should be substantive and compelling for grant funders
+- End with a strong, specific Call to Action
+
+Generate the Case for Support now:"""
+
+        response = client.chat.completions.create(
+            model="gpt-4o",
+            messages=[
+                {"role": "system", "content": "You are an expert nonprofit grant writer specializing in professional funding documents. Generate compelling, fact-based cases for support using only verified organizational data."},
+                {"role": "user", "content": prompt}
+            ],
+            max_tokens=2000
+        )
+        
+        content = response.choices[0].message.content
+        
+        # Add source note
+        content += "\n\n---\n**Source Notes:** This Case for Support is based only on verified organizational data provided by the user. No statistics or program details have been fabricated."
+        
+        return jsonify({
+            'success': True,
+            'content': content,
+            'message': 'Case for Support generated successfully',
+            'word_count': len(content.split()),
+            'sections': ['Executive Summary', 'Organization Overview', 'Mission & Vision', 'Programs & Services', 'Community Impact', 'Financial Need', 'Call to Action']
+        })
+        
+    except Exception as e:
+        logger.error(f"Error generating case for support: {e}")
+        return jsonify({'error': str(e)}), 500
     db.session.add(doc); db.session.commit()
     return jsonify({"id": doc.id, "needsInput": needs, "content": content}), 200
 

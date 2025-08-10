@@ -65,14 +65,8 @@
     const common = { orgId: 1, orgName: 'Nitrogen Network' };
 
     document.getElementById('btnCase').onclick = async () => {
-      try{
-        show('Generating Case for Support…');
-        const data = await postJSON('/api/writing/case-support', {...common, audience:'foundations and individual donors', length:'700-900', title:'Case for Support'});
-        out.style.display='block'; docDiv.textContent = data.content;
-        showNeeds(data.needsInput);
-        enableExports('case-support', data.id);
-        show(data.needsInput?.length ? 'Needs input listed below.' : 'Done. Copy ready.');
-      }catch(e){ show('Error: '+e.message); }
+      // Redirect to the detailed form
+      window.location.href = '/case-support';
     };
 
     document.getElementById('btnPitch').onclick = async () => {

@@ -59,6 +59,11 @@ def profile():
     """Organization Profile Management Page"""
     return render_template("profile.html", active="profile")
 
+@pages.get("/case-support")
+def case_support():
+    """Case for Support Generator Form"""
+    return render_template("case_support_form.html", active="writing")
+
 @pages.get("/admin")
 def admin_dashboard():
     """Admin Dashboard Page"""
