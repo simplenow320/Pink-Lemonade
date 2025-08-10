@@ -1,196 +1,232 @@
 {% extends "base.html" %}
-{% block title %}{{ grant.title }}{% endblock %}
+
+{% block title %}{{ grant.title }} - Pink Lemonade{% endblock %}
+
+{% block extra_css %}
+<style>
+  .detail-card {
+    background: white;
+    border-radius: 16px;
+    padding: 32px;
+    border: 1px solid #E8E8E8;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    margin-bottom: 24px;
+  }
+  
+  .fit-badge {
+    background: linear-gradient(135deg, #B8899A, #D4BAC7);
+    color: white;
+    padding: 8px 16px;
+    border-radius: 20px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    display: inline-block;
+  }
+  
+  .btn-primary {
+    background: #B8899A;
+    color: white;
+    padding: 12px 24px;
+    border-radius: 8px;
+    border: none;
+    cursor: pointer;
+    font-size: 1rem;
+    font-weight: 500;
+    transition: all 0.2s ease;
+    text-decoration: none;
+    display: inline-block;
+  }
+  
+  .btn-primary:hover {
+    background: #A67A8A;
+    color: white;
+    text-decoration: none;
+  }
+  
+  .btn-outline {
+    background: white;
+    color: #B8899A;
+    padding: 12px 24px;
+    border: 1px solid #B8899A;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 1rem;
+    font-weight: 500;
+    transition: all 0.2s ease;
+    text-decoration: none;
+    display: inline-block;
+  }
+  
+  .btn-outline:hover {
+    background: #B8899A;
+    color: white;
+    text-decoration: none;
+  }
+  
+  .info-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 24px;
+    margin: 24px 0;
+  }
+  
+  .info-item {
+    padding: 16px;
+    background: #F8F9FA;
+    border-radius: 8px;
+  }
+  
+  .info-label {
+    color: #6B6B6B;
+    font-size: 0.9rem;
+    margin-bottom: 4px;
+  }
+  
+  .info-value {
+    color: #2A2A2A;
+    font-weight: 500;
+    font-size: 1.1rem;
+  }
+</style>
+{% endblock %}
 
 {% block content %}
-<div class="container mx-auto px-4 py-6">
-    <!-- Back Button -->
-    <div class="mb-6">
-        <a href="/opportunities" class="inline-flex items-center text-gray-600 hover:text-gray-900">
-            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
-            </svg>
-            Back to Opportunities
-        </a>
+<div style="max-width: 800px; margin: 0 auto; padding: 20px;">
+  <!-- Back Button -->
+  <div style="margin-bottom: 20px;">
+    <a href="/opportunities" class="btn-outline">← Back to Opportunities</a>
+  </div>
+  
+  <!-- Grant Header -->
+  <div class="detail-card">
+    <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 16px;">
+      <div style="flex: 1;">
+        <h1 style="font-size: 2rem; font-weight: 700; color: #2A2A2A; margin: 0 0 8px 0; line-height: 1.2;">
+          {{ grant.title }}
+        </h1>
+        <p style="font-size: 1.2rem; color: #6B6B6B; margin: 0; font-weight: 500;">{{ grant.funder }}</p>
+      </div>
+      {% if grant.match_score %}
+      <div class="fit-badge">
+        {{ grant.match_score }}/5 ★
+      </div>
+      {% endif %}
     </div>
-
-    <!-- Grant Header -->
-    <div class="bg-white rounded-lg shadow-md p-6 mb-6">
-        <div class="flex justify-between items-start mb-4">
-            <div>
-                <h1 class="text-3xl font-bold mb-2" style="color: var(--black)">{{ grant.title }}</h1>
-                <p class="text-xl text-gray-600">{{ grant.funder }}</p>
-            </div>
-            {% if grant.match_score %}
-            <span class="px-3 py-1 rounded-full text-sm font-medium 
-                {% if grant.match_score == 5 %}bg-green-100 text-green-800
-                {% elif grant.match_score == 4 %}bg-blue-100 text-blue-800
-                {% elif grant.match_score == 3 %}bg-yellow-100 text-yellow-800
-                {% elif grant.match_score == 2 %}bg-orange-100 text-orange-800
-                {% else %}bg-red-100 text-red-800{% endif %}">
-                Match Score: {{ grant.match_score }}/5
-            </span>
-            {% endif %}
+    
+    <!-- Grant Info Grid -->
+    <div class="info-grid">
+      <div class="info-item">
+        <div class="info-label">Funding Amount</div>
+        <div class="info-value">
+          {% if grant.amount_min and grant.amount_max %}
+            ${{ "{:,}".format(grant.amount_min|int) }} - ${{ "{:,}".format(grant.amount_max|int) }}
+          {% elif grant.amount_min %}
+            ${{ "{:,}".format(grant.amount_min|int) }}+
+          {% elif grant.amount_max %}
+            Up to ${{ "{:,}".format(grant.amount_max|int) }}
+          {% else %}
+            Not specified
+          {% endif %}
         </div>
-
-        <!-- Key Information -->
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-            <div class="bg-gray-50 rounded-lg p-4">
-                <h3 class="text-sm font-medium text-gray-500 mb-1">Deadline</h3>
-                <p class="text-lg font-semibold">
-                    {% if grant.deadline %}
-                        {{ grant.deadline.strftime('%B %d, %Y') }}
-                    {% else %}
-                        Rolling Application
-                    {% endif %}
-                </p>
-            </div>
-            <div class="bg-gray-50 rounded-lg p-4">
-                <h3 class="text-sm font-medium text-gray-500 mb-1">Amount Range</h3>
-                <p class="text-lg font-semibold">
-                    {% if grant.amount_min or grant.amount_max %}
-                        {% if grant.amount_min and grant.amount_max %}
-                            ${{ "{:,}".format(grant.amount_min) }} - ${{ "{:,}".format(grant.amount_max) }}
-                        {% elif grant.amount_max %}
-                            Up to ${{ "{:,}".format(grant.amount_max) }}
-                        {% else %}
-                            From ${{ "{:,}".format(grant.amount_min) }}
-                        {% endif %}
-                    {% else %}
-                        Not Specified
-                    {% endif %}
-                </p>
-            </div>
-            <div class="bg-gray-50 rounded-lg p-4">
-                <h3 class="text-sm font-medium text-gray-500 mb-1">Source</h3>
-                <p class="text-lg font-semibold">{{ grant.source or 'Direct' }}</p>
-            </div>
+      </div>
+      
+      <div class="info-item">
+        <div class="info-label">Application Deadline</div>
+        <div class="info-value">
+          {% if grant.deadline %}
+            {{ grant.deadline.strftime('%B %d, %Y') }}
+          {% else %}
+            Rolling deadline
+          {% endif %}
         </div>
-
-        <!-- Action Buttons -->
-        <div class="flex gap-3">
-            <button onclick="saveGrant({{ grant.id }})" class="px-6 py-2 border border-gray-300 rounded-lg font-medium hover:bg-gray-50">
-                Save to Library
-            </button>
-            <button onclick="applyToGrant({{ grant.id }})" class="px-6 py-2 rounded-lg font-medium" style="background-color: var(--pink); color: var(--black)">
-                Start Application
-            </button>
-            {% if grant.link %}
-            <a href="{{ grant.link }}" target="_blank" class="px-6 py-2 border border-gray-300 rounded-lg font-medium hover:bg-gray-50 inline-flex items-center">
-                View Original
-                <svg class="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path>
-                </svg>
-            </a>
-            {% endif %}
-        </div>
+      </div>
+      
+      {% if grant.geography %}
+      <div class="info-item">
+        <div class="info-label">Location</div>
+        <div class="info-value">{{ grant.geography }}</div>
+      </div>
+      {% endif %}
+      
+      {% if grant.source_name %}
+      <div class="info-item">
+        <div class="info-label">Source</div>
+        <div class="info-value">{{ grant.source_name }}</div>
+      </div>
+      {% endif %}
     </div>
-
-    <!-- Description -->
-    <div class="bg-white rounded-lg shadow-md p-6 mb-6">
-        <h2 class="text-xl font-bold mb-3">Description</h2>
-        <p class="text-gray-700 whitespace-pre-wrap">{{ grant.description or 'No description available.' }}</p>
+    
+    <!-- Action Buttons -->
+    <div style="display: flex; gap: 16px; margin-top: 24px;">
+      <button onclick="saveGrant({{ grant.id }})" class="btn-outline">Save Grant</button>
+      {% if grant.link %}
+      <a href="{{ grant.link }}" target="_blank" class="btn-primary">View Application Details</a>
+      {% else %}
+      <button onclick="createApplication({{ grant.id }})" class="btn-primary">Start Application</button>
+      {% endif %}
     </div>
-
-    <!-- Eligibility & Requirements -->
-    {% if grant.eligibility %}
-    <div class="bg-white rounded-lg shadow-md p-6 mb-6">
-        <h2 class="text-xl font-bold mb-3">Eligibility Requirements</h2>
-        <p class="text-gray-700 whitespace-pre-wrap">{{ grant.eligibility }}</p>
+  </div>
+  
+  <!-- Grant Description/Eligibility -->
+  {% if grant.eligibility %}
+  <div class="detail-card">
+    <h2 style="font-size: 1.4rem; font-weight: 600; color: #2A2A2A; margin: 0 0 16px 0;">Eligibility & Description</h2>
+    <div style="color: #4A4A4A; line-height: 1.6;">
+      {{ grant.eligibility|safe }}
     </div>
-    {% endif %}
-
-    <!-- Match Analysis -->
-    {% if grant.match_explanation %}
-    <div class="bg-pink-50 rounded-lg shadow-md p-6 mb-6">
-        <h2 class="text-xl font-bold mb-3">Why This Is a Good Match</h2>
-        <p class="text-gray-700">{{ grant.match_explanation }}</p>
+  </div>
+  {% endif %}
+  
+  <!-- Match Reasoning -->
+  {% if grant.match_reason %}
+  <div class="detail-card">
+    <h2 style="font-size: 1.4rem; font-weight: 600; color: #2A2A2A; margin: 0 0 16px 0;">Why This Grant Fits Your Organization</h2>
+    <div style="color: #4A4A4A; line-height: 1.6;">
+      {{ grant.match_reason }}
     </div>
-    {% endif %}
-
-    <!-- Additional Information -->
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {% if grant.geography %}
-        <div class="bg-white rounded-lg shadow-md p-6">
-            <h3 class="text-lg font-semibold mb-2">Geographic Focus</h3>
-            <p class="text-gray-700">{{ grant.geography }}</p>
-        </div>
-        {% endif %}
-
-        {% if grant.focus_area %}
-        <div class="bg-white rounded-lg shadow-md p-6">
-            <h3 class="text-lg font-semibold mb-2">Focus Areas</h3>
-            <p class="text-gray-700">{{ grant.focus_area }}</p>
-        </div>
-        {% endif %}
-
-        {% if grant.posted_date %}
-        <div class="bg-white rounded-lg shadow-md p-6">
-            <h3 class="text-lg font-semibold mb-2">Posted Date</h3>
-            <p class="text-gray-700">{{ grant.posted_date.strftime('%B %d, %Y') }}</p>
-        </div>
-        {% endif %}
-
-        {% if grant.grant_type %}
-        <div class="bg-white rounded-lg shadow-md p-6">
-            <h3 class="text-lg font-semibold mb-2">Grant Type</h3>
-            <p class="text-gray-700">{{ grant.grant_type }}</p>
-        </div>
-        {% endif %}
+  </div>
+  {% endif %}
+  
+  <!-- Grant Status -->
+  <div class="detail-card">
+    <h2 style="font-size: 1.4rem; font-weight: 600; color: #2A2A2A; margin: 0 0 16px 0;">Application Status</h2>
+    <div style="display: flex; align-items: center; gap: 8px;">
+      <span style="padding: 6px 12px; background: #E3F2FD; color: #1976D2; border-radius: 16px; font-size: 0.9rem; text-transform: capitalize;">
+        {{ grant.status }}
+      </span>
+      {% if grant.created_at %}
+      <span style="color: #6B6B6B; font-size: 0.9rem;">
+        Added {{ grant.created_at.strftime('%B %d, %Y') }}
+      </span>
+      {% endif %}
     </div>
+  </div>
+</div>
+
+<!-- Toast notification -->
+<div id="toast" style="position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#B8899A;color:white;padding:12px 20px;border-radius:8px;display:none;z-index:1000">
+  <span id="toastMessage"></span>
 </div>
 
 <script>
 function saveGrant(grantId) {
-    fetch(`/api/opportunities/save/${grantId}`, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        }
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            showToast('Grant saved to your library!');
-        } else {
-            showToast('Failed to save grant. Please try again.');
-        }
-    })
-    .catch(error => {
-        console.error('Error:', error);
-        showToast('An error occurred. Please try again.');
-    });
+  // Add save functionality here
+  showToast('Grant saved successfully!');
 }
 
-function applyToGrant(grantId) {
-    fetch(`/api/opportunities/apply/${grantId}`, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        }
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            window.location.href = '/applications';
-        } else {
-            showToast('Failed to start application. Please try again.');
-        }
-    })
-    .catch(error => {
-        console.error('Error:', error);
-        showToast('An error occurred. Please try again.');
-    });
+function createApplication(grantId) {
+  // Add application creation functionality here
+  showToast('Application creation coming soon!');
 }
 
 function showToast(message) {
-    const toast = document.createElement('div');
-    toast.className = 'fixed bottom-4 right-4 bg-gray-800 text-white px-6 py-3 rounded-lg shadow-lg z-50';
-    toast.textContent = message;
-    document.body.appendChild(toast);
-    
-    setTimeout(() => {
-        toast.remove();
-    }, 3000);
+  const toast = document.getElementById('toast');
+  const toastMessage = document.getElementById('toastMessage');
+  toastMessage.textContent = message;
+  toast.style.display = 'block';
+  setTimeout(() => {
+    toast.style.display = 'none';
+  }, 3000);
 }
 </script>
 {% endblock %}

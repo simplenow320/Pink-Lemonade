@@ -115,4 +115,11 @@ def reset_password():
     """Password reset page"""
     return render_template('reset_password.html', active=None)
 
+@bp.route('/grant/<int:grant_id>')
+def grant_detail(grant_id):
+    """Grant detail page"""
+    from app.models import Grant
+    grant = Grant.query.get_or_404(grant_id)
+    return render_template('grant_detail.html', grant=grant, active='opportunities')
+
 # Add other page routes as needed
