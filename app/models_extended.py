@@ -414,3 +414,136 @@ class ImpactReport(db.Model):
             "last_modified": self.last_modified.isoformat()
         }
 
+
+
+# =============================================================================
+# Smart Reporting Phase 3 Models - Data Collection & Validation Automation
+# =============================================================================
+
+class DataCollectionWorkflow(db.Model):
+    """Automated data collection workflow management"""
+    __tablename__ = "data_collection_workflows"
+    
+    id = db.Column(db.Integer, primary_key=True)
+    project_id = db.Column(db.Integer, db.ForeignKey("projects.id"), nullable=False)
+    name = db.Column(db.String(200), nullable=False)
+    description = db.Column(db.Text)
+    workflow_type = db.Column(db.String(100), nullable=False)
+    trigger_conditions = db.Column(db.Text)
+    stakeholder_targets = db.Column(db.Text)
+    distribution_channels = db.Column(db.Text)
+    collection_window_days = db.Column(db.Integer, default=14)
+    mobile_optimized = db.Column(db.Boolean, default=True)
+    offline_capable = db.Column(db.Boolean, default=True)
+    status = db.Column(db.String(50), default="draft")
+    automation_enabled = db.Column(db.Boolean, default=False)
+    target_response_rate = db.Column(db.Float)
+    actual_response_rate = db.Column(db.Float)
+    quality_threshold = db.Column(db.Float, default=7.0)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    activated_at = db.Column(db.DateTime)
+    
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "project_id": self.project_id,
+            "name": self.name,
+            "workflow_type": self.workflow_type,
+            "status": self.status,
+            "automation_enabled": self.automation_enabled,
+            "mobile_optimized": self.mobile_optimized,
+            "offline_capable": self.offline_capable,
+            "target_response_rate": self.target_response_rate,
+            "actual_response_rate": self.actual_response_rate
+        }
+
+
+class ValidationRule(db.Model):
+    """Configurable validation criteria and business rules"""
+    __tablename__ = "validation_rules"
+    
+    id = db.Column(db.Integer, primary_key=True)
+    project_id = db.Column(db.Integer, db.ForeignKey("projects.id"))
+    question_id = db.Column(db.Integer, db.ForeignKey("impact_questions.id"))
+    rule_name = db.Column(db.String(200), nullable=False)
+    rule_type = db.Column(db.String(50), nullable=False)
+    validation_criteria = db.Column(db.Text, nullable=False)
+    severity = db.Column(db.String(50), default="error")
+    auto_fix_enabled = db.Column(db.Boolean, default=False)
+    error_message = db.Column(db.Text)
+    help_text = db.Column(db.Text)
+    rule_enabled = db.Column(db.Boolean, default=True)
+    times_triggered = db.Column(db.Integer, default=0)
+    success_rate = db.Column(db.Float)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "rule_name": self.rule_name,
+            "rule_type": self.rule_type,
+            "severity": self.severity,
+            "rule_enabled": self.rule_enabled,
+            "success_rate": self.success_rate
+        }
+
+
+class ResponseValidation(db.Model):
+    """Real-time validation results and quality metrics"""
+    __tablename__ = "response_validations"
+    
+    id = db.Column(db.Integer, primary_key=True)
+    response_id = db.Column(db.Integer, db.ForeignKey("survey_responses.id"), nullable=False)
+    validation_rule_id = db.Column(db.Integer, db.ForeignKey("validation_rules.id"))
+    validation_status = db.Column(db.String(50), nullable=False)
+    quality_score = db.Column(db.Float)
+    completeness_score = db.Column(db.Float)
+    issues_found = db.Column(db.Text)
+    auto_corrections = db.Column(db.Text)
+    manual_review_required = db.Column(db.Boolean, default=False)
+    response_time_seconds = db.Column(db.Float)
+    device_type = db.Column(db.String(50))
+    connection_quality = db.Column(db.String(50))
+    authenticity_score = db.Column(db.Float)
+    validated_at = db.Column(db.DateTime, default=datetime.utcnow)
+    
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "response_id": self.response_id,
+            "validation_status": self.validation_status,
+            "quality_score": self.quality_score,
+            "completeness_score": self.completeness_score,
+            "manual_review_required": self.manual_review_required,
+            "authenticity_score": self.authenticity_score
+        }
+
+
+class DataCleansingLog(db.Model):
+    """Audit trail of automated data corrections"""
+    __tablename__ = "data_cleansing_logs"
+    
+    id = db.Column(db.Integer, primary_key=True)
+    response_id = db.Column(db.Integer, db.ForeignKey("survey_responses.id"), nullable=False)
+    operation_type = db.Column(db.String(100), nullable=False)
+    field_name = db.Column(db.String(200))
+    original_value = db.Column(db.Text)
+    corrected_value = db.Column(db.Text)
+    correction_method = db.Column(db.String(100))
+    confidence_score = db.Column(db.Float)
+    correction_reasoning = db.Column(db.Text)
+    auto_applied = db.Column(db.Boolean, default=False)
+    requires_review = db.Column(db.Boolean, default=False)
+    review_status = db.Column(db.String(50))
+    applied_at = db.Column(db.DateTime, default=datetime.utcnow)
+    
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "response_id": self.response_id,
+            "operation_type": self.operation_type,
+            "correction_method": self.correction_method,
+            "confidence_score": self.confidence_score,
+            "auto_applied": self.auto_applied,
+            "review_status": self.review_status
+        }
