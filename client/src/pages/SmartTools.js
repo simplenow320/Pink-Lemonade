@@ -266,7 +266,7 @@ const SmartTools = () => {
           <div className="space-y-2">
             <Link
               to={tool.route}
-              className="w-full inline-flex items-center justify-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-orange-600 hover:bg-orange-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500 transition-colors"
+              className="w-full inline-flex items-center justify-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-pink-500 hover:bg-pink-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-pink-500 transition-colors"
             >
               Launch Tool
             </Link>
@@ -309,30 +309,30 @@ const SmartTools = () => {
         >
           <h2 className="text-2xl font-bold text-gray-900 mb-4">Comprehensive Grant Management Platform</h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+            <div className="bg-pink-50 border border-pink-200 rounded-lg p-4">
               <div className="flex items-center">
-                <div className="w-3 h-3 bg-green-500 rounded-full mr-3"></div>
+                <div className="w-3 h-3 bg-pink-500 rounded-full mr-3"></div>
                 <div>
-                  <div className="font-semibold text-green-800">AI Writing Tools</div>
-                  <div className="text-sm text-green-600">4 Professional Content Generators</div>
+                  <div className="font-semibold text-pink-800">AI Writing Tools</div>
+                  <div className="text-sm text-pink-600">4 Professional Content Generators</div>
                 </div>
               </div>
             </div>
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+            <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
               <div className="flex items-center">
-                <div className="w-3 h-3 bg-blue-500 rounded-full mr-3"></div>
+                <div className="w-3 h-3 bg-gray-500 rounded-full mr-3"></div>
                 <div>
-                  <div className="font-semibold text-blue-800">Reporting System</div>
-                  <div className="text-sm text-blue-600">Advanced Analytics & Dashboards</div>
+                  <div className="font-semibold text-gray-800">Reporting System</div>
+                  <div className="text-sm text-gray-600">Advanced Analytics & Dashboards</div>
                 </div>
               </div>
             </div>
-            <div className="bg-purple-50 border border-purple-200 rounded-lg p-4">
+            <div className="bg-pink-50 border border-pink-200 rounded-lg p-4">
               <div className="flex items-center">
-                <div className="w-3 h-3 bg-purple-500 rounded-full mr-3"></div>
+                <div className="w-3 h-3 bg-pink-400 rounded-full mr-3"></div>
                 <div>
-                  <div className="font-semibold text-purple-800">Data Collection</div>
-                  <div className="text-sm text-purple-600">Smart Surveys & Validation</div>
+                  <div className="font-semibold text-pink-800">Data Collection</div>
+                  <div className="text-sm text-pink-600">Smart Surveys & Validation</div>
                 </div>
               </div>
             </div>

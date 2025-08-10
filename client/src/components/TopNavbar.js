@@ -53,9 +53,9 @@ const TopNavbar = () => {
           <div className="flex items-center">
             {/* Logo */}
             <Link to="/" className="flex-shrink-0 flex items-center">
-              <span className="text-xl font-extrabold tracking-tight text-orange-500">
+              <span className="text-xl font-extrabold tracking-tight text-pink-500">
                 <span className="inline-block transform">Grant</span>
-                <span className="inline-block text-orange-600">Flow</span>
+                <span className="inline-block text-pink-600">Flow</span>
               </span>
             </Link>
           </div>
@@ -68,8 +68,8 @@ const TopNavbar = () => {
                 to={item.href}
                 className={`flex items-center px-3 py-2 text-sm font-medium rounded-md mx-1 transition-colors duration-200 ${
                   isActive(item.href)
-                    ? 'bg-orange-50 text-orange-600'
-                    : 'text-gray-600 hover:bg-gray-50 hover:text-orange-500'
+                    ? 'bg-pink-50 text-pink-600'
+                    : 'text-gray-600 hover:bg-gray-50 hover:text-pink-500'
                 }`}
               >
                 <span className="inline-flex items-center justify-center w-5 h-5 mr-2">
@@ -84,7 +84,7 @@ const TopNavbar = () => {
           <div className="flex items-center md:hidden">
             <button
               type="button"
-              className="inline-flex items-center justify-center p-2 rounded-md text-gray-500 hover:text-orange-500 hover:bg-gray-100 focus:outline-none"
+              className="inline-flex items-center justify-center p-2 rounded-md text-gray-500 hover:text-pink-500 hover:bg-gray-100 focus:outline-none"
               aria-controls="mobile-menu"
               aria-expanded="false"
               onClick={toggleMenu}
@@ -134,8 +134,8 @@ const TopNavbar = () => {
                 to={item.href}
                 className={`flex items-center px-3 py-3 text-base font-medium rounded-md ${
                   isActive(item.href)
-                    ? 'bg-orange-50 text-orange-600'
-                    : 'text-gray-600 hover:bg-gray-50 hover:text-orange-500'
+                    ? 'bg-pink-50 text-pink-600'
+                    : 'text-gray-600 hover:bg-gray-50 hover:text-pink-500'
                 }`}
                 onClick={() => setIsMenuOpen(false)}
               >
@@ -154,7 +154,7 @@ const TopNavbar = () => {
 
 // Modern, sleek SVG icons
 const renderIcon = (iconName, isActive) => {
-  const color = isActive ? 'text-orange-500' : 'text-gray-500';
+  const color = isActive ? 'text-pink-500' : 'text-gray-500';
 
   switch (iconName) {
     case 'dashboard':
