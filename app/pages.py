@@ -79,6 +79,11 @@ def grant_tracker():
     """Grant Tracker Dashboard"""
     return render_template("grant_tracker.html", active="writing")
 
+@pages.get("/settings-guided")
+def settings_guided():
+    """Guided Organization Setup Form"""
+    return render_template("settings_guided.html", active="profile")
+
 @pages.get("/admin")
 def admin_dashboard():
     """Admin Dashboard Page"""

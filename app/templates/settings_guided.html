@@ -1,0 +1,687 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Organization Setup - Pink Lemonade</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --pink: #F5F0F1;
+            --pink-matte: #B8899A;
+            --white: #FAFAFA;
+            --black: #2A2A2A;
+            --grey-light: #FAFAFA;
+            --grey: #6B6B6B;
+            --grey-dark: #2A2A2A;
+            --border: #E8E8E8;
+        }
+
+        body {
+            background-color: var(--grey-light);
+            color: var(--black);
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        }
+
+        .header-bar {
+            background: var(--white);
+            border-bottom: 1px solid var(--border);
+            padding: 1rem 1.5rem;
+        }
+
+        .setup-container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        .step-card {
+            background: var(--white);
+            border-radius: 0.5rem;
+            padding: 2rem;
+            margin-bottom: 1.5rem;
+            border: 1px solid var(--border);
+            transition: all 0.3s ease;
+        }
+
+        .step-card.active {
+            border-color: var(--pink-matte);
+            box-shadow: 0 4px 12px rgba(184, 137, 154, 0.1);
+        }
+
+        .step-card.completed {
+            background: var(--pink);
+            border-color: var(--pink-matte);
+        }
+
+        .step-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .step-number {
+            background: var(--pink-matte);
+            color: var(--white);
+            width: 2rem;
+            height: 2rem;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            margin-right: 1rem;
+        }
+
+        .step-number.completed {
+            background: #10B981;
+        }
+
+        .step-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: var(--black);
+        }
+
+        .step-description {
+            color: var(--grey);
+            margin-bottom: 1.5rem;
+            line-height: 1.6;
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+            color: var(--grey-dark);
+        }
+
+        .form-input, .form-textarea {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid var(--border);
+            border-radius: 0.375rem;
+            background: var(--white);
+            color: var(--black);
+            transition: border-color 0.2s;
+        }
+
+        .form-input:focus, .form-textarea:focus {
+            outline: none;
+            border-color: var(--pink-matte);
+            border-width: 2px;
+        }
+
+        .btn-primary {
+            background: var(--pink-matte);
+            color: var(--white);
+            padding: 0.75rem 2rem;
+            border-radius: 0.375rem;
+            font-weight: 500;
+            transition: opacity 0.2s;
+            border: none;
+            cursor: pointer;
+        }
+
+        .btn-primary:hover {
+            opacity: 0.9;
+        }
+
+        .btn-secondary {
+            background: var(--white);
+            color: var(--grey-dark);
+            border: 1px solid var(--border);
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.375rem;
+            font-weight: 500;
+            transition: all 0.2s;
+            cursor: pointer;
+        }
+
+        .btn-secondary:hover {
+            background: var(--grey-light);
+        }
+
+        .progress-bar {
+            background: var(--border);
+            height: 0.5rem;
+            border-radius: 0.25rem;
+            margin-bottom: 2rem;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            background: var(--pink-matte);
+            height: 100%;
+            transition: width 0.3s ease;
+        }
+
+        .ai-message {
+            background: var(--pink);
+            border-left: 4px solid var(--pink-matte);
+            padding: 1rem;
+            margin-bottom: 1.5rem;
+            border-radius: 0 0.375rem 0.375rem 0;
+        }
+
+        .ai-message .ai-icon {
+            display: inline-block;
+            margin-right: 0.5rem;
+            font-weight: 600;
+            color: var(--pink-matte);
+        }
+
+        .confirmation-section {
+            background: #FEF3C7;
+            border: 1px solid #F59E0B;
+            border-radius: 0.375rem;
+            padding: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .confirmation-title {
+            font-weight: 600;
+            color: #92400E;
+            margin-bottom: 0.5rem;
+        }
+
+        .confirmation-text {
+            color: #92400E;
+            font-size: 0.875rem;
+        }
+
+        .step-content {
+            display: none;
+        }
+
+        .step-content.active {
+            display: block;
+        }
+
+        .navigation-buttons {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 2rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--border);
+        }
+
+        .completion-celebration {
+            text-align: center;
+            padding: 3rem;
+            background: var(--pink);
+            border-radius: 0.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .completion-celebration h2 {
+            color: var(--pink-matte);
+            font-size: 2rem;
+            margin-bottom: 1rem;
+        }
+
+        .completion-celebration p {
+            color: var(--grey-dark);
+            font-size: 1.125rem;
+            margin-bottom: 2rem;
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <div class="header-bar">
+        <div class="max-w-7xl mx-auto flex items-center justify-between">
+            <div class="flex items-center space-x-4">
+                <h1 class="text-xl font-semibold">Organization Setup</h1>
+            </div>
+            <a href="/profile" class="text-sm hover:underline" style="color: var(--pink-matte);">← Back to Profile</a>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="setup-container">
+        <!-- Progress Bar -->
+        <div class="progress-bar">
+            <div class="progress-fill" id="progress-fill" style="width: 12.5%;"></div>
+        </div>
+
+        <!-- Welcome Message -->
+        <div class="ai-message" id="welcome-message">
+            <span class="ai-icon">🤖</span>
+            <strong>Welcome!</strong> I'm your nonprofit onboarding assistant. I'll help you set up your organization profile step by step. This information will be used to create all your AI-generated documents, so accuracy is important. Ready to begin?
+        </div>
+
+        <!-- Step 1: Organization Name -->
+        <div class="step-card active" id="step-1">
+            <div class="step-header">
+                <div class="step-number">1</div>
+                <div class="step-title">Organization Name</div>
+            </div>
+            <div class="step-content active">
+                <div class="step-description">
+                    Let's start with your organization's legal name. This will appear on all your documents and grant applications.
+                </div>
+                <div class="form-group">
+                    <label class="form-label">What is your organization's full legal name? *</label>
+                    <input type="text" id="org-name" class="form-input" placeholder="e.g., Nitrogen Network">
+                    <small class="text-gray-500">Enter exactly as it appears in your legal documents</small>
+                </div>
+                <div class="confirmation-section" id="name-confirmation" style="display: none;">
+                    <div class="confirmation-title">Please confirm:</div>
+                    <div class="confirmation-text">Your organization name is: <span id="name-preview"></span></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Step 2: Mission Statement -->
+        <div class="step-card" id="step-2">
+            <div class="step-header">
+                <div class="step-number">2</div>
+                <div class="step-title">Mission Statement</div>
+            </div>
+            <div class="step-content">
+                <div class="ai-message">
+                    <span class="ai-icon">🤖</span>
+                    Great! Now let's capture your mission statement. This is the heart of your organization.
+                </div>
+                <div class="step-description">
+                    Your mission statement should clearly explain why your organization exists and what it aims to accomplish.
+                </div>
+                <div class="form-group">
+                    <label class="form-label">What is your organization's mission statement? *</label>
+                    <textarea id="mission" class="form-textarea" rows="3" placeholder="Our mission is to..."></textarea>
+                    <small class="text-gray-500">This will be used in all grant applications and reports</small>
+                </div>
+                <div class="confirmation-section" id="mission-confirmation" style="display: none;">
+                    <div class="confirmation-title">Please confirm:</div>
+                    <div class="confirmation-text">Your mission is: <span id="mission-preview"></span></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Step 3: Vision Statement -->
+        <div class="step-card" id="step-3">
+            <div class="step-header">
+                <div class="step-number">3</div>
+                <div class="step-title">Vision Statement</div>
+            </div>
+            <div class="step-content">
+                <div class="ai-message">
+                    <span class="ai-icon">🤖</span>
+                    Perfect mission statement! Now, what's your vision for the future?
+                </div>
+                <div class="step-description">
+                    Your vision statement describes the future you're working to create - the long-term impact you want to achieve.
+                </div>
+                <div class="form-group">
+                    <label class="form-label">What is your organization's vision for the future?</label>
+                    <textarea id="vision" class="form-textarea" rows="3" placeholder="We envision a world where..."></textarea>
+                    <small class="text-gray-500">Optional, but helpful for comprehensive proposals</small>
+                </div>
+                <div class="confirmation-section" id="vision-confirmation" style="display: none;">
+                    <div class="confirmation-title">Please confirm:</div>
+                    <div class="confirmation-text">Your vision is: <span id="vision-preview"></span></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Step 4: Programs & Services -->
+        <div class="step-card" id="step-4">
+            <div class="step-header">
+                <div class="step-number">4</div>
+                <div class="step-title">Programs & Services</div>
+            </div>
+            <div class="step-content">
+                <div class="ai-message">
+                    <span class="ai-icon">🤖</span>
+                    Excellent! Now tell me about the specific programs and services you offer.
+                </div>
+                <div class="step-description">
+                    Describe your key programs, services, or initiatives. Be specific about what you do and how you do it.
+                </div>
+                <div class="form-group">
+                    <label class="form-label">What programs and services does your organization provide? *</label>
+                    <textarea id="programs" class="form-textarea" rows="4" placeholder="We offer after-school programs, community workshops, mentoring services..."></textarea>
+                    <small class="text-gray-500">Include your main programs and any special initiatives</small>
+                </div>
+                <div class="confirmation-section" id="programs-confirmation" style="display: none;">
+                    <div class="confirmation-title">Please confirm:</div>
+                    <div class="confirmation-text">Your programs are: <span id="programs-preview"></span></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Step 5: Target Audience -->
+        <div class="step-card" id="step-5">
+            <div class="step-header">
+                <div class="step-number">5</div>
+                <div class="step-title">Target Audience</div>
+            </div>
+            <div class="step-content">
+                <div class="ai-message">
+                    <span class="ai-icon">🤖</span>
+                    Great programs! Who do you serve with these programs?
+                </div>
+                <div class="step-description">
+                    Describe the specific groups of people or communities you serve. Be as specific as possible.
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Who is your target audience or beneficiaries? *</label>
+                    <textarea id="audience" class="form-textarea" rows="3" placeholder="We serve at-risk youth ages 12-18, single mothers, urban families..."></textarea>
+                    <small class="text-gray-500">Include demographics, age ranges, locations, or specific populations</small>
+                </div>
+                <div class="confirmation-section" id="audience-confirmation" style="display: none;">
+                    <div class="confirmation-title">Please confirm:</div>
+                    <div class="confirmation-text">You serve: <span id="audience-preview"></span></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Step 6: Past Funding -->
+        <div class="step-card" id="step-6">
+            <div class="step-header">
+                <div class="step-number">6</div>
+                <div class="step-title">Past Funding</div>
+            </div>
+            <div class="step-content">
+                <div class="ai-message">
+                    <span class="ai-icon">🤖</span>
+                    Perfect! Now let's talk about your funding history - this helps establish credibility.
+                </div>
+                <div class="step-description">
+                    Share information about grants, donations, or other funding you've received. Include specific amounts and funders if possible.
+                </div>
+                <div class="form-group">
+                    <label class="form-label">What past funding or grants have you received?</label>
+                    <textarea id="past-funding" class="form-textarea" rows="4" placeholder="$25,000 from XYZ Foundation in 2024, $10,000 from local United Way..."></textarea>
+                    <small class="text-gray-500">Include amounts, funders, and years if available</small>
+                </div>
+                <div class="confirmation-section" id="funding-confirmation" style="display: none;">
+                    <div class="confirmation-title">Please confirm:</div>
+                    <div class="confirmation-text">Your funding history: <span id="funding-preview"></span></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Step 7: Current Needs -->
+        <div class="step-card" id="step-7">
+            <div class="step-header">
+                <div class="step-number">7</div>
+                <div class="step-title">Current Needs</div>
+            </div>
+            <div class="step-content">
+                <div class="ai-message">
+                    <span class="ai-icon">🤖</span>
+                    Excellent track record! Now, what are your current funding needs and priorities?
+                </div>
+                <div class="step-description">
+                    Describe what you need funding for right now. Be specific about programs, equipment, staff, or other needs.
+                </div>
+                <div class="form-group">
+                    <label class="form-label">What are your current funding needs and priorities? *</label>
+                    <textarea id="current-needs" class="form-textarea" rows="4" placeholder="We need $50,000 to expand our after-school program, hire additional staff, purchase equipment..."></textarea>
+                    <small class="text-gray-500">Be specific about amounts and what the funding will support</small>
+                </div>
+                <div class="confirmation-section" id="needs-confirmation" style="display: none;">
+                    <div class="confirmation-title">Please confirm:</div>
+                    <div class="confirmation-text">Your current needs: <span id="needs-preview"></span></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Step 8: Key Achievements -->
+        <div class="step-card" id="step-8">
+            <div class="step-header">
+                <div class="step-number">8</div>
+                <div class="step-title">Key Achievements</div>
+            </div>
+            <div class="step-content">
+                <div class="ai-message">
+                    <span class="ai-icon">🤖</span>
+                    Almost done! Let's highlight your key achievements and impact.
+                </div>
+                <div class="step-description">
+                    Share your most important accomplishments, impact metrics, success stories, or awards. Use specific numbers when possible.
+                </div>
+                <div class="form-group">
+                    <label class="form-label">What are your key achievements and impact metrics? *</label>
+                    <textarea id="achievements" class="form-textarea" rows="4" placeholder="Served 500 youth in 2024, 95% graduation rate, Winner of Community Impact Award..."></textarea>
+                    <small class="text-gray-500">Include specific numbers, outcomes, awards, or recognition</small>
+                </div>
+                <div class="confirmation-section" id="achievements-confirmation" style="display: none;">
+                    <div class="confirmation-title">Please confirm:</div>
+                    <div class="confirmation-text">Your achievements: <span id="achievements-preview"></span></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Completion Step -->
+        <div class="step-card" id="completion" style="display: none;">
+            <div class="completion-celebration">
+                <h2>🎉 Setup Complete!</h2>
+                <p>Your organization profile has been successfully saved. This information will now be used to create personalized grant documents and proposals.</p>
+                <div class="flex gap-4 justify-center">
+                    <a href="/writing" class="btn-primary">Start Writing Documents</a>
+                    <a href="/profile" class="btn-secondary">View Profile</a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Navigation -->
+        <div class="navigation-buttons">
+            <button id="prev-btn" class="btn-secondary" style="visibility: hidden;">Previous</button>
+            <div class="text-sm text-gray-500">
+                Step <span id="current-step">1</span> of 8
+            </div>
+            <button id="next-btn" class="btn-primary">Continue</button>
+        </div>
+    </div>
+
+    <script>
+        let currentStep = 1;
+        const totalSteps = 8;
+        const formData = {};
+
+        const requiredFields = {
+            1: 'org-name',
+            2: 'mission',
+            4: 'programs',
+            5: 'audience',
+            7: 'current-needs',
+            8: 'achievements'
+        };
+
+        document.addEventListener('DOMContentLoaded', () => {
+            updateNavigation();
+            setupFieldListeners();
+        });
+
+        function setupFieldListeners() {
+            // Add blur listeners to all form fields for confirmation
+            document.querySelectorAll('input, textarea').forEach(field => {
+                field.addEventListener('blur', () => showConfirmation(field));
+                field.addEventListener('input', () => hideConfirmation(field));
+            });
+        }
+
+        function showConfirmation(field) {
+            const fieldId = field.id;
+            const value = field.value.trim();
+            const confirmationId = fieldId.replace(/^(org-)?/, '') + '-confirmation';
+            const previewId = fieldId.replace(/^(org-)?/, '') + '-preview';
+            
+            const confirmationDiv = document.getElementById(confirmationId);
+            const previewSpan = document.getElementById(previewId);
+            
+            if (confirmationDiv && previewSpan && value) {
+                previewSpan.textContent = value;
+                confirmationDiv.style.display = 'block';
+            }
+        }
+
+        function hideConfirmation(field) {
+            const fieldId = field.id;
+            const confirmationId = fieldId.replace(/^(org-)?/, '') + '-confirmation';
+            const confirmationDiv = document.getElementById(confirmationId);
+            
+            if (confirmationDiv) {
+                confirmationDiv.style.display = 'none';
+            }
+        }
+
+        function validateCurrentStep() {
+            const requiredField = requiredFields[currentStep];
+            if (requiredField) {
+                const field = document.getElementById(requiredField);
+                const value = field.value.trim();
+                if (!value) {
+                    field.focus();
+                    field.style.borderColor = '#DC2626';
+                    return false;
+                }
+                field.style.borderColor = '#E8E8E8';
+                formData[requiredField] = value;
+            } else {
+                // Optional field
+                const stepFields = document.querySelectorAll(`#step-${currentStep} input, #step-${currentStep} textarea`);
+                stepFields.forEach(field => {
+                    if (field.value.trim()) {
+                        formData[field.id] = field.value.trim();
+                    }
+                });
+            }
+            return true;
+        }
+
+        function nextStep() {
+            if (!validateCurrentStep()) {
+                return;
+            }
+
+            // Mark current step as completed
+            const currentCard = document.getElementById(`step-${currentStep}`);
+            currentCard.classList.remove('active');
+            currentCard.classList.add('completed');
+            currentCard.querySelector('.step-number').classList.add('completed');
+            currentCard.querySelector('.step-number').innerHTML = '✓';
+            currentCard.querySelector('.step-content').classList.remove('active');
+
+            currentStep++;
+            
+            if (currentStep > totalSteps) {
+                completeSetup();
+                return;
+            }
+
+            // Show next step
+            const nextCard = document.getElementById(`step-${currentStep}`);
+            nextCard.classList.add('active');
+            nextCard.querySelector('.step-content').classList.add('active');
+
+            updateProgress();
+            updateNavigation();
+            
+            // Focus first field in new step
+            const firstField = nextCard.querySelector('input, textarea');
+            if (firstField) {
+                setTimeout(() => firstField.focus(), 300);
+            }
+
+            // Scroll to active step
+            nextCard.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+
+        function previousStep() {
+            if (currentStep <= 1) return;
+
+            // Hide current step
+            const currentCard = document.getElementById(`step-${currentStep}`);
+            currentCard.classList.remove('active');
+            currentCard.querySelector('.step-content').classList.remove('active');
+
+            currentStep--;
+
+            // Show previous step
+            const prevCard = document.getElementById(`step-${currentStep}`);
+            prevCard.classList.remove('completed');
+            prevCard.classList.add('active');
+            prevCard.querySelector('.step-number').classList.remove('completed');
+            prevCard.querySelector('.step-number').innerHTML = currentStep;
+            prevCard.querySelector('.step-content').classList.add('active');
+
+            updateProgress();
+            updateNavigation();
+            prevCard.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+
+        function updateProgress() {
+            const progress = (currentStep / totalSteps) * 100;
+            document.getElementById('progress-fill').style.width = `${progress}%`;
+            document.getElementById('current-step').textContent = currentStep;
+        }
+
+        function updateNavigation() {
+            const prevBtn = document.getElementById('prev-btn');
+            const nextBtn = document.getElementById('next-btn');
+            
+            prevBtn.style.visibility = currentStep === 1 ? 'hidden' : 'visible';
+            nextBtn.textContent = currentStep === totalSteps ? 'Complete Setup' : 'Continue';
+        }
+
+        async function completeSetup() {
+            try {
+                // Save all form data
+                const response = await fetch('/api/profile/organization', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        name: formData['org-name'],
+                        mission: formData['mission'],
+                        vision: formData['vision'] || '',
+                        programs: formData['programs'],
+                        target_audience: formData['audience'],
+                        past_funding: formData['past-funding'] || '',
+                        current_needs: formData['current-needs'],
+                        key_achievements: formData['achievements']
+                    })
+                });
+
+                if (response.ok) {
+                    // Hide all steps and show completion
+                    document.querySelectorAll('.step-card').forEach(card => card.style.display = 'none');
+                    document.querySelector('.navigation-buttons').style.display = 'none';
+                    document.getElementById('completion').style.display = 'block';
+                    
+                    // Update progress to 100%
+                    document.getElementById('progress-fill').style.width = '100%';
+                    
+                    // Scroll to top
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                } else {
+                    throw new Error('Failed to save profile');
+                }
+            } catch (error) {
+                console.error('Error saving profile:', error);
+                alert('There was an error saving your profile. Please try again.');
+            }
+        }
+
+        // Event listeners
+        document.getElementById('next-btn').addEventListener('click', nextStep);
+        document.getElementById('prev-btn').addEventListener('click', previousStep);
+
+        // Allow Enter key to proceed
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' && e.target.matches('input')) {
+                e.preventDefault();
+                nextStep();
+            }
+        });
+    </script>
+</body>
+</html>

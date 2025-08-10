@@ -24,9 +24,9 @@ def get_grants_for_tracker():
                 'amount_min': grant.amount_min,
                 'amount_max': grant.amount_max,
                 'status': grant.status or 'available',
-                'focus_area': grant.focus_area,
-                'description': grant.description,
-                'url': grant.url
+                'focus_area': getattr(grant, 'geography', None),
+                'description': getattr(grant, 'eligibility', None),
+                'url': getattr(grant, 'link', None)
             })
         
         # Sort by deadline (earliest first, nulls last)
