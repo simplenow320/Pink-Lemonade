@@ -56,3 +56,8 @@ def live_data():
 def journey():
     """Interactive Onboarding Journey Page"""
     return render_template("onboarding.html", active="journey")
+
+@pages.get("/admin")
+def admin_dashboard():
+    """Admin Dashboard Page"""
+    return render_template("admin_dashboard.html", active="admin")

@@ -28,7 +28,7 @@ def create_app():
     from app.api.organization import bp as organization_bp
     from app.api.scraper import bp as scraper_bp
     from app.api.opportunities import bp as opportunities_bp
-    from app.api.admin import bp as admin_bp
+    from app.api.admin import admin_bp
     from app.api.scrape import bp as scrape_bp
     from app.api.ai_test import bp as ai_test_bp
     from app.api.writing import bp as writing_bp
@@ -61,6 +61,16 @@ def create_app():
     # Register onboarding journey endpoints
     from app.api.onboarding import onboarding_bp
     flask_app.register_blueprint(onboarding_bp)
+    
+    # Initialize monitoring
+    from app.services.monitoring_service import init_monitoring
+    init_monitoring(flask_app)
+    
+    # Add security headers
+    from app.services.security_service import security
+    @flask_app.after_request
+    def add_security_headers(response):
+        return security.add_security_headers(response)
     
     # Add template context processor for global template variables
     @flask_app.context_processor

@@ -1,0 +1,298 @@
+{% extends "base.html" %}
+
+{% block title %}Admin Dashboard - Pink Lemonade{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-6">
+    <h1 class="text-3xl font-bold mb-6" style="color: #4A4A4A;">Admin Dashboard</h1>
+    
+    <!-- System Health -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+        <div class="bg-white rounded-lg shadow-md p-6">
+            <h2 class="text-lg font-semibold mb-2">System Status</h2>
+            <div id="systemStatus" class="text-center">
+                <div class="text-4xl mb-2">⏳</div>
+                <p class="text-gray-500">Checking...</p>
+            </div>
+        </div>
+        
+        <div class="bg-white rounded-lg shadow-md p-6">
+            <h2 class="text-lg font-semibold mb-2">Database</h2>
+            <div id="databaseStatus" class="text-center">
+                <div class="text-4xl mb-2">⏳</div>
+                <p class="text-gray-500">Checking...</p>
+            </div>
+        </div>
+        
+        <div class="bg-white rounded-lg shadow-md p-6">
+            <h2 class="text-lg font-semibold mb-2">Cache Performance</h2>
+            <div id="cacheStatus" class="text-center">
+                <div class="text-4xl mb-2">⏳</div>
+                <p class="text-gray-500">Loading...</p>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Statistics -->
+    <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+        <h2 class="text-xl font-semibold mb-4">Platform Statistics</h2>
+        <div id="platformStats" class="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div class="text-center p-4 bg-gray-50 rounded">
+                <p class="text-2xl font-bold" style="color: #F8D7DA;" id="totalUsers">-</p>
+                <p class="text-sm text-gray-600">Total Users</p>
+            </div>
+            <div class="text-center p-4 bg-gray-50 rounded">
+                <p class="text-2xl font-bold" style="color: #F8D7DA;" id="totalGrants">-</p>
+                <p class="text-sm text-gray-600">Total Grants</p>
+            </div>
+            <div class="text-center p-4 bg-gray-50 rounded">
+                <p class="text-2xl font-bold" style="color: #F8D7DA;" id="successRate">-</p>
+                <p class="text-sm text-gray-600">Success Rate</p>
+            </div>
+            <div class="text-center p-4 bg-gray-50 rounded">
+                <p class="text-2xl font-bold" style="color: #F8D7DA;" id="avgXP">-</p>
+                <p class="text-sm text-gray-600">Avg User XP</p>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Performance Metrics -->
+    <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+        <h2 class="text-xl font-semibold mb-4">Performance Metrics</h2>
+        <div id="performanceMetrics">
+            <p class="text-gray-500">Loading performance data...</p>
+        </div>
+    </div>
+    
+    <!-- Recent Errors -->
+    <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+        <h2 class="text-xl font-semibold mb-4">Recent Errors</h2>
+        <div id="recentErrors" class="max-h-64 overflow-y-auto">
+            <p class="text-gray-500">Loading error log...</p>
+        </div>
+    </div>
+    
+    <!-- Admin Actions -->
+    <div class="bg-white rounded-lg shadow-md p-6">
+        <h2 class="text-xl font-semibold mb-4">Admin Actions</h2>
+        <div class="flex flex-wrap gap-4">
+            <button onclick="clearCache()" class="px-4 py-2 rounded" 
+                style="background-color: #F8D7DA; color: #4A4A4A;">
+                Clear Cache
+            </button>
+            <button onclick="optimizeDatabase()" class="px-4 py-2 rounded" 
+                style="background-color: #4A4A4A; color: white;">
+                Optimize Database
+            </button>
+            <button onclick="refreshMetrics()" class="px-4 py-2 rounded border" 
+                style="border-color: #F8D7DA; color: #4A4A4A;">
+                Refresh Metrics
+            </button>
+        </div>
+    </div>
+</div>
+
+<script>
+// Load everything on page load
+document.addEventListener('DOMContentLoaded', () => {
+    checkHealth();
+    loadStats();
+    loadMetrics();
+    loadErrors();
+    
+    // Auto-refresh every 30 seconds
+    setInterval(() => {
+        checkHealth();
+        loadMetrics();
+    }, 30000);
+});
+
+async function checkHealth() {
+    try {
+        const response = await fetch('/api/admin/health');
+        const data = await response.json();
+        
+        // Update system status
+        const systemDiv = document.getElementById('systemStatus');
+        if (data.status === 'healthy') {
+            systemDiv.innerHTML = `
+                <div class="text-4xl mb-2">✅</div>
+                <p class="text-green-600">Healthy</p>
+                <p class="text-xs text-gray-500">Uptime: ${Math.round(data.uptime_hours)}h</p>
+            `;
+        } else if (data.status === 'degraded') {
+            systemDiv.innerHTML = `
+                <div class="text-4xl mb-2">⚠️</div>
+                <p class="text-yellow-600">Degraded</p>
+            `;
+        } else {
+            systemDiv.innerHTML = `
+                <div class="text-4xl mb-2">❌</div>
+                <p class="text-red-600">Unhealthy</p>
+            `;
+        }
+        
+        // Update database status
+        const dbDiv = document.getElementById('databaseStatus');
+        if (data.database && data.database.connected) {
+            dbDiv.innerHTML = `
+                <div class="text-4xl mb-2">✅</div>
+                <p class="text-green-600">Connected</p>
+                <p class="text-xs text-gray-500">${Math.round(data.database.response_time_ms)}ms</p>
+            `;
+        } else {
+            dbDiv.innerHTML = `
+                <div class="text-4xl mb-2">❌</div>
+                <p class="text-red-600">Disconnected</p>
+            `;
+        }
+        
+    } catch (error) {
+        console.error('Error checking health:', error);
+    }
+}
+
+async function loadStats() {
+    try {
+        const response = await fetch('/api/admin/stats');
+        const data = await response.json();
+        
+        if (data.success) {
+            document.getElementById('totalUsers').textContent = data.stats.users.total;
+            document.getElementById('totalGrants').textContent = data.stats.grants.total;
+            document.getElementById('successRate').textContent = data.stats.grants.success_rate + '%';
+            document.getElementById('avgXP').textContent = data.stats.gamification.average_xp;
+        }
+    } catch (error) {
+        console.error('Error loading stats:', error);
+    }
+}
+
+async function loadMetrics() {
+    try {
+        const response = await fetch('/api/admin/metrics');
+        const data = await response.json();
+        
+        if (data.success) {
+            // Update cache status
+            const cacheDiv = document.getElementById('cacheStatus');
+            const hitRate = data.cache.hit_rate || 0;
+            cacheDiv.innerHTML = `
+                <div class="text-2xl font-bold" style="color: ${hitRate > 70 ? '#10B981' : '#F59E0B'};">
+                    ${hitRate}%
+                </div>
+                <p class="text-sm text-gray-600">Hit Rate</p>
+                <p class="text-xs text-gray-500">${data.cache.size} items</p>
+            `;
+            
+            // Update performance metrics
+            const perfDiv = document.getElementById('performanceMetrics');
+            const reqStats = data.metrics.requests;
+            
+            let endpointRows = '';
+            for (const [endpoint, stats] of Object.entries(reqStats.endpoints || {})) {
+                endpointRows += `
+                    <tr>
+                        <td class="py-1 text-sm">${endpoint}</td>
+                        <td class="py-1 text-sm text-center">${stats.count}</td>
+                        <td class="py-1 text-sm text-center">${Math.round(stats.avg_duration)}ms</td>
+                        <td class="py-1 text-sm text-center">
+                            <span class="${stats.errors > 0 ? 'text-red-600' : 'text-green-600'}">
+                                ${stats.errors}
+                            </span>
+                        </td>
+                    </tr>
+                `;
+            }
+            
+            perfDiv.innerHTML = `
+                <div class="mb-4">
+                    <p class="text-sm text-gray-600">Total Requests: ${reqStats.total}</p>
+                    <p class="text-sm text-gray-600">Success Rate: ${reqStats.success_rate.toFixed(1)}%</p>
+                </div>
+                <table class="w-full text-left">
+                    <thead>
+                        <tr class="border-b">
+                            <th class="py-2">Endpoint</th>
+                            <th class="py-2 text-center">Calls</th>
+                            <th class="py-2 text-center">Avg Time</th>
+                            <th class="py-2 text-center">Errors</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${endpointRows || '<tr><td colspan="4" class="text-center py-4 text-gray-500">No data</td></tr>'}
+                    </tbody>
+                </table>
+            `;
+        }
+    } catch (error) {
+        console.error('Error loading metrics:', error);
+    }
+}
+
+async function loadErrors() {
+    try {
+        const response = await fetch('/api/admin/errors');
+        const data = await response.json();
+        
+        if (data.success) {
+            const errorsDiv = document.getElementById('recentErrors');
+            
+            if (data.recent_errors && data.recent_errors.length > 0) {
+                errorsDiv.innerHTML = data.recent_errors.map(error => `
+                    <div class="border-b py-2">
+                        <p class="text-sm font-semibold">${error.type}</p>
+                        <p class="text-xs text-gray-600">${error.message}</p>
+                        <p class="text-xs text-gray-400">${new Date(error.timestamp).toLocaleString()}</p>
+                    </div>
+                `).join('');
+            } else {
+                errorsDiv.innerHTML = '<p class="text-gray-500">No recent errors</p>';
+            }
+        }
+    } catch (error) {
+        console.error('Error loading errors:', error);
+    }
+}
+
+async function clearCache() {
+    if (!confirm('Clear all cached data?')) return;
+    
+    try {
+        const response = await fetch('/api/admin/cache/clear', { method: 'POST' });
+        const data = await response.json();
+        
+        if (data.success) {
+            alert('Cache cleared successfully');
+            loadMetrics();
+        }
+    } catch (error) {
+        console.error('Error clearing cache:', error);
+        alert('Failed to clear cache');
+    }
+}
+
+async function optimizeDatabase() {
+    if (!confirm('Optimize database? This may take a moment.')) return;
+    
+    try {
+        const response = await fetch('/api/admin/database/optimize', { method: 'POST' });
+        const data = await response.json();
+        
+        if (data.success) {
+            alert(data.message);
+        }
+    } catch (error) {
+        console.error('Error optimizing database:', error);
+        alert('Failed to optimize database');
+    }
+}
+
+function refreshMetrics() {
+    checkHealth();
+    loadStats();
+    loadMetrics();
+    loadErrors();
+}
+</script>
+{% endblock %}
