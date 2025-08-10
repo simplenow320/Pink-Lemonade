@@ -1,11 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
-import Sidebar from '../Sidebar';
 
 const ModernLayout = ({ children }) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [scrollPosition, setScrollPosition] = useState(0);
   const location = useLocation();
 
@@ -79,49 +77,28 @@ const ModernLayout = ({ children }) => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 flex">
-      {/* Sidebar */}
-      <Sidebar isOpen={isSidebarOpen} setIsOpen={setIsSidebarOpen} />
-      
-      {/* Main content area */}
-      <div className="flex-1 flex flex-col">
-        {/* Modern Top Navigation - fixed, with glass effect on scroll */}
-        <header
-        className={`fixed top-0 left-0 md:left-64 right-0 z-30 transition-all duration-300 ${
+    <div className="min-h-screen bg-gray-50 flex flex-col">
+      {/* Modern Top Navigation - fixed, with glass effect on scroll */}
+      <header
+        className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
           scrollPosition > 10 ? 'bg-white shadow-md' : 'bg-white/90 backdrop-blur-sm'
         }`}
       >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
-            {/* Mobile Menu Button */}
-            <button
-              type="button"
-              className="md:hidden inline-flex items-center justify-center p-2 rounded-md text-gray-500 hover:text-pink-500 hover:bg-gray-100 focus:outline-none"
-              onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-            >
-              <span className="sr-only">Open sidebar menu</span>
-              <svg
-                className="h-6 w-6"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M4 6h16M4 12h16M4 18h16"
+            {/* Logo */}
+            <div className="flex-shrink-0">
+              <Link to="/" className="flex items-center">
+                <img 
+                  src="/assets/pink-lemonade-logo.png" 
+                  alt="Pink Lemonade" 
+                  className="h-8 w-auto"
                 />
-              </svg>
-            </button>
-
-            {/* Page Title or Logo */}
-            <div className="flex-shrink-0 hidden md:block">
-              <h1 className="text-xl font-semibold text-gray-900">Pink Lemonade</h1>
+              </Link>
             </div>
 
-            {/* Desktop Navigation - completely hidden since we have sidebar */}
-            <nav className="hidden space-x-1">
+            {/* Desktop Navigation - hidden on mobile */}
+            <nav className="hidden md:flex space-x-1">
               {navItems.map((item) => (
                 <Link
                   key={item.name}
@@ -255,8 +232,8 @@ const ModernLayout = ({ children }) => {
         </AnimatePresence>
       </header>
 
-      {/* Main Content with padding for fixed header and sidebar */}
-      <main className="flex-grow pt-16 pb-12 md:ml-64">
+      {/* Main Content with padding for fixed header */}
+      <main className="flex-grow pt-16 pb-12">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">{children}</div>
       </main>
 
@@ -283,7 +260,6 @@ const ModernLayout = ({ children }) => {
           </div>
         </div>
       </footer>
-      </div>
     </div>
   );
 };
