@@ -1,6 +1,6 @@
 :root{
   --pink:#F5F0F1;
-  --pink-primary:#B8899A;
+  --pink-primary:#B7899A;
   --white:#FAFAFA;
   --grey:#6B6B6B;
   --black:#2A2A2A;
@@ -34,6 +34,30 @@ a[style*="background:#B8899A"]:hover {
   transition: transform 0.3s ease;
 }
 .logo-5x:hover {
+  transform: scale(1.05);
+}
+
+.logo-4x {
+  height: 213px; /* 170px * 1.25 = 213px */
+  width: auto;
+  border-radius: 8px;
+  background: transparent;
+  padding: 6px;
+  transition: transform 0.3s ease;
+}
+.logo-4x:hover {
+  transform: scale(1.05);
+}
+
+.logo-3x {
+  height: 160px; /* 128px * 1.25 = 160px */
+  width: auto;
+  border-radius: 6px;
+  background: transparent;
+  padding: 4px;
+  transition: transform 0.3s ease;
+}
+.logo-3x:hover {
   transform: scale(1.05);
 }
 *{box-sizing:border-box}

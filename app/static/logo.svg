@@ -1,0 +1,18 @@
+<svg width="200" height="60" viewBox="0 0 200 60" xmlns="http://www.w3.org/2000/svg">
+  <!-- Pink Lemonade logo -->
+  <g>
+    <!-- Lemonade glass -->
+    <path d="M15 15 L20 45 L40 45 L45 15 Z" fill="none" stroke="#B7899A" stroke-width="2"/>
+    <!-- Lemon slice -->
+    <circle cx="30" cy="25" r="8" fill="none" stroke="#B7899A" stroke-width="2"/>
+    <line x1="30" y1="17" x2="30" y2="33" stroke="#B7899A" stroke-width="1"/>
+    <line x1="22" y1="25" x2="38" y2="25" stroke="#B7899A" stroke-width="1"/>
+    <!-- Straw -->
+    <line x1="35" y1="10" x2="38" y2="30" stroke="#B7899A" stroke-width="2"/>
+    
+    <!-- Text -->
+    <text x="55" y="35" font-family="Arial, sans-serif" font-size="24" font-weight="bold" fill="#B7899A">
+      Pink Lemonade
+    </text>
+  </g>
+</svg>
