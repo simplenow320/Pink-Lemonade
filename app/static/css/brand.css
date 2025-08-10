@@ -9,9 +9,9 @@
   --font:Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Arial, "Helvetica Neue", sans-serif;
 }
 
-/* Logo Styling - 20x Size (4x bigger than 5x) */
+/* Logo Styling - Reduced Size */
 .logo-5x {
-  height: 640px; /* 20x standard 32px = 640px */
+  height: 213px; /* 3x smaller than 640px */
   width: auto;
   border-radius: 12px;
   background: transparent;
@@ -19,7 +19,7 @@
   transition: transform 0.3s ease;
 }
 .logo-5x:hover {
-  transform: scale(1.02);
+  transform: scale(1.05);
 }
 *{box-sizing:border-box}
 html,body{margin:0;padding:0;background:var(--white);color:var(--grey);font-family:var(--font);line-height:1.55}
@@ -47,12 +47,12 @@ footer.small{color:#777;font-size:12px;margin-top:24px;text-align:center;border-
 
 /* Responsive Design */
 @media (max-width: 768px) {
-  .logo-5x{height:480px} /* Smaller on mobile */
+  .logo-5x{height:160px} /* Smaller on mobile */
   .grid-4{grid-template-columns:repeat(2,minmax(0,1fr))}
   .grid-2{grid-template-columns:1fr}
 }
 
 @media (max-width: 480px) {
-  .logo-5x{height:400px} /* Even smaller on very small screens */
+  .logo-5x{height:133px} /* Even smaller on very small screens */
   .container{padding:16px}
 }
