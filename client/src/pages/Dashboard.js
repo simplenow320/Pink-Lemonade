@@ -4,6 +4,9 @@ import { useGrants } from '../hooks/useGrants';
 import { formatCurrency, formatDate } from '../utils/formatters';
 import { Chart as ChartJS, ArcElement, Tooltip, Legend, CategoryScale, LinearScale, BarElement, Title } from 'chart.js';
 import { Doughnut, Bar } from 'react-chartjs-2';
+import WelcomeAnimation from '../components/ui/WelcomeAnimation';
+import ProfileRewards from '../components/ui/ProfileRewards';
+import ErrorVisualization from '../components/ui/ErrorVisualization';
 
 // Register Chart.js components
 ChartJS.register(ArcElement, Tooltip, Legend, CategoryScale, LinearScale, BarElement, Title);
@@ -45,25 +48,19 @@ const Dashboard = () => {
   if (loading) {
     return (
       <div className="flex justify-center items-center h-64">
-        <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-orange-500"></div>
+        <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-pink-500"></div>
       </div>
     );
   }
   
   if (error) {
     return (
-      <div className="bg-red-50 border-l-4 border-red-400 p-4 mb-6 rounded-md">
-        <div className="flex">
-          <div className="flex-shrink-0">
-            <svg className="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
-              <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
-            </svg>
-          </div>
-          <div className="ml-3">
-            <p className="text-sm text-red-700">{error}</p>
-          </div>
-        </div>
-      </div>
+      <ErrorVisualization
+        type="server"
+        error={error}
+        solution="Try refreshing the page. If this keeps happening, check your internet connection."
+        onRetry={() => window.location.reload()}
+      />
     );
   }
 
@@ -124,6 +121,13 @@ const Dashboard = () => {
 
   return (
     <div className="space-y-8">
+      {/* Welcome Animation */}
+      <WelcomeAnimation 
+        userName="Admin"
+        orgName="Pink Lemonade User"
+        isFirstVisit={!grants || grants.length === 0}
+      />
+
       {/* Page Header with CTA */}
       <div className="flex flex-col lg:flex-row justify-between lg:items-center">
         <div>
@@ -421,8 +425,18 @@ const Dashboard = () => {
           </div>
         </div>
         
-        {/* Right column - Lists */}
-        <div className="lg:col-span-3 space-y-8">
+        {/* Right column - Sidebar with Profile and Lists */}
+        <div className="lg:col-span-1 space-y-6">
+          <ProfileRewards 
+            completionPercentage={85}
+            completedSections={['basic_info', 'programs', 'capacity']}
+            totalSections={5}
+          />
+        </div>
+      </div>
+
+      {/* Grant Lists Section */}
+      <div className="space-y-8">
           {/* Upcoming Deadlines */}
           <div className="bg-white shadow-sm rounded-xl overflow-hidden">
             <div className="px-6 py-4 border-b border-gray-200">
@@ -440,7 +454,7 @@ const Dashboard = () => {
                         <div className="mt-1 flex items-center text-sm text-gray-500">
                           <span className="truncate">{grant.funder}</span>
                           <span className="mx-1">•</span>
-                          <span className="font-medium text-orange-600">
+                          <span className="font-medium text-pink-600">
                             Due: {formatDate(grant.due_date)}
                           </span>
                         </div>

@@ -24,7 +24,7 @@ const WritingAssistant = lazy(() => import('./pages/WritingAssistant'));
 const PageLoader = () => (
   <div className="flex items-center justify-center min-h-[70vh]">
     <div className="flex flex-col items-center">
-      <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500"></div>
+      <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-pink-500"></div>
       <p className="mt-4 text-gray-600">Loading...</p>
     </div>
   </div>
@@ -65,7 +65,7 @@ function App() {
       <div className="flex items-center justify-center min-h-screen bg-gray-50">
         <div className="text-center">
           <div className="flex flex-col items-center">
-            <div className="inline-block animate-spin h-10 w-10 border-4 border-orange-500 border-t-transparent rounded-full mb-4"></div>
+            <div className="inline-block animate-spin h-10 w-10 border-4 border-pink-500 border-t-transparent rounded-full mb-4"></div>
             <h2 className="text-xl font-semibold text-gray-700">Loading GrantFlow...</h2>
             <p className="mt-2 text-sm text-gray-500">
               Connecting to your grants management system
@@ -101,7 +101,7 @@ function App() {
           <p className="text-gray-600 mb-6">{error}</p>
           <button
             onClick={() => window.location.reload()}
-            className="w-full px-4 py-2 bg-orange-500 text-white rounded-lg font-medium hover:bg-orange-600 transition-colors shadow-md hover:shadow-lg"
+            className="w-full px-4 py-2 bg-pink-500 text-white rounded-lg font-medium hover:bg-pink-600 transition-colors shadow-md hover:shadow-lg"
           >
             Try Again
           </button>

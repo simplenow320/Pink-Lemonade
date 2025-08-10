@@ -3,15 +3,15 @@
 @tailwind utilities;
 
 :root {
-  --color-primary: #f97316;
-  --color-primary-dark: #ea580c;
-  --color-primary-light: #ffedd5;
-  --color-secondary: #3b82f6;
-  --color-secondary-dark: #2563eb;
-  --color-secondary-light: #dbeafe;
-  --color-accent: #8b5cf6;
-  --color-accent-dark: #7c3aed;
-  --color-accent-light: #ede9fe;
+  --color-primary: #ec4899;
+  --color-primary-dark: #db2777;
+  --color-primary-light: #f9a8d4;
+  --color-secondary: #6b7280;
+  --color-secondary-dark: #374151;
+  --color-secondary-light: #d1d5db;
+  --color-accent: #1f2937;
+  --color-accent-dark: #111827;
+  --color-accent-light: #9ca3af;
   --color-success: #10b981;
   --color-warning: #f59e0b;
   --color-error: #ef4444;
@@ -65,7 +65,7 @@ body {
 
 /* Custom Form Styles */
 .form-input {
-  @apply w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500;
+  @apply w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-pink-500;
 }
 
 .form-select {
