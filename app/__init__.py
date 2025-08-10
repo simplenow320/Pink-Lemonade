@@ -88,6 +88,14 @@ def create_app():
     from app.api.notification_enhancement import bp as notification_enhancement_bp
     flask_app.register_blueprint(notification_enhancement_bp)
     
+    # Register production readiness endpoints
+    from app.api.production_readiness import bp as production_bp
+    flask_app.register_blueprint(production_bp)
+    
+    # Register deployment endpoints
+    from app.api.deployment import bp as deployment_bp
+    flask_app.register_blueprint(deployment_bp)
+    
     # Register live data integration endpoints
     from app.api.live_data import bp as live_data_bp
     flask_app.register_blueprint(live_data_bp)
