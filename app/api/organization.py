@@ -1,9 +1,9 @@
 """Organization API endpoints for profile management and onboarding"""
 from flask import Blueprint, request, jsonify, session
-from flask_login import login_required, current_user
 from app import db
 from app.models import Organization, User
 from app.services.ai_service import AIService
+from app.api.auth import login_required, get_current_user
 import logging
 from datetime import datetime
 
@@ -19,15 +19,19 @@ def update_onboarding():
         data = request.json
         step = data.get('step', 1)
         
+        # Get current user
+        user = get_current_user()
+        if not user:
+            return jsonify({'error': 'User not found'}), 404
+            
         # Get or create organization for current user
-        org = Organization.query.filter_by(created_by_user_id=current_user.id).first()
+        org = Organization.query.filter_by(created_by_user_id=user.id).first()
         
         if not org:
             # Create new organization
-            org = Organization(
-                name=current_user.org_name or data.get('legal_name', ''),
-                created_by_user_id=current_user.id
-            )
+            org = Organization()
+            org.name = user.org_name or data.get('legal_name', '')
+            org.created_by_user_id = user.id
             db.session.add(org)
         
         # Update based on step

@@ -853,3 +853,24 @@ class Narrative(db.Model):
             'created_at': self.created_at.isoformat() if self.created_at else None,
             'updated_at': self.updated_at.isoformat() if self.updated_at else None
         }
+class Analytics(db.Model):
+    __tablename__ = "analytics"
+    
+    id = db.Column(db.Integer, primary_key=True)
+    event_type = db.Column(db.String(50), nullable=False)  # grant_decision, application_outcome, etc.
+    event_data = db.Column(db.JSON)  # Flexible data storage for various event types
+    user_id = db.Column(db.Integer, db.ForeignKey("users.id"))
+    org_id = db.Column(db.Integer, db.ForeignKey("organizations.id"))
+    grant_id = db.Column(db.Integer, db.ForeignKey("grants.id"))
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "event_type": self.event_type,
+            "event_data": self.event_data,
+            "user_id": self.user_id,
+            "org_id": self.org_id,
+            "grant_id": self.grant_id,
+            "created_at": self.created_at.isoformat() if self.created_at else None
+        }
