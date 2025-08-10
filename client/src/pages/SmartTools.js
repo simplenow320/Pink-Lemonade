@@ -43,99 +43,53 @@ const SmartTools = () => {
 
   const smartTools = [
     {
-      id: 'matching',
-      name: 'Smart Matching',
-      description: 'AI-powered grant-to-organization matching with intelligent scoring',
-      icon: '🎯',
-      color: 'from-blue-500 to-blue-600',
-      features: ['94% matching accuracy', 'Intelligent scoring system', 'Mission alignment analysis'],
-      endpoint: '/api/ai/match-grant',
-      phase: 'core'
-    },
-    {
-      id: 'extraction',
-      name: 'Smart Extraction', 
-      description: 'Automated grant data extraction from documents and websites',
-      icon: '📄',
-      color: 'from-green-500 to-green-600',
-      features: ['Document parsing', 'Web scraping', 'Data normalization'],
-      endpoint: '/api/ai/extract-grant',
-      phase: 'core'
-    },
-    {
-      id: 'writing',
-      name: 'Smart Writing',
-      description: 'AI-powered narrative generation and proposal assistance',
-      icon: '✍️',
-      color: 'from-purple-500 to-purple-600',
-      features: ['Automated narratives', 'Proposal templates', 'Content optimization'],
-      endpoint: '/api/writing/generate-narrative',
-      phase: 'core'
-    },
-    {
-      id: 'intelligence',
-      name: 'Smart Intelligence',
-      description: 'Advanced grant analysis with strategic insights',
-      icon: '🧠',
-      color: 'from-orange-500 to-orange-600',
-      features: ['Grant analysis', 'Strategic recommendations', 'Contact intelligence'],
-      endpoint: '/api/grant-intelligence/analyze',
-      phase: 'core'
-    },
-    {
-      id: 'surveys',
-      name: 'Smart Surveys',
-      description: 'AI-refined survey building with intelligent question optimization',
-      icon: '📊',
-      color: 'from-indigo-500 to-indigo-600',
-      features: ['Question refinement', 'Response optimization', 'Survey analytics'],
-      endpoint: '/api/smart-reporting/phase2/health',
-      phase: 'phase2'
-    },
-    {
-      id: 'collection',
-      name: 'Smart Collection',
-      description: 'Automated data collection and validation with real-time processing',
-      icon: '📥',
-      color: 'from-teal-500 to-teal-600',
-      features: ['Automated workflows', 'Real-time validation', 'Data cleansing'],
-      endpoint: '/api/smart-reporting/phase3/health',
-      phase: 'phase3'
-    },
-    {
-      id: 'analytics',
-      name: 'Smart Analytics',
-      description: 'Executive dashboards with predictive analytics and insights',
-      icon: '📈',
-      color: 'from-red-500 to-red-600',
-      features: ['Executive dashboards', 'Predictive analytics', 'Performance insights'],
-      endpoint: '/api/smart-reporting/phase4/health',
-      phase: 'phase4'
-    },
-    {
-      id: 'reports',
-      name: 'Smart Reports',
-      description: 'Automated report generation with stakeholder customization',
+      id: 'case-support',
+      name: 'Case for Support',
+      description: 'Create compelling case documents that make the argument for why your organization deserves funding',
       icon: '📋',
       color: 'from-pink-500 to-pink-600',
-      features: ['Executive summaries', 'Stakeholder reports', 'Automated distribution'],
-      endpoint: '/api/smart-reporting/phase5/health',
-      phase: 'phase5'
+      features: ['Professional funding documents', 'Mission-driven narratives', 'Donor-ready content'],
+      endpoint: '/api/writing/case-support',
+      route: '/case-support',
+      phase: 'practical'
     },
     {
-      id: 'governance',
-      name: 'Smart Governance',
-      description: 'Comprehensive compliance monitoring and audit trail management',
-      icon: '🛡️',
-      color: 'from-gray-500 to-gray-600',
-      features: ['Compliance monitoring', 'Audit trails', 'Data governance'],
-      endpoint: '/api/smart-reporting/phase6/health',
-      phase: 'phase6'
+      id: 'impact-report',
+      name: 'Impact Reports',
+      description: 'Generate comprehensive reports showing your programs actual outcomes and community impact',
+      icon: '📊',
+      color: 'from-blue-500 to-blue-600',
+      features: ['Outcome tracking', 'Visual metrics', 'Stakeholder reports'],
+      endpoint: '/api/writing/impact-report',
+      route: '/impact-report',
+      phase: 'practical'
+    },
+    {
+      id: 'grant-pitch',
+      name: 'Grant Pitch',
+      description: 'AI-powered pitch generator for presentations, emails, and verbal delivery to funders',
+      icon: '🎯',
+      color: 'from-green-500 to-green-600',
+      features: ['Multiple formats', 'Funder-specific', 'Presentation ready'],
+      endpoint: '/api/writing/grant-pitch',
+      route: '/grant-pitch',
+      phase: 'practical'
+    },
+    {
+      id: 'writing-assistant',
+      name: 'Writing Assistant',
+      description: 'AI-powered text improvement and proposal writing help for any grant content',
+      icon: '✍️',
+      color: 'from-purple-500 to-purple-600',
+      features: ['Text improvement', 'Professional polish', 'Content optimization'],
+      endpoint: '/api/writing/improve',
+      route: '/writing-assistant',
+      phase: 'practical'
     }
   ];
 
   const getToolStatus = (tool) => {
-    if (tool.phase === 'core') return 'operational';
+    if (tool.phase === 'practical') return 'operational';
     return healthStatus[tool.phase]?.status || 'checking';
   };
 
@@ -188,14 +142,14 @@ const SmartTools = () => {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, delay: 0.3 }}
         >
-          <h2 className="text-2xl font-bold text-gray-900 mb-4">🏆 System Status</h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+          <h2 className="text-2xl font-bold text-gray-900 mb-4">📝 Practical Grant Writing Tools</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="bg-pink-50 border border-pink-200 rounded-lg p-4">
               <div className="flex items-center">
-                <div className="w-3 h-3 bg-green-500 rounded-full mr-3"></div>
+                <div className="w-3 h-3 bg-pink-500 rounded-full mr-3"></div>
                 <div>
-                  <div className="font-semibold text-green-800">Smart Reporting System</div>
-                  <div className="text-sm text-green-600">100% Complete - All 6 Phases</div>
+                  <div className="font-semibold text-pink-800">Ready-to-Use Tools</div>
+                  <div className="text-sm text-pink-600">4 Practical Writing Tools Available</div>
                 </div>
               </div>
             </div>
@@ -203,17 +157,8 @@ const SmartTools = () => {
               <div className="flex items-center">
                 <div className="w-3 h-3 bg-blue-500 rounded-full mr-3"></div>
                 <div>
-                  <div className="font-semibold text-blue-800">Core AI Tools</div>
-                  <div className="text-sm text-blue-600">4 Tools Operational</div>
-                </div>
-              </div>
-            </div>
-            <div className="bg-purple-50 border border-purple-200 rounded-lg p-4">
-              <div className="flex items-center">
-                <div className="w-3 h-3 bg-purple-500 rounded-full mr-3"></div>
-                <div>
-                  <div className="font-semibold text-purple-800">Enterprise Features</div>
-                  <div className="text-sm text-purple-600">Compliance & Governance Active</div>
+                  <div className="font-semibold text-blue-800">Real Grant Documents</div>
+                  <div className="text-sm text-blue-600">Professional, Donor-Ready Content</div>
                 </div>
               </div>
             </div>
@@ -262,13 +207,13 @@ const SmartTools = () => {
 
                   {/* Action Buttons */}
                   <div className="space-y-2">
-                    {tool.phase === 'core' ? (
-                      <Link
-                        to={`/smart-tools/${tool.id}`}
+                    {tool.phase === 'practical' ? (
+                      <a
+                        href={tool.route}
                         className="w-full inline-flex items-center justify-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-orange-600 hover:bg-orange-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500 transition-colors"
                       >
                         Launch Tool
-                      </Link>
+                      </a>
                     ) : (
                       <button
                         onClick={() => {
@@ -291,15 +236,10 @@ const SmartTools = () => {
                     <button 
                       onClick={() => {
                         const docs = {
-                          matching: 'AI-powered grant matching with 94% accuracy',
-                          extraction: 'Document parsing and web scraping capabilities',
-                          writing: 'Automated narrative generation and proposal assistance',
-                          intelligence: 'Advanced grant analysis with strategic insights',
-                          surveys: 'Phase 2: AI question refinement and survey builder',
-                          collection: 'Phase 3: Automated data collection and validation',
-                          analytics: 'Phase 4: Executive dashboards and predictive analytics',
-                          reports: 'Phase 5: Automated report generation with customization',
-                          governance: 'Phase 6: Compliance monitoring and audit trails'
+                          'case-support': 'Create professional funding documents with compelling narratives for donors and foundations',
+                          'impact-report': 'Generate comprehensive reports showing program outcomes and community impact with visual metrics',
+                          'grant-pitch': 'AI-powered pitch generator for presentations, emails, and verbal delivery in multiple formats',
+                          'writing-assistant': 'Improve any grant content with AI-powered text enhancement and professional polish'
                         };
                         alert(`${tool.name} Documentation:\n\n${docs[tool.id]}\n\nEndpoint: ${tool.endpoint}`);
                       }}

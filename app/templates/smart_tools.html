@@ -45,14 +45,14 @@
     <!-- System Status -->
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 -mt-8">
         <div class="bg-white rounded-lg shadow-md p-6 mb-8">
-            <h2 class="text-2xl font-bold text-gray-900 mb-4">🏆 System Status</h2>
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div class="bg-green-50 border border-green-200 rounded-lg p-4">
+            <h2 class="text-2xl font-bold text-gray-900 mb-4">📝 Practical Grant Writing Tools</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div class="bg-pink-50 border border-pink-200 rounded-lg p-4">
                     <div class="flex items-center">
-                        <div class="w-3 h-3 bg-green-500 rounded-full mr-3"></div>
+                        <div class="w-3 h-3 bg-pink-500 rounded-full mr-3"></div>
                         <div>
-                            <div class="font-semibold text-green-800">Smart Reporting System</div>
-                            <div class="text-sm text-green-600">100% Complete - All 6 Phases</div>
+                            <div class="font-semibold text-pink-800">Ready-to-Use Tools</div>
+                            <div class="text-sm text-pink-600">4 Practical Writing Tools Available</div>
                         </div>
                     </div>
                 </div>
@@ -60,17 +60,8 @@
                     <div class="flex items-center">
                         <div class="w-3 h-3 bg-blue-500 rounded-full mr-3"></div>
                         <div>
-                            <div class="font-semibold text-blue-800">Core AI Tools</div>
-                            <div class="text-sm text-blue-600">4 Tools Operational</div>
-                        </div>
-                    </div>
-                </div>
-                <div class="bg-purple-50 border border-purple-200 rounded-lg p-4">
-                    <div class="flex items-center">
-                        <div class="w-3 h-3 bg-purple-500 rounded-full mr-3"></div>
-                        <div>
-                            <div class="font-semibold text-purple-800">Enterprise Features</div>
-                            <div class="text-sm text-purple-600">Compliance & Governance Active</div>
+                            <div class="font-semibold text-blue-800">Real Grant Documents</div>
+                            <div class="text-sm text-blue-600">Professional, Donor-Ready Content</div>
                         </div>
                     </div>
                 </div>
@@ -78,18 +69,18 @@
         </div>
 
         <!-- Smart Tools Grid -->
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-            <!-- Smart Matching -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+            <!-- Case for Support -->
             <div class="bg-white rounded-lg shadow-md overflow-hidden card-hover">
-                <div class="bg-gradient-to-r from-blue-500 to-blue-600 p-6 text-white">
+                <div class="bg-gradient-to-r from-pink-500 to-pink-600 p-6 text-white">
                     <div class="flex items-center justify-between mb-2">
-                        <div class="text-3xl">🎯</div>
+                        <div class="text-3xl">📋</div>
                         <div class="px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-600">
                             ✅ Operational
                         </div>
                     </div>
-                    <h3 class="text-xl font-bold mb-1">Smart Matching</h3>
-                    <p class="text-sm opacity-90">AI-powered grant-to-organization matching with intelligent scoring</p>
+                    <h3 class="text-xl font-bold mb-1">Case for Support</h3>
+                    <p class="text-sm opacity-90">Create compelling case documents that make the argument for why your organization deserves funding</p>
                 </div>
                 <div class="p-6">
                     <div class="mb-4">
@@ -97,23 +88,146 @@
                         <ul class="space-y-1">
                             <li class="text-sm text-gray-600 flex items-center">
                                 <span class="w-1.5 h-1.5 bg-gray-400 rounded-full mr-2"></span>
-                                94% matching accuracy
+                                Professional funding documents
                             </li>
                             <li class="text-sm text-gray-600 flex items-center">
                                 <span class="w-1.5 h-1.5 bg-gray-400 rounded-full mr-2"></span>
-                                Intelligent scoring system
+                                Mission-driven narratives
                             </li>
                             <li class="text-sm text-gray-600 flex items-center">
                                 <span class="w-1.5 h-1.5 bg-gray-400 rounded-full mr-2"></span>
-                                Mission alignment analysis
+                                Donor-ready content
                             </li>
                         </ul>
                     </div>
                     <div class="space-y-2">
-                        <button onclick="testAPI('/api/ai/match-grant')" class="w-full px-4 py-2 bg-orange-600 text-white rounded-md hover:bg-orange-700 transition-colors">
-                            Test API
+                        <a href="/case-support" class="w-full inline-block text-center px-4 py-2 bg-orange-600 text-white rounded-md hover:bg-orange-700 transition-colors">
+                            Launch Tool
+                        </a>
+                        <button onclick="showDocs('Case for Support', 'Create professional funding documents with compelling narratives for donors and foundations', '/api/writing/case-support')" class="w-full text-sm text-gray-600 hover:text-gray-800 underline">
+                            View Documentation
                         </button>
-                        <button onclick="showDocs('Smart Matching', 'AI-powered grant matching with 94% accuracy', '/api/ai/match-grant')" class="w-full text-sm text-gray-600 hover:text-gray-800 underline">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Impact Reports -->
+            <div class="bg-white rounded-lg shadow-md overflow-hidden card-hover">
+                <div class="bg-gradient-to-r from-blue-500 to-blue-600 p-6 text-white">
+                    <div class="flex items-center justify-between mb-2">
+                        <div class="text-3xl">📊</div>
+                        <div class="px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-600">
+                            ✅ Operational
+                        </div>
+                    </div>
+                    <h3 class="text-xl font-bold mb-1">Impact Reports</h3>
+                    <p class="text-sm opacity-90">Generate comprehensive reports showing your programs actual outcomes and community impact</p>
+                </div>
+                <div class="p-6">
+                    <div class="mb-4">
+                        <h4 class="font-semibold text-gray-900 mb-2">Key Features:</h4>
+                        <ul class="space-y-1">
+                            <li class="text-sm text-gray-600 flex items-center">
+                                <span class="w-1.5 h-1.5 bg-gray-400 rounded-full mr-2"></span>
+                                Outcome tracking
+                            </li>
+                            <li class="text-sm text-gray-600 flex items-center">
+                                <span class="w-1.5 h-1.5 bg-gray-400 rounded-full mr-2"></span>
+                                Visual metrics
+                            </li>
+                            <li class="text-sm text-gray-600 flex items-center">
+                                <span class="w-1.5 h-1.5 bg-gray-400 rounded-full mr-2"></span>
+                                Stakeholder reports
+                            </li>
+                        </ul>
+                    </div>
+                    <div class="space-y-2">
+                        <a href="/impact-report" class="w-full inline-block text-center px-4 py-2 bg-orange-600 text-white rounded-md hover:bg-orange-700 transition-colors">
+                            Launch Tool
+                        </a>
+                        <button onclick="showDocs('Impact Reports', 'Generate comprehensive reports showing program outcomes and community impact with visual metrics', '/api/writing/impact-report')" class="w-full text-sm text-gray-600 hover:text-gray-800 underline">
+                            View Documentation
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Grant Pitch -->
+            <div class="bg-white rounded-lg shadow-md overflow-hidden card-hover">
+                <div class="bg-gradient-to-r from-green-500 to-green-600 p-6 text-white">
+                    <div class="flex items-center justify-between mb-2">
+                        <div class="text-3xl">🎯</div>
+                        <div class="px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-600">
+                            ✅ Operational
+                        </div>
+                    </div>
+                    <h3 class="text-xl font-bold mb-1">Grant Pitch</h3>
+                    <p class="text-sm opacity-90">AI-powered pitch generator for presentations, emails, and verbal delivery to funders</p>
+                </div>
+                <div class="p-6">
+                    <div class="mb-4">
+                        <h4 class="font-semibold text-gray-900 mb-2">Key Features:</h4>
+                        <ul class="space-y-1">
+                            <li class="text-sm text-gray-600 flex items-center">
+                                <span class="w-1.5 h-1.5 bg-gray-400 rounded-full mr-2"></span>
+                                Multiple formats
+                            </li>
+                            <li class="text-sm text-gray-600 flex items-center">
+                                <span class="w-1.5 h-1.5 bg-gray-400 rounded-full mr-2"></span>
+                                Funder-specific
+                            </li>
+                            <li class="text-sm text-gray-600 flex items-center">
+                                <span class="w-1.5 h-1.5 bg-gray-400 rounded-full mr-2"></span>
+                                Presentation ready
+                            </li>
+                        </ul>
+                    </div>
+                    <div class="space-y-2">
+                        <a href="/grant-pitch" class="w-full inline-block text-center px-4 py-2 bg-orange-600 text-white rounded-md hover:bg-orange-700 transition-colors">
+                            Launch Tool
+                        </a>
+                        <button onclick="showDocs('Grant Pitch', 'AI-powered pitch generator for presentations, emails, and verbal delivery in multiple formats', '/api/writing/grant-pitch')" class="w-full text-sm text-gray-600 hover:text-gray-800 underline">
+                            View Documentation
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Writing Assistant -->
+            <div class="bg-white rounded-lg shadow-md overflow-hidden card-hover">
+                <div class="bg-gradient-to-r from-purple-500 to-purple-600 p-6 text-white">
+                    <div class="flex items-center justify-between mb-2">
+                        <div class="text-3xl">✍️</div>
+                        <div class="px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-600">
+                            ✅ Operational
+                        </div>
+                    </div>
+                    <h3 class="text-xl font-bold mb-1">Writing Assistant</h3>
+                    <p class="text-sm opacity-90">AI-powered text improvement and proposal writing help for any grant content</p>
+                </div>
+                <div class="p-6">
+                    <div class="mb-4">
+                        <h4 class="font-semibold text-gray-900 mb-2">Key Features:</h4>
+                        <ul class="space-y-1">
+                            <li class="text-sm text-gray-600 flex items-center">
+                                <span class="w-1.5 h-1.5 bg-gray-400 rounded-full mr-2"></span>
+                                Text improvement
+                            </li>
+                            <li class="text-sm text-gray-600 flex items-center">
+                                <span class="w-1.5 h-1.5 bg-gray-400 rounded-full mr-2"></span>
+                                Professional polish
+                            </li>
+                            <li class="text-sm text-gray-600 flex items-center">
+                                <span class="w-1.5 h-1.5 bg-gray-400 rounded-full mr-2"></span>
+                                Content optimization
+                            </li>
+                        </ul>
+                    </div>
+                    <div class="space-y-2">
+                        <a href="/writing-assistant" class="w-full inline-block text-center px-4 py-2 bg-orange-600 text-white rounded-md hover:bg-orange-700 transition-colors">
+                            Launch Tool
+                        </a>
+                        <button onclick="showDocs('Writing Assistant', 'Improve any grant content with AI-powered text enhancement and professional polish', '/api/writing/improve')" class="w-full text-sm text-gray-600 hover:text-gray-800 underline">
                             View Documentation
                         </button>
                     </div>

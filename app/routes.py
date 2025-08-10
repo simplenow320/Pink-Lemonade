@@ -85,11 +85,6 @@ def opportunities():
     """Render the opportunities page"""
     return render_template('opportunities_new.html', active='opportunities')
 
-@bp.route('/profile')
-def profile():
-    """Render the profile page"""
-    return render_template('profile.html', active='profile')
-
 @bp.route('/settings')
 def settings():
     """Settings page"""
@@ -136,5 +131,20 @@ def smart_tools():
 def smart_tool_detail(tool_id):
     """Individual Smart Tool page"""
     return render_template('smart_tools.html', active='smart-tools', tool_id=tool_id)
+
+@bp.route('/case-support')
+def case_support():
+    """Case for Support tool page"""
+    return render_template('case_support_form.html', active='smart-tools')
+
+@bp.route('/impact-report')
+def impact_report():
+    """Impact Report tool page"""
+    return render_template('impact_report_form.html', active='smart-tools')
+
+@bp.route('/grant-pitch')
+def grant_pitch():
+    """Grant Pitch tool page"""
+    return render_template('grant_pitch_form.html', active='smart-tools')
 
 # Add other page routes as needed
