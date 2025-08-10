@@ -4,7 +4,7 @@ Simple Organization Profile API - Working implementation
 
 from flask import Blueprint, request, jsonify
 from app import db
-from app.models import Org
+from app.models import Organization
 from app.models_extended import OrgProfile
 import logging
 import json
@@ -16,7 +16,7 @@ def get_organization():
     """Get organization profile - working version with extended data"""
     try:
         # Get the basic org first
-        org = Org.query.first()
+        org = Organization.query.first()
         if not org:
             return jsonify({
                 'name': '',
@@ -58,9 +58,9 @@ def save_organization():
         data = request.json
         
         # Get or create basic organization
-        org = Org.query.first()
+        org = Organization.query.first()
         if not org:
-            org = Org(name=data.get('name', ''), mission=data.get('mission', ''))
+            org = Organization(name=data.get('name', ''), mission=data.get('mission', ''))
             db.session.add(org)
             db.session.flush()  # Get the ID
         else:

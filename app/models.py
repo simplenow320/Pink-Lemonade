@@ -195,19 +195,175 @@ class UserInvite(db.Model):
             'created_at': self.created_at.isoformat() if self.created_at else None
         }
 
-class Org(db.Model):
-    __tablename__ = "orgs"
+class Organization(db.Model):
+    __tablename__ = "organizations"
     id = db.Column(db.Integer, primary_key=True)
+    
+    # Core Identity
     name = db.Column(db.String(255), nullable=False, unique=True)
+    legal_name = db.Column(db.String(255))  # Legal registered name
+    ein = db.Column(db.String(20))  # Tax ID / EIN
+    org_type = db.Column(db.String(50))  # 501c3, faith-based, educational, etc.
+    year_founded = db.Column(db.Integer)
+    website = db.Column(db.String(255))
+    social_media = db.Column(db.JSON)  # {twitter: '', facebook: '', etc.}
+    
+    # Mission & Vision
     mission = db.Column(db.Text)
+    vision = db.Column(db.Text)
+    values = db.Column(db.Text)  # Core values
+    
+    # Program Focus
+    primary_focus_areas = db.Column(db.JSON)  # ['education', 'housing', 'healthcare']
+    secondary_focus_areas = db.Column(db.JSON)  # Additional areas
+    programs_services = db.Column(db.Text)  # Detailed program descriptions
+    target_demographics = db.Column(db.JSON)  # ['youth', 'seniors', 'families']
+    age_groups_served = db.Column(db.JSON)  # ['0-5', '6-12', '13-18', etc.]
+    
+    # Geographic Scope
+    service_area_type = db.Column(db.String(50))  # local, regional, national, international
+    primary_city = db.Column(db.String(100))
+    primary_state = db.Column(db.String(50))
+    primary_zip = db.Column(db.String(20))
+    counties_served = db.Column(db.JSON)  # List of counties
+    states_served = db.Column(db.JSON)  # List of states if multi-state
+    
+    # Organizational Capacity
+    annual_budget_range = db.Column(db.String(50))  # <$100k, $100k-500k, etc.
+    staff_size = db.Column(db.String(50))  # 1-5, 6-10, 11-25, etc.
+    volunteer_count = db.Column(db.String(50))  # Range
+    board_size = db.Column(db.Integer)
+    
+    # Impact Metrics
+    people_served_annually = db.Column(db.String(50))  # Range or number
+    key_achievements = db.Column(db.Text)  # Major accomplishments
+    impact_metrics = db.Column(db.JSON)  # Measurable outcomes
+    
+    # Grant History & Preferences
+    previous_funders = db.Column(db.JSON)  # List of past funders
+    typical_grant_size = db.Column(db.String(50))  # Range
+    grant_success_rate = db.Column(db.Float)  # Percentage
+    preferred_grant_types = db.Column(db.JSON)  # ['operating', 'project', 'capacity']
+    grant_writing_capacity = db.Column(db.String(50))  # internal, consultant, both
+    
+    # Special Characteristics
+    faith_based = db.Column(db.Boolean, default=False)
+    minority_led = db.Column(db.Boolean, default=False)
+    woman_led = db.Column(db.Boolean, default=False)
+    lgbtq_led = db.Column(db.Boolean, default=False)
+    veteran_led = db.Column(db.Boolean, default=False)
+    
+    # AI Learning Fields
+    keywords = db.Column(db.JSON)  # Important keywords for matching
+    unique_capabilities = db.Column(db.Text)  # What makes org unique
+    partnership_interests = db.Column(db.Text)  # Collaboration areas
+    funding_priorities = db.Column(db.Text)  # Current funding needs
+    exclusions = db.Column(db.JSON)  # Things they DON'T do/want
+    
+    # Profile Completion
+    profile_completeness = db.Column(db.Integer, default=0)  # Percentage
+    onboarding_completed_at = db.Column(db.DateTime)
+    last_profile_update = db.Column(db.DateTime)
+    
+    # Admin
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_by_user_id = db.Column(db.Integer, db.ForeignKey("users.id"))
+    
+    def calculate_completeness(self):
+        """Calculate profile completion percentage"""
+        required_fields = [
+            'name', 'mission', 'org_type', 'primary_focus_areas', 
+            'service_area_type', 'annual_budget_range', 'staff_size'
+        ]
+        optional_fields = [
+            'legal_name', 'ein', 'year_founded', 'website', 'vision', 
+            'programs_services', 'target_demographics', 'key_achievements',
+            'previous_funders', 'unique_capabilities'
+        ]
+        
+        completed = 0
+        total = len(required_fields) + len(optional_fields)
+        
+        for field in required_fields:
+            if getattr(self, field):
+                completed += 2  # Required fields worth more
+        
+        for field in optional_fields:
+            if getattr(self, field):
+                completed += 1
+                
+        self.profile_completeness = min(100, int((completed / (len(required_fields) * 2 + len(optional_fields))) * 100))
+        return self.profile_completeness
     
     def to_dict(self):
         return {
             'id': self.id,
             'name': self.name,
+            'legal_name': self.legal_name,
+            'ein': self.ein,
+            'org_type': self.org_type,
+            'year_founded': self.year_founded,
+            'website': self.website,
+            'social_media': self.social_media or {},
             'mission': self.mission,
+            'vision': self.vision,
+            'values': self.values,
+            'primary_focus_areas': self.primary_focus_areas or [],
+            'secondary_focus_areas': self.secondary_focus_areas or [],
+            'programs_services': self.programs_services,
+            'target_demographics': self.target_demographics or [],
+            'age_groups_served': self.age_groups_served or [],
+            'service_area_type': self.service_area_type,
+            'primary_city': self.primary_city,
+            'primary_state': self.primary_state,
+            'counties_served': self.counties_served or [],
+            'annual_budget_range': self.annual_budget_range,
+            'staff_size': self.staff_size,
+            'volunteer_count': self.volunteer_count,
+            'board_size': self.board_size,
+            'people_served_annually': self.people_served_annually,
+            'key_achievements': self.key_achievements,
+            'impact_metrics': self.impact_metrics or {},
+            'previous_funders': self.previous_funders or [],
+            'typical_grant_size': self.typical_grant_size,
+            'grant_success_rate': self.grant_success_rate,
+            'preferred_grant_types': self.preferred_grant_types or [],
+            'faith_based': self.faith_based,
+            'minority_led': self.minority_led,
+            'woman_led': self.woman_led,
+            'keywords': self.keywords or [],
+            'unique_capabilities': self.unique_capabilities,
+            'funding_priorities': self.funding_priorities,
+            'profile_completeness': self.profile_completeness,
             'created_at': self.created_at.isoformat() if self.created_at else None
+        }
+    
+    def to_ai_context(self):
+        """Generate comprehensive context for AI matching"""
+        return {
+            'name': self.name,
+            'mission': self.mission,
+            'vision': self.vision,
+            'focus_areas': (self.primary_focus_areas or []) + (self.secondary_focus_areas or []),
+            'keywords': self.keywords or [],
+            'geographic_focus': f"{self.service_area_type} - {self.primary_city}, {self.primary_state}",
+            'target_population': ', '.join(self.target_demographics or []),
+            'annual_budget': self.annual_budget_range,
+            'staff_capacity': self.staff_size,
+            'grant_experience': {
+                'previous_funders': self.previous_funders or [],
+                'typical_size': self.typical_grant_size,
+                'success_rate': self.grant_success_rate
+            },
+            'unique_factors': {
+                'faith_based': self.faith_based,
+                'minority_led': self.minority_led,
+                'woman_led': self.woman_led,
+                'unique_capabilities': self.unique_capabilities
+            },
+            'current_needs': self.funding_priorities,
+            'exclusions': self.exclusions or []
         }
 
 class Module(db.Model):
@@ -574,8 +730,7 @@ class WatchlistSource(db.Model):
             'created_at': self.created_at.isoformat() if self.created_at else None
         }
 
-# Legacy Organization class for backward compatibility
-Organization = Org
+# Organization class is now the primary organization model
 
 # Legacy ScraperSource and ScraperHistory for backward compatibility with existing scraper code
 class ScraperSource(db.Model):

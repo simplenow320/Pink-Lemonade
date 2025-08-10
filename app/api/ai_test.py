@@ -4,7 +4,7 @@ Tests the prompt system with a simple case support generation
 """
 from flask import Blueprint, jsonify
 from app import db
-from app.models import Org
+from app.models import Organization
 from app.services.ai_prompter import get_prompter
 from datetime import datetime
 import logging
@@ -30,7 +30,7 @@ def selftest():
     
     try:
         # 1. Get the first organization (or create test data)
-        org = Org.query.first()
+        org = Organization.query.first()
         if not org:
             # Create minimal test org
             test_results['tests'].append({

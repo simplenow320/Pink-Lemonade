@@ -26,7 +26,6 @@ def create_app():
     from app.api.auth import bp as auth_bp, init_auth
     from app.api.analytics import bp as analytics_bp
     from app.api.dashboard import dashboard_bp
-    from app.api.organization import bp as organization_bp
     from app.api.scraper import bp as scraper_bp
     from app.api.opportunities import bp as opportunities_bp
     from app.api.admin import admin_bp
@@ -46,7 +45,13 @@ def create_app():
     flask_app.register_blueprint(auth_bp)  # Register auth blueprint
     flask_app.register_blueprint(analytics_bp)
     flask_app.register_blueprint(dashboard_bp)
-    flask_app.register_blueprint(organization_bp)
+    
+    # Register new organization API
+    try:
+        from app.api.organization import bp as organization_bp
+        flask_app.register_blueprint(organization_bp, url_prefix='/api/organization')
+    except ImportError:
+        pass  # Organization API not yet available
     flask_app.register_blueprint(scraper_bp)
     flask_app.register_blueprint(opportunities_bp)
     flask_app.register_blueprint(admin_bp)

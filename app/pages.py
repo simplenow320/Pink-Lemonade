@@ -1,6 +1,16 @@
-from flask import Blueprint, render_template
+from flask import Blueprint, render_template, session, redirect, url_for
+from functools import wraps
 from app.services.stats_service import get_dashboard_stats, get_top_matches
 from app.models import Grant
+
+# Simple login required decorator
+def login_required(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if not session.get('user_id'):
+            return redirect(url_for('pages.login'))
+        return f(*args, **kwargs)
+    return decorated_function
 
 pages = Blueprint("pages", __name__)
 
@@ -72,6 +82,37 @@ def applications():
 def settings():
     return render_template("settings.html", active="settings")
 
+# Onboarding routes
+@pages.get("/onboarding/step1")
+@login_required
+def onboarding_step1():
+    return render_template("onboarding/step1_basics.html")
+
+@pages.get("/onboarding/step2")
+@login_required  
+def onboarding_step2():
+    return render_template("onboarding/step2_programs.html")
+
+@pages.get("/onboarding/step3")
+@login_required
+def onboarding_step3():
+    return render_template("onboarding/step3_capacity.html")
+
+@pages.get("/onboarding/step4")
+@login_required
+def onboarding_step4():
+    return render_template("onboarding/step4_grant_history.html")
+
+@pages.get("/onboarding/step5")
+@login_required
+def onboarding_step5():
+    return render_template("onboarding/step5_ai_learning.html")
+
+@pages.get("/profile")
+@login_required
+def profile():
+    return render_template("profile/organization.html")
+
 @pages.get("/writing")
 def writing():
     return render_template("writing.html", active="writing")
@@ -88,9 +129,9 @@ def journey():
     """Interactive Onboarding Journey Page"""
     return render_template("onboarding.html", active="journey")
 
-@pages.get("/profile")
-def profile():
-    """Organization Profile Management Page"""
+@pages.get("/profile-legacy")
+def profile_legacy():
+    """Legacy Organization Profile Page"""
     return render_template("profile.html", active="profile")
 
 @pages.get("/case-support")

@@ -1,133 +1,250 @@
-from flask import Blueprint, request, jsonify
-from app.models import Organization
+"""Organization API endpoints for profile management and onboarding"""
+from flask import Blueprint, request, jsonify, session
+from flask_login import login_required, current_user
 from app import db
-from sqlalchemy.exc import SQLAlchemyError
+from app.models import Organization, User
+from app.services.ai_service import AIService
 import logging
-import json
+from datetime import datetime
 
-bp = Blueprint('organization', __name__, url_prefix='/api/organization')
+logger = logging.getLogger(__name__)
+bp = Blueprint('organization', __name__)
+ai_service = AIService()
 
-@bp.route('', methods=['GET'])
-def get_organization():
-    """Get organization profile"""
-    try:
-        # Get the organization profile
-        # Assume we only have one organization profile in the system
-        org = Organization.query.first()
-        
-        if org is None:
-            return jsonify({"error": "Organization profile not found"}), 404
-        
-        return jsonify(org.to_dict())
-    
-    except Exception as e:
-        logging.error(f"Error fetching organization profile: {str(e)}")
-        return jsonify({"error": "Failed to fetch organization profile"}), 500
-
-@bp.route('', methods=['PUT', 'POST'])
-def update_organization():
-    """Update organization profile"""
+@bp.route('/onboarding', methods=['POST'])
+@login_required
+def update_onboarding():
+    """Update organization profile during onboarding"""
     try:
         data = request.json
+        step = data.get('step', 1)
         
-        # Get the organization profile (or create if it doesn't exist)
-        org = Organization.query.first()
+        # Get or create organization for current user
+        org = Organization.query.filter_by(created_by_user_id=current_user.id).first()
         
-        if org is None:
-            # Create new organization profile
+        if not org:
+            # Create new organization
             org = Organization(
-                name=data.get('name', ''),
-                mission=data.get('mission', ''),
-                website=data.get('website', ''),
-                location=data.get('location', {}),
-                founding_year=data.get('founding_year'),
-                team=data.get('team', []),
-                focus_areas=data.get('focus_areas', []),
-                keywords=data.get('keywords', []),
-                past_programs=data.get('past_programs', []),
-                financials=data.get('financials', {}),
-                case_for_support=data.get('case_for_support', '')
+                name=current_user.org_name or data.get('legal_name', ''),
+                created_by_user_id=current_user.id
             )
             db.session.add(org)
-        else:
-            # Update existing organization profile
-            if 'name' in data:
-                org.name = data['name']
-            if 'mission' in data:
-                org.mission = data['mission']
-            if 'website' in data:
-                org.website = data['website']
-            if 'location' in data:
-                org.location = data['location']
-            if 'founding_year' in data:
-                org.founding_year = data['founding_year']
-            if 'team' in data:
-                org.team = data['team']
-            if 'focus_areas' in data:
-                org.focus_areas = data['focus_areas']
-            if 'keywords' in data:
-                org.keywords = data['keywords']
-            if 'past_programs' in data:
-                org.past_programs = data['past_programs']
-            if 'financials' in data:
-                org.financials = data['financials']
-            if 'case_for_support' in data:
-                org.case_for_support = data['case_for_support']
         
+        # Update based on step
+        if step == 1:  # Basic Info
+            org.legal_name = data.get('legal_name')
+            org.ein = data.get('ein')
+            org.org_type = data.get('org_type')
+            org.year_founded = data.get('year_founded')
+            org.website = data.get('website')
+            org.mission = data.get('mission')
+            org.vision = data.get('vision')
+            org.values = data.get('values')
+            org.faith_based = data.get('faith_based', False)
+            org.minority_led = data.get('minority_led', False)
+            org.woman_led = data.get('woman_led', False)
+            org.lgbtq_led = data.get('lgbtq_led', False)
+            org.veteran_led = data.get('veteran_led', False)
+            
+            # Parse social media
+            social = data.get('social_media', '')
+            if social:
+                org.social_media = {'handle': social}
+                
+        elif step == 2:  # Programs & Services
+            org.primary_focus_areas = data.get('primary_focus_areas', [])
+            org.secondary_focus_areas = data.get('secondary_focus_areas', [])
+            org.programs_services = data.get('programs_services')
+            org.target_demographics = data.get('target_demographics', [])
+            org.age_groups_served = data.get('age_groups_served', [])
+            org.service_area_type = data.get('service_area_type')
+            org.primary_city = data.get('primary_city')
+            org.primary_state = data.get('primary_state')
+            org.primary_zip = data.get('primary_zip')
+            org.counties_served = data.get('counties_served', [])
+            org.states_served = data.get('states_served', [])
+            
+        elif step == 3:  # Organizational Capacity
+            org.annual_budget_range = data.get('annual_budget_range')
+            org.staff_size = data.get('staff_size')
+            org.volunteer_count = data.get('volunteer_count')
+            org.board_size = data.get('board_size')
+            org.people_served_annually = data.get('people_served_annually')
+            org.key_achievements = data.get('key_achievements')
+            
+            # Parse impact metrics
+            metrics = data.get('impact_metrics', {})
+            if metrics:
+                org.impact_metrics = metrics
+                
+        elif step == 4:  # Grant History
+            org.previous_funders = data.get('previous_funders', [])
+            org.typical_grant_size = data.get('typical_grant_size')
+            org.grant_success_rate = data.get('grant_success_rate')
+            org.preferred_grant_types = data.get('preferred_grant_types', [])
+            org.grant_writing_capacity = data.get('grant_writing_capacity')
+            
+        elif step == 5:  # AI Learning
+            org.keywords = data.get('keywords', [])
+            org.unique_capabilities = data.get('unique_capabilities')
+            org.partnership_interests = data.get('partnership_interests')
+            org.funding_priorities = data.get('funding_priorities')
+            org.exclusions = data.get('exclusions', [])
+            
+            # Mark onboarding complete
+            org.onboarding_completed_at = datetime.utcnow()
+        
+        # Update profile completeness
+        org.calculate_completeness()
+        org.last_profile_update = datetime.utcnow()
+        
+        # Commit changes
         db.session.commit()
         
-        return jsonify(org.to_dict())
-    
-    except SQLAlchemyError as e:
-        db.session.rollback()
-        logging.error(f"Database error updating organization profile: {str(e)}")
-        return jsonify({"error": "Database error occurred"}), 500
+        # If AI data is updated, trigger AI learning
+        if step in [1, 2, 5]:  # Steps with AI-relevant data
+            try:
+                # Get AI context for learning
+                ai_context = org.to_ai_context()
+                logger.info(f"AI learning from updated org profile: {org.name}")
+                # The AI service will use this context for future matching
+            except Exception as e:
+                logger.error(f"AI learning error: {e}")
+        
+        return jsonify({
+            'success': True,
+            'message': f'Step {step} completed successfully',
+            'profile_completeness': org.profile_completeness,
+            'org_id': org.id
+        })
+        
     except Exception as e:
-        logging.error(f"Error updating organization profile: {str(e)}")
-        return jsonify({"error": "Failed to update organization profile"}), 500
+        logger.error(f"Onboarding update error: {e}")
+        db.session.rollback()
+        return jsonify({'error': str(e)}), 500
 
-@bp.route('/seed', methods=['POST'])
-def seed_organization():
-    """Seed the organization profile with sample data"""
+@bp.route('/profile', methods=['GET'])
+@login_required
+def get_profile():
+    """Get current organization profile"""
     try:
-        # Check if organization already exists
-        existing_org = Organization.query.first()
-        if existing_org:
-            return jsonify({"error": "Organization profile already exists"}), 400
+        org = Organization.query.filter_by(created_by_user_id=current_user.id).first()
         
-        # Load sample data from seed.json
-        try:
-            with open('seed.json', 'r') as f:
-                seed_data = json.load(f)
-                org_data = seed_data.get('organization', {})
-        except (FileNotFoundError, json.JSONDecodeError) as e:
-            logging.error(f"Error loading seed data: {str(e)}")
-            return jsonify({"error": "Failed to load seed data"}), 500
+        if not org:
+            return jsonify({'error': 'Organization not found'}), 404
         
-        # Create new organization with seed data
-        new_org = Organization(
-            name=org_data.get('name', ''),
-            mission=org_data.get('mission', ''),
-            website=org_data.get('website', ''),
-            location=org_data.get('location', {}),
-            founding_year=org_data.get('founding_year'),
-            team=org_data.get('team', []),
-            focus_areas=org_data.get('focus_areas', []),
-            keywords=org_data.get('keywords', []),
-            past_programs=org_data.get('past_programs', []),
-            financials=org_data.get('financials', {}),
-            case_for_support=org_data.get('case_for_support', '')
-        )
+        return jsonify({
+            'success': True,
+            'organization': org.to_dict()
+        })
         
-        db.session.add(new_org)
+    except Exception as e:
+        logger.error(f"Error fetching profile: {e}")
+        return jsonify({'error': str(e)}), 500
+
+@bp.route('/profile', methods=['PUT'])
+@login_required
+def update_profile():
+    """Update organization profile (from profile page)"""
+    try:
+        data = request.json
+        org = Organization.query.filter_by(created_by_user_id=current_user.id).first()
+        
+        if not org:
+            return jsonify({'error': 'Organization not found'}), 404
+        
+        # Update all provided fields
+        updateable_fields = [
+            'legal_name', 'ein', 'org_type', 'year_founded', 'website',
+            'mission', 'vision', 'values', 'primary_focus_areas',
+            'secondary_focus_areas', 'programs_services', 'target_demographics',
+            'age_groups_served', 'service_area_type', 'primary_city',
+            'primary_state', 'primary_zip', 'annual_budget_range',
+            'staff_size', 'volunteer_count', 'board_size', 'people_served_annually',
+            'key_achievements', 'previous_funders', 'typical_grant_size',
+            'grant_success_rate', 'preferred_grant_types', 'grant_writing_capacity',
+            'faith_based', 'minority_led', 'woman_led', 'lgbtq_led', 'veteran_led',
+            'keywords', 'unique_capabilities', 'partnership_interests',
+            'funding_priorities', 'exclusions'
+        ]
+        
+        for field in updateable_fields:
+            if field in data:
+                setattr(org, field, data[field])
+        
+        # Recalculate completeness
+        org.calculate_completeness()
+        org.last_profile_update = datetime.utcnow()
+        
         db.session.commit()
         
-        return jsonify({"message": "Organization profile seeded successfully", "data": new_org.to_dict()}), 201
-    
-    except SQLAlchemyError as e:
-        db.session.rollback()
-        logging.error(f"Database error seeding organization profile: {str(e)}")
-        return jsonify({"error": "Database error occurred"}), 500
+        # Trigger AI learning with updated data
+        try:
+            ai_context = org.to_ai_context()
+            logger.info(f"AI learning from profile update: {org.name}")
+        except Exception as e:
+            logger.error(f"AI learning error on profile update: {e}")
+        
+        return jsonify({
+            'success': True,
+            'message': 'Profile updated successfully',
+            'organization': org.to_dict()
+        })
+        
     except Exception as e:
-        logging.error(f"Error seeding organization profile: {str(e)}")
-        return jsonify({"error": "Failed to seed organization profile"}), 500
+        logger.error(f"Profile update error: {e}")
+        db.session.rollback()
+        return jsonify({'error': str(e)}), 500
+
+@bp.route('/ai-context', methods=['GET'])
+@login_required  
+def get_ai_context():
+    """Get organization's AI context for debugging/transparency"""
+    try:
+        org = Organization.query.filter_by(created_by_user_id=current_user.id).first()
+        
+        if not org:
+            return jsonify({'error': 'Organization not found'}), 404
+        
+        return jsonify({
+            'success': True,
+            'ai_context': org.to_ai_context(),
+            'profile_completeness': org.profile_completeness
+        })
+        
+    except Exception as e:
+        logger.error(f"Error fetching AI context: {e}")
+        return jsonify({'error': str(e)}), 500
+
+@bp.route('/check-onboarding', methods=['GET'])
+@login_required
+def check_onboarding_status():
+    """Check if user needs to complete onboarding"""
+    try:
+        org = Organization.query.filter_by(created_by_user_id=current_user.id).first()
+        
+        needs_onboarding = not org or not org.onboarding_completed_at
+        current_step = 1
+        
+        if org:
+            # Determine current step based on what's filled
+            if org.mission and org.org_type:
+                current_step = 2
+            if org.primary_focus_areas:
+                current_step = 3
+            if org.annual_budget_range:
+                current_step = 4
+            if org.typical_grant_size:
+                current_step = 5
+            if org.onboarding_completed_at:
+                current_step = 0  # Completed
+        
+        return jsonify({
+            'needs_onboarding': needs_onboarding,
+            'current_step': current_step,
+            'profile_completeness': org.profile_completeness if org else 0
+        })
+        
+    except Exception as e:
+        logger.error(f"Error checking onboarding: {e}")
+        return jsonify({'error': str(e)}), 500

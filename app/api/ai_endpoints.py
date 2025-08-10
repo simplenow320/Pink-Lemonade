@@ -4,7 +4,7 @@ AI-powered endpoints for grant extraction, matching, and narrative generation
 
 from flask import Blueprint, request, jsonify, session
 from app import db
-from app.models import Grant, Organization, Org
+from app.models import Grant, Organization
 from app.services.ai_service import ai_service
 import logging
 import requests
