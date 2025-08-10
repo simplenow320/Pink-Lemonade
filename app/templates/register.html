@@ -7,38 +7,40 @@
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
     <style>
         :root {
-            --pink: #F8D7DA;
-            --white: #FFFFFF;
-            --black: #000000;
-            --grey: #4A4A4A;
+            --pink: #B8899A;
+            --white: #FAFAFA;
+            --black: #2A2A2A;
+            --grey: #6B6B6B;
+            --border: #E8E8E8;
         }
         body {
-            background: linear-gradient(135deg, #F8D7DA 0%, #FFFFFF 100%);
+            background: #FAFAFA;
             min-height: 100vh;
         }
         .glass {
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(248, 215, 218, 0.2);
+            background: rgba(250, 250, 250, 0.98);
+            backdrop-filter: blur(8px);
+            border: 1px solid var(--border);
         }
         .btn-pink {
             background-color: var(--pink);
-            color: var(--black);
-            transition: all 0.3s ease;
+            color: var(--white);
+            transition: all 0.2s ease;
         }
         .btn-pink:hover {
-            background-color: #F5C2C7;
+            background-color: #A67A8A;
             transform: translateY(-1px);
-            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
         }
         .input-field {
-            border: 1px solid #E5E5E5;
-            transition: all 0.3s ease;
+            border: 1px solid var(--border);
+            transition: all 0.2s ease;
+            background: var(--white);
         }
         .input-field:focus {
             border-color: var(--pink);
             outline: none;
-            box-shadow: 0 0 0 3px rgba(248, 215, 218, 0.1);
+            box-shadow: 0 0 0 2px rgba(184, 137, 154, 0.1);
         }
     </style>
 </head>
@@ -47,7 +49,7 @@
         <div class="glass rounded-lg shadow-2xl p-8 w-full max-w-md">
             <!-- Logo and Title -->
             <div class="text-center mb-8">
-                <h1 class="text-3xl font-bold" style="color: var(--pink);">Pink Lemonade</h1>
+                <h1 class="text-3xl font-medium" style="color: var(--black);">Pink Lemonade</h1>
                 <p class="text-gray-600 mt-2">Create your account</p>
             </div>
 
