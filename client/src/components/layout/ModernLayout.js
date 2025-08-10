@@ -43,6 +43,12 @@ const ModernLayout = ({ children }) => {
       icon: OrganizationIcon,
     },
     {
+      name: 'Profile',
+      path: '/profile',
+      description: 'Your personal profile',
+      icon: OrganizationIcon,
+    },
+    {
       name: 'Scraper',
       path: '/scraper',
       description: 'Find new grant opportunities',

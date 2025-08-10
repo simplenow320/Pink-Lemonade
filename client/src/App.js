@@ -15,6 +15,8 @@ const Dashboard = lazy(() => import('./pages/Dashboard'));
 const Grants = lazy(() => import('./pages/Grants'));
 const GrantDetail = lazy(() => import('./pages/GrantDetail'));
 const Organization = lazy(() => import('./pages/Organization'));
+const Profile = lazy(() => import('./pages/Profile'));
+const Onboarding = lazy(() => import('./pages/Onboarding'));
 const Narrative = lazy(() => import('./pages/Narrative'));
 const Scraper = lazy(() => import('./pages/Scraper'));
 const Analytics = lazy(() => import('./pages/Analytics'));
@@ -159,6 +161,22 @@ function App() {
                   element={
                     <ErrorBoundary>
                       <Organization />
+                    </ErrorBoundary>
+                  }
+                />
+                <Route
+                  path="/profile"
+                  element={
+                    <ErrorBoundary>
+                      <Profile />
+                    </ErrorBoundary>
+                  }
+                />
+                <Route
+                  path="/onboarding"
+                  element={
+                    <ErrorBoundary>
+                      <Onboarding />
                     </ErrorBoundary>
                   }
                 />

@@ -1,11 +1,10 @@
 """
 User Profile API endpoints
-Handles user profile management and organization settings
 """
 
 from flask import Blueprint, request, jsonify, session
 from app import db
-from app.models import User, Organization
+from app.models import User, UserProgress, Organization
 from app.api.auth import login_required, get_current_user
 import logging
 
@@ -13,150 +12,206 @@ logger = logging.getLogger(__name__)
 
 bp = Blueprint('profile', __name__, url_prefix='/api/profile')
 
-@bp.route('/user', methods=['GET'])
+@bp.route('/get', methods=['GET'])
 @login_required
-def get_user_profile():
+def get_profile():
     """Get current user's profile"""
     try:
         user = get_current_user()
-        return jsonify({
-            'success': True,
-            'user': user.to_dict()
-        })
+        if not user:
+            return jsonify({'error': 'User not found'}), 404
+        
+        # Get user progress
+        progress = UserProgress.query.filter_by(user_id=user.id).first()
+        
+        # Get organization if user has one
+        organization = None
+        if user.org_id:
+            organization = Organization.query.filter_by(id=user.org_id).first()
+        
+        profile_data = {
+            'id': user.id,
+            'email': user.email,
+            'first_name': user.first_name or '',
+            'last_name': user.last_name or '',
+            'phone': user.phone or '',
+            'job_title': user.job_title or '',
+            'org_name': user.org_name or '',
+            'role': user.role or 'member',
+            'timezone': user.timezone or 'America/New_York',
+            'notification_preferences': user.notification_preferences or {
+                'email_notifications': True,
+                'grant_alerts': True,
+                'weekly_digest': True,
+                'deadline_reminders': True
+            },
+            'is_verified': user.is_verified,
+            'created_at': user.created_at.isoformat() if user.created_at else None,
+            'last_login': user.last_login.isoformat() if user.last_login else None
+        }
+        
+        # Add progress info if exists
+        if progress:
+            profile_data['progress'] = {
+                'total_xp': progress.total_xp,
+                'current_level': progress.current_level,
+                'streak_days': progress.streak_days,
+                'onboarding_complete': progress.onboarding_complete
+            }
+        
+        # Add organization info if exists
+        if organization:
+            profile_data['organization'] = {
+                'id': organization.id,
+                'name': organization.name,
+                'mission': organization.mission,
+                'primary_focus_areas': organization.primary_focus_areas
+            }
+        
+        return jsonify({'profile': profile_data}), 200
+        
     except Exception as e:
-        logger.error(f"Error getting user profile: {e}")
-        return jsonify({'error': str(e)}), 500
+        logger.error(f"Error fetching profile: {e}")
+        return jsonify({'error': 'Failed to fetch profile'}), 500
 
-@bp.route('/user', methods=['PUT'])
+
+@bp.route('/update', methods=['POST'])
 @login_required
-def update_user_profile():
+def update_profile():
     """Update current user's profile"""
     try:
         user = get_current_user()
+        if not user:
+            return jsonify({'error': 'User not found'}), 404
+        
         data = request.get_json()
         
         # Update allowed fields
-        if 'first_name' in data:
-            user.first_name = data['first_name'].strip()
-        if 'last_name' in data:
-            user.last_name = data['last_name'].strip()
-        if 'phone' in data:
-            user.phone = data['phone'].strip()
-        if 'timezone' in data:
-            user.timezone = data['timezone']
-        if 'notification_preferences' in data:
-            user.notification_preferences = data['notification_preferences']
+        allowed_fields = [
+            'first_name', 'last_name', 'phone', 'job_title', 
+            'org_name', 'timezone', 'notification_preferences'
+        ]
+        
+        for field in allowed_fields:
+            if field in data:
+                setattr(user, field, data[field])
+        
+        # Update email only if changed and valid
+        if 'email' in data and data['email'] != user.email:
+            # Check if email already exists
+            existing = User.query.filter_by(email=data['email']).first()
+            if existing and existing.id != user.id:
+                return jsonify({'error': 'Email already in use'}), 400
+            user.email = data['email']
+            user.is_verified = False  # Require re-verification on email change
         
         db.session.commit()
         
+        # Return updated profile
+        profile_data = {
+            'id': user.id,
+            'email': user.email,
+            'first_name': user.first_name,
+            'last_name': user.last_name,
+            'phone': user.phone,
+            'job_title': user.job_title,
+            'org_name': user.org_name,
+            'timezone': user.timezone,
+            'notification_preferences': user.notification_preferences
+        }
+        
         return jsonify({
-            'success': True,
             'message': 'Profile updated successfully',
-            'user': user.to_dict()
-        })
+            'profile': profile_data
+        }), 200
+        
     except Exception as e:
-        logger.error(f"Error updating user profile: {e}")
+        logger.error(f"Error updating profile: {e}")
         db.session.rollback()
-        return jsonify({'error': str(e)}), 500
+        return jsonify({'error': 'Failed to update profile'}), 500
 
-@bp.route('/organization', methods=['GET'])
-@login_required  
-def get_organization():
-    """Get user's organization profile"""
-    try:
-        user = get_current_user()
-        # Get user's organization by matching org_id string/int
-        if user.org_id:
-            org = Organization.query.filter_by(id=user.org_id).first()
-            if not org:
-                # Try by string match if org_id is a string
-                org = Organization.query.filter(Organization.name.ilike(f'%{user.org_id}%')).first()
-        else:
-            org = Organization.query.first()
-        
-        if not org:
-            return jsonify({'error': 'Organization not found'}), 404
-            
-        return jsonify({
-            'success': True,
-            'organization': org.to_dict()
-        })
-    except Exception as e:
-        logger.error(f"Error getting organization: {e}")
-        return jsonify({'error': str(e)}), 500
 
-@bp.route('/organization', methods=['PUT'])
+@bp.route('/onboarding/status', methods=['GET'])
 @login_required
-def update_organization():
-    """Update organization profile"""
+def get_onboarding_status():
+    """Get user's onboarding status"""
     try:
         user = get_current_user()
-        if user.role not in ['admin', 'manager']:
-            return jsonify({'error': 'Insufficient permissions'}), 403
-            
-        # Get user's organization by matching org_id string/int
-        if user.org_id:
-            org = Organization.query.filter_by(id=user.org_id).first()
-            if not org:
-                # Try by string match if org_id is a string
-                org = Organization.query.filter(Organization.name.ilike(f'%{user.org_id}%')).first()
-        else:
-            org = Organization.query.first()
-            
-        if not org:
-            return jsonify({'error': 'Organization not found'}), 404
-            
-        data = request.get_json()
+        if not user:
+            return jsonify({'error': 'User not found'}), 404
         
-        # Update organization fields
-        if 'name' in data:
-            org.name = data['name'].strip()
-        if 'description' in data:
-            org.description = data['description'].strip()
-        if 'website' in data:
-            org.website = data['website'].strip()
-        if 'focus_areas' in data:
-            org.focus_areas = data['focus_areas']
-        if 'keywords' in data:
-            org.keywords = data['keywords']
-            
+        # Get or create user progress
+        progress = UserProgress.query.filter_by(user_id=user.id).first()
+        if not progress:
+            progress = UserProgress()
+            progress.user_id = user.id
+            progress.total_xp = 0
+            progress.current_level = 1
+            progress.streak_days = 0
+            progress.onboarding_complete = False
+            db.session.add(progress)
+            db.session.commit()
+        
+        # Check what's completed
+        completed_steps = []
+        if user.first_name and user.last_name:
+            completed_steps.append('personal_info')
+        if user.email and user.is_verified:
+            completed_steps.append('email_verified')
+        if user.job_title and user.org_name:
+            completed_steps.append('work_info')
+        if user.org_id:
+            completed_steps.append('organization_setup')
+        
+        # Calculate completion percentage
+        total_steps = 4
+        completion_percentage = (len(completed_steps) / total_steps) * 100
+        
+        return jsonify({
+            'onboarding_complete': progress.onboarding_complete,
+            'completed_steps': completed_steps,
+            'completion_percentage': completion_percentage,
+            'current_xp': progress.total_xp,
+            'current_level': progress.current_level
+        }), 200
+        
+    except Exception as e:
+        logger.error(f"Error fetching onboarding status: {e}")
+        return jsonify({'error': 'Failed to fetch onboarding status'}), 500
+
+
+@bp.route('/onboarding/complete', methods=['POST'])
+@login_required
+def complete_onboarding():
+    """Mark onboarding as complete"""
+    try:
+        user = get_current_user()
+        if not user:
+            return jsonify({'error': 'User not found'}), 404
+        
+        progress = UserProgress.query.filter_by(user_id=user.id).first()
+        if not progress:
+            progress = UserProgress()
+            progress.user_id = user.id
+            progress.total_xp = 500  # Bonus XP for completing onboarding
+            progress.current_level = 2
+            progress.onboarding_complete = True
+            db.session.add(progress)
+        else:
+            progress.onboarding_complete = True
+            progress.total_xp += 500  # Bonus XP
+            if progress.total_xp >= 500:
+                progress.current_level = 2
+        
         db.session.commit()
         
         return jsonify({
-            'success': True,
-            'message': 'Organization updated successfully',
-            'organization': org.to_dict()
-        })
+            'message': 'Onboarding completed!',
+            'bonus_xp': 500,
+            'new_level': progress.current_level
+        }), 200
+        
     except Exception as e:
-        logger.error(f"Error updating organization: {e}")
+        logger.error(f"Error completing onboarding: {e}")
         db.session.rollback()
-        return jsonify({'error': str(e)}), 500
-
-@bp.route('/grants', methods=['GET'])
-@login_required
-def get_user_grants():
-    """Get user's saved grants and applications"""
-    try:
-        user = get_current_user()
-        from app.models import Grant
-        
-        # Get all grants for user's organization
-        grants = Grant.query.filter_by(org_id=user.org_id).all()
-        
-        # Categorize grants
-        saved_grants = [g.to_dict() for g in grants if g.status == 'prospect']
-        applications = [g.to_dict() for g in grants if g.status in ['drafting', 'submitted']]
-        awarded = [g.to_dict() for g in grants if g.status == 'awarded']
-        
-        return jsonify({
-            'success': True,
-            'saved_grants': saved_grants,
-            'applications': applications,
-            'awarded': awarded,
-            'total_saved': len(saved_grants),
-            'total_applications': len(applications),
-            'total_awarded': len(awarded)
-        })
-    except Exception as e:
-        logger.error(f"Error getting user grants: {e}")
-        return jsonify({'error': str(e)}), 500
+        return jsonify({'error': 'Failed to complete onboarding'}), 500
