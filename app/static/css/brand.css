@@ -8,15 +8,29 @@
   --space-lg:24px;
   --font:Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Arial, "Helvetica Neue", sans-serif;
 }
+
+/* Logo Styling - 4x Size */
+.logo-4x {
+  height: 128px; /* 4x standard 32px = 128px */
+  width: auto;
+  border-radius: 12px;
+  background: transparent;
+  padding: 8px;
+  transition: transform 0.3s ease;
+}
+.logo-4x:hover {
+  transform: scale(1.05);
+}
 *{box-sizing:border-box}
 html,body{margin:0;padding:0;background:var(--white);color:var(--grey);font-family:var(--font);line-height:1.55}
 h1,h2,h3{color:var(--black);margin:0 0 var(--space)}
 a{text-decoration:none;color:var(--black)}
 .container{max-width:1100px;margin:0 auto;padding:24px}
 .card{background:var(--white);border:1px solid rgba(0,0,0,.08);border-radius:var(--radius);padding:var(--space-lg)}
-.nav{display:flex;gap:16px;align-items:center;margin-bottom:24px}
-.nav a{padding:8px 10px;border-radius:6px}
-.nav a.active,.nav a:hover{background:var(--pink)}
+.nav{display:flex;gap:16px;align-items:center;margin-bottom:24px;flex-wrap:wrap}
+.nav a{padding:8px 10px;border-radius:6px;transition:background-color 0.2s ease}
+.nav a.active,.nav a:hover{background:var(--pink);transform:translateY(-1px)}
+.nav .logo-4x{margin-right:12px;flex-shrink:0}
 .btn{display:inline-block;border-radius:var(--radius);padding:12px 18px;border:1px solid rgba(0,0,0,.1);background:var(--white);color:var(--black)}
 .btn-primary{background:var(--pink);border-color:var(--pink)}
 .badge{display:inline-block;padding:4px 10px;border-radius:999px;background:var(--pink);color:var(--black);font-size:12px}
@@ -25,4 +39,24 @@ a{text-decoration:none;color:var(--black)}
 .grid-4{grid-template-columns:repeat(4,minmax(0,1fr))}
 .table{width:100%;border-collapse:collapse}
 .table th,.table td{padding:10px;border-top:1px solid rgba(0,0,0,.08);text-align:left}
-footer.small{color:#777;font-size:12px;margin-top:24px}
+footer.small{color:#777;font-size:12px;margin-top:24px;text-align:center;border-top:1px solid rgba(0,0,0,.08);padding-top:16px}
+
+/* Enhanced UX Improvements */
+.btn{transition:all 0.2s ease}
+.btn:hover{transform:translateY(-1px);box-shadow:0 4px 12px rgba(0,0,0,.1)}
+.card{transition:box-shadow 0.2s ease}
+.card:hover{box-shadow:0 8px 24px rgba(0,0,0,.08)}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .logo-4x{height:80px} /* Smaller on mobile */
+  .nav{flex-direction:column;align-items:flex-start;gap:8px}
+  .nav a{display:block;width:100%;text-align:center}
+  .grid-4{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .grid-2{grid-template-columns:1fr}
+}
+
+@media (max-width: 480px) {
+  .logo-4x{height:64px} /* Even smaller on very small screens */
+  .container{padding:16px}
+}
