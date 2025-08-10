@@ -96,6 +96,10 @@ def create_app():
     from app.api.deployment import bp as deployment_bp
     flask_app.register_blueprint(deployment_bp)
     
+    # Register final completion endpoints
+    from app.api.final_completion import bp as final_completion_bp
+    flask_app.register_blueprint(final_completion_bp)
+    
     # Register live data integration endpoints
     from app.api.live_data import bp as live_data_bp
     flask_app.register_blueprint(live_data_bp)
