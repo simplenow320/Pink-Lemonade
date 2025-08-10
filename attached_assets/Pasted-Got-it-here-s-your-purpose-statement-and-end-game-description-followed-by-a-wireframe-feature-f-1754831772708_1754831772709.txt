@@ -1,0 +1,106 @@
+Got it — here’s your purpose statement and end-game description, followed by a wireframe + feature flow for the Smart Reporting System.
+
+⸻
+
+Purpose & End Game
+
+The Smart Reporting System is built to save nonprofits massive amounts of time while increasing their funder confidence.
+Its end goal is to turn real program results into funder-ready impact reports, board summaries, and newsletter stories without anyone spending weeks chasing data.
+
+By combining verified grant data, project-level reporting, and AI that can only use accurate information from the system, organizations will:
+	•	Prove their impact with clean, visual, and persuasive reports.
+	•	Meet funder requirements on time, every time.
+	•	Use one set of collected data to produce multiple outputs for funders, boards, stakeholders, and donors.
+
+Ultimately, this system becomes the nonprofit’s single source of truth for grant impact — reducing staff stress, increasing funding renewal rates, and freeing leaders to focus on mission work.
+
+⸻
+
+Wireframe & Feature Map
+
+1. Grant Data Intake (Screen: “Grant Details”)
+
+Purpose: Store all funder requirements, deadlines, and deliverables in one place.
+Features:
+	•	Manual entry form for grant details.
+	•	Auto-import from active grants in the system.
+	•	Field locking for verified data.
+	•	Link grant to specific project(s).
+
+⸻
+
+2. Project Setup (Screen: “Project Dashboard”)
+
+Purpose: Connect the grant to a measurable project with reporting deadlines.
+Features:
+	•	Project name, description, start/end dates.
+	•	Assign reporting intervals (quarterly, semi-annual, annual).
+	•	Auto-link deliverables from grant record.
+	•	Assign project owner.
+
+⸻
+
+3. AI Impact Question Generation (Screen: “Impact Question Builder”)
+
+Purpose: Suggest meaningful, measurable questions for data collection.
+Features:
+	•	AI analyzes grant + project data.
+	•	Suggests 7 editable questions.
+	•	Options to add/remove questions.
+	•	Tag questions by type (quantitative, qualitative, story).
+
+⸻
+
+4. Reporting Portal (Screen: “Survey Link & Responses”)
+
+Purpose: Capture input from staff, beneficiaries, or partners.
+Features:
+	•	Public/partner-facing survey link.
+	•	Real-time response tracking.
+	•	Response filtering by date, location, or participant role.
+	•	Auto-tagging responses to the right grant/project.
+
+⸻
+
+5. Reporting Dashboard (Screen: “Impact Overview”)
+
+Purpose: Give a quick view of impact progress.
+Features:
+	•	KPI widgets (percent of goals met, participants served, funds used).
+	•	Visual timeline of reporting periods.
+	•	Alerts for upcoming deadlines.
+
+⸻
+
+6. Output Center (Screen: “Generate Reports”)
+
+Purpose: Produce all reporting formats from one place.
+Features:
+	•	Funder Impact Report: Includes charts, visuals, narrative.
+	•	Board Summary: Short, high-level impact snapshot.
+	•	Newsletter Story: Engaging public-facing copy.
+	•	Export as PDF, Word, CSV.
+	•	Guardrails to pull only verified data.
+
+⸻
+
+7. Accuracy & Governance
+
+Purpose: Maintain credibility and compliance.
+Features:
+	•	Role-based permissions.
+	•	Change logs for data and reports.
+	•	AI outputs cite data sources.
+	•	Missing data flagged for follow-up.
+
+⸻
+
+High-Level Flow
+
+Grant Added → Project Created → AI Suggests Questions → Surveys Sent → Data Collected → Reports Generated → Stakeholders Informed
+
+⸻
+
+If you want, I can now turn this into a clickable wireframe mockup that visually matches the rest of your site so the devs can plug it in without touching your design style. That way, you keep your branding intact and just add this as a powerful feature.
+
+Do you want me to make that mockup next?
