@@ -133,6 +133,27 @@ Focus on mission alignment, geographic match, focus area overlap, and eligibilit
         
         return None, None
     
+    def analyze_text(self, prompt: str) -> Optional[Dict]:
+        """
+        General text analysis method for AI extraction and analysis tasks
+        Returns structured JSON response or None if analysis fails
+        """
+        if not self.is_enabled():
+            return None
+        
+        messages = [
+            {"role": "system", "content": "You are an expert grant analyst. Always provide clear, structured JSON responses with real data only. Never fabricate contact information, dates, or specific details not present in the source material."},
+            {"role": "user", "content": prompt}
+        ]
+        
+        result = self._make_request(
+            messages,
+            response_format={"type": "json_object"},
+            max_tokens=1500
+        )
+        
+        return result if result else {}
+    
     def extract_grant_info(self, text: str) -> Optional[Dict]:
         """
         Extract grant information from text or webpage content

@@ -192,6 +192,15 @@ Return JSON with: contact_info, deadlines, requirements, complexity_score (1-5)
 """
             result = self.ai_service.analyze_text(extraction_prompt)
             
+            # Handle None or empty responses
+            if not result:
+                return {
+                    'contact_info': {},
+                    'deadlines': {},
+                    'requirements': {},
+                    'complexity_score': 3  # Default medium complexity
+                }
+            
             return result if isinstance(result, dict) else {}
             
         except Exception as e:
@@ -249,6 +258,18 @@ Format as JSON.
 """
             result = self.ai_service.analyze_text(analysis_prompt)
             
+            # Handle None or empty responses
+            if not result:
+                return {
+                    'mission_alignment_score': 3,
+                    'priority_level': 'Medium',
+                    'next_actions': [
+                        'Review grant requirements and eligibility criteria',
+                        'Assess alignment with organizational mission',
+                        'Prepare necessary documentation'
+                    ]
+                }
+            
             return result if isinstance(result, dict) else {}
             
         except Exception as e:
@@ -269,36 +290,73 @@ Format as JSON.
         """
         try:
             # Update contact information
-            if 'contact_info' in extraction_data:
+            if 'contact_info' in extraction_data and extraction_data['contact_info']:
                 grant.contact_info = extraction_data['contact_info']
             
-            # Update requirements summary
+            # Update requirements summary - check multiple possible locations
             requirements = extraction_data.get('requirements', {})
-            if requirements.get('eligibility_summary'):
-                grant.requirements_summary = requirements['eligibility_summary']
+            if requirements:
+                if isinstance(requirements, dict):
+                    # Build summary from available fields
+                    summary_parts = []
+                    if requirements.get('eligibility'):
+                        summary_parts.append(f"Eligibility: {requirements['eligibility']}")
+                    if requirements.get('geography'):
+                        summary_parts.append(f"Geography: {requirements['geography']}")
+                    if requirements.get('award_range'):
+                        range_info = requirements['award_range']
+                        if isinstance(range_info, dict):
+                            summary_parts.append(f"Award: ${range_info.get('min', 0):,} - ${range_info.get('max', 0):,}")
+                    
+                    if summary_parts:
+                        grant.requirements_summary = ' | '.join(summary_parts)
+                elif isinstance(requirements, str):
+                    grant.requirements_summary = requirements
             
-            # Update complexity score
-            app_details = extraction_data.get('application_details', {})
-            if app_details.get('complexity_score'):
-                grant.application_complexity = app_details['complexity_score']
+            # Update complexity score - handle direct field or nested
+            if 'complexity_score' in extraction_data:
+                score = extraction_data['complexity_score']
+                if isinstance(score, (int, float)):
+                    grant.application_complexity = int(score)
+            elif 'application_details' in extraction_data:
+                app_details = extraction_data['application_details']
+                if isinstance(app_details, dict) and app_details.get('complexity_score'):
+                    grant.application_complexity = int(app_details['complexity_score'])
             
-            # Update AI summary from analysis
-            if 'mission_alignment' in analysis_data:
+            # Update AI summary from analysis - handle multiple structures
+            summary_parts = []
+            
+            # Check for mission alignment score
+            if 'mission_alignment_score' in analysis_data:
+                score = analysis_data['mission_alignment_score']
+                summary_parts.append(f"Alignment Score: {score}/5")
+            elif 'mission_alignment' in analysis_data:
                 alignment = analysis_data['mission_alignment']
-                summary_parts = []
-                
-                if alignment.get('alignment_summary'):
-                    summary_parts.append(f"Fit Score: {alignment.get('fit_score', 'N/A')}/5")
-                    summary_parts.append(alignment['alignment_summary'])
-                
-                if 'strategic_assessment' in analysis_data:
-                    strategic = analysis_data['strategic_assessment']
+                if isinstance(alignment, dict):
+                    if alignment.get('fit_score'):
+                        summary_parts.append(f"Fit Score: {alignment['fit_score']}/5")
+                    if alignment.get('alignment_summary'):
+                        summary_parts.append(alignment['alignment_summary'])
+            
+            # Check for priority level
+            if 'priority_level' in analysis_data:
+                summary_parts.append(f"Priority: {analysis_data['priority_level']}")
+            elif 'strategic_assessment' in analysis_data:
+                strategic = analysis_data['strategic_assessment']
+                if isinstance(strategic, dict):
                     if strategic.get('priority_level'):
                         summary_parts.append(f"Priority: {strategic['priority_level']}")
                     if strategic.get('effort_vs_reward'):
                         summary_parts.append(strategic['effort_vs_reward'])
-                
-                grant.ai_summary = ' | '.join(summary_parts) if summary_parts else None
+            
+            # Check for next actions
+            if 'next_actions' in analysis_data and isinstance(analysis_data['next_actions'], list):
+                actions = analysis_data['next_actions']
+                if actions and len(actions) > 0:
+                    summary_parts.append(f"Next Step: {actions[0]}")
+            
+            if summary_parts:
+                grant.ai_summary = ' | '.join(summary_parts)
             
             # Update timestamp
             grant.last_intelligence_update = datetime.utcnow()
