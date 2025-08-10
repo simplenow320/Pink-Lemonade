@@ -84,6 +84,11 @@ def settings_guided():
     """Guided Organization Setup Form"""
     return render_template("settings_guided.html", active="profile")
 
+@pages.get("/grant-intelligence")
+def grant_intelligence():
+    """Grant Intelligence Dashboard"""
+    return render_template("grant_intelligence.html", active="writing")
+
 @pages.get("/admin")
 def admin_dashboard():
     """Admin Dashboard Page"""

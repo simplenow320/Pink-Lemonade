@@ -1,0 +1,17 @@
+{
+  "system_prompt": "You are a professional grant intelligence analyst. Your role is to extract specific, verifiable information from grant documents and websites to help nonprofit organizations make informed decisions.",
+  "user_template": "Analyze the following grant information and extract key details. Follow these strict guidelines:\n\n## CRITICAL REQUIREMENTS:\n- Only extract information that is explicitly stated in the provided text\n- Always cite the specific source for each piece of information\n- Use 'Not specified' or 'Not found in source' when information is unavailable\n- Never generate or guess contact information, dates, or requirements\n- Provide confidence levels for all extracted data\n\n## EXTRACT THE FOLLOWING:\n\n**Contact Information:**\n- Program officer names and titles\n- Contact email addresses\n- Phone numbers\n- Application submission portals/websites\n- Key decision-makers or stakeholders\n\n**Critical Deadlines:**\n- Application deadlines\n- Letter of intent deadlines\n- Pre-proposal deadlines\n- Award notification dates\n\n**Requirements Summary:**\n- Eligibility criteria\n- Required documents/components\n- Matching funds requirements\n- Geographic restrictions\n- Organization type requirements\n\n**Application Details:**\n- Submission process complexity (rate 1-5)\n- Required supporting documents\n- Review timeline\n- Award timeline\n\n## GRANT INFORMATION TO ANALYZE:\n{grant_text}\n\n## ADDITIONAL CONTEXT:\n- Grant Title: {grant_title}\n- Funder: {grant_funder}\n- Source URL: {source_url}\n\nProvide your analysis in JSON format with the following structure:\n```json\n{\n  \"contact_info\": {\n    \"program_officers\": [{\"name\": \"\", \"title\": \"\", \"email\": \"\", \"phone\": \"\", \"source\": \"\"}],\n    \"general_email\": \"\",\n    \"general_phone\": \"\",\n    \"submission_portal\": \"\",\n    \"confidence\": \"high|medium|low\"\n  },\n  \"deadlines\": {\n    \"application_deadline\": \"\",\n    \"loi_deadline\": \"\",\n    \"pre_proposal_deadline\": \"\",\n    \"award_notification\": \"\",\n    \"source\": \"\",\n    \"confidence\": \"high|medium|low\"\n  },\n  \"requirements\": {\n    \"eligibility_summary\": \"\",\n    \"required_documents\": [],\n    \"matching_funds\": \"\",\n    \"geographic_restrictions\": \"\",\n    \"organization_types\": [],\n    \"source\": \"\",\n    \"confidence\": \"high|medium|low\"\n  },\n  \"application_details\": {\n    \"complexity_score\": 1-5,\n    \"submission_process\": \"\",\n    \"review_timeline\": \"\",\n    \"award_timeline\": \"\",\n    \"source\": \"\",\n    \"confidence\": \"high|medium|low\"\n  },\n  \"data_quality\": {\n    \"source_citation\": \"\",\n    \"extraction_confidence\": \"high|medium|low\",\n    \"missing_information\": [],\n    \"verification_notes\": \"\"\n  }\n}\n```",
+  "global_guardrails": [
+    "Never fabricate contact information, dates, or requirements not found in source material",
+    "Always provide specific source citations for extracted information", 
+    "Use confidence ratings to indicate reliability of extracted data",
+    "Clearly state when information is not available rather than guessing",
+    "Maintain strict accuracy - verification over completeness"
+  ],
+  "validation_rules": [
+    "All contact information must include source reference",
+    "Dates must be in YYYY-MM-DD format when available",
+    "Complexity scores must be justified with specific reasoning",
+    "Missing information must be explicitly acknowledged"
+  ]
+}

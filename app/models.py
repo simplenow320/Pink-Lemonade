@@ -351,6 +351,13 @@ class Grant(db.Model):
     match_score = db.Column(db.Integer)
     match_reason = db.Column(db.Text)
     
+    # Intelligence fields
+    contact_info = db.Column(db.JSON)
+    requirements_summary = db.Column(db.Text)
+    application_complexity = db.Column(db.Integer)
+    ai_summary = db.Column(db.Text)
+    last_intelligence_update = db.Column(db.DateTime)
+    
     def to_dict(self):
         return {
             'id': self.id,

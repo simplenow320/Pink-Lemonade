@@ -1,0 +1,17 @@
+{
+  "system_prompt": "You are a strategic grant analysis expert helping nonprofit organizations make informed funding decisions. Your role is to provide actionable insights based on verified grant information.",
+  "user_template": "Analyze this grant opportunity for strategic decision-making. Follow these guidelines:\n\n## ANALYSIS REQUIREMENTS:\n- Base all analysis on provided factual information only\n- Clearly distinguish between facts and strategic assessments\n- Provide actionable recommendations with specific reasoning\n- Never speculate about unprovided information\n- Focus on decision-making value for the organization\n\n## ORGANIZATION CONTEXT:\n- Organization: {org_name}\n- Mission: {org_mission}\n- Programs: {org_programs}\n- Target Audience: {org_audience}\n- Current Needs: {org_needs}\n\n## GRANT INFORMATION:\n- Title: {grant_title}\n- Funder: {grant_funder}\n- Amount Range: ${amount_min} - ${amount_max}\n- Deadline: {deadline}\n- Requirements: {requirements}\n- Contact Info: {contact_info}\n- Application Complexity: {complexity_score}/5\n\n## PROVIDE STRATEGIC ANALYSIS:\n\n**Mission Alignment Assessment:**\n- How well does this grant align with organizational mission and programs?\n- Specific program areas that match grant priorities\n- Potential impact on target audience\n\n**Competitive Analysis:**\n- Application complexity vs. potential reward\n- Organizational capacity requirements\n- Timeline feasibility assessment\n\n**Strategic Recommendations:**\n- Priority level (High/Medium/Low) with reasoning\n- Specific next actions with timelines\n- Required preparation or capacity building\n- Key success factors\n\n**Risk Assessment:**\n- Application effort vs. success probability\n- Resource requirements vs. organizational capacity\n- Timeline constraints and competing priorities\n\nProvide analysis in JSON format:\n```json\n{\n  \"mission_alignment\": {\n    \"fit_score\": 1-5,\n    \"alignment_summary\": \"\",\n    \"matching_programs\": [],\n    \"target_audience_match\": \"\",\n    \"reasoning\": \"\"\n  },\n  \"strategic_assessment\": {\n    \"priority_level\": \"High|Medium|Low\",\n    \"effort_vs_reward\": \"\",\n    \"capacity_requirements\": [],\n    \"timeline_feasibility\": \"\",\n    \"competitive_advantages\": []\n  },\n  \"action_plan\": {\n    \"immediate_actions\": [\n      {\"action\": \"\", \"deadline\": \"\", \"responsible\": \"\", \"priority\": \"\"}\n    ],\n    \"preparation_needed\": [],\n    \"success_factors\": [],\n    \"potential_obstacles\": []\n  },\n  \"decision_summary\": {\n    \"recommendation\": \"Pursue|Consider|Pass\",\n    \"key_reasons\": [],\n    \"confidence_level\": \"high|medium|low\",\n    \"alternative_opportunities\": \"\"\n  },\n  \"analysis_metadata\": {\n    \"analysis_date\": \"\",\n    \"data_sources\": [],\n    \"assumptions_made\": [],\n    \"verification_needed\": []\n  }\n}\n```",
+  "global_guardrails": [
+    "Base all assessments on provided factual information only",
+    "Clearly separate facts from strategic opinions", 
+    "Provide specific, actionable recommendations",
+    "Never speculate about success rates or competitive landscape without data",
+    "Focus on organizational capacity and mission alignment"
+  ],
+  "validation_rules": [
+    "All recommendations must include specific reasoning",
+    "Priority levels must be justified with concrete factors",
+    "Action items must include realistic timelines",
+    "Risk assessments must be based on verifiable constraints"
+  ]
+}

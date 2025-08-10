@@ -59,6 +59,10 @@ def create_app():
     flask_app.register_blueprint(user_settings_bp)
     flask_app.register_blueprint(grants_bp, url_prefix='/api/grants')
     
+    # Register grant intelligence endpoints
+    from app.api.grant_intelligence import intelligence_api
+    flask_app.register_blueprint(intelligence_api)
+    
     # Register new AI endpoints
     from app.api.ai_endpoints import bp as ai_endpoints_bp
     flask_app.register_blueprint(ai_endpoints_bp)

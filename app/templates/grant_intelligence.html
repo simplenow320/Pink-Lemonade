@@ -1,0 +1,515 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Grant Intelligence - Pink Lemonade</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --pink: #F5F0F1;
+            --pink-matte: #B8899A;
+            --white: #FAFAFA;
+            --black: #2A2A2A;
+            --grey-light: #FAFAFA;
+            --grey: #6B6B6B;
+            --grey-dark: #2A2A2A;
+            --border: #E8E8E8;
+        }
+
+        body {
+            background-color: var(--grey-light);
+            color: var(--black);
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        }
+
+        .header-bar {
+            background: var(--white);
+            border-bottom: 1px solid var(--border);
+            padding: 1rem 1.5rem;
+        }
+
+        .intelligence-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        .intelligence-card {
+            background: var(--white);
+            border-radius: 0.5rem;
+            padding: 2rem;
+            margin-bottom: 1.5rem;
+            border: 1px solid var(--border);
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+
+        .btn-primary {
+            background: var(--pink-matte);
+            color: var(--white);
+            padding: 0.75rem 2rem;
+            border-radius: 0.375rem;
+            font-weight: 500;
+            border: none;
+            cursor: pointer;
+            transition: opacity 0.2s;
+        }
+
+        .btn-primary:hover {
+            opacity: 0.9;
+        }
+
+        .btn-secondary {
+            background: var(--white);
+            color: var(--grey-dark);
+            border: 1px solid var(--border);
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.375rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-secondary:hover {
+            background: var(--grey-light);
+        }
+
+        .loading-spinner {
+            border: 3px solid var(--border);
+            border-top: 3px solid var(--pink-matte);
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            animation: spin 1s linear infinite;
+            display: inline-block;
+            margin-right: 0.5rem;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .status-badge {
+            padding: 0.25rem 0.75rem;
+            border-radius: 1rem;
+            font-size: 0.875rem;
+            font-weight: 500;
+        }
+
+        .status-high { background: #10B981; color: white; }
+        .status-medium { background: #F59E0B; color: white; }
+        .status-low { background: #6B7280; color: white; }
+
+        .confidence-indicator {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            margin-right: 0.5rem;
+        }
+
+        .confidence-high { background: #10B981; }
+        .confidence-medium { background: #F59E0B; }
+        .confidence-low { background: #EF4444; }
+
+        .intelligence-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+            margin-top: 2rem;
+        }
+
+        .contact-card {
+            background: var(--pink);
+            padding: 1.5rem;
+            border-radius: 0.5rem;
+            border: 1px solid var(--pink-matte);
+        }
+
+        .requirements-card {
+            background: #F0F9FF;
+            padding: 1.5rem;
+            border-radius: 0.5rem;
+            border: 1px solid #0EA5E9;
+        }
+
+        .analysis-card {
+            background: #F0FDF4;
+            padding: 1.5rem;
+            border-radius: 0.5rem;
+            border: 1px solid #10B981;
+        }
+
+        .action-item {
+            background: var(--white);
+            padding: 1rem;
+            border-radius: 0.375rem;
+            border-left: 4px solid var(--pink-matte);
+            margin-bottom: 1rem;
+        }
+
+        .action-priority-high { border-left-color: #EF4444; }
+        .action-priority-medium { border-left-color: #F59E0B; }
+        .action-priority-low { border-left-color: #10B981; }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .stat-card {
+            background: var(--white);
+            padding: 1.5rem;
+            border-radius: 0.5rem;
+            border: 1px solid var(--border);
+            text-align: center;
+        }
+
+        .stat-number {
+            font-size: 2rem;
+            font-weight: bold;
+            color: var(--pink-matte);
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-label {
+            color: var(--grey);
+            font-size: 0.875rem;
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <div class="header-bar">
+        <div class="max-w-7xl mx-auto flex items-center justify-between">
+            <div class="flex items-center space-x-4">
+                <h1 class="text-xl font-semibold">Grant Intelligence</h1>
+            </div>
+            <a href="/grant-tracker" class="text-sm hover:underline" style="color: var(--pink-matte);">← Back to Grant Tracker</a>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="intelligence-container">
+        <!-- Intelligence Overview -->
+        <div class="intelligence-card">
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="text-xl font-semibold">AI-Powered Grant Intelligence</h2>
+                <div class="flex gap-2">
+                    <button onclick="analyzeAllGrants()" class="btn-primary" id="analyze-all-btn">
+                        <span id="analyze-spinner" style="display: none;" class="loading-spinner"></span>
+                        Analyze All Grants
+                    </button>
+                    <button onclick="refreshIntelligence()" class="btn-secondary">Refresh</button>
+                </div>
+            </div>
+            
+            <p class="text-gray-600 mb-6">
+                Extract valuable decision-making information from grant opportunities using AI analysis. 
+                Get contact details, requirements summaries, complexity assessments, and strategic recommendations.
+            </p>
+
+            <!-- Intelligence Stats -->
+            <div class="stats-grid" id="intelligence-stats">
+                <!-- Stats will be populated by JavaScript -->
+            </div>
+        </div>
+
+        <!-- Grant Intelligence List -->
+        <div id="grants-intelligence-list">
+            <!-- Grant intelligence cards will be populated here -->
+        </div>
+
+        <!-- Loading State -->
+        <div id="loading-state" class="intelligence-card text-center" style="display: none;">
+            <div class="loading-spinner"></div>
+            <span>Loading grant intelligence...</span>
+        </div>
+
+        <!-- Empty State -->
+        <div id="empty-state" class="intelligence-card text-center" style="display: none;">
+            <h3 class="text-lg font-semibold mb-2">No Grant Intelligence Available</h3>
+            <p class="text-gray-600 mb-4">Click "Analyze All Grants" to start extracting valuable information from your grant opportunities.</p>
+            <button onclick="analyzeAllGrants()" class="btn-primary">Start Analysis</button>
+        </div>
+    </div>
+
+    <script>
+        let allGrantsIntelligence = [];
+
+        document.addEventListener('DOMContentLoaded', () => {
+            loadIntelligenceData();
+        });
+
+        async function loadIntelligenceData() {
+            try {
+                document.getElementById('loading-state').style.display = 'block';
+                
+                // Get intelligence status
+                const statusResponse = await fetch('/api/grants/intelligence-status');
+                const statusData = await statusResponse.json();
+                
+                if (statusData.success) {
+                    updateIntelligenceStats(statusData.status);
+                }
+
+                // Get grants with intelligence
+                const grantsResponse = await fetch('/api/grants/tracker');
+                const grantsData = await grantsResponse.json();
+                
+                if (grantsData.success) {
+                    allGrantsIntelligence = grantsData.grants;
+                    displayGrantsIntelligence(allGrantsIntelligence);
+                }
+                
+                document.getElementById('loading-state').style.display = 'none';
+                
+            } catch (error) {
+                console.error('Error loading intelligence data:', error);
+                document.getElementById('loading-state').style.display = 'none';
+                showEmptyState();
+            }
+        }
+
+        function updateIntelligenceStats(stats) {
+            const statsGrid = document.getElementById('intelligence-stats');
+            statsGrid.innerHTML = `
+                <div class="stat-card">
+                    <div class="stat-number">${stats.total_grants}</div>
+                    <div class="stat-label">Total Grants</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">${stats.analyzed_grants}</div>
+                    <div class="stat-label">Analyzed Grants</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">${stats.grants_with_contacts}</div>
+                    <div class="stat-label">With Contact Info</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">${stats.analysis_coverage}%</div>
+                    <div class="stat-label">Coverage</div>
+                </div>
+            `;
+        }
+
+        function displayGrantsIntelligence(grants) {
+            const container = document.getElementById('grants-intelligence-list');
+            
+            if (grants.length === 0) {
+                showEmptyState();
+                return;
+            }
+
+            container.innerHTML = grants.map(grant => createGrantIntelligenceCard(grant)).join('');
+        }
+
+        function createGrantIntelligenceCard(grant) {
+            const hasIntelligence = grant.ai_summary || grant.contact_info;
+            const complexityScore = grant.application_complexity || 'Not assessed';
+            
+            return `
+                <div class="intelligence-card">
+                    <div class="flex items-start justify-between mb-4">
+                        <div class="flex-1">
+                            <h3 class="text-lg font-semibold mb-1">${grant.title}</h3>
+                            <p class="text-gray-600 mb-2">${grant.funder}</p>
+                            <div class="flex items-center gap-2">
+                                <span class="text-sm text-gray-500">
+                                    ${formatAmount(grant.amount_min, grant.amount_max)}
+                                </span>
+                                ${grant.deadline ? `<span class="text-sm text-gray-500">• Due ${formatDate(grant.deadline)}</span>` : ''}
+                                ${complexityScore !== 'Not assessed' ? `<span class="text-sm text-gray-500">• Complexity ${complexityScore}/5</span>` : ''}
+                            </div>
+                        </div>
+                        <div class="flex flex-col items-end gap-2">
+                            ${hasIntelligence ? '<span class="status-badge status-high">Analyzed</span>' : '<span class="status-badge status-low">Pending</span>'}
+                            <button onclick="analyzeGrant(${grant.id})" class="btn-secondary text-sm">
+                                ${hasIntelligence ? 'Re-analyze' : 'Analyze'}
+                            </button>
+                        </div>
+                    </div>
+
+                    ${hasIntelligence ? `
+                        <div class="intelligence-grid">
+                            ${grant.contact_info ? createContactCard(grant.contact_info) : ''}
+                            ${grant.requirements_summary ? createRequirementsCard(grant.requirements_summary) : ''}
+                            ${grant.ai_summary ? createAnalysisCard(grant.ai_summary) : ''}
+                        </div>
+                    ` : `
+                        <div class="text-center py-4 text-gray-500">
+                            <p>Click "Analyze" to extract valuable information about this grant opportunity.</p>
+                        </div>
+                    `}
+                </div>
+            `;
+        }
+
+        function createContactCard(contactInfo) {
+            if (typeof contactInfo === 'string') {
+                try {
+                    contactInfo = JSON.parse(contactInfo);
+                } catch (e) {
+                    return '';
+                }
+            }
+
+            return `
+                <div class="contact-card">
+                    <h4 class="font-semibold mb-2 flex items-center">
+                        <div class="confidence-indicator confidence-${contactInfo.confidence || 'medium'}"></div>
+                        Contact Information
+                    </h4>
+                    ${contactInfo.general_email ? `<p class="mb-1"><strong>Email:</strong> ${contactInfo.general_email}</p>` : ''}
+                    ${contactInfo.general_phone ? `<p class="mb-1"><strong>Phone:</strong> ${contactInfo.general_phone}</p>` : ''}
+                    ${contactInfo.submission_portal ? `<p class="mb-1"><strong>Portal:</strong> <a href="${contactInfo.submission_portal}" target="_blank" class="text-blue-600 hover:underline">Application Portal</a></p>` : ''}
+                    ${contactInfo.program_officers && contactInfo.program_officers.length > 0 ? `
+                        <div class="mt-2">
+                            <strong>Program Officers:</strong>
+                            ${contactInfo.program_officers.map(officer => `
+                                <div class="ml-2 text-sm">
+                                    ${officer.name} ${officer.title ? `(${officer.title})` : ''}
+                                    ${officer.email ? `- ${officer.email}` : ''}
+                                </div>
+                            `).join('')}
+                        </div>
+                    ` : ''}
+                </div>
+            `;
+        }
+
+        function createRequirementsCard(requirements) {
+            return `
+                <div class="requirements-card">
+                    <h4 class="font-semibold mb-2">Requirements Summary</h4>
+                    <p class="text-sm">${requirements}</p>
+                </div>
+            `;
+        }
+
+        function createAnalysisCard(analysis) {
+            return `
+                <div class="analysis-card">
+                    <h4 class="font-semibold mb-2">AI Analysis</h4>
+                    <p class="text-sm">${analysis}</p>
+                </div>
+            `;
+        }
+
+        async function analyzeGrant(grantId) {
+            try {
+                const response = await fetch(`/api/grants/${grantId}/intelligence`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        org_name: 'Nitrogen Network',
+                        org_mission: 'Urban ministry and community development',
+                        org_programs: 'After-school programs, community workshops, mentoring services',
+                        org_audience: 'At-risk youth and urban families',
+                        org_needs: 'Program expansion and community outreach funding'
+                    })
+                });
+
+                const result = await response.json();
+                
+                if (result.success) {
+                    showNotification('Grant analysis completed successfully!', 'success');
+                    await loadIntelligenceData(); // Refresh the data
+                } else {
+                    showNotification('Analysis failed: ' + (result.error || 'Unknown error'), 'error');
+                }
+
+            } catch (error) {
+                console.error('Error analyzing grant:', error);
+                showNotification('Failed to analyze grant. Please try again.', 'error');
+            }
+        }
+
+        async function analyzeAllGrants() {
+            const btn = document.getElementById('analyze-all-btn');
+            const spinner = document.getElementById('analyze-spinner');
+            
+            try {
+                btn.disabled = true;
+                spinner.style.display = 'inline-block';
+                
+                const response = await fetch('/api/grants/bulk-intelligence', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        limit: 10,
+                        org_context: {
+                            org_name: 'Nitrogen Network',
+                            org_mission: 'Urban ministry and community development',
+                            org_programs: 'After-school programs, community workshops, mentoring services',
+                            org_audience: 'At-risk youth and urban families',
+                            org_needs: 'Program expansion and community outreach funding'
+                        }
+                    })
+                });
+
+                const result = await response.json();
+                
+                if (result.successful > 0) {
+                    showNotification(`Successfully analyzed ${result.successful} grants!`, 'success');
+                    await loadIntelligenceData(); // Refresh the data
+                } else {
+                    showNotification('No grants were analyzed successfully.', 'warning');
+                }
+
+            } catch (error) {
+                console.error('Error analyzing grants:', error);
+                showNotification('Failed to analyze grants. Please try again.', 'error');
+            } finally {
+                btn.disabled = false;
+                spinner.style.display = 'none';
+            }
+        }
+
+        async function refreshIntelligence() {
+            await loadIntelligenceData();
+        }
+
+        function showEmptyState() {
+            document.getElementById('empty-state').style.display = 'block';
+            document.getElementById('grants-intelligence-list').innerHTML = '';
+        }
+
+        function formatAmount(min, max) {
+            if (!min && !max) return 'Amount not specified';
+            if (!min) return `Up to $${Number(max).toLocaleString()}`;
+            if (!max) return `From $${Number(min).toLocaleString()}`;
+            if (min === max) return `$${Number(min).toLocaleString()}`;
+            return `$${Number(min).toLocaleString()} - $${Number(max).toLocaleString()}`;
+        }
+
+        function formatDate(dateString) {
+            if (!dateString) return 'No deadline';
+            const date = new Date(dateString);
+            return date.toLocaleDateString();
+        }
+
+        function showNotification(message, type = 'info') {
+            // Create notification element
+            const notification = document.createElement('div');
+            notification.className = `fixed top-4 right-4 px-6 py-3 rounded-lg shadow-lg z-50 ${
+                type === 'success' ? 'bg-green-500 text-white' :
+                type === 'error' ? 'bg-red-500 text-white' :
+                type === 'warning' ? 'bg-yellow-500 text-white' :
+                'bg-blue-500 text-white'
+            }`;
+            notification.textContent = message;
+            
+            document.body.appendChild(notification);
+            
+            // Remove after 5 seconds
+            setTimeout(() => {
+                notification.remove();
+            }, 5000);
+        }
+    </script>
+</body>
+</html>
