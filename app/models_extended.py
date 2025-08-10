@@ -922,3 +922,287 @@ class ReportDistribution(db.Model):
             "first_viewed": self.first_viewed.isoformat() if self.first_viewed else None,
             "last_viewed": self.last_viewed.isoformat() if self.last_viewed else None
         }
+
+
+# =============================================================================
+# Smart Reporting Phase 6 Models - Governance & Compliance Framework
+# =============================================================================
+
+class AuditLog(db.Model):
+    """Comprehensive activity and change tracking"""
+    __tablename__ = "audit_logs"
+    
+    id = db.Column(db.Integer, primary_key=True)
+    
+    # Activity identification
+    activity_type = db.Column(db.String(100), nullable=False)  # login, report_generation, template_edit, etc.
+    entity_type = db.Column(db.String(100))  # report, template, user, system
+    entity_id = db.Column(db.String(100))  # ID of affected entity
+    action = db.Column(db.String(50), nullable=False)  # create, read, update, delete, execute
+    
+    # User and session information
+    user_id = db.Column(db.String(100))
+    user_role = db.Column(db.String(50))
+    session_id = db.Column(db.String(100))
+    ip_address = db.Column(db.String(45))  # IPv6 support
+    user_agent = db.Column(db.Text)
+    
+    # Activity details
+    activity_description = db.Column(db.Text, nullable=False)
+    before_state = db.Column(db.Text)  # JSON: state before change
+    after_state = db.Column(db.Text)  # JSON: state after change
+    change_summary = db.Column(db.Text)  # Human-readable change description
+    
+    # Context and metadata
+    request_method = db.Column(db.String(10))  # GET, POST, PUT, DELETE
+    endpoint = db.Column(db.String(200))  # API endpoint accessed
+    request_data = db.Column(db.Text)  # JSON: sanitized request data
+    response_status = db.Column(db.Integer)  # HTTP response code
+    
+    # Compliance and security
+    compliance_relevant = db.Column(db.Boolean, default=False)
+    security_relevant = db.Column(db.Boolean, default=False)
+    privacy_relevant = db.Column(db.Boolean, default=False)
+    retention_period_days = db.Column(db.Integer, default=2555)  # 7 years default
+    
+    # Performance metrics
+    processing_time_ms = db.Column(db.Float)
+    memory_usage_mb = db.Column(db.Float)
+    database_queries = db.Column(db.Integer)
+    
+    # Timestamps
+    timestamp = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "activity_type": self.activity_type,
+            "entity_type": self.entity_type,
+            "entity_id": self.entity_id,
+            "action": self.action,
+            "user_id": self.user_id,
+            "activity_description": self.activity_description,
+            "compliance_relevant": self.compliance_relevant,
+            "security_relevant": self.security_relevant,
+            "privacy_relevant": self.privacy_relevant,
+            "timestamp": self.timestamp.isoformat(),
+            "processing_time_ms": self.processing_time_ms
+        }
+
+
+class ComplianceRule(db.Model):
+    """Regulatory requirements and monitoring configuration"""
+    __tablename__ = "compliance_rules"
+    
+    id = db.Column(db.Integer, primary_key=True)
+    
+    # Rule identification
+    rule_name = db.Column(db.String(200), nullable=False)
+    rule_category = db.Column(db.String(100), nullable=False)  # financial, reporting, privacy, security
+    regulation_source = db.Column(db.String(100))  # GAAP, FASB, IRS, funder_specific, internal
+    funder_id = db.Column(db.Integer)  # FK to specific funder if applicable
+    
+    # Rule definition
+    rule_description = db.Column(db.Text, nullable=False)
+    compliance_criteria = db.Column(db.Text, nullable=False)  # JSON: specific requirements
+    validation_logic = db.Column(db.Text)  # JSON: automated validation rules
+    severity_level = db.Column(db.String(20), default="medium")  # low, medium, high, critical
+    
+    # Monitoring configuration
+    monitoring_frequency = db.Column(db.String(50), default="daily")  # continuous, hourly, daily, weekly
+    automated_check = db.Column(db.Boolean, default=True)
+    alert_threshold = db.Column(db.Float)  # Threshold for compliance violations
+    notification_recipients = db.Column(db.Text)  # JSON: list of notification recipients
+    
+    # Deadlines and timing
+    compliance_deadline_type = db.Column(db.String(50))  # fixed_date, periodic, event_triggered
+    deadline_schedule = db.Column(db.String(100))  # Cron expression or specific dates
+    advance_warning_days = db.Column(db.Integer, default=30)
+    
+    # Documentation and references
+    legal_reference = db.Column(db.Text)
+    documentation_url = db.Column(db.String(500))
+    internal_policy_reference = db.Column(db.String(200))
+    
+    # Status and performance
+    is_active = db.Column(db.Boolean, default=True)
+    last_check = db.Column(db.DateTime)
+    last_compliance_status = db.Column(db.String(20))  # compliant, non_compliant, warning, unknown
+    violation_count = db.Column(db.Integer, default=0)
+    
+    # Timestamps
+    effective_date = db.Column(db.DateTime, default=datetime.utcnow)
+    expiration_date = db.Column(db.DateTime)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "rule_name": self.rule_name,
+            "rule_category": self.rule_category,
+            "regulation_source": self.regulation_source,
+            "rule_description": self.rule_description,
+            "severity_level": self.severity_level,
+            "monitoring_frequency": self.monitoring_frequency,
+            "automated_check": self.automated_check,
+            "is_active": self.is_active,
+            "last_compliance_status": self.last_compliance_status,
+            "violation_count": self.violation_count,
+            "effective_date": self.effective_date.isoformat(),
+            "last_check": self.last_check.isoformat() if self.last_check else None
+        }
+
+
+class DataGovernancePolicy(db.Model):
+    """Privacy, security, and retention policy definitions"""
+    __tablename__ = "data_governance_policies"
+    
+    id = db.Column(db.Integer, primary_key=True)
+    
+    # Policy identification
+    policy_name = db.Column(db.String(200), nullable=False)
+    policy_type = db.Column(db.String(50), nullable=False)  # privacy, security, retention, access
+    data_category = db.Column(db.String(100))  # pii, financial, program_data, metadata
+    jurisdiction = db.Column(db.String(50))  # US, EU, CA, etc.
+    
+    # Policy definition
+    policy_description = db.Column(db.Text, nullable=False)
+    policy_rules = db.Column(db.Text, nullable=False)  # JSON: specific policy rules
+    enforcement_level = db.Column(db.String(20), default="strict")  # advisory, standard, strict
+    
+    # Privacy settings
+    consent_required = db.Column(db.Boolean, default=False)
+    opt_out_allowed = db.Column(db.Boolean, default=True)
+    data_minimization = db.Column(db.Boolean, default=True)
+    purpose_limitation = db.Column(db.Boolean, default=True)
+    
+    # Security controls
+    encryption_required = db.Column(db.Boolean, default=True)
+    access_controls = db.Column(db.Text)  # JSON: role-based access rules
+    audit_logging = db.Column(db.Boolean, default=True)
+    anonymization_rules = db.Column(db.Text)  # JSON: data anonymization requirements
+    
+    # Retention and lifecycle
+    retention_period_days = db.Column(db.Integer)
+    auto_deletion = db.Column(db.Boolean, default=False)
+    archive_before_deletion = db.Column(db.Boolean, default=True)
+    deletion_method = db.Column(db.String(50), default="secure_wipe")  # soft_delete, secure_wipe, cryptographic
+    
+    # Compliance and legal
+    regulatory_basis = db.Column(db.Text)  # Legal basis for policy (GDPR Article, etc.)
+    breach_notification_required = db.Column(db.Boolean, default=True)
+    breach_notification_timeframe = db.Column(db.Integer, default=72)  # hours
+    
+    # Monitoring and enforcement
+    automated_enforcement = db.Column(db.Boolean, default=True)
+    violation_tracking = db.Column(db.Boolean, default=True)
+    exception_process = db.Column(db.Text)  # Process for handling exceptions
+    
+    # Status and versioning
+    is_active = db.Column(db.Boolean, default=True)
+    version = db.Column(db.String(20), default="1.0")
+    approval_status = db.Column(db.String(20), default="draft")  # draft, approved, deprecated
+    approved_by = db.Column(db.String(200))
+    approved_date = db.Column(db.DateTime)
+    
+    # Timestamps
+    effective_date = db.Column(db.DateTime, default=datetime.utcnow)
+    review_date = db.Column(db.DateTime)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "policy_name": self.policy_name,
+            "policy_type": self.policy_type,
+            "data_category": self.data_category,
+            "jurisdiction": self.jurisdiction,
+            "policy_description": self.policy_description,
+            "enforcement_level": self.enforcement_level,
+            "consent_required": self.consent_required,
+            "encryption_required": self.encryption_required,
+            "retention_period_days": self.retention_period_days,
+            "automated_enforcement": self.automated_enforcement,
+            "is_active": self.is_active,
+            "version": self.version,
+            "approval_status": self.approval_status,
+            "effective_date": self.effective_date.isoformat()
+        }
+
+
+class QualityAssessment(db.Model):
+    """Report and data quality evaluation records"""
+    __tablename__ = "quality_assessments"
+    
+    id = db.Column(db.Integer, primary_key=True)
+    
+    # Assessment target
+    assessment_type = db.Column(db.String(50), nullable=False)  # report, data, system, process
+    target_entity_type = db.Column(db.String(50))  # report_generation, template, data_collection
+    target_entity_id = db.Column(db.String(100))
+    
+    # Assessment execution
+    assessment_method = db.Column(db.String(50), default="automated")  # automated, manual, hybrid
+    assessor_id = db.Column(db.String(100))  # User ID or system identifier
+    assessment_criteria = db.Column(db.Text)  # JSON: quality criteria used
+    
+    # Quality scores
+    overall_quality_score = db.Column(db.Float, nullable=False)  # 0-10 scale
+    accuracy_score = db.Column(db.Float)
+    completeness_score = db.Column(db.Float)
+    consistency_score = db.Column(db.Float)
+    timeliness_score = db.Column(db.Float)
+    relevance_score = db.Column(db.Float)
+    
+    # Detailed findings
+    quality_issues = db.Column(db.Text)  # JSON: list of identified issues
+    recommendations = db.Column(db.Text)  # JSON: improvement recommendations
+    corrective_actions = db.Column(db.Text)  # JSON: required/suggested actions
+    
+    # Assessment context
+    assessment_scope = db.Column(db.Text)  # What was assessed
+    baseline_comparison = db.Column(db.Float)  # Comparison to baseline/previous assessment
+    trend_analysis = db.Column(db.Text)  # JSON: quality trend information
+    
+    # Validation and approval
+    validation_status = db.Column(db.String(20), default="pending")  # pending, validated, rejected
+    validated_by = db.Column(db.String(100))
+    validation_notes = db.Column(db.Text)
+    
+    # Follow-up tracking
+    follow_up_required = db.Column(db.Boolean, default=False)
+    follow_up_due_date = db.Column(db.DateTime)
+    follow_up_completed = db.Column(db.Boolean, default=False)
+    follow_up_notes = db.Column(db.Text)
+    
+    # Performance metrics
+    assessment_duration_seconds = db.Column(db.Float)
+    automated_checks_performed = db.Column(db.Integer)
+    manual_validations_performed = db.Column(db.Integer)
+    
+    # Timestamps
+    assessment_date = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "assessment_type": self.assessment_type,
+            "target_entity_type": self.target_entity_type,
+            "target_entity_id": self.target_entity_id,
+            "assessment_method": self.assessment_method,
+            "overall_quality_score": self.overall_quality_score,
+            "accuracy_score": self.accuracy_score,
+            "completeness_score": self.completeness_score,
+            "consistency_score": self.consistency_score,
+            "timeliness_score": self.timeliness_score,
+            "relevance_score": self.relevance_score,
+            "validation_status": self.validation_status,
+            "follow_up_required": self.follow_up_required,
+            "assessment_date": self.assessment_date.isoformat(),
+            "assessment_duration_seconds": self.assessment_duration_seconds
+        }
