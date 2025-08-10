@@ -677,3 +677,248 @@ class DataVisualization(db.Model):
             "auto_refresh": self.auto_refresh,
             "is_interactive": self.is_interactive
         }
+
+
+# =============================================================================
+# Smart Reporting Phase 5 Models - Automated Report Generation
+# =============================================================================
+
+class ReportTemplate(db.Model):
+    """Professional report layouts and section definitions"""
+    __tablename__ = "report_templates"
+    
+    id = db.Column(db.Integer, primary_key=True)
+    template_name = db.Column(db.String(200), nullable=False)
+    template_type = db.Column(db.String(100), nullable=False)  # executive, funder, board, program, beneficiary
+    stakeholder_audience = db.Column(db.String(100))  # primary target audience
+    
+    # Template structure
+    template_sections = db.Column(db.Text)  # JSON: ordered list of report sections
+    layout_config = db.Column(db.Text)  # JSON: visual layout and styling
+    content_rules = db.Column(db.Text)  # JSON: AI content generation rules
+    
+    # Branding and styling
+    brand_theme = db.Column(db.String(50), default="pink_lemonade")
+    header_config = db.Column(db.Text)  # JSON: header layout and logos
+    footer_config = db.Column(db.Text)  # JSON: footer content and styling
+    
+    # Output formats
+    supported_formats = db.Column(db.Text)  # JSON: list of export formats (pdf, docx, html)
+    default_format = db.Column(db.String(20), default="pdf")
+    
+    # Usage and performance
+    usage_count = db.Column(db.Integer, default=0)
+    average_generation_time = db.Column(db.Float)  # seconds
+    user_satisfaction_score = db.Column(db.Float)
+    
+    # Template status
+    is_active = db.Column(db.Boolean, default=True)
+    is_default = db.Column(db.Boolean, default=False)
+    version = db.Column(db.String(20), default="1.0")
+    
+    # Timestamps
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "template_name": self.template_name,
+            "template_type": self.template_type,
+            "stakeholder_audience": self.stakeholder_audience,
+            "supported_formats": json.loads(self.supported_formats) if self.supported_formats else [],
+            "default_format": self.default_format,
+            "usage_count": self.usage_count,
+            "user_satisfaction_score": self.user_satisfaction_score,
+            "is_active": self.is_active,
+            "version": self.version,
+            "created_at": self.created_at.isoformat()
+        }
+
+
+class ReportGeneration(db.Model):
+    """Generated report tracking and metadata"""
+    __tablename__ = "report_generations"
+    
+    id = db.Column(db.Integer, primary_key=True)
+    report_template_id = db.Column(db.Integer, db.ForeignKey("report_templates.id"))
+    project_id = db.Column(db.Integer, db.ForeignKey("projects.id"))
+    
+    # Report metadata
+    report_title = db.Column(db.String(300), nullable=False)
+    report_type = db.Column(db.String(100))  # executive_summary, quarterly_report, impact_report
+    stakeholder_audience = db.Column(db.String(100))
+    reporting_period_start = db.Column(db.DateTime)
+    reporting_period_end = db.Column(db.DateTime)
+    
+    # Generation details
+    generation_status = db.Column(db.String(50), default="pending")  # pending, generating, completed, failed
+    generation_progress = db.Column(db.Integer, default=0)  # 0-100
+    generation_time_seconds = db.Column(db.Float)
+    ai_confidence_score = db.Column(db.Float)
+    
+    # Content summary
+    total_sections = db.Column(db.Integer)
+    total_pages = db.Column(db.Integer)
+    word_count = db.Column(db.Integer)
+    chart_count = db.Column(db.Integer)
+    data_points_included = db.Column(db.Integer)
+    
+    # Output information
+    output_format = db.Column(db.String(20))
+    file_size_mb = db.Column(db.Float)
+    file_path = db.Column(db.String(500))
+    download_url = db.Column(db.String(500))
+    
+    # Quality metrics
+    content_quality_score = db.Column(db.Float)  # AI-assessed content quality
+    visual_appeal_score = db.Column(db.Float)  # Layout and design quality
+    stakeholder_relevance_score = db.Column(db.Float)  # Audience appropriateness
+    
+    # Usage and feedback
+    view_count = db.Column(db.Integer, default=0)
+    download_count = db.Column(db.Integer, default=0)
+    stakeholder_feedback_score = db.Column(db.Float)
+    
+    # Timestamps
+    requested_at = db.Column(db.DateTime, default=datetime.utcnow)
+    completed_at = db.Column(db.DateTime)
+    expires_at = db.Column(db.DateTime)  # File cleanup date
+    
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "report_title": self.report_title,
+            "report_type": self.report_type,
+            "stakeholder_audience": self.stakeholder_audience,
+            "generation_status": self.generation_status,
+            "generation_progress": self.generation_progress,
+            "output_format": self.output_format,
+            "total_pages": self.total_pages,
+            "word_count": self.word_count,
+            "ai_confidence_score": self.ai_confidence_score,
+            "download_url": self.download_url,
+            "requested_at": self.requested_at.isoformat(),
+            "completed_at": self.completed_at.isoformat() if self.completed_at else None
+        }
+
+
+class ReportSchedule(db.Model):
+    """Automated report generation and distribution schedules"""
+    __tablename__ = "report_schedules"
+    
+    id = db.Column(db.Integer, primary_key=True)
+    report_template_id = db.Column(db.Integer, db.ForeignKey("report_templates.id"))
+    project_id = db.Column(db.Integer, db.ForeignKey("projects.id"))
+    
+    # Schedule configuration
+    schedule_name = db.Column(db.String(200), nullable=False)
+    frequency = db.Column(db.String(50), nullable=False)  # monthly, quarterly, annually, custom
+    custom_schedule = db.Column(db.String(100))  # Cron expression for custom schedules
+    
+    # Timing settings
+    generation_day = db.Column(db.Integer)  # Day of month/quarter for generation
+    generation_hour = db.Column(db.Integer, default=9)  # Hour of day (24-hour format)
+    timezone = db.Column(db.String(50), default="UTC")
+    
+    # Content configuration
+    auto_data_refresh = db.Column(db.Boolean, default=True)
+    include_trends = db.Column(db.Boolean, default=True)
+    include_comparisons = db.Column(db.Boolean, default=True)
+    include_recommendations = db.Column(db.Boolean, default=True)
+    
+    # Distribution settings
+    auto_distribute = db.Column(db.Boolean, default=False)
+    distribution_list = db.Column(db.Text)  # JSON: list of email recipients
+    distribution_message = db.Column(db.Text)  # Custom message for distribution
+    
+    # Schedule status
+    is_active = db.Column(db.Boolean, default=True)
+    last_generated = db.Column(db.DateTime)
+    next_generation = db.Column(db.DateTime)
+    generation_count = db.Column(db.Integer, default=0)
+    success_rate = db.Column(db.Float)  # Success rate of automated generations
+    
+    # Error handling
+    max_retries = db.Column(db.Integer, default=3)
+    current_retries = db.Column(db.Integer, default=0)
+    last_error_message = db.Column(db.Text)
+    
+    # Timestamps
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "schedule_name": self.schedule_name,
+            "frequency": self.frequency,
+            "generation_day": self.generation_day,
+            "generation_hour": self.generation_hour,
+            "is_active": self.is_active,
+            "auto_distribute": self.auto_distribute,
+            "last_generated": self.last_generated.isoformat() if self.last_generated else None,
+            "next_generation": self.next_generation.isoformat() if self.next_generation else None,
+            "generation_count": self.generation_count,
+            "success_rate": self.success_rate
+        }
+
+
+class ReportDistribution(db.Model):
+    """Stakeholder-specific distribution tracking and analytics"""
+    __tablename__ = "report_distributions"
+    
+    id = db.Column(db.Integer, primary_key=True)
+    report_generation_id = db.Column(db.Integer, db.ForeignKey("report_generations.id"))
+    
+    # Recipient information
+    recipient_name = db.Column(db.String(200))
+    recipient_email = db.Column(db.String(200))
+    recipient_type = db.Column(db.String(100))  # executive, board_member, funder, staff, partner
+    recipient_organization = db.Column(db.String(200))
+    
+    # Distribution details
+    distribution_method = db.Column(db.String(50), default="email")  # email, download, api
+    distribution_status = db.Column(db.String(50), default="pending")  # pending, sent, delivered, failed
+    custom_message = db.Column(db.Text)
+    
+    # Engagement tracking
+    delivery_timestamp = db.Column(db.DateTime)
+    first_viewed = db.Column(db.DateTime)
+    last_viewed = db.Column(db.DateTime)
+    view_count = db.Column(db.Integer, default=0)
+    time_spent_viewing = db.Column(db.Integer)  # seconds
+    
+    # Download tracking
+    download_count = db.Column(db.Integer, default=0)
+    first_download = db.Column(db.DateTime)
+    last_download = db.Column(db.DateTime)
+    
+    # Feedback and interaction
+    feedback_rating = db.Column(db.Integer)  # 1-5 rating
+    feedback_comments = db.Column(db.Text)
+    feedback_submitted = db.Column(db.DateTime)
+    
+    # Follow-up actions
+    follow_up_required = db.Column(db.Boolean, default=False)
+    follow_up_notes = db.Column(db.Text)
+    follow_up_completed = db.Column(db.DateTime)
+    
+    # Timestamps
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "recipient_name": self.recipient_name,
+            "recipient_email": self.recipient_email,
+            "recipient_type": self.recipient_type,
+            "distribution_status": self.distribution_status,
+            "view_count": self.view_count,
+            "download_count": self.download_count,
+            "feedback_rating": self.feedback_rating,
+            "delivery_timestamp": self.delivery_timestamp.isoformat() if self.delivery_timestamp else None,
+            "first_viewed": self.first_viewed.isoformat() if self.first_viewed else None,
+            "last_viewed": self.last_viewed.isoformat() if self.last_viewed else None
+        }
