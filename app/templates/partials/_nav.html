@@ -1,6 +1,5 @@
 <nav class="nav" role="navigation" aria-label="Primary">
   <img src="{{ url_for('static', filename='images/pink-lemonade-logo.png') }}" alt="Pink Lemonade" class="logo-4x" />
-  <a href="/" class="{{ 'active' if active=='home' else '' }}">Home</a>
   <a href="/dashboard" class="{{ 'active' if active=='dashboard' else '' }}">Dashboard</a>
   <a href="/opportunities" class="{{ 'active' if active=='opps' else '' }}">Opportunities</a>
   <a href="/saved" class="{{ 'active' if active=='saved' else '' }}">Saved</a>
