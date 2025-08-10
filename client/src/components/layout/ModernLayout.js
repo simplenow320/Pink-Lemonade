@@ -87,7 +87,7 @@ const ModernLayout = ({ children }) => {
       <div className="flex-1 flex flex-col">
         {/* Modern Top Navigation - fixed, with glass effect on scroll */}
         <header
-        className={`fixed top-0 left-64 right-0 z-30 transition-all duration-300 md:left-64 ${
+        className={`fixed top-0 left-0 md:left-64 right-0 z-30 transition-all duration-300 ${
           scrollPosition > 10 ? 'bg-white shadow-md' : 'bg-white/90 backdrop-blur-sm'
         }`}
       >
@@ -255,8 +255,8 @@ const ModernLayout = ({ children }) => {
         </AnimatePresence>
       </header>
 
-      {/* Main Content with padding for fixed header */}
-      <main className="flex-grow pt-16 pb-12">
+      {/* Main Content with padding for fixed header and sidebar */}
+      <main className="flex-grow pt-16 pb-12 md:ml-64">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">{children}</div>
       </main>
 
