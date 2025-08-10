@@ -24,9 +24,9 @@ a[style*="background:#B8899A"]:hover {
   box-shadow: 0 4px 12px rgba(184,137,154,0.15) !important;
 }
 
-/* Logo Styling - 5x bigger */
+/* Logo Styling */
 .logo-5x {
-  height: 850px; /* Ultra large 5x size */
+  height: 100px; /* Standard size */
   width: auto;
   border-radius: 12px;
   background: transparent;
@@ -38,7 +38,7 @@ a[style*="background:#B8899A"]:hover {
 }
 
 .logo-4x {
-  height: 680px; /* Large 5x size */
+  height: 80px; /* Standard size */
   width: auto;
   border-radius: 8px;
   background: transparent;
@@ -50,7 +50,7 @@ a[style*="background:#B8899A"]:hover {
 }
 
 .logo-3x {
-  height: 510px; /* Medium 5x size */
+  height: 60px; /* Standard size */
   width: auto;
   border-radius: 6px;
   background: transparent;
@@ -85,16 +85,16 @@ footer.small{color:var(--grey);font-size:11px;margin-top:24px;text-align:center;
 
 /* Responsive Design */
 @media (max-width: 768px) {
-  .logo-5x{height:600px} /* Proportionally sized for mobile */
-  .logo-4x{height:480px}
-  .logo-3x{height:360px}
+  .logo-5x{height:70px} /* Proportionally sized for mobile */
+  .logo-4x{height:56px}
+  .logo-3x{height:42px}
   .grid-4{grid-template-columns:repeat(2,minmax(0,1fr))}
   .grid-2{grid-template-columns:1fr}
 }
 
 @media (max-width: 480px) {
-  .logo-5x{height:425px} /* Proportionally sized for small screens */
-  .logo-4x{height:340px}
-  .logo-3x{height:255px}
+  .logo-5x{height:50px} /* Proportionally sized for small screens */
+  .logo-4x{height:40px}
+  .logo-3x{height:30px}
   .container{padding:16px}
 }
