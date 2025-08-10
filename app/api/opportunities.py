@@ -246,40 +246,20 @@ def get_opportunities():
         logger.error(f"Error fetching opportunities: {e}")
         return jsonify({'error': str(e)}), 500
 
-@bp.route('/opportunities/save', methods=['POST'])
-def save_opportunity():
-    """Save an opportunity to the user's saved grants (org-scoped)"""
+@bp.route('/opportunities/save/<int:grant_id>', methods=['POST'])
+def save_opportunity(grant_id):
+    """Save an existing grant to user's saved list"""
     try:
-        data = request.json
-        opportunity_id = data.get('opportunity_id')
+        # Get the grant from database
+        grant = Grant.query.get_or_404(grant_id)
         
-        # For now, we need to get the opportunity data from the frontend
-        # In a real implementation, we'd store opportunities temporarily
-        
-        # Get organization
-        org = Organization.query.first()
-        if not org:
-            return jsonify({'error': 'Organization not found'}), 404
-        
-        # Create a new grant from the opportunity
-        # This is a simplified version - you'd want to pass the full opportunity data
-        grant = Grant()
-        grant.title = data.get('title', 'Grant Opportunity')
-        grant.funder = data.get('funder', 'Unknown')
-        grant.description = data.get('description', '')
-        grant.amount_min = data.get('amount_min', 0)
-        grant.amount_max = data.get('amount_max', 0)
-        grant.deadline = data.get('deadline')
+        # Change status to saved/prospect
         grant.status = 'prospect'
-        grant.org_id = org.id
-        grant.source_name = data.get('source', 'Opportunities')
-        grant.created_at = datetime.now()
-        
-        db.session.add(grant)
         db.session.commit()
         
         return jsonify({
-            'message': 'Opportunity saved',
+            'success': True,
+            'message': 'Grant saved to your library',
             'grant_id': grant.id
         })
         
@@ -288,36 +268,20 @@ def save_opportunity():
         db.session.rollback()
         return jsonify({'error': str(e)}), 500
 
-@bp.route('/opportunities/apply', methods=['POST'])
-def apply_to_opportunity():
-    """Create a draft application from an opportunity"""
+@bp.route('/opportunities/apply/<int:grant_id>', methods=['POST'])
+def apply_to_opportunity(grant_id):
+    """Start application process for a grant"""
     try:
-        data = request.json
-        opportunity_id = data.get('opportunity_id')
+        # Get the grant from database
+        grant = Grant.query.get_or_404(grant_id)
         
-        # Get organization
-        org = Organization.query.first()
-        if not org:
-            return jsonify({'error': 'Organization not found'}), 404
-        
-        # First save as grant
-        grant = Grant()
-        grant.title = data.get('title', 'Grant Opportunity')
-        grant.funder = data.get('funder', 'Unknown')
-        grant.description = data.get('description', '')
-        grant.amount_min = data.get('amount_min', 0)
-        grant.amount_max = data.get('amount_max', 0)
-        grant.deadline = data.get('deadline')
-        grant.status = 'drafting'  # Set to drafting for applications
-        grant.org_id = org.id
-        grant.source_name = data.get('source', 'Opportunities')
-        grant.created_at = datetime.now()
-        
-        db.session.add(grant)
+        # Change status to drafting (application started)
+        grant.status = 'drafting'
         db.session.commit()
         
         return jsonify({
-            'message': 'Added to applications',
+            'success': True,
+            'message': 'Application started successfully',
             'application_id': grant.id
         })
         

@@ -119,6 +119,7 @@ def register():
         if user.role == 'admin' and user.is_verified:
             session['user_id'] = user.id
             session['user_email'] = user.email
+            session['user_org_id'] = user.org_id
             session.permanent = True
         
         logger.info(f"New user registered: {email}")
@@ -173,6 +174,7 @@ def login():
         # Log the user in
         session['user_id'] = user.id
         session['user_email'] = user.email
+        session['user_org_id'] = user.org_id
         session.permanent = remember
         
         logger.info(f"User logged in: {user.email}")

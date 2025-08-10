@@ -19,10 +19,18 @@ def get_dashboard_metrics():
     """Get key performance metrics for the dashboard"""
     try:
         import os
-        data_mode = os.environ.get('APP_DATA_MODE', 'MOCK')
-        org_id = session.get('org_id', 'org-001')
+        data_mode = os.environ.get('APP_DATA_MODE', 'LIVE')
+        # Use session user's org_id or default to first organization
+        org_id = session.get('user_org_id')
+        if not org_id:
+            # Get the first organization or create default
+            org = Organization.query.first()
+            if org:
+                org_id = org.id
+            else:
+                org_id = 1  # Default fallback
         
-        # Get all grants for the organization
+        # Get all grants for the organization 
         grants = Grant.query.filter_by(org_id=org_id).all()
         
         # Calculate metrics from real data

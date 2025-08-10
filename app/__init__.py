@@ -33,6 +33,7 @@ def create_app():
     from app.api.ai_test import bp as ai_test_bp
     from app.api.writing import bp as writing_bp
     from app.api.exports import bp as exports_bp
+    from app.api.profile import bp as profile_bp
     
     # Initialize authentication
     init_auth(flask_app)
@@ -49,6 +50,7 @@ def create_app():
     flask_app.register_blueprint(ai_test_bp, url_prefix='/api/ai-test')
     flask_app.register_blueprint(writing_bp, url_prefix='/api/writing')
     flask_app.register_blueprint(exports_bp, url_prefix='/api/exports')
+    flask_app.register_blueprint(profile_bp)
     
     # Register new AI endpoints
     from app.api.ai_endpoints import bp as ai_endpoints_bp
