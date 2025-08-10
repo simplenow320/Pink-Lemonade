@@ -70,14 +70,8 @@
     };
 
     document.getElementById('btnPitch').onclick = async () => {
-      try{
-        show('Generating Grant Pitch…');
-        const data = await postJSON('/api/writing/grant-pitch', {...common, funder:'Target Funder', alignment:'AI literacy; workforce; community; digital divide', limits:'120'});
-        out.style.display='block'; docDiv.textContent = data.content;
-        showNeeds(data.needsInput);
-        enableExports('grant-pitch', data.id);
-        show(data.needsInput?.length ? 'Needs input listed below.' : 'Done. Copy ready.');
-      }catch(e){ show('Error: '+e.message); }
+      // Redirect to the detailed form
+      window.location.href = '/grant-pitch';
     };
 
     document.getElementById('btnReport').onclick = async () => {

@@ -1,0 +1,512 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Grant Pitch Generator - Pink Lemonade</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --pink: #F5F0F1;
+            --pink-matte: #B8899A;
+            --white: #FAFAFA;
+            --black: #2A2A2A;
+            --grey-light: #FAFAFA;
+            --grey: #6B6B6B;
+            --grey-dark: #2A2A2A;
+            --border: #E8E8E8;
+        }
+
+        body {
+            background-color: var(--grey-light);
+            color: var(--black);
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        }
+
+        .header-bar {
+            background: var(--white);
+            border-bottom: 1px solid var(--border);
+            padding: 1rem 1.5rem;
+        }
+
+        .form-section {
+            background: var(--white);
+            border-radius: 0.5rem;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            border: 1px solid var(--border);
+        }
+
+        .section-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            color: var(--black);
+            border-bottom: 2px solid var(--pink-matte);
+            padding-bottom: 0.5rem;
+        }
+
+        .form-input, .form-textarea, .form-select {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid var(--border);
+            border-radius: 0.375rem;
+            background: var(--white);
+            color: var(--black);
+            transition: border-color 0.2s;
+        }
+
+        .form-input:focus, .form-textarea:focus, .form-select:focus {
+            outline: none;
+            border-color: var(--pink-matte);
+            border-width: 2px;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+            color: var(--grey-dark);
+        }
+
+        .btn-primary {
+            background: var(--pink-matte);
+            color: var(--white);
+            padding: 0.75rem 2rem;
+            border-radius: 0.375rem;
+            font-weight: 500;
+            transition: opacity 0.2s;
+            border: none;
+            cursor: pointer;
+        }
+
+        .btn-primary:hover {
+            opacity: 0.9;
+        }
+
+        .btn-secondary {
+            background: var(--white);
+            color: var(--grey-dark);
+            border: 1px solid var(--border);
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.375rem;
+            font-weight: 500;
+            transition: all 0.2s;
+            cursor: pointer;
+        }
+
+        .btn-secondary:hover {
+            background: var(--grey-light);
+        }
+
+        .output-section {
+            background: var(--white);
+            border-radius: 0.5rem;
+            padding: 1.5rem;
+            border: 1px solid var(--border);
+            display: none;
+        }
+
+        .pitch-format {
+            background: #fefefe;
+            border: 1px solid var(--border);
+            border-radius: 0.375rem;
+            padding: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .pitch-format h3 {
+            color: var(--pink-matte);
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 0.25rem;
+        }
+
+        .pitch-content {
+            white-space: pre-wrap;
+            font-family: 'Georgia', serif;
+            line-height: 1.6;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .loading {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: var(--pink-matte);
+        }
+
+        .spinner {
+            border: 2px solid var(--border);
+            border-top: 2px solid var(--pink-matte);
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .notification {
+            position: fixed;
+            top: 1rem;
+            right: 1rem;
+            padding: 1rem 1.5rem;
+            border-radius: 0.375rem;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            z-index: 1000;
+            animation: slideIn 0.3s ease-out;
+        }
+
+        .notification-success {
+            background: var(--pink-matte);
+            color: var(--white);
+        }
+
+        .notification-error {
+            background: #DC2626;
+            color: var(--white);
+        }
+
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+
+        .format-tabs {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .format-tab {
+            padding: 0.5rem 1rem;
+            border: 1px solid var(--border);
+            border-radius: 0.375rem;
+            background: var(--grey-light);
+            color: var(--grey);
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .format-tab.active {
+            background: var(--pink-matte);
+            color: var(--white);
+            border-color: var(--pink-matte);
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <div class="header-bar">
+        <div class="max-w-7xl mx-auto flex items-center justify-between">
+            <div class="flex items-center space-x-4">
+                <h1 class="text-xl font-semibold">Grant Pitch Generator</h1>
+            </div>
+            <a href="/writing" class="text-sm hover:underline" style="color: var(--pink-matte);">← Back to Writing</a>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="max-w-4xl mx-auto px-4 py-6">
+        <div class="form-section">
+            <h2 class="section-title">Pitch Settings</h2>
+            <p class="text-gray-600 mb-6">Configure your grant pitch targeting</p>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                <div>
+                    <label class="form-label">Target Funder *</label>
+                    <input type="text" id="funder_name" class="form-input" required placeholder="Ford Foundation, Gates Foundation, etc.">
+                </div>
+                <div>
+                    <label class="form-label">Word Limit per Format *</label>
+                    <select id="word_limit" class="form-select" required>
+                        <option value="150">Short (150 words)</option>
+                        <option value="250">Medium (250 words)</option>
+                        <option value="400">Long (400 words)</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="mb-6">
+                <label class="form-label">Alignment Areas *</label>
+                <input type="text" id="alignment" class="form-input" required placeholder="Education, Youth Development, Community Building, etc.">
+                <small class="text-gray-500">Areas where your work aligns with funder priorities</small>
+            </div>
+        </div>
+
+        <div class="form-section">
+            <h2 class="section-title">Organization Information</h2>
+            <p class="text-gray-600 mb-6">Provide verified facts for your pitch</p>
+            
+            <form id="grant-pitch-form">
+                <div class="mb-6">
+                    <label class="form-label">Organization Name *</label>
+                    <input type="text" id="org_name" class="form-input" required placeholder="Nitrogen Network">
+                </div>
+
+                <div class="mb-6">
+                    <label class="form-label">Mission Statement *</label>
+                    <textarea id="mission" class="form-textarea" rows="2" required placeholder="Our mission is to..."></textarea>
+                </div>
+
+                <div class="mb-6">
+                    <label class="form-label">Key Programs/Services *</label>
+                    <textarea id="programs" class="form-textarea" rows="3" required placeholder="List your most relevant programs..."></textarea>
+                </div>
+
+                <div class="mb-6">
+                    <label class="form-label">Impact/Results *</label>
+                    <textarea id="impact" class="form-textarea" rows="3" required placeholder="Specific outcomes and numbers..."></textarea>
+                </div>
+
+                <div class="mb-6">
+                    <label class="form-label">Funding Need *</label>
+                    <textarea id="funding_need" class="form-textarea" rows="2" required placeholder="What you need funding for..."></textarea>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                    <div>
+                        <label class="form-label">Funding Amount</label>
+                        <input type="text" id="funding_amount" class="form-input" placeholder="$25,000">
+                    </div>
+                    <div>
+                        <label class="form-label">Geographic Focus</label>
+                        <input type="text" id="geographic_focus" class="form-input" placeholder="Atlanta, Georgia">
+                    </div>
+                </div>
+
+                <div class="flex gap-4">
+                    <button type="submit" class="btn-primary" id="generate-btn">
+                        Generate Grant Pitch
+                    </button>
+                    <button type="button" class="btn-secondary" onclick="loadFromProfile()">
+                        Load from Profile
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Output Section -->
+        <div id="output-section" class="output-section">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="section-title">Generated Grant Pitches</h2>
+                <div class="flex gap-2">
+                    <button onclick="copyAllPitches()" class="btn-secondary">Copy All</button>
+                    <button onclick="exportPitches()" class="btn-secondary">Export</button>
+                </div>
+            </div>
+            
+            <div id="loading" class="loading" style="display: none;">
+                <div class="spinner"></div>
+                <span>Creating your professional grant pitches...</span>
+            </div>
+
+            <div class="format-tabs">
+                <div class="format-tab active" data-format="one-page">One-Page Pitch</div>
+                <div class="format-tab" data-format="email">Email Pitch</div>
+                <div class="format-tab" data-format="verbal">Verbal Script</div>
+                <div class="format-tab" data-format="all">View All</div>
+            </div>
+
+            <div id="pitch-outputs">
+                <div id="one-page-content" class="pitch-format">
+                    <h3>One-Page Pitch</h3>
+                    <div class="pitch-content" id="one-page-text"></div>
+                </div>
+                <div id="email-content" class="pitch-format" style="display: none;">
+                    <h3>Email Pitch</h3>
+                    <div class="pitch-content" id="email-text"></div>
+                </div>
+                <div id="verbal-content" class="pitch-format" style="display: none;">
+                    <h3>Verbal Script (60-90 seconds)</h3>
+                    <div class="pitch-content" id="verbal-text"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let generatedPitches = {
+            onePage: '',
+            email: '',
+            verbal: ''
+        };
+
+        document.addEventListener('DOMContentLoaded', () => {
+            loadFromProfile();
+            setupFormatTabs();
+        });
+
+        document.getElementById('grant-pitch-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            await generateGrantPitch();
+        });
+
+        function setupFormatTabs() {
+            document.querySelectorAll('.format-tab').forEach(tab => {
+                tab.addEventListener('click', () => {
+                    const format = tab.getAttribute('data-format');
+                    
+                    // Update active tab
+                    document.querySelectorAll('.format-tab').forEach(t => t.classList.remove('active'));
+                    tab.classList.add('active');
+                    
+                    // Show/hide content
+                    if (format === 'all') {
+                        document.querySelectorAll('.pitch-format').forEach(f => f.style.display = 'block');
+                    } else {
+                        document.querySelectorAll('.pitch-format').forEach(f => f.style.display = 'none');
+                        document.getElementById(`${format}-content`).style.display = 'block';
+                    }
+                });
+            });
+        }
+
+        async function generateGrantPitch() {
+            const formData = {
+                org_name: document.getElementById('org_name').value,
+                funder_name: document.getElementById('funder_name').value,
+                alignment: document.getElementById('alignment').value,
+                word_limit: document.getElementById('word_limit').value,
+                mission: document.getElementById('mission').value,
+                programs: document.getElementById('programs').value,
+                impact: document.getElementById('impact').value,
+                funding_need: document.getElementById('funding_need').value,
+                funding_amount: document.getElementById('funding_amount').value,
+                geographic_focus: document.getElementById('geographic_focus').value
+            };
+
+            // Validate required fields
+            const requiredFields = ['org_name', 'funder_name', 'alignment', 'mission', 'programs', 'impact', 'funding_need'];
+            for (const field of requiredFields) {
+                if (!formData[field].trim()) {
+                    showNotification(`${field.replace('_', ' ').toUpperCase()} is required`, 'error');
+                    return;
+                }
+            }
+
+            try {
+                document.getElementById('loading').style.display = 'flex';
+                document.getElementById('output-section').style.display = 'block';
+                
+                // Clear previous content
+                document.getElementById('one-page-text').innerHTML = '';
+                document.getElementById('email-text').innerHTML = '';
+                document.getElementById('verbal-text').innerHTML = '';
+
+                const response = await fetch('/api/writing/grant-pitch', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify(formData)
+                });
+
+                if (!response.ok) {
+                    throw new Error('Failed to generate grant pitch');
+                }
+
+                const data = await response.json();
+                
+                // Parse the three formats from the response
+                const content = data.content;
+                const sections = content.split('## ');
+                
+                let onePageContent = '';
+                let emailContent = '';
+                let verbalContent = '';
+                
+                sections.forEach(section => {
+                    if (section.includes('One-Page Pitch')) {
+                        onePageContent = section.replace('One-Page Pitch', '').trim();
+                    } else if (section.includes('Email Pitch')) {
+                        emailContent = section.replace('Email Pitch', '').trim();
+                    } else if (section.includes('Verbal Script')) {
+                        verbalContent = section.replace('Verbal Script', '').trim();
+                    }
+                });
+                
+                // Store and display content
+                generatedPitches.onePage = onePageContent;
+                generatedPitches.email = emailContent;
+                generatedPitches.verbal = verbalContent;
+                
+                document.getElementById('one-page-text').innerHTML = formatPitchContent(onePageContent);
+                document.getElementById('email-text').innerHTML = formatPitchContent(emailContent);
+                document.getElementById('verbal-text').innerHTML = formatPitchContent(verbalContent);
+                
+                document.getElementById('loading').style.display = 'none';
+                showNotification('Grant pitches generated successfully!', 'success');
+
+            } catch (error) {
+                document.getElementById('loading').style.display = 'none';
+                console.error('Error generating grant pitch:', error);
+                showNotification('Error generating pitches. Please try again.', 'error');
+            }
+        }
+
+        async function loadFromProfile() {
+            try {
+                const response = await fetch('/api/profile/organization');
+                if (response.ok) {
+                    const data = await response.json();
+                    
+                    if (data.name) document.getElementById('org_name').value = data.name;
+                    if (data.mission) document.getElementById('mission').value = data.mission;
+                    if (data.location) document.getElementById('geographic_focus').value = data.location;
+                    
+                    showNotification('Profile data loaded', 'success');
+                }
+            } catch (error) {
+                console.error('Error loading profile:', error);
+            }
+        }
+
+        function formatPitchContent(content) {
+            return content
+                .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+                .replace(/\*(.+?)\*/g, '<em>$1</em>')
+                .replace(/\n\n/g, '</p><p>')
+                .replace(/^(.+)$/gm, '<p>$1</p>')
+                .replace(/^<p><strong>Subject:/g, '<strong>Subject:')
+                .replace(/<\/strong><\/p>$/g, '</strong>');
+        }
+
+        function copyAllPitches() {
+            const allContent = `ONE-PAGE PITCH:\n${generatedPitches.onePage}\n\nEMAIL PITCH:\n${generatedPitches.email}\n\nVERBAL SCRIPT:\n${generatedPitches.verbal}`;
+            
+            navigator.clipboard.writeText(allContent).then(() => {
+                showNotification('All pitches copied to clipboard!', 'success');
+            }).catch(() => {
+                showNotification('Failed to copy content', 'error');
+            });
+        }
+
+        function exportPitches() {
+            const allContent = `# Grant Pitches\n\n## One-Page Pitch\n${generatedPitches.onePage}\n\n## Email Pitch\n${generatedPitches.email}\n\n## Verbal Script\n${generatedPitches.verbal}`;
+            
+            const blob = new Blob([allContent], { type: 'text/markdown' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'grant-pitches.md';
+            a.click();
+            URL.revokeObjectURL(url);
+            
+            showNotification('Grant pitches exported!', 'success');
+        }
+
+        function showNotification(message, type) {
+            const notification = document.createElement('div');
+            notification.className = `notification notification-${type}`;
+            notification.textContent = message;
+            document.body.appendChild(notification);
+            setTimeout(() => notification.remove(), 4000);
+        }
+    </script>
+</body>
+</html>

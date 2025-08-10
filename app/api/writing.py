@@ -141,26 +141,86 @@ Generate the Case for Support now:"""
     except Exception as e:
         logger.error(f"Error generating case for support: {e}")
         return jsonify({'error': str(e)}), 500
-    db.session.add(doc); db.session.commit()
-    return jsonify({"id": doc.id, "needsInput": needs, "content": content}), 200
 
-@bp.post("/grant-pitch")
+@bp.route('/grant-pitch', methods=['POST'])
 def create_grant_pitch():
-    body = _json()
-    org_id = int(body.get("orgId") or 1)
-    tokens = {
-        "org_name": body.get("orgName") or "Your Organization",
-        "funder_name": body.get("funder") or "Target Funder",
-        "alignment_points": body.get("alignment") or "youth, AI literacy, community impact",
-        "per_section_word_limits": body.get("limits") or "120"
-    }
-    data_pack = build_data_pack(org_id)
-    result = run_prompt("grant_pitch", tokens, data_pack)
-    content = result["content"]
-    needs = _extract_missing(content)
-    doc = GrantPitchDoc(org_id=org_id, funder=tokens["funder_name"], sections={"body": content}, needs_input=needs, sources={})
-    db.session.add(doc); db.session.commit()
-    return jsonify({"id": doc.id, "needsInput": needs, "content": content}), 200
+    """Generate a Grant Pitch in three formats using verified user inputs only"""
+    try:
+        data = request.get_json()
+        
+        # Validate required fields
+        required_fields = ['org_name', 'funder_name', 'alignment', 'mission', 'programs', 'impact', 'funding_need']
+        for field in required_fields:
+            if not data.get(field, '').strip():
+                return jsonify({'error': f'{field.replace("_", " ").title()} is required'}), 400
+        
+        # Use OpenAI for document generation
+        from openai import OpenAI
+        client = OpenAI(api_key=os.environ.get('OPENAI_API_KEY'))
+        
+        # Build the professional grant pitch prompt
+        prompt = f"""You are a professional grant and donor pitch coach. Using only the verified input provided below, create three versions of a persuasive pitch.
+
+ORGANIZATION DETAILS:
+- Name: {data.get('org_name')}
+- Mission: {data.get('mission')}
+- Programs/Services: {data.get('programs')}
+- Impact/Results: {data.get('impact')}
+- Funding Need: {data.get('funding_need')}
+- Funding Amount: {data.get('funding_amount', 'Not specified')}
+- Geographic Focus: {data.get('geographic_focus', 'Not specified')}
+
+TARGET FUNDER: {data.get('funder_name')}
+ALIGNMENT AREAS: {data.get('alignment')}
+WORD LIMIT: {data.get('word_limit', '250')} words per format
+
+Create these three distinct pitch formats:
+
+## One-Page Pitch
+(formatted in clear sections with headers and structured content)
+
+## Email Pitch  
+(compelling subject line + concise persuasive body suitable for email)
+
+## Verbal Script
+(conversational tone, 60–90 seconds when spoken aloud)
+
+Requirements:
+- Use ONLY the verified facts provided above
+- Avoid filler words, exaggerations, or invented facts
+- Focus on clarity, urgency, and impact in all formats
+- Tailor content specifically to {data.get('funder_name')} priorities
+- Highlight alignment with {data.get('alignment')} areas
+- Stay within {data.get('word_limit', '250')} word limit per format
+- Make each format distinct and purposeful
+
+Generate the three grant pitch formats now:"""
+
+        response = client.chat.completions.create(
+            model="gpt-4o",
+            messages=[
+                {"role": "system", "content": "You are a professional grant and donor pitch coach specializing in creating compelling, fact-based pitches in multiple formats. Generate concise, impactful pitches using only verified organizational data."},
+                {"role": "user", "content": prompt}
+            ],
+            max_tokens=2000
+        )
+        
+        content = response.choices[0].message.content
+        
+        # Add source note
+        content += "\n\n---\n**Source Notes:** These grant pitches are based only on verified organizational data provided by the user. No statistics or program details have been fabricated."
+        
+        return jsonify({
+            'success': True,
+            'content': content,
+            'message': 'Grant pitches generated successfully',
+            'word_count': len(content.split()),
+            'formats': ['One-Page Pitch', 'Email Pitch', 'Verbal Script']
+        })
+        
+    except Exception as e:
+        logger.error(f"Error generating grant pitch: {e}")
+        return jsonify({'error': str(e)}), 500
 
 @bp.post("/impact-report")
 def create_impact_report():

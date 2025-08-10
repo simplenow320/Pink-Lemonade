@@ -64,6 +64,11 @@ def case_support():
     """Case for Support Generator Form"""
     return render_template("case_support_form.html", active="writing")
 
+@pages.get("/grant-pitch")
+def grant_pitch():
+    """Grant Pitch Generator Form"""
+    return render_template("grant_pitch_form.html", active="writing")
+
 @pages.get("/admin")
 def admin_dashboard():
     """Admin Dashboard Page"""
