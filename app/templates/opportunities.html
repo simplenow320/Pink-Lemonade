@@ -1,50 +1,266 @@
 {% extends "base.html" %}
-{% block title %}Opportunities{% endblock %}
+{% block title %}Discover Opportunities{% endblock %}
 {% block content %}
-  <h1>Opportunities</h1>
-  <form id="searchForm" class="card" onsubmit="return false" style="margin-bottom:16px">
-    <label for="q">Search</label>
-    <input id="q" name="q" placeholder="Search grants..." style="width:100%;padding:12px;border-radius:12px;border:1px solid #E8E8E8;background:#FAFAFA;color:#2A2A2A">
-    <div style="margin-top:12px">
-      <button id="discoverBtn" class="btn btn-primary" type="button">Discover grants</button>
-    </div>
-  </form>
-  <div id="toast" class="card" style="display:none;padding:12px;margin-bottom:12px;background:var(--pink);color:var(--black)">Updated.</div>
-  <section class="grid">
-    {% for g in grants %}
-    <div class="card">
-      <div style="display:flex;justify-content:space-between;align-items:center">
-        <h3 style="margin:0">{{ g.title }}</h3>
-        <span class="badge">{{ g.deadline or 'Rolling' }}</span>
+
+<!-- Hero Header -->
+<div style="background:#FAFAFA;padding:60px 20px;text-align:center;margin-bottom:40px">
+  <h1 style="font-size:2.8rem;font-weight:500;color:#2A2A2A;margin:0 0 16px 0;letter-spacing:-0.01em">
+    Discover Grant Opportunities
+  </h1>
+  <p style="font-size:1.1rem;color:#6B6B6B;max-width:600px;margin:0 auto">
+    Find and track funding opportunities that match your organization's mission
+  </p>
+</div>
+
+<!-- Search and Filters -->
+<div style="background:white;border-radius:20px;padding:32px;box-shadow:0 2px 10px rgba(0,0,0,0.04);margin-bottom:32px;border:1px solid #E8E8E8">
+  
+  <!-- Search Bar -->
+  <div style="margin-bottom:32px">
+    <div style="position:relative;max-width:600px;margin:0 auto">
+      <div style="position:absolute;left:16px;top:50%;transform:translateY(-50%);pointer-events:none">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="#6B6B6B">
+          <path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/>
+        </svg>
       </div>
-      <p style="margin:8px 0 12px 0">{{ g.funder }}</p>
-      <a class="btn" href="{{ g.link }}" target="_blank">Open</a>
+      <input id="q" name="q" placeholder="Search by title, funder, or keyword..." 
+        style="width:100%;padding:16px 16px 16px 50px;border-radius:50px;border:1px solid #E8E8E8;background:#FAFAFA;color:#2A2A2A;font-size:1rem;outline:none;transition:all 0.2s ease"
+        onfocus="this.style.borderColor='#B8899A';this.style.boxShadow='0 0 0 3px rgba(184,137,154,0.1)'"
+        onblur="this.style.borderColor='#E8E8E8';this.style.boxShadow='none'">
     </div>
-    {% endfor %}
-  </section>
-  <script>
-  const btn = document.getElementById('discoverBtn');
-  const toast = document.getElementById('toast');
-  const q = document.getElementById('q');
-  async function runDiscovery(){
-    btn.disabled = true; btn.textContent = 'Discovering…';
-    try{
-      const res = await fetch('/api/scrape/run-now', {
-        method:'POST',
-        headers:{'Content-Type':'application/json'},
-        body: JSON.stringify({ orgId: {{ org_id|int }}, query: q.value || null })
-      });
-      const data = await res.json();
-      toast.style.display = 'block';
-      toast.textContent = `Upserted ${data.upserted || 0} opportunities (${data.mode}).`;
-      setTimeout(()=>{ window.location.reload(); }, 800);
-    }catch(e){
-      toast.style.display = 'block';
-      toast.textContent = 'Discovery failed. Please try again.';
-    }finally{
-      btn.disabled = false; btn.textContent = 'Discover grants';
-    }
+  </div>
+
+  <!-- Filters -->
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:20px;margin-bottom:24px">
+    
+    <div>
+      <label style="display:block;margin-bottom:8px;font-weight:500;color:#2A2A2A;font-size:0.9rem">City</label>
+      <select id="cityFilter" style="width:100%;padding:12px;border-radius:12px;border:1px solid #E8E8E8;background:#FAFAFA;color:#2A2A2A;font-size:0.95rem">
+        <option value="">All Cities</option>
+        <option value="chicago">Chicago</option>
+        <option value="detroit">Detroit</option>
+        <option value="milwaukee">Milwaukee</option>
+      </select>
+    </div>
+    
+    <div>
+      <label style="display:block;margin-bottom:8px;font-weight:500;color:#2A2A2A;font-size:0.9rem">Focus Area</label>
+      <select id="focusFilter" style="width:100%;padding:12px;border-radius:12px;border:1px solid #E8E8E8;background:#FAFAFA;color:#2A2A2A;font-size:0.95rem">
+        <option value="">All Areas</option>
+        <option value="education">Education</option>
+        <option value="youth">Youth Development</option>
+        <option value="community">Community Building</option>
+        <option value="health">Health & Wellness</option>
+      </select>
+    </div>
+    
+    <div>
+      <label style="display:block;margin-bottom:8px;font-weight:500;color:#2A2A2A;font-size:0.9rem">Deadline</label>
+      <select id="deadlineFilter" style="width:100%;padding:12px;border-radius:12px;border:1px solid #E8E8E8;background:#FAFAFA;color:#2A2A2A;font-size:0.95rem">
+        <option value="">Any Time</option>
+        <option value="30">Next 30 Days</option>
+        <option value="60">Next 60 Days</option>
+        <option value="90">Next 90 Days</option>
+      </select>
+    </div>
+    
+    <div>
+      <label style="display:block;margin-bottom:8px;font-weight:500;color:#2A2A2A;font-size:0.9rem">Source</label>
+      <select id="sourceFilter" style="width:100%;padding:12px;border-radius:12px;border:1px solid #E8E8E8;background:#FAFAFA;color:#2A2A2A;font-size:0.95rem">
+        <option value="">All Sources</option>
+        <option value="grants.gov">Grants.gov</option>
+        <option value="foundation">Private Foundations</option>
+        <option value="corporate">Corporate</option>
+      </select>
+    </div>
+    
+  </div>
+
+  <!-- Action Buttons -->
+  <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap">
+    <button id="searchBtn" style="background:#B8899A;color:white;padding:12px 24px;border-radius:24px;border:none;font-size:0.95rem;font-weight:500;cursor:pointer;transition:all 0.2s ease;box-shadow:0 2px 8px rgba(184,137,154,0.2)"
+      onmouseover="this.style.background='#A67A8A';this.style.transform='translateY(-1px)'"
+      onmouseout="this.style.background='#B8899A';this.style.transform='translateY(0)'">
+      Search Grants
+    </button>
+    <button id="discoverBtn" style="background:white;color:#B8899A;padding:12px 24px;border-radius:24px;border:1px solid #B8899A;font-size:0.95rem;font-weight:500;cursor:pointer;transition:all 0.2s ease"
+      onmouseover="this.style.background='#B8899A';this.style.color='white'"
+      onmouseout="this.style.background='white';this.style.color='#B8899A'">
+      Discover New Grants
+    </button>
+    <button id="clearBtn" style="background:transparent;color:#6B6B6B;padding:12px 24px;border-radius:24px;border:1px solid #E8E8E8;font-size:0.95rem;cursor:pointer;transition:all 0.2s ease"
+      onmouseover="this.style.background='#F5F5F5'"
+      onmouseout="this.style.background='transparent'">
+      Clear Filters
+    </button>
+  </div>
+</div>
+
+<!-- Results Summary -->
+<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:24px">
+  <h2 id="resultCount" style="font-size:1.4rem;font-weight:500;color:#2A2A2A;margin:0">
+    {{ grants|length }} Opportunities Found
+  </h2>
+  <div style="display:flex;align-items:center;gap:12px">
+    <span style="color:#6B6B6B;font-size:0.9rem">Sort by:</span>
+    <select id="sortBy" style="padding:8px 12px;border-radius:8px;border:1px solid #E8E8E8;background:#FAFAFA;color:#2A2A2A;font-size:0.9rem">
+      <option value="deadline">Deadline</option>
+      <option value="fit_score">Best Match</option>
+      <option value="amount">Amount</option>
+      <option value="recent">Recently Added</option>
+    </select>
+  </div>
+</div>
+
+<!-- Loading State -->
+<div id="loadingState" style="display:none;text-align:center;padding:60px 20px">
+  <div style="display:inline-block;width:40px;height:40px;border:3px solid #E8E8E8;border-radius:50%;border-top-color:#B8899A;animation:spin 1s ease-in-out infinite;margin-bottom:16px"></div>
+  <p style="color:#6B6B6B;margin:0">Searching for opportunities...</p>
+</div>
+
+<!-- Results Grid -->
+<div id="resultsGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(380px,1fr));gap:24px">
+  {% for g in grants %}
+  <div class="grant-card" style="background:white;border-radius:16px;padding:24px;border:1px solid #E8E8E8;transition:all 0.2s ease;box-shadow:0 2px 8px rgba(0,0,0,0.02)"
+    onmouseover="this.style.transform='translateY(-4px)';this.style.boxShadow='0 8px 25px rgba(0,0,0,0.08)'"
+    onmouseout="this.style.transform='translateY(0)';this.style.boxShadow='0 2px 8px rgba(0,0,0,0.02)'">
+    
+    <!-- Grant Header -->
+    <div style="margin-bottom:16px">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px">
+        <h3 style="font-size:1.2rem;font-weight:600;color:#2A2A2A;margin:0;line-height:1.3;flex:1;padding-right:16px">
+          {% if g.link %}<a href="{{ g.link }}" target="_blank" style="color:inherit;text-decoration:none">{{ g.title or 'Untitled Grant' }}</a>{% else %}{{ g.title or 'Untitled Grant' }}{% endif %}
+        </h3>
+        {% if g.fit or g.fit_score %}
+        <div style="background:linear-gradient(135deg,#B8899A,#D4BAC7);color:white;padding:6px 12px;border-radius:20px;font-size:0.8rem;font-weight:600;min-width:fit-content">
+          {{ g.fit or g.fit_score }}/5 ★
+        </div>
+        {% endif %}
+      </div>
+      <p style="color:#6B6B6B;margin:0;font-size:0.95rem;font-weight:500">{{ g.funder or 'Unknown Funder' }}</p>
+    </div>
+
+    <!-- Grant Details -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px;font-size:0.9rem">
+      <div>
+        <div style="color:#6B6B6B;margin-bottom:4px">Amount</div>
+        <div style="color:#2A2A2A;font-weight:500">{{ g.amount or 'Not specified' }}</div>
+      </div>
+      <div>
+        <div style="color:#6B6B6B;margin-bottom:4px">Deadline</div>
+        <div style="color:#2A2A2A;font-weight:500">{{ g.deadline or 'Rolling' }}</div>
+      </div>
+    </div>
+
+    <!-- Actions -->
+    <div style="display:flex;gap:8px">
+      {% if g.link %}
+      <a href="{{ g.link }}" target="_blank" 
+        style="flex:1;background:#B8899A;color:white;padding:10px 16px;border-radius:8px;text-decoration:none;text-align:center;font-size:0.9rem;font-weight:500;transition:all 0.2s ease"
+        onmouseover="this.style.background='#A67A8A'"
+        onmouseout="this.style.background='#B8899A'">
+        View Details
+      </a>
+      {% endif %}
+      <button style="background:white;color:#B8899A;padding:10px 16px;border:1px solid #B8899A;border-radius:8px;cursor:pointer;font-size:0.9rem;font-weight:500;transition:all 0.2s ease"
+        onmouseover="this.style.background='#B8899A';this.style.color='white'"
+        onmouseout="this.style.background='white';this.style.color='#B8899A'">
+        Save
+      </button>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+
+<!-- Empty State -->
+{% if not grants %}
+<div style="text-align:center;padding:80px 20px;color:#6B6B6B">
+  <div style="width:80px;height:80px;background:#F5F0F1;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 24px">
+    <svg width="36" height="36" viewBox="0 0 24 24" fill="#B8899A">
+      <path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/>
+    </svg>
+  </div>
+  <h3 style="font-size:1.3rem;font-weight:500;color:#2A2A2A;margin:0 0 8px 0">No opportunities found</h3>
+  <p style="margin:0 0 24px 0">Try adjusting your search criteria or discover new grants</p>
+  <button id="discoverEmptyBtn" style="background:#B8899A;color:white;padding:12px 24px;border-radius:24px;border:none;font-size:0.95rem;font-weight:500;cursor:pointer">
+    Discover Grants
+  </button>
+</div>
+{% endif %}
+
+<!-- Toast Notification -->
+<div id="toast" style="display:none;position:fixed;top:20px;right:20px;background:#B8899A;color:white;padding:16px 24px;border-radius:12px;box-shadow:0 4px 20px rgba(0,0,0,0.15);z-index:1000;font-size:0.9rem;font-weight:500">
+  Updated.
+</div>
+
+<style>
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* Enhanced select styling */
+select:focus {
+  outline: none;
+  border-color: #B8899A !important;
+  box-shadow: 0 0 0 3px rgba(184,137,154,0.1) !important;
+}
+</style>
+
+<script>
+const btn = document.getElementById('discoverBtn');
+const discoverEmptyBtn = document.getElementById('discoverEmptyBtn');
+const searchBtn = document.getElementById('searchBtn');
+const clearBtn = document.getElementById('clearBtn');
+const toast = document.getElementById('toast');
+const q = document.getElementById('q');
+const loadingState = document.getElementById('loadingState');
+const resultsGrid = document.getElementById('resultsGrid');
+
+async function runDiscovery(){
+  const activeBtn = btn || discoverEmptyBtn;
+  activeBtn.disabled = true; 
+  activeBtn.textContent = 'Discovering…';
+  loadingState.style.display = 'block';
+  resultsGrid.style.display = 'none';
+  
+  try{
+    const res = await fetch('/api/scrape/run-now', {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ orgId: {{ org_id|int }}, query: q.value || null })
+    });
+    const data = await res.json();
+    showToast(`Found ${data.upserted || 0} new opportunities (${data.mode})`);
+    setTimeout(()=>{ window.location.reload(); }, 1200);
+  }catch(e){
+    showToast('Discovery failed. Please try again.', true);
+    loadingState.style.display = 'none';
+    resultsGrid.style.display = 'grid';
+  }finally{
+    activeBtn.disabled = false; 
+    activeBtn.textContent = 'Discover New Grants';
   }
-  btn.addEventListener('click', runDiscovery);
-  </script>
+}
+
+function showToast(message, isError = false) {
+  toast.textContent = message;
+  toast.style.background = isError ? '#EF4444' : '#B8899A';
+  toast.style.display = 'block';
+  setTimeout(() => { toast.style.display = 'none'; }, 3000);
+}
+
+function clearFilters() {
+  document.getElementById('q').value = '';
+  document.getElementById('cityFilter').value = '';
+  document.getElementById('focusFilter').value = '';
+  document.getElementById('deadlineFilter').value = '';
+  document.getElementById('sourceFilter').value = '';
+}
+
+// Event listeners
+btn?.addEventListener('click', runDiscovery);
+discoverEmptyBtn?.addEventListener('click', runDiscovery);
+clearBtn?.addEventListener('click', clearFilters);
+</script>
+
 {% endblock %}
