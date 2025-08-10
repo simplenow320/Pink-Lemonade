@@ -165,8 +165,8 @@
 
 <div class="auth-container">
   <div class="auth-header">
-    <h2>Create Your Account</h2>
-    <p>Join Pink Lemonade to discover and win more grants</p>
+    <h2>Register Your Organization</h2>
+    <p>Join Pink Lemonade to discover and win more grants for your nonprofit</p>
   </div>
 
   <div id="errorMessage" class="error-message"></div>
@@ -179,18 +179,24 @@
     </div>
 
     <div class="form-group">
-      <label for="email">Email Address *</label>
+      <label for="email">Organization Email *</label>
       <input type="email" id="email" name="email" required placeholder="admin@yournonprofit.org">
+      <small>This will be your login email</small>
     </div>
 
     <div class="form-group">
-      <label for="firstName">First Name *</label>
-      <input type="text" id="firstName" name="first_name" required placeholder="Your first name">
+      <label for="firstName">Administrator First Name *</label>
+      <input type="text" id="firstName" name="first_name" required placeholder="Primary contact first name">
     </div>
 
     <div class="form-group">
-      <label for="lastName">Last Name *</label>
-      <input type="text" id="lastName" name="last_name" required placeholder="Your last name">
+      <label for="lastName">Administrator Last Name *</label>
+      <input type="text" id="lastName" name="last_name" required placeholder="Primary contact last name">
+    </div>
+    
+    <div class="form-group">
+      <label for="jobTitle">Your Role/Title</label>
+      <input type="text" id="jobTitle" name="job_title" placeholder="e.g., Executive Director, Grant Manager">
     </div>
 
     <div class="form-group">
@@ -215,7 +221,7 @@
       </label>
     </div>
 
-    <button type="submit" class="btn-register" id="submitBtn">Create Account</button>
+    <button type="submit" class="btn-register" id="submitBtn">Register Organization</button>
   </form>
 
   <div class="auth-footer">
@@ -278,7 +284,7 @@ document.getElementById('registerForm').addEventListener('submit', async functio
   delete data.terms;
   
   submitBtn.disabled = true;
-  submitBtn.textContent = 'Creating Account...';
+  submitBtn.textContent = 'Registering Organization...';
   
   try {
     const response = await fetch('/api/auth/register', {
@@ -292,7 +298,7 @@ document.getElementById('registerForm').addEventListener('submit', async functio
     const result = await response.json();
     
     if (response.ok) {
-      successMsg.textContent = 'Account created successfully! Check your email to verify your account.';
+      successMsg.textContent = 'Organization registered successfully! Check your email to verify your account.';
       successMsg.style.display = 'block';
       e.target.reset();
       
@@ -304,7 +310,7 @@ document.getElementById('registerForm').addEventListener('submit', async functio
       errorMsg.textContent = result.error || 'Registration failed. Please try again.';
       errorMsg.style.display = 'block';
       submitBtn.disabled = false;
-      submitBtn.textContent = 'Create Account';
+      submitBtn.textContent = 'Register Organization';
     }
   } catch (error) {
     errorMsg.textContent = 'An error occurred. Please try again.';

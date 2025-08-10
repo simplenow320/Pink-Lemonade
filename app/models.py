@@ -14,6 +14,7 @@ class User(db.Model):
     last_name = db.Column(db.String(100))
     phone = db.Column(db.String(20))
     org_name = db.Column(db.String(200))  # Added for organization name
+    job_title = db.Column(db.String(100))  # User's role/title in the organization
     role = db.Column(db.String(20), default='member')  # admin, manager, member
     org_id = db.Column(db.String(50))
     is_active = db.Column(db.Boolean, default=True)

@@ -76,10 +76,11 @@ def register():
         org_name = data.get('org_name', '').strip()
         first_name = data.get('first_name', '').strip()
         last_name = data.get('last_name', '').strip()
+        job_title = data.get('job_title', '').strip()
         
         # Validate required fields
         if not email or not password or not org_name or not first_name or not last_name:
-            return jsonify({'error': 'All fields are required'}), 400
+            return jsonify({'error': 'All required fields must be filled'}), 400
         
         # Use AuthService to register user
         result = auth_service.register_user(
@@ -87,7 +88,8 @@ def register():
             password=password,
             org_name=org_name,
             first_name=first_name,
-            last_name=last_name
+            last_name=last_name,
+            job_title=job_title
         )
         
         if result['success']:

@@ -15,7 +15,7 @@ class AuthService:
     def __init__(self):
         self.email_service = EmailService()
         
-    def register_user(self, email, password, org_name, first_name, last_name):
+    def register_user(self, email, password, org_name, first_name, last_name, job_title=None):
         """Register a new user"""
         try:
             # Check if user already exists
@@ -30,6 +30,7 @@ class AuthService:
                 org_name=org_name,
                 first_name=first_name,
                 last_name=last_name,
+                job_title=job_title,
                 is_verified=False,
                 created_at=datetime.utcnow()
             )
