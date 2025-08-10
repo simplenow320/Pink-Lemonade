@@ -9,6 +9,7 @@
       <button class="btn btn-primary" id="btnCase">Generate Case for Support</button>
       <button class="btn" id="btnPitch">Generate Grant Pitch</button>
       <button class="btn" id="btnReport">Generate Impact Report</button>
+      <button class="btn" id="btnTracker">Grant Tracker</button>
     </div>
     <div id="toast" class="card" style="display:none;padding:10px;margin-top:12px;background:var(--pink);color:var(--black)"></div>
   </section>
@@ -77,6 +78,11 @@
     document.getElementById('btnReport').onclick = async () => {
       // Redirect to the detailed form
       window.location.href = '/impact-report';
+    };
+
+    document.getElementById('btnTracker').onclick = async () => {
+      // Redirect to the grant tracker
+      window.location.href = '/grant-tracker';
     };
   </script>
 {% endblock %}

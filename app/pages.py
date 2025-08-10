@@ -74,6 +74,11 @@ def impact_report():
     """Impact Report Generator Form"""
     return render_template("impact_report_form.html", active="writing")
 
+@pages.get("/grant-tracker")
+def grant_tracker():
+    """Grant Tracker Dashboard"""
+    return render_template("grant_tracker.html", active="writing")
+
 @pages.get("/admin")
 def admin_dashboard():
     """Admin Dashboard Page"""

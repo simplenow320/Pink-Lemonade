@@ -1,0 +1,534 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Grant Tracker - Pink Lemonade</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --pink: #F5F0F1;
+            --pink-matte: #B8899A;
+            --white: #FAFAFA;
+            --black: #2A2A2A;
+            --grey-light: #FAFAFA;
+            --grey: #6B6B6B;
+            --grey-dark: #2A2A2A;
+            --border: #E8E8E8;
+        }
+
+        body {
+            background-color: var(--grey-light);
+            color: var(--black);
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        }
+
+        .header-bar {
+            background: var(--white);
+            border-bottom: 1px solid var(--border);
+            padding: 1rem 1.5rem;
+        }
+
+        .tracker-section {
+            background: var(--white);
+            border-radius: 0.5rem;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            border: 1px solid var(--border);
+        }
+
+        .section-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            color: var(--black);
+            border-bottom: 2px solid var(--pink-matte);
+            padding-bottom: 0.5rem;
+        }
+
+        .grants-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1rem;
+        }
+
+        .grants-table th {
+            background: var(--pink-matte);
+            color: var(--white);
+            padding: 0.75rem;
+            text-align: left;
+            font-weight: 600;
+            border-bottom: 2px solid var(--border);
+        }
+
+        .grants-table td {
+            padding: 0.75rem;
+            border-bottom: 1px solid var(--border);
+            vertical-align: top;
+        }
+
+        .grants-table tr:hover {
+            background: var(--pink);
+        }
+
+        .status-badge {
+            padding: 0.25rem 0.75rem;
+            border-radius: 1rem;
+            font-size: 0.875rem;
+            font-weight: 500;
+            text-align: center;
+            white-space: nowrap;
+        }
+
+        .status-drafting {
+            background: #FEF3C7;
+            color: #92400E;
+        }
+
+        .status-submitted {
+            background: #DBEAFE;
+            color: #1E40AF;
+        }
+
+        .status-won {
+            background: #D1FAE5;
+            color: #065F46;
+        }
+
+        .status-lost {
+            background: #FEE2E2;
+            color: #991B1B;
+        }
+
+        .status-available {
+            background: var(--pink);
+            color: var(--grey-dark);
+        }
+
+        .deadline-urgent {
+            color: #DC2626;
+            font-weight: 600;
+        }
+
+        .deadline-soon {
+            color: #D97706;
+            font-weight: 500;
+        }
+
+        .deadline-normal {
+            color: var(--grey-dark);
+        }
+
+        .next-action {
+            font-size: 0.875rem;
+            color: var(--grey);
+            font-style: italic;
+        }
+
+        .loading {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+            color: var(--pink-matte);
+        }
+
+        .spinner {
+            border: 2px solid var(--border);
+            border-top: 2px solid var(--pink-matte);
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            animation: spin 1s linear infinite;
+            margin-right: 0.5rem;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .notification {
+            position: fixed;
+            top: 1rem;
+            right: 1rem;
+            padding: 1rem 1.5rem;
+            border-radius: 0.375rem;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            z-index: 1000;
+            animation: slideIn 0.3s ease-out;
+        }
+
+        .notification-success {
+            background: var(--pink-matte);
+            color: var(--white);
+        }
+
+        .notification-error {
+            background: #DC2626;
+            color: var(--white);
+        }
+
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+
+        .filter-bar {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1rem;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        .filter-select {
+            padding: 0.5rem;
+            border: 1px solid var(--border);
+            border-radius: 0.375rem;
+            background: var(--white);
+            color: var(--black);
+        }
+
+        .btn-primary {
+            background: var(--pink-matte);
+            color: var(--white);
+            padding: 0.5rem 1rem;
+            border-radius: 0.375rem;
+            font-weight: 500;
+            border: none;
+            cursor: pointer;
+            transition: opacity 0.2s;
+        }
+
+        .btn-primary:hover {
+            opacity: 0.9;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 3rem;
+            color: var(--grey);
+        }
+
+        .empty-state h3 {
+            font-size: 1.125rem;
+            margin-bottom: 0.5rem;
+            color: var(--grey-dark);
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <div class="header-bar">
+        <div class="max-w-7xl mx-auto flex items-center justify-between">
+            <div class="flex items-center space-x-4">
+                <h1 class="text-xl font-semibold">Grant Tracker</h1>
+            </div>
+            <a href="/writing" class="text-sm hover:underline" style="color: var(--pink-matte);">← Back to Writing</a>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="max-w-7xl mx-auto px-4 py-6">
+        <div class="tracker-section">
+            <h2 class="section-title">Grant Management Dashboard</h2>
+            <p class="text-gray-600 mb-6">Track deadlines, statuses, and next actions for all grants in your database</p>
+            
+            <!-- Filters -->
+            <div class="filter-bar">
+                <label class="text-sm font-medium text-gray-700">Filter by Status:</label>
+                <select id="statusFilter" class="filter-select">
+                    <option value="">All Statuses</option>
+                    <option value="available">Available</option>
+                    <option value="drafting">Drafting</option>
+                    <option value="submitted">Submitted</option>
+                    <option value="won">Won</option>
+                    <option value="lost">Lost</option>
+                </select>
+                
+                <label class="text-sm font-medium text-gray-700">Sort by:</label>
+                <select id="sortFilter" class="filter-select">
+                    <option value="deadline">Deadline (Earliest First)</option>
+                    <option value="deadline-desc">Deadline (Latest First)</option>
+                    <option value="name">Grant Name</option>
+                    <option value="funder">Funder</option>
+                    <option value="amount">Amount</option>
+                </select>
+                
+                <button onclick="refreshGrants()" class="btn-primary">Refresh</button>
+            </div>
+
+            <!-- Loading State -->
+            <div id="loading" class="loading">
+                <div class="spinner"></div>
+                <span>Loading grants from database...</span>
+            </div>
+
+            <!-- Grants Table -->
+            <div id="grants-container" style="display: none;">
+                <table class="grants-table">
+                    <thead>
+                        <tr>
+                            <th style="width: 25%;">Grant Name</th>
+                            <th style="width: 15%;">Funder</th>
+                            <th style="width: 12%;">Deadline</th>
+                            <th style="width: 10%;">Amount</th>
+                            <th style="width: 12%;">Status</th>
+                            <th style="width: 26%;">Next Action</th>
+                        </tr>
+                    </thead>
+                    <tbody id="grants-tbody">
+                        <!-- Grants will be populated here -->
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Empty State -->
+            <div id="empty-state" class="empty-state" style="display: none;">
+                <h3>No Grants Found</h3>
+                <p>No grants are currently in your database. Visit the Opportunities page to discover and save grants.</p>
+                <div class="mt-4">
+                    <a href="/opportunities" class="btn-primary">Discover Grants</a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Summary Stats -->
+        <div class="tracker-section">
+            <h2 class="section-title">Summary Statistics</h2>
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4" id="summary-stats">
+                <div class="text-center">
+                    <div class="text-2xl font-bold text-pink-matte" id="total-grants">-</div>
+                    <div class="text-sm text-gray-600">Total Grants</div>
+                </div>
+                <div class="text-center">
+                    <div class="text-2xl font-bold text-yellow-600" id="drafting-count">-</div>
+                    <div class="text-sm text-gray-600">In Progress</div>
+                </div>
+                <div class="text-center">
+                    <div class="text-2xl font-bold text-blue-600" id="submitted-count">-</div>
+                    <div class="text-sm text-gray-600">Submitted</div>
+                </div>
+                <div class="text-center">
+                    <div class="text-2xl font-bold text-red-600" id="urgent-count">-</div>
+                    <div class="text-sm text-gray-600">Due Soon</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let allGrants = [];
+
+        document.addEventListener('DOMContentLoaded', () => {
+            loadGrants();
+            
+            // Set up filter listeners
+            document.getElementById('statusFilter').addEventListener('change', filterAndDisplayGrants);
+            document.getElementById('sortFilter').addEventListener('change', filterAndDisplayGrants);
+        });
+
+        async function loadGrants() {
+            try {
+                document.getElementById('loading').style.display = 'flex';
+                document.getElementById('grants-container').style.display = 'none';
+                document.getElementById('empty-state').style.display = 'none';
+
+                const response = await fetch('/api/grants/tracker');
+                if (!response.ok) {
+                    throw new Error('Failed to load grants');
+                }
+
+                const data = await response.json();
+                allGrants = data.grants;
+                
+                document.getElementById('loading').style.display = 'none';
+                
+                if (allGrants.length === 0) {
+                    document.getElementById('empty-state').style.display = 'block';
+                } else {
+                    document.getElementById('grants-container').style.display = 'block';
+                    filterAndDisplayGrants();
+                }
+                
+                updateSummaryStats();
+
+            } catch (error) {
+                document.getElementById('loading').style.display = 'none';
+                console.error('Error loading grants:', error);
+                showNotification('Error loading grants. Please try again.', 'error');
+            }
+        }
+
+        function filterAndDisplayGrants() {
+            const statusFilter = document.getElementById('statusFilter').value;
+            const sortFilter = document.getElementById('sortFilter').value;
+            
+            let filteredGrants = [...allGrants];
+            
+            // Apply status filter
+            if (statusFilter) {
+                filteredGrants = filteredGrants.filter(grant => grant.status === statusFilter);
+            }
+            
+            // Apply sorting
+            filteredGrants.sort((a, b) => {
+                switch (sortFilter) {
+                    case 'deadline':
+                        return new Date(a.deadline || '9999-12-31') - new Date(b.deadline || '9999-12-31');
+                    case 'deadline-desc':
+                        return new Date(b.deadline || '9999-12-31') - new Date(a.deadline || '9999-12-31');
+                    case 'name':
+                        return a.title.localeCompare(b.title);
+                    case 'funder':
+                        return a.funder.localeCompare(b.funder);
+                    case 'amount':
+                        return (b.amount_max || b.amount_min || 0) - (a.amount_max || a.amount_min || 0);
+                    default:
+                        return new Date(a.deadline || '9999-12-31') - new Date(b.deadline || '9999-12-31');
+                }
+            });
+            
+            displayGrants(filteredGrants);
+        }
+
+        function displayGrants(grants) {
+            const tbody = document.getElementById('grants-tbody');
+            tbody.innerHTML = '';
+            
+            grants.forEach(grant => {
+                const row = document.createElement('tr');
+                
+                // Format deadline and determine urgency
+                const { formattedDeadline, urgencyClass } = formatDeadline(grant.deadline);
+                
+                // Format amount
+                const amount = formatAmount(grant.amount_min, grant.amount_max);
+                
+                // Get status info
+                const { statusBadge, nextAction } = getStatusInfo(grant);
+                
+                row.innerHTML = `
+                    <td>
+                        <div class="font-medium">${grant.title}</div>
+                        <div class="text-sm text-gray-500">${grant.focus_area || 'General'}</div>
+                    </td>
+                    <td>${grant.funder}</td>
+                    <td class="${urgencyClass}">${formattedDeadline}</td>
+                    <td>${amount}</td>
+                    <td>${statusBadge}</td>
+                    <td>
+                        <div class="next-action">${nextAction}</div>
+                    </td>
+                `;
+                
+                tbody.appendChild(row);
+            });
+        }
+
+        function formatDeadline(deadline) {
+            if (!deadline) {
+                return { formattedDeadline: 'Not specified', urgencyClass: 'deadline-normal' };
+            }
+            
+            const deadlineDate = new Date(deadline);
+            const today = new Date();
+            const daysUntil = Math.ceil((deadlineDate - today) / (1000 * 60 * 60 * 24));
+            
+            let urgencyClass = 'deadline-normal';
+            if (daysUntil < 0) {
+                urgencyClass = 'deadline-urgent';
+            } else if (daysUntil <= 7) {
+                urgencyClass = 'deadline-urgent';
+            } else if (daysUntil <= 30) {
+                urgencyClass = 'deadline-soon';
+            }
+            
+            const formattedDate = deadlineDate.toLocaleDateString();
+            const daysText = daysUntil < 0 ? `${Math.abs(daysUntil)} days overdue` : 
+                             daysUntil === 0 ? 'Due today' :
+                             daysUntil === 1 ? 'Due tomorrow' :
+                             `${daysUntil} days remaining`;
+            
+            return { 
+                formattedDeadline: `${formattedDate} (${daysText})`, 
+                urgencyClass 
+            };
+        }
+
+        function formatAmount(min, max) {
+            if (!min && !max) return 'Not specified';
+            if (min && max && min !== max) {
+                return `$${min.toLocaleString()} - $${max.toLocaleString()}`;
+            }
+            const amount = max || min;
+            return `$${amount.toLocaleString()}`;
+        }
+
+        function getStatusInfo(grant) {
+            const status = grant.status || 'available';
+            
+            let statusBadge = '';
+            let nextAction = '';
+            
+            switch (status) {
+                case 'drafting':
+                    statusBadge = '<span class="status-badge status-drafting">Drafting</span>';
+                    nextAction = 'Complete application draft and review requirements';
+                    break;
+                case 'submitted':
+                    statusBadge = '<span class="status-badge status-submitted">Submitted</span>';
+                    nextAction = 'Wait for funder response and prepare follow-up materials';
+                    break;
+                case 'won':
+                    statusBadge = '<span class="status-badge status-won">Won</span>';
+                    nextAction = 'Begin grant implementation and reporting requirements';
+                    break;
+                case 'lost':
+                    statusBadge = '<span class="status-badge status-lost">Lost</span>';
+                    nextAction = 'Request feedback and consider reapplication options';
+                    break;
+                default:
+                    statusBadge = '<span class="status-badge status-available">Available</span>';
+                    nextAction = 'Review requirements and begin application process';
+            }
+            
+            return { statusBadge, nextAction };
+        }
+
+        function updateSummaryStats() {
+            const total = allGrants.length;
+            const drafting = allGrants.filter(g => g.status === 'drafting').length;
+            const submitted = allGrants.filter(g => g.status === 'submitted').length;
+            
+            // Count urgent (due within 7 days)
+            const urgent = allGrants.filter(grant => {
+                if (!grant.deadline) return false;
+                const deadlineDate = new Date(grant.deadline);
+                const today = new Date();
+                const daysUntil = Math.ceil((deadlineDate - today) / (1000 * 60 * 60 * 24));
+                return daysUntil <= 7 && daysUntil >= 0;
+            }).length;
+            
+            document.getElementById('total-grants').textContent = total;
+            document.getElementById('drafting-count').textContent = drafting;
+            document.getElementById('submitted-count').textContent = submitted;
+            document.getElementById('urgent-count').textContent = urgent;
+        }
+
+        async function refreshGrants() {
+            await loadGrants();
+            showNotification('Grants refreshed successfully', 'success');
+        }
+
+        function showNotification(message, type) {
+            const notification = document.createElement('div');
+            notification.className = `notification notification-${type}`;
+            notification.textContent = message;
+            document.body.appendChild(notification);
+            setTimeout(() => notification.remove(), 4000);
+        }
+    </script>
+</body>
+</html>
