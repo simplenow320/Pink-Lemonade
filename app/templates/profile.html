@@ -364,7 +364,7 @@
                     <h3 class="font-semibold mb-3">Quick Actions</h3>
                     <div class="space-y-2">
                         <button onclick="exportProfile()" class="btn-secondary w-full">Export Profile</button>
-                        <button onclick="previewAIContext()" class="btn-secondary w-full">Test AI Matching</button>
+                        <button onclick="previewAIContext()" class="btn-secondary w-full">Show AI Context</button>
                         <button onclick="clearDocuments()" class="btn-secondary w-full">Clear All Documents</button>
                     </div>
                 </div>
@@ -439,7 +439,7 @@
 
         async function loadOrganization() {
             try {
-                const response = await fetch('/api/organization');
+                const response = await fetch('/api/profile/organization');
                 if (response.ok) {
                     const data = await response.json();
                     document.getElementById('org_name').value = data.name || '';
@@ -452,7 +452,7 @@
                     updateAIContext(data);
                 }
             } catch (error) {
-                // Error logged: 'Error loading organization:', error
+                console.log('Loading organization profile...');
             }
         }
 
@@ -491,27 +491,33 @@
                 ein: document.getElementById('ein').value,
                 annual_budget: document.getElementById('budget').value,
                 location: document.getElementById('location').value,
-                focus_areas: document.getElementById('focus_areas').value.split(',').map(s => s.trim()),
-                keywords: document.getElementById('keywords').value.split(',').map(s => s.trim())
+                focus_areas: document.getElementById('focus_areas').value.split(',').map(s => s.trim()).filter(s => s),
+                keywords: document.getElementById('keywords').value.split(',').map(s => s.trim()).filter(s => s)
             };
 
             try {
-                const response = await fetch('/api/organization', {
+                const response = await fetch('/api/profile/organization', {
                     method: 'POST',
                     headers: {'Content-Type': 'application/json'},
                     body: JSON.stringify(orgData)
                 });
 
                 if (response.ok) {
-                    showNotification('Organization details saved successfully', 'success');
+                    const result = await response.json();
+                    showNotification('Organization profile saved successfully', 'success');
                     updateCompleteness();
                     updateAIContext(orgData);
+                    
+                    // Show profile completion status
+                    if (result.profile_complete) {
+                        showNotification('Profile complete! AI matching is now optimized for your organization', 'success');
+                    }
                 } else {
-                    showNotification('Failed to save organization details', 'error');
+                    showNotification('Failed to save organization profile', 'error');
                 }
             } catch (error) {
-                // Error logged: 'Error saving organization:', error
-                showNotification('Error saving organization details', 'error');
+                console.error('Error saving organization:', error);
+                showNotification('Error saving organization profile', 'error');
             }
         }
 
@@ -692,9 +698,33 @@
         }
 
         async function previewAIContext() {
-            showNotification('Testing AI matching with your profile...', 'success');
-            // This would trigger an AI test match
-            window.location.href = '/opportunities';
+            try {
+                const response = await fetch('/api/profile/ai-context');
+                if (response.ok) {
+                    const data = await response.json();
+                    
+                    // Update AI context display
+                    const contextDiv = document.getElementById('ai-context');
+                    if (data.context) {
+                        contextDiv.innerHTML = `
+                            <div class="bg-gray-50 p-3 rounded text-sm">
+                                <strong>AI Matching Context:</strong><br>
+                                ${data.context.replace(/\n/g, '<br>')}
+                            </div>
+                            <div class="mt-2 text-xs ${data.status === 'ready' ? 'text-green-600' : 'text-amber-600'}">
+                                Status: ${data.status === 'ready' ? '✅ Ready for AI matching' : '⚠️ Profile incomplete'}
+                            </div>
+                        `;
+                    }
+                    
+                    showNotification(data.message, data.status === 'ready' ? 'success' : 'error');
+                } else {
+                    showNotification('Unable to load AI context', 'error');
+                }
+            } catch (error) {
+                console.error('Error loading AI context:', error);
+                showNotification('Error loading AI context', 'error');
+            }
         }
 
         async function clearDocuments() {

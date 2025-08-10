@@ -16,6 +16,7 @@ def create_app():
     with flask_app.app_context():
         # Import models so they are registered
         import app.models
+        import app.models_extended
         
         # Create all tables
         db.create_all()
@@ -34,6 +35,7 @@ def create_app():
     from app.api.writing import bp as writing_bp
     from app.api.exports import bp as exports_bp
     from app.api.profile import bp as profile_bp
+    from app.api.simple_org import bp as simple_org_bp
     
     # Initialize authentication
     init_auth(flask_app)
@@ -51,6 +53,7 @@ def create_app():
     flask_app.register_blueprint(writing_bp, url_prefix='/api/writing')
     flask_app.register_blueprint(exports_bp, url_prefix='/api/exports')
     flask_app.register_blueprint(profile_bp)
+    flask_app.register_blueprint(simple_org_bp)
     
     # Register new AI endpoints
     from app.api.ai_endpoints import bp as ai_endpoints_bp

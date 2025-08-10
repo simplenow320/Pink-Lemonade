@@ -54,6 +54,11 @@ def journey():
     """Interactive Onboarding Journey Page"""
     return render_template("onboarding.html", active="journey")
 
+@pages.get("/profile")
+def profile():
+    """Organization Profile Management Page"""
+    return render_template("profile.html", active="profile")
+
 @pages.get("/admin")
 def admin_dashboard():
     """Admin Dashboard Page"""

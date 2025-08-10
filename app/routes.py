@@ -6,6 +6,11 @@ from flask import Blueprint, render_template, redirect
 
 bp = Blueprint('routes', __name__)
 
+@bp.route('/profile')
+def profile():
+    """Organization Profile page"""
+    return render_template('profile.html', active='profile')
+
 @bp.route('/')
 def index():
     """Home page - show landing page"""
