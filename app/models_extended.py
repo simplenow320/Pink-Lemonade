@@ -547,3 +547,133 @@ class DataCleansingLog(db.Model):
             "auto_applied": self.auto_applied,
             "review_status": self.review_status
         }
+
+
+# =============================================================================
+# Smart Reporting Phase 4 Models - Dashboard & Analytics Integration
+# =============================================================================
+
+class DashboardConfig(db.Model):
+    """User-customizable dashboard configurations"""
+    __tablename__ = "dashboard_configs"
+    
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.String(50))
+    dashboard_name = db.Column(db.String(200), nullable=False)
+    dashboard_type = db.Column(db.String(50), default="executive")
+    layout_config = db.Column(db.Text)
+    active_widgets = db.Column(db.Text)
+    refresh_interval = db.Column(db.Integer, default=300)
+    data_range_days = db.Column(db.Integer, default=30)
+    is_default = db.Column(db.Boolean, default=False)
+    is_shared = db.Column(db.Boolean, default=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "dashboard_name": self.dashboard_name,
+            "dashboard_type": self.dashboard_type,
+            "refresh_interval": self.refresh_interval,
+            "data_range_days": self.data_range_days,
+            "is_default": self.is_default
+        }
+
+
+class AnalyticsSnapshot(db.Model):
+    """Point-in-time analytics data storage"""
+    __tablename__ = "analytics_snapshots"
+    
+    id = db.Column(db.Integer, primary_key=True)
+    project_id = db.Column(db.Integer, db.ForeignKey("projects.id"))
+    snapshot_type = db.Column(db.String(50), nullable=False)
+    snapshot_date = db.Column(db.DateTime, nullable=False)
+    response_rate = db.Column(db.Float)
+    completion_rate = db.Column(db.Float)
+    quality_score = db.Column(db.Float)
+    engagement_score = db.Column(db.Float)
+    participants_reached = db.Column(db.Integer)
+    satisfaction_rating = db.Column(db.Float)
+    impact_score = db.Column(db.Float)
+    surveys_distributed = db.Column(db.Integer, default=0)
+    surveys_completed = db.Column(db.Integer, default=0)
+    validation_pass_rate = db.Column(db.Float)
+    data_quality_score = db.Column(db.Float)
+    detailed_metrics = db.Column(db.Text)
+    trend_indicators = db.Column(db.Text)
+    predictive_insights = db.Column(db.Text)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "project_id": self.project_id,
+            "snapshot_type": self.snapshot_type,
+            "response_rate": self.response_rate,
+            "completion_rate": self.completion_rate,
+            "quality_score": self.quality_score,
+            "satisfaction_rating": self.satisfaction_rating,
+            "impact_score": self.impact_score
+        }
+
+
+class PredictiveModel(db.Model):
+    """AI model configurations and performance tracking"""
+    __tablename__ = "predictive_models"
+    
+    id = db.Column(db.Integer, primary_key=True)
+    model_name = db.Column(db.String(200), nullable=False)
+    model_type = db.Column(db.String(100), nullable=False)
+    target_variable = db.Column(db.String(100))
+    algorithm_type = db.Column(db.String(100))
+    accuracy_score = db.Column(db.Float)
+    model_status = db.Column(db.String(50), default="training")
+    prediction_count = db.Column(db.Integer, default=0)
+    average_confidence = db.Column(db.Float)
+    model_version = db.Column(db.String(50))
+    last_training_date = db.Column(db.DateTime)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "model_name": self.model_name,
+            "model_type": self.model_type,
+            "accuracy_score": self.accuracy_score,
+            "model_status": self.model_status,
+            "prediction_count": self.prediction_count,
+            "average_confidence": self.average_confidence
+        }
+
+
+class DataVisualization(db.Model):
+    """Chart and visualization definitions"""
+    __tablename__ = "data_visualizations"
+    
+    id = db.Column(db.Integer, primary_key=True)
+    dashboard_config_id = db.Column(db.Integer, db.ForeignKey("dashboard_configs.id"))
+    viz_name = db.Column(db.String(200), nullable=False)
+    viz_type = db.Column(db.String(50), nullable=False)
+    data_source = db.Column(db.String(100))
+    chart_config = db.Column(db.Text, nullable=False)
+    position_x = db.Column(db.Integer, default=0)
+    position_y = db.Column(db.Integer, default=0)
+    width = db.Column(db.Integer, default=6)
+    height = db.Column(db.Integer, default=4)
+    auto_refresh = db.Column(db.Boolean, default=True)
+    refresh_interval_seconds = db.Column(db.Integer, default=300)
+    is_interactive = db.Column(db.Boolean, default=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "viz_name": self.viz_name,
+            "viz_type": self.viz_type,
+            "data_source": self.data_source,
+            "width": self.width,
+            "height": self.height,
+            "auto_refresh": self.auto_refresh,
+            "is_interactive": self.is_interactive
+        }

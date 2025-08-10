@@ -121,6 +121,10 @@ def create_app():
     from app.api.smart_reporting_phase3 import bp as smart_reporting_phase3_bp
     flask_app.register_blueprint(smart_reporting_phase3_bp)
     
+    # Register Smart Reporting Phase 4 blueprint
+    from app.api.smart_reporting_phase4 import bp as smart_reporting_phase4_bp
+    flask_app.register_blueprint(smart_reporting_phase4_bp)
+    
     # Initialize monitoring
     from app.services.monitoring_service import init_monitoring
     init_monitoring(flask_app)
