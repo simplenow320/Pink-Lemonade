@@ -48,8 +48,8 @@ const SmartTools = () => {
       id: 'grant-pitch',
       name: 'Grant Pitch',
       description: 'AI-powered pitch generator for presentations, emails, and verbal delivery to funders',
-      icon: '🎯',
-      color: 'from-green-500 to-green-600',
+      icon: 'target',
+      color: 'from-pink-400 to-pink-500',
       features: ['Multiple formats', 'Funder-specific', 'Presentation ready'],
       endpoint: '/api/writing/grant-pitch',
       route: '/grant-pitch',
@@ -60,8 +60,8 @@ const SmartTools = () => {
       id: 'case-support',
       name: 'Case for Support',
       description: 'Create compelling case documents that make the argument for why your organization deserves funding',
-      icon: '📋',
-      color: 'from-pink-500 to-pink-600',
+      icon: 'file-text',
+      color: 'from-pink-300 to-pink-400',
       features: ['Professional funding documents', 'Mission-driven narratives', 'Donor-ready content'],
       endpoint: '/api/writing/case-support',
       route: '/case-support',
@@ -72,8 +72,8 @@ const SmartTools = () => {
       id: 'impact-report',
       name: 'Impact Reports',
       description: 'Generate comprehensive reports showing your programs actual outcomes and community impact',
-      icon: '📊',
-      color: 'from-blue-500 to-blue-600',
+      icon: 'bar-chart-2',
+      color: 'from-gray-400 to-gray-500',
       features: ['Outcome tracking', 'Visual metrics', 'Stakeholder reports'],
       endpoint: '/api/writing/impact-report',
       route: '/impact-report',
@@ -88,8 +88,8 @@ const SmartTools = () => {
       id: 'writing-assistant',
       name: 'Writing Assistant',
       description: 'AI-powered text improvement and proposal writing help for any grant content',
-      icon: '✍️',
-      color: 'from-purple-500 to-purple-600',
+      icon: 'edit-3',
+      color: 'from-gray-300 to-gray-400',
       features: ['Text improvement', 'Professional polish', 'Content optimization'],
       endpoint: '/api/writing/improve',
       route: '/writing-assistant',
@@ -102,8 +102,8 @@ const SmartTools = () => {
       id: 'executive-dashboard',
       name: 'Executive Dashboard',
       description: 'Real-time metrics display with predictive analytics and performance monitoring',
-      icon: '📈',
-      color: 'from-indigo-500 to-indigo-600',
+      icon: 'trending-up',
+      color: 'from-pink-200 to-pink-300',
       features: ['Real-time KPIs', 'Predictive forecasting', 'Custom dashboards'],
       endpoint: '/api/smart-reporting/phase4/executive-metrics',
       route: '/analytics',
@@ -114,8 +114,8 @@ const SmartTools = () => {
       id: 'data-visualization',
       name: 'Data Visualization',
       description: 'Advanced charts, graphs, and interactive visualizations for comprehensive analysis',
-      icon: '📊',
-      color: 'from-cyan-500 to-cyan-600',
+      icon: 'pie-chart',
+      color: 'from-gray-400 to-gray-500',
       features: ['Interactive charts', 'Custom visualizations', 'Trend analysis'],
       endpoint: '/api/smart-reporting/phase4/data-visualization',
       route: '/analytics?view=charts',
@@ -126,8 +126,8 @@ const SmartTools = () => {
       id: 'automated-reports',
       name: 'Automated Report Generation',
       description: 'Scheduled executive summaries and stakeholder-specific reports with smart distribution',
-      icon: '🤖',
-      color: 'from-emerald-500 to-emerald-600',
+      icon: 'cpu',
+      color: 'from-pink-300 to-pink-400',
       features: ['Automated scheduling', 'Multi-audience reports', 'Smart distribution'],
       endpoint: '/api/smart-reporting/phase5/executive-summary',
       route: '/reports/automated',
@@ -138,8 +138,8 @@ const SmartTools = () => {
       id: 'performance-tracking',
       name: 'Performance Tracking',
       description: 'Cross-tool data fusion with AI-powered insights and success prediction',
-      icon: '🎯',
-      color: 'from-orange-500 to-orange-600',
+      icon: 'activity',
+      color: 'from-gray-300 to-gray-400',
       features: ['Success metrics', 'AI predictions', 'Cross-tool analysis'],
       endpoint: '/api/smart-reporting/phase4/predictive-forecast',
       route: '/analytics?view=performance',
@@ -152,8 +152,8 @@ const SmartTools = () => {
       id: 'survey-builder',
       name: 'AI Survey Builder',
       description: 'Advanced survey generation with adaptive question refinement and conditional logic',
-      icon: '📝',
-      color: 'from-violet-500 to-violet-600',
+      icon: 'clipboard',
+      color: 'from-pink-200 to-pink-300',
       features: ['AI question generation', 'Conditional logic', 'Multi-stakeholder surveys'],
       endpoint: '/api/smart-reporting/phase2/survey-builder',
       route: '/surveys/builder',
@@ -164,8 +164,8 @@ const SmartTools = () => {
       id: 'data-validation',
       name: 'Data Validation Engine',
       description: 'Automated data quality checks with intelligent validation and cleansing',
-      icon: '✅',
-      color: 'from-teal-500 to-teal-600',
+      icon: 'check-circle',
+      color: 'from-gray-400 to-gray-500',
       features: ['Quality scoring', 'Automated validation', 'Data cleansing'],
       endpoint: '/api/smart-reporting/phase3/validation-engine',
       route: '/data/validation',
@@ -176,8 +176,8 @@ const SmartTools = () => {
       id: 'impact-measurement',
       name: 'Impact Measurement',
       description: 'AI-generated impact questions with automated scoring and trend analysis',
-      icon: '🎪',
-      color: 'from-rose-500 to-rose-600',
+      icon: 'award',
+      color: 'from-pink-300 to-pink-400',
       features: ['AI impact questions', 'Automated scoring', 'Trend identification'],
       endpoint: '/api/smart-reporting/phase2/impact-questions',
       route: '/impact/measurement',
@@ -202,10 +202,10 @@ const SmartTools = () => {
 
   const getStatusText = (status) => {
     switch (status) {
-      case 'operational': return '✅ Operational';
-      case 'error': return '❌ Error';
-      case 'checking': return '⏳ Checking...';
-      default: return '❓ Unknown';
+      case 'operational': return 'Operational';
+      case 'error': return 'Error';
+      case 'checking': return 'Checking...';
+      default: return 'Unknown';
     }
   };
 
@@ -224,7 +224,22 @@ const SmartTools = () => {
         {/* Tool Header */}
         <div className={`bg-gradient-to-r ${tool.color} p-6 text-white`}>
           <div className="flex items-center justify-between mb-2">
-            <div className="text-3xl">{tool.icon}</div>
+            <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={
+                tool.icon === 'target' ? "M12 2a10 10 0 100 20 10 10 0 000-20zm0 4a6 6 0 100 12 6 6 0 000-12zm0 2a4 4 0 100 8 4 4 0 000-8z" :
+                tool.icon === 'file-text' ? "M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" :
+                tool.icon === 'bar-chart-2' ? "M18 20V10M12 20V4M6 20v-6" :
+                tool.icon === 'edit-3' ? "M12 20h9M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4L16.5 3.5z" :
+                tool.icon === 'trending-up' ? "M23 6l-9.5 9.5-5-5L1 18" :
+                tool.icon === 'pie-chart' ? "M21.21 15.89A10 10 0 118 2.83M22 12A10 10 0 0012 2v10z" :
+                tool.icon === 'cpu' ? "M9 1v6h6V1M9 17v6h6v-6M1 9h6v6H1M17 9h6v6h-6" :
+                tool.icon === 'activity' ? "M22 12h-4l-3 9L9 3l-3 9H2" :
+                tool.icon === 'clipboard' ? "M9 3H7a2 2 0 00-2 2v14a2 2 0 002 2h10a2 2 0 002-2V5a2 2 0 00-2-2h-2M9 3v2h6V3M9 3a2 2 0 012-2h2a2 2 0 012 2" :
+                tool.icon === 'check-circle' ? "M22 11.08V12a10 10 0 11-5.93-9.14M22 4L12 14.01l-3-3" :
+                tool.icon === 'award' ? "M12 15l-8 5V4l8 5 8-5v16z" :
+                "M3 12h18M3 6h18M3 18h18"
+              } />
+            </svg>
             <div className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(status)}`}>
               {getStatusText(status)}
             </div>
@@ -272,7 +287,7 @@ const SmartTools = () => {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6 }}
           >
-            🚀 Comprehensive Smart Tools Suite
+            Comprehensive Smart Tools Suite
           </motion.h1>
           <motion.p 
             className="text-xl text-gray-600 max-w-3xl mx-auto"
@@ -292,7 +307,7 @@ const SmartTools = () => {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, delay: 0.3 }}
         >
-          <h2 className="text-2xl font-bold text-gray-900 mb-4">📈 Comprehensive Grant Management Platform</h2>
+          <h2 className="text-2xl font-bold text-gray-900 mb-4">Comprehensive Grant Management Platform</h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="bg-green-50 border border-green-200 rounded-lg p-4">
               <div className="flex items-center">
@@ -326,7 +341,7 @@ const SmartTools = () => {
 
         {/* Main Featured Tools - Always Visible */}
         <div className="mb-12">
-          <h2 className="text-2xl font-bold text-gray-900 mb-2">🌟 Featured Smart Tools</h2>
+          <h2 className="text-2xl font-bold text-gray-900 mb-2">Featured Smart Tools</h2>
           <p className="text-gray-600 mb-6">Essential AI-powered tools for grant success</p>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {mainTools.map((tool, index) => renderToolCard(tool, index))}
@@ -341,14 +356,14 @@ const SmartTools = () => {
           >
             <div className="flex items-center justify-between">
               <div>
-                <h2 className="text-2xl font-bold text-gray-900">🛠️ Comprehensive Supporting Tools</h2>
+                <h2 className="text-2xl font-bold text-gray-900">Comprehensive Supporting Tools</h2>
                 <p className="text-gray-600 mt-1">
                   {supportingTools.length} additional tools for advanced reporting, analytics, and data management
                 </p>
               </div>
-              <div className="text-2xl">
-                {showSupportingTools ? '▼' : '▶'}
-              </div>
+              <svg className="w-6 h-6 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={showSupportingTools ? "M19 9l-7 7-7-7" : "M9 5l7 7-7 7"} />
+              </svg>
             </div>
           </div>
 
@@ -362,8 +377,8 @@ const SmartTools = () => {
             >
               {/* AI Writing & Document Generation */}
               <div>
-                <h3 className="text-xl font-bold text-gray-900 mb-2 flex items-center">
-                  ✍️ Additional Writing Tools
+                <h3 className="text-xl font-bold text-gray-900 mb-2">
+                  Additional Writing Tools
                 </h3>
                 <p className="text-gray-600 mb-6">Professional proposal content and documentation tools</p>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -375,8 +390,8 @@ const SmartTools = () => {
 
               {/* Comprehensive Reporting System */}
               <div>
-                <h3 className="text-xl font-bold text-gray-900 mb-2 flex items-center">
-                  📊 Comprehensive Reporting & Analytics
+                <h3 className="text-xl font-bold text-gray-900 mb-2">
+                  Comprehensive Reporting & Analytics
                 </h3>
                 <p className="text-gray-600 mb-6">Advanced reporting, dashboards, and performance tracking</p>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -388,8 +403,8 @@ const SmartTools = () => {
 
               {/* Data Collection & Validation */}
               <div>
-                <h3 className="text-xl font-bold text-gray-900 mb-2 flex items-center">
-                  📝 Data Collection & Validation
+                <h3 className="text-xl font-bold text-gray-900 mb-2">
+                  Data Collection & Validation
                 </h3>
                 <p className="text-gray-600 mb-6">Advanced survey tools, data validation, and impact measurement</p>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
