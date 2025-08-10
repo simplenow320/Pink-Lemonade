@@ -39,7 +39,7 @@ function App() {
   useEffect(() => {
     const initialize = async () => {
       try {
-        console.log('GrantFlow application initialized');
+        console.log('Pink Lemonade application initialized');
         const result = await initializeOrganization();
       } catch (err) {
         console.error('Error initializing application:', err);
@@ -66,9 +66,9 @@ function App() {
         <div className="text-center">
           <div className="flex flex-col items-center">
             <div className="inline-block animate-spin h-10 w-10 border-4 border-pink-500 border-t-transparent rounded-full mb-4"></div>
-            <h2 className="text-xl font-semibold text-gray-700">Loading GrantFlow...</h2>
+            <h2 className="text-xl font-semibold text-gray-700">Loading Pink Lemonade...</h2>
             <p className="mt-2 text-sm text-gray-500">
-              Connecting to your grants management system
+              Connecting to your grant discovery platform
             </p>
           </div>
         </div>

@@ -83,9 +83,11 @@ const ModernLayout = ({ children }) => {
             {/* Logo */}
             <div className="flex-shrink-0">
               <Link to="/" className="flex items-center">
-                <span className="text-2xl font-extrabold bg-clip-text text-transparent bg-gradient-to-r from-orange-500 to-orange-600">
-                  GrantFlow
-                </span>
+                <img 
+                  src="/attached_assets/Photoroom_20250810_075737_1754827233457.png" 
+                  alt="Pink Lemonade" 
+                  className="h-8 w-auto"
+                />
               </Link>
             </div>
 
@@ -235,7 +237,7 @@ const ModernLayout = ({ children }) => {
           <div className="flex flex-col md:flex-row justify-between items-center py-6">
             <div className="flex items-center">
               <span className="text-gray-500 text-sm">
-                &copy; {new Date().getFullYear()} GrantFlow. All rights reserved.
+                &copy; {new Date().getFullYear()} Pink Lemonade. All rights reserved.
               </span>
             </div>
             <div className="mt-4 md:mt-0 flex space-x-6">

@@ -6,26 +6,13 @@ const Landing = () => {
 
   return (
     <div className="min-h-screen bg-white flex flex-col items-center justify-center px-4">
-      {/* Extra Large Logo */}
-      <div className="mb-12 flex items-center">
-        <svg className="w-24 h-24 mr-4" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <circle cx="50" cy="50" r="45" stroke="#EC4899" strokeWidth="5"/>
-          <circle cx="50" cy="50" r="35" stroke="#EC4899" strokeWidth="3"/>
-          {/* Lemon slice segments */}
-          <path d="M50 15 L50 85" stroke="#EC4899" strokeWidth="2"/>
-          <path d="M15 50 L85 50" stroke="#EC4899" strokeWidth="2"/>
-          <path d="M25 25 L75 75" stroke="#EC4899" strokeWidth="2"/>
-          <path d="M75 25 L25 75" stroke="#EC4899" strokeWidth="2"/>
-          <circle cx="50" cy="50" r="8" fill="white" stroke="#EC4899" strokeWidth="2"/>
-        </svg>
-        <div>
-          <h1 className="text-6xl font-bold">
-            <span className="text-pink-500">pink</span>
-          </h1>
-          <h1 className="text-6xl font-bold -mt-2">
-            <span className="text-pink-500">lemonade</span>
-          </h1>
-        </div>
+      {/* Pink Lemonade Logo - 3.5x bigger, centered */}
+      <div className="mb-12">
+        <img 
+          src="/attached_assets/Photoroom_20250810_075737_1754827233457.png" 
+          alt="Pink Lemonade" 
+          className="h-80 w-auto mx-auto"
+        />
       </div>
 
       {/* Main Heading */}
