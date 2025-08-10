@@ -26,7 +26,7 @@ a[style*="background:#B8899A"]:hover {
 
 /* Logo Styling - 5x bigger */
 .logo-5x {
-  height: 500px; /* Increased to 5x size */
+  height: 850px; /* Ultra large 5x size */
   width: auto;
   border-radius: 12px;
   background: transparent;
@@ -38,7 +38,7 @@ a[style*="background:#B8899A"]:hover {
 }
 
 .logo-4x {
-  height: 400px; /* Increased to 5x size */
+  height: 680px; /* Large 5x size */
   width: auto;
   border-radius: 8px;
   background: transparent;
@@ -50,7 +50,7 @@ a[style*="background:#B8899A"]:hover {
 }
 
 .logo-3x {
-  height: 300px; /* Increased to 5x size */
+  height: 510px; /* Medium 5x size */
   width: auto;
   border-radius: 6px;
   background: transparent;
@@ -85,16 +85,16 @@ footer.small{color:var(--grey);font-size:11px;margin-top:24px;text-align:center;
 
 /* Responsive Design */
 @media (max-width: 768px) {
-  .logo-5x{height:350px} /* Proportionally sized for mobile */
-  .logo-4x{height:280px}
-  .logo-3x{height:210px}
+  .logo-5x{height:600px} /* Proportionally sized for mobile */
+  .logo-4x{height:480px}
+  .logo-3x{height:360px}
   .grid-4{grid-template-columns:repeat(2,minmax(0,1fr))}
   .grid-2{grid-template-columns:1fr}
 }
 
 @media (max-width: 480px) {
-  .logo-5x{height:250px} /* Proportionally sized for small screens */
-  .logo-4x{height:200px}
-  .logo-3x{height:150px}
+  .logo-5x{height:425px} /* Proportionally sized for small screens */
+  .logo-4x{height:340px}
+  .logo-3x{height:255px}
   .container{padding:16px}
 }
