@@ -34,7 +34,7 @@ API_SOURCES = {
     
     'philanthropy_news': {
         'name': 'Philanthropy News Digest',
-        'enabled': True,
+        'enabled': False,  # Returns 403 Forbidden - NOT WORKING
         'base_url': 'https://philanthropynewsdigest.org/rfps/rss',
         'api_key': None,
         'rate_limit': {
@@ -90,7 +90,7 @@ API_SOURCES = {
     
     'michigan_portal': {
         'name': 'Michigan Open Data Portal',
-        'enabled': True,
+        'enabled': False,  # No implementation - returns empty
         'base_url': 'https://data.michigan.gov/api',
         'api_key': None,
         'rate_limit': {
@@ -104,7 +104,7 @@ API_SOURCES = {
     
     'georgia_portal': {
         'name': 'Georgia Grants Portal',
-        'enabled': True,
+        'enabled': False,  # No implementation - returns empty
         'base_url': 'https://georgia.grantplatform.com/api',
         'api_key': None,
         'rate_limit': {

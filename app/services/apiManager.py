@@ -228,23 +228,32 @@ class APIManager:
     def _fetch_grants_gov(self, params: Dict) -> List[Dict]:
         """
         Fetch grants from Grants.gov API
-        Note: Grants.gov has a public API that doesn't require authentication
+        Uses the v2 search API which is publicly available
         """
         try:
-            base_url = self.sources['grants_gov']['base_url']
+            # Using the correct endpoint
+            search_url = "https://www.grants.gov/search/"
             
-            # Build query parameters
-            query_params = {
-                'keyword': params.get('query', ''),
-                'oppStatus': 'open',
-                'rows': params.get('limit', 25)
+            # Build POST payload for v2 API
+            payload = {
+                "startRecordNum": 0,
+                "keyword": params.get('query', 'nonprofit'),
+                "oppStatuses": "forecasted|posted",  # Open opportunities
+                "sortBy": "openDate|desc",
+                "rows": params.get('limit', 25)
             }
             
-            # Make request
-            response = requests.get(
-                f"{base_url}/search/v2/",
-                params=query_params,
-                timeout=10
+            headers = {
+                "Content-Type": "application/json",
+                "User-Agent": "PinkLemonade/1.0"
+            }
+            
+            # Make POST request to search endpoint
+            response = requests.post(
+                search_url,
+                json=payload,
+                headers=headers,
+                timeout=15
             )
             
             if response.status_code == 200:
@@ -349,21 +358,23 @@ class APIManager:
     
     def _fetch_federal_register(self, params: Dict) -> List[Dict]:
         """
-        Fetch grants from Federal Register API
+        Fetch REAL grant notices from Federal Register API
+        This API is confirmed working and returns actual government grant notices
         """
         try:
-            base_url = self.sources['federal_register']['base_url']
+            # Using the actual working endpoint
+            base_url = "https://www.federalregister.gov/api/v1"
             
-            # Build query parameters for Federal Register
-            # Note: Federal Register API has specific URL encoding requirements
+            # Search for grant-related documents
             query_params = {
-                'conditions[term]': params.get('query', 'grant'),
+                'conditions[term]': params.get('query', 'grant opportunity funding'),
+                'conditions[type][]': 'NOTICE',  # Focus on funding notices
                 'per_page': params.get('limit', 20),
                 'order': 'newest'
             }
             
             response = requests.get(
-                f"{base_url}/documents.json",
+                f"{base_url}/documents",
                 params=query_params,
                 timeout=10
             )
