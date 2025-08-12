@@ -193,376 +193,42 @@
           </a>
         </div>
       </div>
+
+      <!-- Smart Reports -->
+      <div style="background: white; border-radius: 16px; border: 1px solid #E8E8E8; overflow: hidden; transition: all 0.2s ease;">
+        <div style="padding: 32px;">
+          <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px;">
+            <div style="width: 48px; height: 48px; background: linear-gradient(135deg, #B8899A, #D4BAC7); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 20px;">
+              📋
+            </div>
+            <div style="background: #F0F8F0; color: #2D5A2D; padding: 4px 12px; border-radius: 12px; font-size: 12px; font-weight: 500;">
+              Active
+            </div>
+          </div>
+          
+          <h3 style="font-size: 1.25rem; font-weight: 600; color: #2A2A2A; margin: 0 0 8px 0;">
+            Smart Reports
+          </h3>
+          
+          <p style="color: #6B6B6B; font-size: 0.95rem; line-height: 1.5; margin: 0 0 24px 0;">
+            Automated report generation with stakeholder customization and insights
+          </p>
+          
+          <div style="margin-bottom: 24px;">
+            <div style="display: flex; flex-direction: column; gap: 8px;">
+              <div style="color: #6B6B6B; font-size: 0.9rem;">• Executive summaries</div>
+              <div style="color: #6B6B6B; font-size: 0.9rem;">• Stakeholder reports</div>
+              <div style="color: #6B6B6B; font-size: 0.9rem;">• Automated distribution</div>
+            </div>
+          </div>
+          
+          <a href="/reports" style="display: block; text-align: center; padding: 12px 24px; background: linear-gradient(135deg, #B8899A, #D4BAC7); color: white; text-decoration: none; border-radius: 8px; font-weight: 500; font-size: 0.95rem;">
+            Generate Reports
+          </a>
+        </div>
+      </div>
     </div>
   </div>
 </div>
-            <div class="bg-white rounded-lg shadow-md overflow-hidden card-hover">
-                <div class="pink-gradient p-6 text-white">
-                    <div class="flex items-center justify-between mb-2">
-                        <div class="text-3xl">✍️</div>
-                        <div class="px-2 py-1 rounded-full text-xs font-medium bg-white text-gray-600">
-                            ✅ Operational
-                        </div>
-                    </div>
-                    <h3 class="text-xl font-bold mb-1">Smart Writing</h3>
-                    <p class="text-sm opacity-90">AI-powered narrative generation and proposal assistance</p>
-                </div>
-                <div class="p-6">
-                    <div class="mb-4">
-                        <h4 class="font-semibold text-gray-900 mb-2">Key Features:</h4>
-                        <ul class="space-y-1">
-                            <li class="text-sm text-gray-600 flex items-center">
-                                <span class="w-1.5 h-1.5 bg-gray-400 rounded-full mr-2"></span>
-                                Automated narratives
-                            </li>
-                            <li class="text-sm text-gray-600 flex items-center">
-                                <span class="w-1.5 h-1.5 bg-gray-400 rounded-full mr-2"></span>
-                                Proposal templates
-                            </li>
-                            <li class="text-sm text-gray-600 flex items-center">
-                                <span class="w-1.5 h-1.5 bg-gray-400 rounded-full mr-2"></span>
-                                Content optimization
-                            </li>
-                        </ul>
-                    </div>
-                    <div class="space-y-2">
-                        <button onclick="testAPI('/api/writing/generate-narrative')" class="w-full px-4 py-2 pink-gradient text-white rounded-md hover:opacity-90 transition-opacity">
-                            Test API
-                        </button>
-                        <button onclick="showDocs('Smart Writing', 'Automated narrative generation and proposal assistance', '/api/writing/generate-narrative')" class="w-full text-sm text-gray-600 hover:text-gray-800 underline">
-                            View Documentation
-                        </button>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Smart Intelligence -->
-            <div class="bg-white rounded-lg shadow-md overflow-hidden card-hover">
-                <div class="pink-gradient p-6 text-white">
-                    <div class="flex items-center justify-between mb-2">
-                        <div class="text-3xl">🧠</div>
-                        <div class="px-2 py-1 rounded-full text-xs font-medium bg-white text-gray-600">
-                            ✅ Operational
-                        </div>
-                    </div>
-                    <h3 class="text-xl font-bold mb-1">Smart Intelligence</h3>
-                    <p class="text-sm opacity-90">Advanced grant analysis with strategic insights</p>
-                </div>
-                <div class="p-6">
-                    <div class="mb-4">
-                        <h4 class="font-semibold text-gray-900 mb-2">Key Features:</h4>
-                        <ul class="space-y-1">
-                            <li class="text-sm text-gray-600 flex items-center">
-                                <span class="w-1.5 h-1.5 bg-gray-400 rounded-full mr-2"></span>
-                                Grant analysis
-                            </li>
-                            <li class="text-sm text-gray-600 flex items-center">
-                                <span class="w-1.5 h-1.5 bg-gray-400 rounded-full mr-2"></span>
-                                Strategic recommendations
-                            </li>
-                            <li class="text-sm text-gray-600 flex items-center">
-                                <span class="w-1.5 h-1.5 bg-gray-400 rounded-full mr-2"></span>
-                                Contact intelligence
-                            </li>
-                        </ul>
-                    </div>
-                    <div class="space-y-2">
-                        <button onclick="testAPI('/api/grant-intelligence/analyze')" class="w-full px-4 py-2 pink-gradient text-white rounded-md hover:opacity-90 transition-opacity">
-                            Test API
-                        </button>
-                        <button onclick="showDocs('Smart Intelligence', 'Advanced grant analysis with strategic insights', '/api/grant-intelligence/analyze')" class="w-full text-sm text-gray-600 hover:text-gray-800 underline">
-                            View Documentation
-                        </button>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Smart Surveys -->
-            <div class="bg-white rounded-lg shadow-md overflow-hidden card-hover">
-                <div class="pink-gradient p-6 text-white">
-                    <div class="flex items-center justify-between mb-2">
-                        <div class="text-3xl">📊</div>
-                        <div class="px-2 py-1 rounded-full text-xs font-medium bg-white text-gray-600">
-                            ✅ Operational
-                        </div>
-                    </div>
-                    <h3 class="text-xl font-bold mb-1">Smart Surveys</h3>
-                    <p class="text-sm opacity-90">AI-refined survey building with intelligent question optimization</p>
-                </div>
-                <div class="p-6">
-                    <div class="mb-4">
-                        <h4 class="font-semibold text-gray-900 mb-2">Key Features:</h4>
-                        <ul class="space-y-1">
-                            <li class="text-sm text-gray-600 flex items-center">
-                                <span class="w-1.5 h-1.5 bg-gray-400 rounded-full mr-2"></span>
-                                Question refinement
-                            </li>
-                            <li class="text-sm text-gray-600 flex items-center">
-                                <span class="w-1.5 h-1.5 bg-gray-400 rounded-full mr-2"></span>
-                                Response optimization
-                            </li>
-                            <li class="text-sm text-gray-600 flex items-center">
-                                <span class="w-1.5 h-1.5 bg-gray-400 rounded-full mr-2"></span>
-                                Survey analytics
-                            </li>
-                        </ul>
-                    </div>
-                    <div class="space-y-2">
-                        <button onclick="testAPI('/api/smart-reporting/phase2/health')" class="w-full px-4 py-2 pink-gradient text-white rounded-md hover:opacity-90 transition-opacity">
-                            Test API
-                        </button>
-                        <button onclick="showDocs('Smart Surveys', 'Phase 2: AI question refinement and survey builder', '/api/smart-reporting/phase2/health')" class="w-full text-sm text-gray-600 hover:text-gray-800 underline">
-                            View Documentation
-                        </button>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Smart Collection -->
-            <div class="bg-white rounded-lg shadow-md overflow-hidden card-hover">
-                <div class="pink-gradient p-6 text-white">
-                    <div class="flex items-center justify-between mb-2">
-                        <div class="text-3xl">📥</div>
-                        <div class="px-2 py-1 rounded-full text-xs font-medium bg-white text-gray-600">
-                            ✅ Operational
-                        </div>
-                    </div>
-                    <h3 class="text-xl font-bold mb-1">Smart Collection</h3>
-                    <p class="text-sm opacity-90">Automated data collection and validation with real-time processing</p>
-                </div>
-                <div class="p-6">
-                    <div class="mb-4">
-                        <h4 class="font-semibold text-gray-900 mb-2">Key Features:</h4>
-                        <ul class="space-y-1">
-                            <li class="text-sm text-gray-600 flex items-center">
-                                <span class="w-1.5 h-1.5 bg-gray-400 rounded-full mr-2"></span>
-                                Automated workflows
-                            </li>
-                            <li class="text-sm text-gray-600 flex items-center">
-                                <span class="w-1.5 h-1.5 bg-gray-400 rounded-full mr-2"></span>
-                                Real-time validation
-                            </li>
-                            <li class="text-sm text-gray-600 flex items-center">
-                                <span class="w-1.5 h-1.5 bg-gray-400 rounded-full mr-2"></span>
-                                Data cleansing
-                            </li>
-                        </ul>
-                    </div>
-                    <div class="space-y-2">
-                        <button onclick="testAPI('/api/smart-reporting/phase3/health')" class="w-full px-4 py-2 pink-gradient text-white rounded-md hover:opacity-90 transition-opacity">
-                            Test API
-                        </button>
-                        <button onclick="showDocs('Smart Collection', 'Phase 3: Automated data collection and validation', '/api/smart-reporting/phase3/health')" class="w-full text-sm text-gray-600 hover:text-gray-800 underline">
-                            View Documentation
-                        </button>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Smart Analytics -->
-            <div class="bg-white rounded-lg shadow-md overflow-hidden card-hover">
-                <div class="pink-gradient p-6 text-white">
-                    <div class="flex items-center justify-between mb-2">
-                        <div class="text-3xl">📈</div>
-                        <div class="px-2 py-1 rounded-full text-xs font-medium bg-white text-gray-600">
-                            ✅ Operational
-                        </div>
-                    </div>
-                    <h3 class="text-xl font-bold mb-1">Smart Analytics</h3>
-                    <p class="text-sm opacity-90">Executive dashboards with predictive analytics and insights</p>
-                </div>
-                <div class="p-6">
-                    <div class="mb-4">
-                        <h4 class="font-semibold text-gray-900 mb-2">Key Features:</h4>
-                        <ul class="space-y-1">
-                            <li class="text-sm text-gray-600 flex items-center">
-                                <span class="w-1.5 h-1.5 bg-gray-400 rounded-full mr-2"></span>
-                                Executive dashboards
-                            </li>
-                            <li class="text-sm text-gray-600 flex items-center">
-                                <span class="w-1.5 h-1.5 bg-gray-400 rounded-full mr-2"></span>
-                                Predictive analytics
-                            </li>
-                            <li class="text-sm text-gray-600 flex items-center">
-                                <span class="w-1.5 h-1.5 bg-gray-400 rounded-full mr-2"></span>
-                                Performance insights
-                            </li>
-                        </ul>
-                    </div>
-                    <div class="space-y-2">
-                        <button onclick="testAPI('/api/smart-reporting/phase4/health')" class="w-full px-4 py-2 pink-gradient text-white rounded-md hover:opacity-90 transition-opacity">
-                            Test API
-                        </button>
-                        <button onclick="showDocs('Smart Analytics', 'Phase 4: Executive dashboards and predictive analytics', '/api/smart-reporting/phase4/health')" class="w-full text-sm text-gray-600 hover:text-gray-800 underline">
-                            View Documentation
-                        </button>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Smart Reports -->
-            <div class="bg-white rounded-lg shadow-md overflow-hidden card-hover">
-                <div class="pink-gradient p-6 text-white">
-                    <div class="flex items-center justify-between mb-2">
-                        <div class="text-3xl">📋</div>
-                        <div class="px-2 py-1 rounded-full text-xs font-medium bg-white text-gray-600">
-                            ✅ Operational
-                        </div>
-                    </div>
-                    <h3 class="text-xl font-bold mb-1">Smart Reports</h3>
-                    <p class="text-sm opacity-90">Automated report generation with stakeholder customization</p>
-                </div>
-                <div class="p-6">
-                    <div class="mb-4">
-                        <h4 class="font-semibold text-gray-900 mb-2">Key Features:</h4>
-                        <ul class="space-y-1">
-                            <li class="text-sm text-gray-600 flex items-center">
-                                <span class="w-1.5 h-1.5 bg-gray-400 rounded-full mr-2"></span>
-                                Executive summaries
-                            </li>
-                            <li class="text-sm text-gray-600 flex items-center">
-                                <span class="w-1.5 h-1.5 bg-gray-400 rounded-full mr-2"></span>
-                                Stakeholder reports
-                            </li>
-                            <li class="text-sm text-gray-600 flex items-center">
-                                <span class="w-1.5 h-1.5 bg-gray-400 rounded-full mr-2"></span>
-                                Automated distribution
-                            </li>
-                        </ul>
-                    </div>
-                    <div class="space-y-2">
-                        <button onclick="testAPI('/api/smart-reporting/phase5/health')" class="w-full px-4 py-2 pink-gradient text-white rounded-md hover:opacity-90 transition-opacity">
-                            Test API
-                        </button>
-                        <button onclick="showDocs('Smart Reports', 'Phase 5: Automated report generation with customization', '/api/smart-reporting/phase5/health')" class="w-full text-sm text-gray-600 hover:text-gray-800 underline">
-                            View Documentation
-                        </button>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Smart Governance -->
-            <div class="bg-white rounded-lg shadow-md overflow-hidden card-hover">
-                <div class="pink-gradient p-6 text-white">
-                    <div class="flex items-center justify-between mb-2">
-                        <div class="text-3xl">🛡️</div>
-                        <div class="px-2 py-1 rounded-full text-xs font-medium bg-white text-gray-600">
-                            ✅ Operational
-                        </div>
-                    </div>
-                    <h3 class="text-xl font-bold mb-1">Smart Governance</h3>
-                    <p class="text-sm opacity-90">Comprehensive compliance monitoring and audit trail management</p>
-                </div>
-                <div class="p-6">
-                    <div class="mb-4">
-                        <h4 class="font-semibold text-gray-900 mb-2">Key Features:</h4>
-                        <ul class="space-y-1">
-                            <li class="text-sm text-gray-600 flex items-center">
-                                <span class="w-1.5 h-1.5 bg-gray-400 rounded-full mr-2"></span>
-                                Compliance monitoring
-                            </li>
-                            <li class="text-sm text-gray-600 flex items-center">
-                                <span class="w-1.5 h-1.5 bg-gray-400 rounded-full mr-2"></span>
-                                Audit trails
-                            </li>
-                            <li class="text-sm text-gray-600 flex items-center">
-                                <span class="w-1.5 h-1.5 bg-gray-400 rounded-full mr-2"></span>
-                                Data governance
-                            </li>
-                        </ul>
-                    </div>
-                    <div class="space-y-2">
-                        <button onclick="testAPI('/api/smart-reporting/phase6/health')" class="w-full px-4 py-2 pink-gradient text-white rounded-md hover:opacity-90 transition-opacity">
-                            Test API
-                        </button>
-                        <button onclick="showDocs('Smart Governance', 'Phase 6: Compliance monitoring and audit trails', '/api/smart-reporting/phase6/health')" class="w-full text-sm text-gray-600 hover:text-gray-800 underline">
-                            View Documentation
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Quick Actions -->
-        <div class="bg-white rounded-lg shadow-md p-6 mb-8">
-            <h2 class="text-2xl font-bold text-gray-900 mb-4">⚡ Quick Actions</h2>
-            <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-                <button onclick="runSystemHealthCheck()" class="flex items-center justify-center px-4 py-3 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-pink-300">
-                    🔍 System Health Check
-                </button>
-                
-                <button onclick="generateExecutiveReport()" class="flex items-center justify-center px-4 py-3 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-pink-300">
-                    📋 Generate Report
-                </button>
-                
-                <button onclick="checkCompliance()" class="flex items-center justify-center px-4 py-3 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-pink-300">
-                    🛡️ Check Compliance
-                </button>
-                
-                <a href="/analytics" class="flex items-center justify-center px-4 py-3 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-pink-300">
-                    📊 View Analytics
-                </a>
-            </div>
-        </div>
-    </div>
-
-    <script>
-        // Test API endpoint
-        function testAPI(endpoint) {
-            fetch(endpoint)
-                .then(response => response.json())
-                .then(data => {
-                    console.log('API Response:', data);
-                    alert(`API Test Result:\n${JSON.stringify(data, null, 2)}`);
-                })
-                .catch(error => {
-                    console.error('API Error:', error);
-                    alert(`API Test Error:\n${error.message}`);
-                });
-        }
-
-        // Show documentation
-        function showDocs(toolName, description, endpoint) {
-            alert(`${toolName} Documentation:\n\n${description}\n\nEndpoint: ${endpoint}`);
-        }
-
-        // System health check
-        function runSystemHealthCheck() {
-            const phases = ['phase2', 'phase3', 'phase4', 'phase5', 'phase6'];
-            phases.forEach(phase => {
-                fetch(`/api/smart-reporting/${phase}/health`)
-                    .then(response => response.json())
-                    .then(data => console.log(`${phase}:`, data))
-                    .catch(error => console.error(`${phase} error:`, error));
-            });
-            alert('Running system health check - see console for results');
-        }
-
-        // Generate executive report
-        function generateExecutiveReport() {
-            fetch('/api/smart-reporting/phase5/executive-summary', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ report_title: 'Test Executive Summary' })
-            })
-            .then(response => response.json())
-            .then(data => {
-                console.log('Executive Summary:', data);
-                alert('Executive summary generated - check console for details');
-            })
-            .catch(error => alert('Error: ' + error.message));
-        }
-
-        // Check compliance
-        function checkCompliance() {
-            fetch('/api/smart-reporting/phase6/compliance-monitor')
-            .then(response => response.json())
-            .then(data => {
-                console.log('Compliance Status:', data);
-                alert(`Compliance Score: ${data.compliance_status?.overall_compliance_score || 'N/A'}% - check console for details`);
-            })
-            .catch(error => alert('Error: ' + error.message));
-        }
-    </script>
 
 {% endblock %}
