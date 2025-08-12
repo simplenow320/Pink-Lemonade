@@ -65,6 +65,10 @@ def create_app():
     flask_app.register_blueprint(user_settings_bp)
     flask_app.register_blueprint(grants_bp, url_prefix='/api/grants')
     
+    # Register organizations API for profile retrieval
+    from app.api.organizations import bp as organizations_bp
+    flask_app.register_blueprint(organizations_bp)
+    
     # Register grant intelligence endpoints
     from app.api.grant_intelligence import intelligence_api
     flask_app.register_blueprint(intelligence_api)

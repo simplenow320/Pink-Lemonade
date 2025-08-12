@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
+import SmartToolsEnhanced from '../components/SmartToolsEnhanced';
 
 const SmartTools = () => {
   const [healthStatus, setHealthStatus] = useState({});
   const [loading, setLoading] = useState(true);
+  const [useEnhancedMode, setUseEnhancedMode] = useState(true); // Default to enhanced mode
 
   useEffect(() => {
     const checkSystemHealth = async () => {
@@ -256,6 +258,12 @@ const SmartTools = () => {
     );
   };
 
+  // If enhanced mode is enabled, render the enhanced component
+  if (useEnhancedMode) {
+    return <SmartToolsEnhanced />;
+  }
+
+  // Otherwise render the original UI
   return (
     <div className="min-h-screen bg-gray-50 py-8">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">

@@ -7,6 +7,40 @@ logger = logging.getLogger(__name__)
 
 bp = Blueprint("grants", __name__)
 
+@bp.route('/list', methods=['GET'])
+def list_grants():
+    """Get all grants for Smart Tools grant selection"""
+    try:
+        # Fetch all grants from database
+        grants = Grant.query.all()
+        
+        grants_data = []
+        for grant in grants:
+            grants_data.append({
+                'id': grant.id,
+                'title': grant.title or 'Untitled Grant',
+                'funder': grant.funder or 'Unknown Funder',
+                'deadline': grant.deadline.isoformat() if grant.deadline else None,
+                'amount_min': grant.amount_min,
+                'amount_max': grant.amount_max,
+                'status': grant.status or 'available',
+                'url': getattr(grant, 'link', None),
+                'description': getattr(grant, 'description', None) or getattr(grant, 'eligibility', None)
+            })
+        
+        # Sort by deadline (earliest first, nulls last)
+        grants_data.sort(key=lambda x: (x['deadline'] is None, x['deadline'] or '9999-12-31'))
+        
+        return jsonify({
+            'success': True,
+            'grants': grants_data,
+            'total': len(grants_data)
+        })
+        
+    except Exception as e:
+        logger.error(f"Error fetching grants list: {e}")
+        return jsonify({'error': str(e), 'grants': []}), 200  # Return empty list on error
+
 @bp.route('/tracker', methods=['GET'])
 def get_grants_for_tracker():
     """Get all grants from database for the grant tracker"""
