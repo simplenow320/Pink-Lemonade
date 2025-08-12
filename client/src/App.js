@@ -265,6 +265,8 @@ function App() {
                     </ErrorBoundary>
                   }
                 />
+                {/* Redirect /reports to /smart-tools */}
+                <Route path="/reports" element={<Navigate to="/smart-tools" replace />} />
                 <Route
                   path="/survey/:projectId"
                   element={

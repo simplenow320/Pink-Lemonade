@@ -167,7 +167,11 @@ def create_app():
             "active": None
         }
     
-
+    # Add specific route for /reports to redirect to /smart-tools
+    @flask_app.route('/reports')
+    def reports_redirect():
+        from flask import redirect
+        return redirect('/smart-tools')
     
     # Start scheduler only in production
     if os.environ.get('FLASK_ENV') == 'production':
