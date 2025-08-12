@@ -67,6 +67,13 @@ class ComprehensiveGrantScraper:
             # Use AI to extract structured information
             grant_details = self._ai_extract_grant_info(extracted_text, grant_url)
             
+            # Generate program overview (3-5 sentences)
+            grant_details['program_overview'] = self._generate_program_overview(
+                grant_details.get('title', ''),
+                grant_details.get('program_description', ''),
+                grant_details.get('funder', '')
+            )
+            
             # Extract additional elements
             grant_details.update({
                 'contact_info': self._extract_contact_information(soup, extracted_text),
@@ -84,6 +91,19 @@ class ComprehensiveGrantScraper:
         except Exception as e:
             logger.error(f"Error extracting grant details from {grant_url}: {e}")
             return {}
+    
+    def _generate_program_overview(self, program_title: str, program_description: str, funder_name: str) -> str:
+        """
+        Generate overview only from real program data - no synthetic content
+        """
+        # Only return overview if we have actual program description
+        if program_description and len(program_description.strip()) > 50:
+            # Return the actual description if substantial, truncated to overview length
+            sentences = program_description.split('.')[:5]  # Take first 5 sentences max
+            return '. '.join(sentences).strip() + '.' if sentences else ""
+        
+        # If no real description available, return empty - no synthetic content
+        return ""
     
     def _ai_extract_grant_info(self, text: str, url: str) -> Dict:
         """
