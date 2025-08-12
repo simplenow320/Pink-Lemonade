@@ -69,6 +69,10 @@ def create_app():
     from app.api.grant_intelligence import intelligence_api
     flask_app.register_blueprint(intelligence_api)
     
+    # Register grant analysis endpoints
+    from app.api.grant_analysis import bp as grant_analysis_bp
+    flask_app.register_blueprint(grant_analysis_bp)
+    
     # Register new AI endpoints
     from app.api.ai_endpoints import bp as ai_endpoints_bp
     flask_app.register_blueprint(ai_endpoints_bp)

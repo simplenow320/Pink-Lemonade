@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import Toast from '../components/Toast';
 import api from '../utils/api';
 
@@ -290,16 +290,24 @@ const Grants = () => {
                       </div>
                     )}
                   </div>
-                  {grant.link && (
-                    <a 
-                      href={grant.link} 
-                      target="_blank" 
-                      rel="noopener noreferrer"
-                      className="text-sm text-pink-600 hover:text-pink-700 mt-2 inline-block"
+                  <div className="flex gap-3 mt-2">
+                    <Link 
+                      to={`/grant/${grant.id}`}
+                      className="text-sm text-pink-600 hover:text-pink-700"
                     >
-                      View Details →
-                    </a>
-                  )}
+                      Analyze Grant →
+                    </Link>
+                    {grant.link && (
+                      <a 
+                        href={grant.link} 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        className="text-sm text-gray-600 hover:text-gray-700"
+                      >
+                        Official Page ↗
+                      </a>
+                    )}
+                  </div>
                 </div>
               ))}
             </div>
