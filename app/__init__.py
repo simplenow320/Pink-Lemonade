@@ -160,6 +160,19 @@ def create_app():
     from app.api.email_invitations import bp as email_invitations_bp
     flask_app.register_blueprint(email_invitations_bp)
     
+    # Register new feature blueprints
+    from app.api.grant_matching import bp as grant_matching_bp
+    flask_app.register_blueprint(grant_matching_bp)
+    
+    from app.api.document_uploads import bp as document_uploads_bp
+    flask_app.register_blueprint(document_uploads_bp)
+    
+    from app.api.team_collaboration import bp as team_collaboration_bp
+    flask_app.register_blueprint(team_collaboration_bp)
+    
+    from app.api.email_notifications import bp as email_notifications_bp
+    flask_app.register_blueprint(email_notifications_bp)
+    
     # Initialize monitoring
     from app.services.monitoring_service import init_monitoring
     init_monitoring(flask_app)

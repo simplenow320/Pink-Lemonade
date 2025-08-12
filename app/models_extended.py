@@ -4,10 +4,11 @@ Smart Reporting models for Phase 1 implementation
 """
 
 from app import db
-from datetime import datetime, date
+from datetime import datetime, date, timedelta
 from sqlalchemy.dialects.postgresql import JSON
 from sqlalchemy import Index
 import json
+import secrets
 
 
 class OrgProfile(db.Model):
