@@ -4,6 +4,8 @@
 Pink Lemonade is an AI-powered grant management platform for nonprofits. It streamlines the entire grant lifecycle from discovery to submission by leveraging intelligent web scraping, AI-powered matching, and automated narrative generation. The platform helps nonprofits discover, evaluate, track, and apply for grants, with a focus on urban ministries and faith-based organizations. Key capabilities include automated grant discovery, real-time analytics, and a comprehensive grant management dashboard.
 
 ## Recent Changes (August 12, 2025)
+🎉 **MAJOR ENHANCEMENT: COMPREHENSIVE DATA COLLECTION SYSTEM**: Built advanced grant intelligence and funder research capabilities that extract 20+ data points per grant, including detailed eligibility criteria, contact information, application requirements, and complete funder profiles.
+
 🎉 **PROJECT 100% COMPLETE**: All features successfully implemented and deployed!
 
 ✅ **SETTINGS PAGE REORGANIZED**: Converted Settings page from personal information focus to organization information focus. Now captures essential nonprofit data including EIN, organization type, mission statement, budget range, focus areas, and programs/services - aligning with the platform's purpose as a nonprofit grant management system.

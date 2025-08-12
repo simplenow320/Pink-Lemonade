@@ -35,16 +35,26 @@ def analyze_grant(grant_id):
             'source': grant.source_name
         }
         
-        # Prepare org data
+        # Prepare org data using actual Organization model fields
         org_data = {}
         if org:
             org_data = {
-                'name': org.name,
-                'mission': org.mission,
-                'focus_areas': org.focus_areas,
-                'programs': org.programs,
-                'budget': org.budget,
-                'ein': org.ein
+                'name': getattr(org, 'name', 'Unknown Organization'),
+                'mission': getattr(org, 'mission', 'Not specified'),
+                'focus_areas': getattr(org, 'primary_focus_areas', None) or getattr(org, 'secondary_focus_areas', 'Not specified'),
+                'programs': getattr(org, 'programs_services', 'Not specified'),
+                'budget': getattr(org, 'annual_budget_range', 'Not specified'),
+                'ein': getattr(org, 'ein', 'Not specified'),
+                'geography': f"{getattr(org, 'primary_city', '')} {getattr(org, 'primary_state', '')}".strip() or 'Not specified',
+                'website': getattr(org, 'website', 'Not specified'),
+                'founded_year': getattr(org, 'year_founded', 'Not specified'),
+                'staff_size': getattr(org, 'staff_size', 'Not specified'),
+                'org_type': getattr(org, 'org_type', 'Not specified'),
+                'service_area': getattr(org, 'service_area_type', 'Not specified'),
+                'target_demographics': getattr(org, 'target_demographics', 'Not specified'),
+                'people_served': getattr(org, 'people_served_annually', 'Not specified'),
+                'previous_funders': getattr(org, 'previous_funders', 'Not specified'),
+                'grant_writing_capacity': getattr(org, 'grant_writing_capacity', 'Not specified')
             }
         
         # Generate comprehensive AI analysis
@@ -74,7 +84,7 @@ def generate_comprehensive_grant_analysis(grant_data, org_data):
     GRANT OPPORTUNITY:
     Title: {grant_data.get('title', 'Unknown')}
     Funder: {grant_data.get('funder', 'Unknown')}
-    Amount Range: ${grant_data.get('amount_min', 0):,} - ${grant_data.get('amount_max', 0):,}
+    Amount Range: ${grant_data.get('amount_min') or 0:,} - ${grant_data.get('amount_max') or 0:,}
     Deadline: {grant_data.get('deadline', 'Not specified')}
     Description: {grant_data.get('description', 'No description available')}
     Source: {grant_data.get('source', 'Unknown')}
