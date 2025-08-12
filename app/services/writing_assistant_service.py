@@ -220,35 +220,42 @@ def generate_section_outline(section_type, grant_info, org_info):
             "error": f"Error generating outline: {str(e)}"
         }
 
-def _construct_section_prompt(section_type, grant_info, org_info, inputs=None):
+def _construct_section_prompt(section_type, grant_info, org_info, inputs=None, funder_profile=None):
     """
-    Construct a prompt for generating content for a specific section
+    Enhanced prompt construction using comprehensive organization data and authentic funder intelligence
     
     Args:
         section_type (str): Type of proposal section
         grant_info (dict): Information about the grant
-        org_info (dict): Information about the organization
+        org_info (dict): Comprehensive organization profile (30+ fields)
         inputs (dict, optional): Additional user inputs
+        funder_profile (dict, optional): Authentic funder intelligence
         
     Returns:
-        str: Constructed prompt
+        str: Enhanced strategic prompt
     """
-    # Base prompt with grant and organization context
+    # Build comprehensive organization context
+    org_context = _build_comprehensive_org_context_for_writing(org_info)
+    
+    # Build grant context with funder intelligence
+    grant_context = _build_grant_context_for_writing(grant_info, funder_profile)
+    
+    # Enhanced strategic prompt
     prompt = f"""
-    Write a compelling {section_type} section for a grant proposal based on the following information:
+    Write a strategic, compelling {section_type} section for a grant proposal that leverages comprehensive organizational intelligence and authentic funder data.
     
-    --- GRANT INFORMATION ---
-    Title: {grant_info.get('title', 'N/A')}
-    Funder: {grant_info.get('funder', 'N/A')}
-    Amount: ${grant_info.get('amount', 'N/A')}
-    Description: {grant_info.get('description', 'N/A')}
-    Focus Areas: {', '.join(grant_info.get('focus_areas', ['N/A']))}
+    {org_context}
     
-    --- ORGANIZATION INFORMATION ---
-    Name: {org_info.get('name', 'N/A')}
-    Mission: {org_info.get('mission', 'N/A')}
-    Programs: {org_info.get('programs', 'N/A')}
-    Population Served: {org_info.get('population_served', 'N/A')}
+    {grant_context}
+    
+    STRATEGIC WRITING REQUIREMENTS:
+    1. Leverage the organization's unique strengths and capabilities
+    2. Demonstrate clear alignment between organizational mission and grant purpose
+    3. Use specific organizational achievements and data points
+    4. Address funder's authentic priorities and success factors
+    5. Show how organizational capacity matches grant requirements
+    6. Integrate geographic alignment and service area compatibility
+    7. Reference relevant previous funding experience and success rates
     """
     
     # Add section-specific instructions
@@ -346,6 +353,147 @@ def _construct_section_prompt(section_type, grant_info, org_info, inputs=None):
     """
     
     return prompt
+
+def _build_comprehensive_org_context_for_writing(org_info):
+    """Build comprehensive organization context for Smart Tools writing"""
+    
+    context_parts = []
+    context_parts.append("=== COMPREHENSIVE ORGANIZATION PROFILE ===")
+    
+    # Core Identity
+    if org_info.get('name'):
+        context_parts.append(f"Organization: {org_info.get('name')}")
+    if org_info.get('legal_name') and org_info.get('legal_name') != org_info.get('name'):
+        context_parts.append(f"Legal Name: {org_info.get('legal_name')}")
+    if org_info.get('org_type'):
+        context_parts.append(f"Organization Type: {org_info.get('org_type')}")
+    if org_info.get('year_founded'):
+        context_parts.append(f"Founded: {org_info.get('year_founded')}")
+    
+    # Mission, Vision & Values
+    if org_info.get('mission'):
+        context_parts.append(f"Mission: {org_info.get('mission')}")
+    if org_info.get('vision'):
+        context_parts.append(f"Vision: {org_info.get('vision')}")
+    if org_info.get('values'):
+        context_parts.append(f"Core Values: {org_info.get('values')}")
+    
+    # Program Focus & Services
+    primary_focus = org_info.get('primary_focus_areas', [])
+    if primary_focus:
+        context_parts.append(f"Primary Focus Areas: {', '.join(primary_focus)}")
+    
+    if org_info.get('programs_services'):
+        context_parts.append(f"Programs & Services: {org_info.get('programs_services')}")
+    
+    target_demos = org_info.get('target_demographics', [])
+    if target_demos:
+        context_parts.append(f"Target Demographics: {', '.join(target_demos)}")
+    
+    age_groups = org_info.get('age_groups_served', [])
+    if age_groups:
+        context_parts.append(f"Age Groups Served: {', '.join(age_groups)}")
+    
+    # Geographic Scope
+    if org_info.get('service_area_type'):
+        context_parts.append(f"Service Area: {org_info.get('service_area_type')}")
+    
+    location_parts = []
+    if org_info.get('primary_city'):
+        location_parts.append(org_info.get('primary_city'))
+    if org_info.get('primary_state'):
+        location_parts.append(org_info.get('primary_state'))
+    if location_parts:
+        context_parts.append(f"Primary Location: {', '.join(location_parts)}")
+    
+    # Organizational Capacity
+    if org_info.get('annual_budget_range'):
+        context_parts.append(f"Annual Budget: {org_info.get('annual_budget_range')}")
+    if org_info.get('staff_size'):
+        context_parts.append(f"Staff Size: {org_info.get('staff_size')}")
+    if org_info.get('people_served_annually'):
+        context_parts.append(f"People Served Annually: {org_info.get('people_served_annually')}")
+    
+    # Track Record & Achievements
+    if org_info.get('key_achievements'):
+        context_parts.append(f"Key Achievements: {org_info.get('key_achievements')}")
+    if org_info.get('previous_funders'):
+        funders = org_info.get('previous_funders', [])
+        context_parts.append(f"Previous Funders: {', '.join(funders[:3])}")
+    if org_info.get('grant_success_rate'):
+        context_parts.append(f"Grant Success Rate: {org_info.get('grant_success_rate')}%")
+    
+    # Special Characteristics
+    special_chars = []
+    if org_info.get('faith_based'):
+        special_chars.append('Faith-based')
+    if org_info.get('minority_led'):
+        special_chars.append('Minority-led')
+    if org_info.get('woman_led'):
+        special_chars.append('Woman-led')
+    if special_chars:
+        context_parts.append(f"Special Characteristics: {', '.join(special_chars)}")
+    
+    # Unique Capabilities
+    if org_info.get('unique_capabilities'):
+        context_parts.append(f"Unique Capabilities: {org_info.get('unique_capabilities')}")
+    
+    return '\n'.join(context_parts)
+
+def _build_grant_context_for_writing(grant_info, funder_profile=None):
+    """Build enhanced grant context with authentic funder intelligence"""
+    
+    context_parts = []
+    context_parts.append("=== GRANT OPPORTUNITY ANALYSIS ===")
+    
+    # Basic Grant Details
+    context_parts.append(f"Grant Title: {grant_info.get('title', 'Not specified')}")
+    context_parts.append(f"Funder: {grant_info.get('funder', 'Not specified')}")
+    
+    if grant_info.get('description'):
+        context_parts.append(f"Description: {grant_info.get('description')}")
+    
+    # Financial Details
+    amount_min = grant_info.get('amount_min', 0)
+    amount_max = grant_info.get('amount_max', 0)
+    if amount_min or amount_max:
+        if amount_min == amount_max:
+            context_parts.append(f"Grant Amount: ${amount_max:,}")
+        else:
+            context_parts.append(f"Amount Range: ${amount_min:,} - ${amount_max:,}")
+    
+    if grant_info.get('deadline'):
+        context_parts.append(f"Deadline: {grant_info.get('deadline')}")
+    
+    focus_areas = grant_info.get('focus_areas', [])
+    if focus_areas:
+        if isinstance(focus_areas, list):
+            context_parts.append(f"Focus Areas: {', '.join(focus_areas)}")
+        else:
+            context_parts.append(f"Focus Areas: {focus_areas}")
+    
+    # Authentic Funder Intelligence (if available)
+    if funder_profile:
+        context_parts.append("\n=== AUTHENTIC FUNDER INTELLIGENCE ===")
+        
+        if funder_profile.get('verified_overview'):
+            context_parts.append(f"Funder Mission: {funder_profile.get('verified_overview')}")
+        
+        if funder_profile.get('funding_priorities'):
+            priorities = funder_profile.get('funding_priorities', [])
+            context_parts.append(f"Funding Priorities: {', '.join(priorities)}")
+        
+        if funder_profile.get('success_factors'):
+            factors = funder_profile.get('success_factors', [])
+            context_parts.append(f"Success Factors: {', '.join(factors[:3])}")
+        
+        if funder_profile.get('typical_grant_amounts'):
+            context_parts.append(f"Typical Grant Range: {funder_profile.get('typical_grant_amounts')}")
+        
+        if funder_profile.get('geographic_focus'):
+            context_parts.append(f"Geographic Focus: {funder_profile.get('geographic_focus')}")
+    
+    return '\n'.join(context_parts)
 
 def generate_narrative(grant, org_profile, section):
     """

@@ -64,79 +64,120 @@ def _json():
 
 @bp.route('/case-support', methods=['POST'])
 def create_case_support():
-    """Generate a Case for Support document using organization profile from database"""
+    """Generate an Enhanced Case for Support using comprehensive organization profile and grant intelligence"""
     try:
         data = request.get_json() or {}
         
-        # Import Organization model
-        from app.models import Organization
+        # Import models and services
+        from app.models import Organization, Grant
+        from app.services.funder_intelligence import FunderIntelligenceService
+        from app.services.writing_assistant_service import _build_comprehensive_org_context_for_writing, _build_grant_context_for_writing
         
-        # Fetch organization from database
+        # Fetch comprehensive organization profile
         org = Organization.query.first()
         if not org:
             return jsonify({'error': 'No organization profile found. Please complete your organization profile first.'}), 404
         
-        # Use organization data from database
-        org_data = org.to_dict()
+        # Get comprehensive organization data
+        org_data = {
+            'name': org.name,
+            'legal_name': org.legal_name,
+            'org_type': org.org_type,
+            'year_founded': org.year_founded,
+            'mission': org.mission,
+            'vision': org.vision,
+            'values': org.values,
+            'primary_focus_areas': org.primary_focus_areas or [],
+            'secondary_focus_areas': org.secondary_focus_areas or [],
+            'programs_services': org.programs_services,
+            'target_demographics': org.target_demographics or [],
+            'age_groups_served': org.age_groups_served or [],
+            'service_area_type': org.service_area_type,
+            'primary_city': org.primary_city,
+            'primary_state': org.primary_state,
+            'annual_budget_range': org.annual_budget_range,
+            'staff_size': org.staff_size,
+            'people_served_annually': org.people_served_annually,
+            'key_achievements': org.key_achievements,
+            'previous_funders': org.previous_funders or [],
+            'grant_success_rate': org.grant_success_rate,
+            'faith_based': org.faith_based,
+            'minority_led': org.minority_led,
+            'woman_led': org.woman_led,
+            'unique_capabilities': org.unique_capabilities,
+            'impact_metrics': org.impact_metrics or {}
+        }
         
-        # Override with any user-provided specifics
-        financial_need = data.get('financial_need', 'Funding to expand our programs and services')
-        audience_type = data.get('audience_type', 'foundations and individual donors')
-        word_count_range = data.get('word_count_range', '600-900')
+        # Get grant context if specified
+        grant_data = {}
+        funder_profile = None
+        grant_id = data.get('grant_id')
         
-        # Use OpenAI for document generation
+        if grant_id:
+            grant = Grant.query.get(grant_id)
+            if grant:
+                grant_data = grant.to_dict()
+                
+                # Get authentic funder intelligence
+                funder_service = FunderIntelligenceService()
+                funder_profile = funder_service.get_funder_profile(
+                    grant_data.get('funder', ''),
+                    grant_data.get('url', '')
+                )
+        
+        # Build comprehensive contexts
+        org_context = _build_comprehensive_org_context_for_writing(org_data)
+        grant_context = _build_grant_context_for_writing(grant_data, funder_profile) if grant_data else ""
+        
+        # Use OpenAI for enhanced document generation
         from openai import OpenAI
         client = OpenAI(api_key=os.environ.get('OPENAI_API_KEY'))
         
-        # Build the professional grant writing prompt with database data
-        prompt = f"""You are an expert nonprofit grant writer with extensive experience in fundraising and development. 
+        # Enhanced strategic prompt using comprehensive data
+        prompt = f"""You are an expert nonprofit strategic communications consultant specializing in creating compelling Cases for Support that leverage comprehensive organizational intelligence.
 
-Generate a polished, fact-checked Case for Support based ONLY on the verified organizational data provided below. Do not invent data, statistics, or history. Maintain the tone of a persuasive, professional funding document.
+{org_context}
 
-ORGANIZATION DETAILS:
-- Name: {org_data.get('name')}
-- Legal Name: {org_data.get('legal_name', org_data.get('name'))}
-- Mission: {org_data.get('mission')}
-- Vision: {org_data.get('vision', 'Not provided')}
-- Programs & Services: {org_data.get('programs_services', 'Not specified')}
-- Key Achievements: {org_data.get('key_achievements', 'Not specified')}
-- Financial Need: {financial_need}
-- Target Demographics: {', '.join(org_data.get('target_demographics', [])) or 'Not specified'}
-- Service Area: {org_data.get('service_area_type', 'Not specified')} - {org_data.get('primary_city', '')}, {org_data.get('primary_state', '')}
-- Founded Year: {org_data.get('year_founded', 'Not provided')}
-- Annual Budget: {org_data.get('annual_budget_range', 'Not specified')}
-- Staff Size: {org_data.get('staff_size', 'Not specified')}
-- People Served Annually: {org_data.get('people_served_annually', 'Not specified')}
+{grant_context}
 
-TARGET AUDIENCE: {data.get('audience_type', 'foundations and individual donors')}
-WORD COUNT: {data.get('word_count_range', '600-900')} words
+STRATEGIC CASE FOR SUPPORT REQUIREMENTS:
+Create a comprehensive, strategic Case for Support that demonstrates why this organization deserves funding. Use the comprehensive organizational data to craft a compelling narrative that shows:
 
-Structure the document with these exact sections:
-# Executive Summary
-## Organization Overview  
-## Mission & Vision
-## Programs & Services
-## Community Impact
-## Financial Need
-## Call to Action
+1. ORGANIZATIONAL EXCELLENCE: Leverage unique capabilities, achievements, and success metrics
+2. MISSION ALIGNMENT: Connect organizational mission to community needs and funder priorities
+3. PROVEN IMPACT: Use specific achievements and success rates to demonstrate effectiveness
+4. STRATEGIC CAPACITY: Show how organizational structure and experience enable success
+5. COMMUNITY VALUE: Demonstrate geographic alignment and demographic focus
+6. SUSTAINABILITY: Reference previous funding success and organizational maturity
 
-Requirements:
-- Use ONLY the verified facts provided above
-- Do not fabricate statistics, dates, or program details
-- Maintain persuasive, professional funding document tone throughout
-- Output in clean markdown format with proper headers
-- Each section should be substantive and compelling for grant funders
-- End with a strong, specific Call to Action
+REQUIRED SECTIONS:
+1. Executive Summary (compelling overview highlighting key strengths)
+2. Organization Overview (comprehensive profile including founding, growth, achievements)
+3. Mission & Strategic Vision (mission, vision, values with context)
+4. Programs & Services (detailed program descriptions with impact data)
+5. Community Impact & Demographics (specific populations served and outcomes)
+6. Organizational Capacity (staff, budget, infrastructure, track record)
+7. Strategic Partnerships & Collaborations (previous funders, success rate)
+8. Financial Sustainability (budget management, funding diversification)
+9. Call to Action (specific funding request with strategic rationale)
 
-Generate the Case for Support now:"""
+WRITING STANDARDS:
+- Use ONLY verified organizational data provided above
+- Demonstrate strategic thinking and organizational maturity
+- Include specific metrics, achievements, and capacity indicators
+- Show alignment between organizational strengths and community needs
+- Professional, compelling tone that inspires confidence
+- Strategic narrative that positions organization as excellent investment
+
+Generate the comprehensive Case for Support now:"""
 
         response = client.chat.completions.create(
             model="gpt-4o",
             messages=[
-                {"role": "system", "content": "You are an expert nonprofit grant writer specializing in professional funding documents. Generate compelling, fact-based cases for support using only verified organizational data."},
+                {"role": "system", "content": "You are an expert nonprofit strategic communications consultant specializing in creating industry-leading Cases for Support that leverage comprehensive organizational intelligence and authentic data to inspire confidence and funding decisions."},
                 {"role": "user", "content": prompt}
             ],
-            max_tokens=2000
+            max_tokens=3000
         )
         
         content = response.choices[0].message.content
@@ -184,24 +225,64 @@ def create_grant_pitch():
         from openai import OpenAI
         client = OpenAI(api_key=os.environ.get('OPENAI_API_KEY'))
         
-        # Build the professional grant pitch prompt with database data
-        prompt = f"""You are a professional grant and donor pitch coach. Using only the verified organizational data provided below, create three versions of a persuasive pitch.
+        # Get comprehensive organization data
+        org_data = {
+            'name': org.name,
+            'legal_name': org.legal_name,
+            'org_type': org.org_type,
+            'year_founded': org.year_founded,
+            'mission': org.mission,
+            'vision': org.vision,
+            'values': org.values,
+            'primary_focus_areas': org.primary_focus_areas or [],
+            'programs_services': org.programs_services,
+            'target_demographics': org.target_demographics or [],
+            'service_area_type': org.service_area_type,
+            'primary_city': org.primary_city,
+            'primary_state': org.primary_state,
+            'annual_budget_range': org.annual_budget_range,
+            'staff_size': org.staff_size,
+            'people_served_annually': org.people_served_annually,
+            'key_achievements': org.key_achievements,
+            'previous_funders': org.previous_funders or [],
+            'grant_success_rate': org.grant_success_rate,
+            'faith_based': org.faith_based,
+            'minority_led': org.minority_led,
+            'woman_led': org.woman_led,
+            'unique_capabilities': org.unique_capabilities,
+            'impact_metrics': org.impact_metrics or {}
+        }
+        
+        # Enhanced strategic grant pitch prompt using comprehensive data
+        prompt = f"""You are a professional grant and donor pitch strategist specializing in creating compelling funding requests using comprehensive organizational intelligence.
 
-ORGANIZATION DETAILS:
+COMPREHENSIVE ORGANIZATION PROFILE:
 - Name: {org_data.get('name')}
+- Legal Name: {org_data.get('legal_name')}
+- Type: {org_data.get('org_type')}
+- Founded: {org_data.get('year_founded')}
 - Mission: {org_data.get('mission')}
+- Vision: {org_data.get('vision')}
+- Primary Focus: {', '.join(org_data.get('primary_focus_areas', []))}
 - Programs/Services: {org_data.get('programs_services', 'Not specified')}
+- Target Demographics: {', '.join(org_data.get('target_demographics', []))}
+- Service Area: {org_data.get('service_area_type')} - {org_data.get('primary_city')}, {org_data.get('primary_state')}
+- Annual Budget: {org_data.get('annual_budget_range')}
+- Staff Size: {org_data.get('staff_size')}
+- People Served: {org_data.get('people_served_annually')}
 - Key Achievements: {org_data.get('key_achievements', 'Not specified')}
-- Impact Metrics: {org_data.get('impact_metrics', {}) if org_data.get('impact_metrics') else 'Not specified'}
+- Previous Funders: {', '.join((org_data.get('previous_funders', []) or [])[:3])}
+- Grant Success Rate: {org_data.get('grant_success_rate')}%
+- Special Characteristics: {'Faith-based' if org_data.get('faith_based') else ''} {'Minority-led' if org_data.get('minority_led') else ''} {'Woman-led' if org_data.get('woman_led') else ''}
+- Unique Capabilities: {org_data.get('unique_capabilities', 'Not specified')}
+- Impact Metrics: {str(org_data.get('impact_metrics', {}))}
+
+PITCH PARAMETERS:
+- Target Funder: {funder_name}
+- Alignment Areas: {alignment}
 - Funding Need: {funding_need}
 - Funding Amount: {funding_amount}
-- Geographic Focus: {org_data.get('service_area_type', 'Not specified')} - {org_data.get('primary_city', '')}, {org_data.get('primary_state', '')}
-- Annual Budget: {org_data.get('annual_budget_range', 'Not specified')}
-- People Served: {org_data.get('people_served_annually', 'Not specified')}
-
-TARGET FUNDER: {data.get('funder_name')}
-ALIGNMENT AREAS: {data.get('alignment')}
-WORD LIMIT: {data.get('word_limit', '250')} words per format
+- Word Limit: {word_limit} words per format
 
 Create these three distinct pitch formats:
 
