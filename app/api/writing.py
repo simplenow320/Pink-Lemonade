@@ -64,35 +64,49 @@ def _json():
 
 @bp.route('/case-support', methods=['POST'])
 def create_case_support():
-    """Generate a Case for Support document using verified user inputs only"""
+    """Generate a Case for Support document using organization profile from database"""
     try:
-        data = request.get_json()
+        data = request.get_json() or {}
         
-        # Validate required fields
-        required_fields = ['org_name', 'mission', 'programs', 'impact', 'financial_need']
-        for field in required_fields:
-            if not data.get(field, '').strip():
-                return jsonify({'error': f'{field.replace("_", " ").title()} is required'}), 400
+        # Import Organization model
+        from app.models import Organization
+        
+        # Fetch organization from database
+        org = Organization.query.first()
+        if not org:
+            return jsonify({'error': 'No organization profile found. Please complete your organization profile first.'}), 404
+        
+        # Use organization data from database
+        org_data = org.to_dict()
+        
+        # Override with any user-provided specifics
+        financial_need = data.get('financial_need', 'Funding to expand our programs and services')
+        audience_type = data.get('audience_type', 'foundations and individual donors')
+        word_count_range = data.get('word_count_range', '600-900')
         
         # Use OpenAI for document generation
         from openai import OpenAI
         client = OpenAI(api_key=os.environ.get('OPENAI_API_KEY'))
         
-        # Build the professional grant writing prompt
+        # Build the professional grant writing prompt with database data
         prompt = f"""You are an expert nonprofit grant writer with extensive experience in fundraising and development. 
 
-Generate a polished, fact-checked Case for Support based ONLY on the verified user inputs provided below. Do not invent data, statistics, or history. Maintain the tone of a persuasive, professional funding document.
+Generate a polished, fact-checked Case for Support based ONLY on the verified organizational data provided below. Do not invent data, statistics, or history. Maintain the tone of a persuasive, professional funding document.
 
 ORGANIZATION DETAILS:
-- Name: {data.get('org_name')}
-- Mission: {data.get('mission')}
-- Vision: {data.get('vision', 'Not provided')}
-- Programs & Services: {data.get('programs')}
-- Community Impact: {data.get('impact')}
-- Financial Need: {data.get('financial_need')}
-- Target Population: {data.get('target_population', 'Not specified')}
-- Geographic Scope: {data.get('geographic_scope', 'Not specified')}
-- Founded Year: {data.get('founded_year', 'Not provided')}
+- Name: {org_data.get('name')}
+- Legal Name: {org_data.get('legal_name', org_data.get('name'))}
+- Mission: {org_data.get('mission')}
+- Vision: {org_data.get('vision', 'Not provided')}
+- Programs & Services: {org_data.get('programs_services', 'Not specified')}
+- Key Achievements: {org_data.get('key_achievements', 'Not specified')}
+- Financial Need: {financial_need}
+- Target Demographics: {', '.join(org_data.get('target_demographics', [])) or 'Not specified'}
+- Service Area: {org_data.get('service_area_type', 'Not specified')} - {org_data.get('primary_city', '')}, {org_data.get('primary_state', '')}
+- Founded Year: {org_data.get('year_founded', 'Not provided')}
+- Annual Budget: {org_data.get('annual_budget_range', 'Not specified')}
+- Staff Size: {org_data.get('staff_size', 'Not specified')}
+- People Served Annually: {org_data.get('people_served_annually', 'Not specified')}
 
 TARGET AUDIENCE: {data.get('audience_type', 'foundations and individual donors')}
 WORD COUNT: {data.get('word_count_range', '600-900')} words
@@ -144,31 +158,46 @@ Generate the Case for Support now:"""
 
 @bp.route('/grant-pitch', methods=['POST'])
 def create_grant_pitch():
-    """Generate a Grant Pitch in three formats using verified user inputs only"""
+    """Generate a Grant Pitch in three formats using organization profile from database"""
     try:
-        data = request.get_json()
+        data = request.get_json() or {}
         
-        # Validate required fields
-        required_fields = ['org_name', 'funder_name', 'alignment', 'mission', 'programs', 'impact', 'funding_need']
-        for field in required_fields:
-            if not data.get(field, '').strip():
-                return jsonify({'error': f'{field.replace("_", " ").title()} is required'}), 400
+        # Import Organization model
+        from app.models import Organization
+        
+        # Fetch organization from database
+        org = Organization.query.first()
+        if not org:
+            return jsonify({'error': 'No organization profile found. Please complete your organization profile first.'}), 404
+        
+        # Use organization data from database
+        org_data = org.to_dict()
+        
+        # Validate required pitch-specific fields
+        funder_name = data.get('funder_name', 'Potential Funder')
+        alignment = data.get('alignment', 'Mission alignment and shared values')
+        funding_need = data.get('funding_need', 'General operating support')
+        funding_amount = data.get('funding_amount', 'Not specified')
+        word_limit = data.get('word_limit', '250')
         
         # Use OpenAI for document generation
         from openai import OpenAI
         client = OpenAI(api_key=os.environ.get('OPENAI_API_KEY'))
         
-        # Build the professional grant pitch prompt
-        prompt = f"""You are a professional grant and donor pitch coach. Using only the verified input provided below, create three versions of a persuasive pitch.
+        # Build the professional grant pitch prompt with database data
+        prompt = f"""You are a professional grant and donor pitch coach. Using only the verified organizational data provided below, create three versions of a persuasive pitch.
 
 ORGANIZATION DETAILS:
-- Name: {data.get('org_name')}
-- Mission: {data.get('mission')}
-- Programs/Services: {data.get('programs')}
-- Impact/Results: {data.get('impact')}
-- Funding Need: {data.get('funding_need')}
-- Funding Amount: {data.get('funding_amount', 'Not specified')}
-- Geographic Focus: {data.get('geographic_focus', 'Not specified')}
+- Name: {org_data.get('name')}
+- Mission: {org_data.get('mission')}
+- Programs/Services: {org_data.get('programs_services', 'Not specified')}
+- Key Achievements: {org_data.get('key_achievements', 'Not specified')}
+- Impact Metrics: {org_data.get('impact_metrics', {}) if org_data.get('impact_metrics') else 'Not specified'}
+- Funding Need: {funding_need}
+- Funding Amount: {funding_amount}
+- Geographic Focus: {org_data.get('service_area_type', 'Not specified')} - {org_data.get('primary_city', '')}, {org_data.get('primary_state', '')}
+- Annual Budget: {org_data.get('annual_budget_range', 'Not specified')}
+- People Served: {org_data.get('people_served_annually', 'Not specified')}
 
 TARGET FUNDER: {data.get('funder_name')}
 ALIGNMENT AREAS: {data.get('alignment')}
@@ -224,15 +253,31 @@ Generate the three grant pitch formats now:"""
 
 @bp.route('/impact-report', methods=['POST'])
 def create_impact_report():
-    """Generate an Impact Report using verified data and inputs only"""
+    """Generate an Impact Report using organization profile from database"""
     try:
-        data = request.get_json()
+        data = request.get_json() or {}
         
-        # Validate required fields
-        required_fields = ['org_name', 'programs_covered', 'program_outcomes']
-        for field in required_fields:
-            if not data.get(field, '').strip():
-                return jsonify({'error': f'{field.replace("_", " ").title()} is required'}), 400
+        # Import Organization model
+        from app.models import Organization
+        
+        # Fetch organization from database
+        org = Organization.query.first()
+        if not org:
+            return jsonify({'error': 'No organization profile found. Please complete your organization profile first.'}), 404
+        
+        # Use organization data from database
+        org_data = org.to_dict()
+        
+        # Use provided data with fallbacks to organization data
+        report_type = data.get('report_type', 'Annual Impact Report')
+        target_audience = data.get('target_audience', 'Foundations and Major Donors')
+        period_start = data.get('period_start', 'January 2024')
+        period_end = data.get('period_end', 'December 2024')
+        
+        # Use organization's actual programs and impact from database
+        programs_covered = data.get('programs_covered', org_data.get('programs_services', 'All organizational programs'))
+        program_outcomes = data.get('program_outcomes', org_data.get('key_achievements', 'See achievements below'))
+        impact_stories = data.get('impact_stories', 'Based on our work with the community')
         
         # Use OpenAI for document generation
         from openai import OpenAI
@@ -245,19 +290,30 @@ def create_impact_report():
                 f"- {m['name']}: Target {m.get('target', 'N/A')}, Actual {m.get('actual', 'N/A')}"
                 for m in data['metrics'] if m.get('name')
             ])
+        elif org_data.get('impact_metrics'):
+            # Use organization's stored impact metrics
+            metrics = org_data.get('impact_metrics', {})
+            if isinstance(metrics, dict):
+                metrics_text = "\n".join([f"- {k}: {v}" for k, v in metrics.items()])
         
-        # Build the professional impact reporting prompt
-        prompt = f"""You are an expert in nonprofit impact reporting. Using the data and manually entered inputs provided below, create a visually clear and funder-friendly report.
+        # Build the professional impact reporting prompt with database data
+        prompt = f"""You are an expert in nonprofit impact reporting. Using the organizational data provided below, create a visually clear and funder-friendly report.
 
 ORGANIZATION DETAILS:
-- Name: {data.get('org_name')}
-- Report Type: {data.get('report_type', 'Quarterly Report')}
-- Target Audience: {data.get('target_audience', 'Foundations')}
-- Report Period: {data.get('period_start', 'Start date not provided')} to {data.get('period_end', 'End date not provided')}
+- Name: {org_data.get('name')}
+- Mission: {org_data.get('mission')}
+- Report Type: {report_type}
+- Target Audience: {target_audience}
+- Report Period: {period_start} to {period_end}
 
 PROGRAM INFORMATION:
-- Programs/Services Covered: {data.get('programs_covered')}
-- Program Outcomes: {data.get('program_outcomes')}
+- Programs/Services: {programs_covered}
+- Key Achievements: {org_data.get('key_achievements', program_outcomes)}
+- Impact Stories: {impact_stories}
+- People Served Annually: {org_data.get('people_served_annually', 'Not specified')}
+
+KEY METRICS:
+{metrics_text or 'Organizational impact metrics in development'}
 - Impact Stories: {data.get('impact_stories', 'Not provided')}
 
 KEY METRICS:

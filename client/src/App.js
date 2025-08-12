@@ -23,6 +23,9 @@ const Analytics = lazy(() => import('./pages/Analytics'));
 const WritingAssistant = lazy(() => import('./pages/WritingAssistant'));
 const SmartTools = lazy(() => import('./pages/SmartTools'));
 const Survey = lazy(() => import('./pages/Survey'));
+const CaseSupport = lazy(() => import('./pages/CaseSupport'));
+const GrantPitch = lazy(() => import('./pages/GrantPitch'));
+const ImpactReport = lazy(() => import('./pages/ImpactReport'));
 
 // Loading component for suspense fallback
 const PageLoader = () => (
@@ -235,6 +238,30 @@ function App() {
                   element={
                     <ErrorBoundary>
                       <SmartTools />
+                    </ErrorBoundary>
+                  }
+                />
+                <Route
+                  path="/case-support"
+                  element={
+                    <ErrorBoundary>
+                      <CaseSupport />
+                    </ErrorBoundary>
+                  }
+                />
+                <Route
+                  path="/grant-pitch"
+                  element={
+                    <ErrorBoundary>
+                      <GrantPitch />
+                    </ErrorBoundary>
+                  }
+                />
+                <Route
+                  path="/impact-report"
+                  element={
+                    <ErrorBoundary>
+                      <ImpactReport />
                     </ErrorBoundary>
                   }
                 />
