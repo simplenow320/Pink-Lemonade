@@ -58,7 +58,7 @@ class FunderIntelligenceService:
             'exclusions': []
         }
         
-        # Enhance with different strategies based on funder type
+        # Enhance with different strategies based on funder type using authentic data only
         if profile['type'] == 'federal':
             profile = self._enhance_federal_funder_profile(profile, grant_url)
         elif profile['type'] == 'foundation':
@@ -67,6 +67,10 @@ class FunderIntelligenceService:
             profile = self._enhance_corporate_profile(profile)
         elif profile['type'] == 'state_local':
             profile = self._enhance_state_local_profile(profile)
+        
+        # Add authentic funder overview if available
+        if profile.get('funder_overview'):
+            profile['verified_overview'] = profile['funder_overview']
         
         # Cache the profile
         self.funder_database[funder_name] = profile

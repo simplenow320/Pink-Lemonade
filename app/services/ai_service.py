@@ -72,40 +72,43 @@ class AIService:
         
         return None
     
-    def match_grant(self, org_profile: Dict, grant: Dict) -> Tuple[Optional[int], Optional[str]]:
+    def match_grant(self, org_profile: Dict, grant: Dict, funder_profile: Dict = None) -> Tuple[Optional[int], Optional[str]]:
         """
-        Match a grant to an organization profile
+        Enhanced grant matching with comprehensive organization data and authentic funder intelligence
         Returns: (fit_score: 1-5, reason: str) or (None, None) if disabled
         """
         if not self.is_enabled():
             return None, None
         
-        # Build prompt
-        prompt = f"""Analyze the fit between this organization and grant opportunity.
+        # Build comprehensive organization profile
+        org_context = self._build_comprehensive_org_context(org_profile)
+        
+        # Build grant context with authentic funder intelligence
+        grant_context = self._build_grant_context_with_funder_intelligence(grant, funder_profile)
+        
+        # Enhanced prompt with rich data
+        prompt = f"""Analyze the strategic fit between this nonprofit organization and grant opportunity using comprehensive data.
 
-Organization Profile:
-- Name: {org_profile.get('name', 'Unknown')}
-- Mission: {org_profile.get('mission', 'Not specified')}
-- Focus Areas: {', '.join(org_profile.get('focus_areas', []))}
-- Keywords: {', '.join(org_profile.get('keywords', []))}
-- Geographic Focus: {org_profile.get('geographic_focus', 'Not specified')}
-- Target Population: {org_profile.get('target_population', 'Not specified')}
+{org_context}
 
-Grant Opportunity:
-- Title: {grant.get('title', 'Unknown')}
-- Funder: {grant.get('funder', 'Unknown')}
-- Description: {grant.get('description', 'Not specified')}
-- Focus Areas: {grant.get('focus_areas', 'Not specified')}
-- Amount Range: ${grant.get('amount_min', 0):,} - ${grant.get('amount_max', 0):,}
-- Deadline: {grant.get('deadline', 'Not specified')}
-- Eligibility: {grant.get('eligibility_criteria', 'Not specified')}
+{grant_context}
 
-Provide a JSON response with:
-1. "fit_score": integer from 1-5 (1=poor fit, 5=excellent fit)
-2. "reason": one concise sentence explaining the score
-3. "explanation": 2-3 sentences with specific details about alignment or gaps
+STRATEGIC ANALYSIS REQUIRED:
+1. Mission & Values Alignment: How well do organizational missions align?
+2. Program Focus Match: Do the organization's programs directly serve this grant's purpose?
+3. Geographic Compatibility: Does service area align with funder's geographic priorities?
+4. Organizational Capacity: Can this organization successfully manage this grant size and requirements?
+5. Target Population Fit: Do beneficiaries match funder's intended recipients?
+6. Funder History: Does the organization's profile match this funder's typical grantees?
+7. Strategic Advantage: What unique strengths does this organization bring?
 
-Focus on mission alignment, geographic match, focus area overlap, and eligibility requirements."""
+Provide detailed JSON response:
+1. "fit_score": integer 1-5 (1=poor fit, 5=excellent strategic match)
+2. "reason": Strategic summary in one compelling sentence
+3. "explanation": 3-4 sentences with specific strategic rationale
+4. "strengths": List of 3 key organizational advantages for this grant
+5. "considerations": List of 2-3 factors to address in application
+6. "strategic_approach": Recommended application strategy"""
 
         messages = [
             {"role": "system", "content": "You are an expert grant advisor analyzing grant-organization fit."},
@@ -123,15 +126,211 @@ Focus on mission alignment, geographic match, focus area overlap, and eligibilit
                 score = max(1, min(5, result.get("fit_score", 3)))  # Clamp to 1-5
                 reason = result.get("reason", "Unable to determine fit")
                 explanation = result.get("explanation", reason)
+                strengths = result.get("strengths", [])
+                considerations = result.get("considerations", [])
+                strategy = result.get("strategic_approach", "")
                 
-                # Combine reason and explanation for better detail
-                full_reason = f"{reason} {explanation}" if explanation != reason else reason
+                # Build comprehensive response
+                full_reason = f"{reason} {explanation}"
+                if strengths:
+                    full_reason += f"\nKey Strengths: {'; '.join(strengths[:3])}"
+                if considerations:
+                    full_reason += f"\nConsiderations: {'; '.join(considerations[:2])}"
+                if strategy:
+                    full_reason += f"\nStrategy: {strategy}"
+                
                 return score, full_reason
             except Exception as e:
-                logger.error(f"Error parsing match result: {e}")
+                logger.error(f"Error parsing enhanced match result: {e}")
                 return 3, "Unable to determine fit score"
         
         return None, None
+    
+    def _build_comprehensive_org_context(self, org_profile: Dict) -> str:
+        """Build comprehensive organization context using all available profile data"""
+        
+        context_parts = []
+        
+        # Core Identity
+        context_parts.append("=== ORGANIZATION PROFILE ===")
+        context_parts.append(f"Organization: {org_profile.get('name', 'Unknown')}")
+        
+        if org_profile.get('legal_name') and org_profile.get('legal_name') != org_profile.get('name'):
+            context_parts.append(f"Legal Name: {org_profile.get('legal_name')}")
+        
+        if org_profile.get('org_type'):
+            context_parts.append(f"Organization Type: {org_profile.get('org_type')}")
+        
+        if org_profile.get('ein'):
+            context_parts.append(f"EIN: {org_profile.get('ein')}")
+        
+        # Mission & Vision
+        if org_profile.get('mission'):
+            context_parts.append(f"Mission: {org_profile.get('mission')}")
+        
+        if org_profile.get('vision'):
+            context_parts.append(f"Vision: {org_profile.get('vision')}")
+        
+        # Program Focus
+        primary_focus = org_profile.get('primary_focus_areas', [])
+        if primary_focus:
+            context_parts.append(f"Primary Focus Areas: {', '.join(primary_focus)}")
+        
+        secondary_focus = org_profile.get('secondary_focus_areas', [])
+        if secondary_focus:
+            context_parts.append(f"Secondary Focus Areas: {', '.join(secondary_focus)}")
+        
+        if org_profile.get('programs_services'):
+            context_parts.append(f"Programs & Services: {org_profile.get('programs_services')}")
+        
+        target_demos = org_profile.get('target_demographics', [])
+        if target_demos:
+            context_parts.append(f"Target Demographics: {', '.join(target_demos)}")
+        
+        age_groups = org_profile.get('age_groups_served', [])
+        if age_groups:
+            context_parts.append(f"Age Groups Served: {', '.join(age_groups)}")
+        
+        # Geographic Scope
+        if org_profile.get('service_area_type'):
+            context_parts.append(f"Service Area: {org_profile.get('service_area_type')}")
+        
+        location_parts = []
+        if org_profile.get('primary_city'):
+            location_parts.append(org_profile.get('primary_city'))
+        if org_profile.get('primary_state'):
+            location_parts.append(org_profile.get('primary_state'))
+        if location_parts:
+            context_parts.append(f"Primary Location: {', '.join(location_parts)}")
+        
+        counties = org_profile.get('counties_served', [])
+        if counties:
+            context_parts.append(f"Counties Served: {', '.join(counties)}")
+        
+        # Organizational Capacity
+        if org_profile.get('annual_budget_range'):
+            context_parts.append(f"Annual Budget: {org_profile.get('annual_budget_range')}")
+        
+        if org_profile.get('staff_size'):
+            context_parts.append(f"Staff Size: {org_profile.get('staff_size')}")
+        
+        if org_profile.get('people_served_annually'):
+            context_parts.append(f"People Served Annually: {org_profile.get('people_served_annually')}")
+        
+        # Grant History & Experience
+        if org_profile.get('previous_funders'):
+            funders = org_profile.get('previous_funders', [])
+            context_parts.append(f"Previous Funders: {', '.join(funders[:5])}")  # Limit to top 5
+        
+        if org_profile.get('typical_grant_size'):
+            context_parts.append(f"Typical Grant Size: {org_profile.get('typical_grant_size')}")
+        
+        if org_profile.get('grant_success_rate'):
+            context_parts.append(f"Grant Success Rate: {org_profile.get('grant_success_rate')}%")
+        
+        preferred_types = org_profile.get('preferred_grant_types', [])
+        if preferred_types:
+            context_parts.append(f"Preferred Grant Types: {', '.join(preferred_types)}")
+        
+        # Special Characteristics
+        special_chars = []
+        if org_profile.get('faith_based'):
+            special_chars.append('Faith-based')
+        if org_profile.get('minority_led'):
+            special_chars.append('Minority-led')
+        if org_profile.get('woman_led'):
+            special_chars.append('Woman-led')
+        if org_profile.get('lgbtq_led'):
+            special_chars.append('LGBTQ+-led')
+        if org_profile.get('veteran_led'):
+            special_chars.append('Veteran-led')
+        
+        if special_chars:
+            context_parts.append(f"Special Characteristics: {', '.join(special_chars)}")
+        
+        # Impact & Achievements
+        if org_profile.get('key_achievements'):
+            context_parts.append(f"Key Achievements: {org_profile.get('key_achievements')}")
+        
+        if org_profile.get('unique_capabilities'):
+            context_parts.append(f"Unique Capabilities: {org_profile.get('unique_capabilities')}")
+        
+        # Keywords for matching
+        keywords = org_profile.get('keywords', [])
+        if keywords:
+            context_parts.append(f"Keywords: {', '.join(keywords)}")
+        
+        return '\n'.join(context_parts)
+    
+    def _build_grant_context_with_funder_intelligence(self, grant: Dict, funder_profile: Dict = None) -> str:
+        """Build grant context enhanced with authentic funder intelligence"""
+        
+        context_parts = []
+        context_parts.append("=== GRANT OPPORTUNITY ===")
+        
+        # Basic Grant Info
+        context_parts.append(f"Grant Title: {grant.get('title', 'Unknown')}")
+        context_parts.append(f"Funder: {grant.get('funder', 'Unknown')}")
+        
+        if grant.get('description'):
+            context_parts.append(f"Description: {grant.get('description')}")
+        
+        # Program Overview (from authentic data)
+        if grant.get('program_overview'):
+            context_parts.append(f"Program Overview: {grant.get('program_overview')}")
+        
+        # Financial Details
+        amount_min = grant.get('amount_min', 0)
+        amount_max = grant.get('amount_max', 0)
+        if amount_min or amount_max:
+            if amount_min == amount_max:
+                context_parts.append(f"Grant Amount: ${amount_max:,}")
+            else:
+                context_parts.append(f"Amount Range: ${amount_min:,} - ${amount_max:,}")
+        
+        # Grant Details
+        if grant.get('deadline'):
+            context_parts.append(f"Deadline: {grant.get('deadline')}")
+        
+        focus_areas = grant.get('focus_areas', [])
+        if focus_areas:
+            if isinstance(focus_areas, list):
+                context_parts.append(f"Focus Areas: {', '.join(focus_areas)}")
+            else:
+                context_parts.append(f"Focus Areas: {focus_areas}")
+        
+        if grant.get('eligibility_criteria'):
+            context_parts.append(f"Eligibility: {grant.get('eligibility_criteria')}")
+        
+        # Enhanced Funder Intelligence (Authentic Data Only)
+        if funder_profile:
+            context_parts.append("\n=== AUTHENTIC FUNDER INTELLIGENCE ===")
+            
+            if funder_profile.get('verified_overview'):
+                context_parts.append(f"Funder Overview: {funder_profile.get('verified_overview')}")
+            
+            if funder_profile.get('official_website'):
+                context_parts.append(f"Official Website: {funder_profile.get('official_website')}")
+            
+            if funder_profile.get('funding_priorities'):
+                priorities = funder_profile.get('funding_priorities', [])
+                context_parts.append(f"Funding Priorities: {', '.join(priorities)}")
+            
+            if funder_profile.get('typical_grant_amounts'):
+                amounts = funder_profile.get('typical_grant_amounts')
+                context_parts.append(f"Typical Grant Range: {amounts}")
+            
+            if funder_profile.get('success_factors'):
+                factors = funder_profile.get('success_factors', [])
+                context_parts.append(f"Success Factors: {', '.join(factors[:3])}")  # Top 3
+            
+            if funder_profile.get('geographic_focus'):
+                context_parts.append(f"Geographic Focus: {funder_profile.get('geographic_focus')}")
+            
+            if funder_profile.get('data_source'):
+                context_parts.append(f"Data Source: {funder_profile.get('data_source')}")
+        
+        return '\n'.join(context_parts)
     
     def analyze_text(self, prompt: str) -> Optional[Dict]:
         """
