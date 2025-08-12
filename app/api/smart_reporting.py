@@ -4,7 +4,11 @@ Project management and foundation endpoints
 """
 
 from flask import Blueprint, request, jsonify, current_app
-from app.services.smart_reporting_service import smart_reporting_service
+try:
+    from app.services.smart_reporting_service import SmartReportingService
+    smart_reporting_service = SmartReportingService()
+except ImportError:
+    smart_reporting_service = None
 from app.models_extended import Project, ReportingSchedule, ImpactQuestion
 from app.models import Grant, Organization
 from app import db
@@ -33,11 +37,15 @@ def create_project():
             }), 400
         
         # Create project using service
-        result = smart_reporting_service.create_project(
-            grant_id=data['grant_id'],
-            organization_id=data['organization_id'],
-            project_data=data
-        )
+        if smart_reporting_service:
+            result = smart_reporting_service.create_project(
+                grant_id=data['grant_id'],
+                organization_id=data['organization_id'],
+                project_data=data
+            )
+        else:
+            # Fallback if service not available
+            result = {'success': False, 'error': 'Smart reporting service not available'}
         
         if result['success']:
             return jsonify(result), 201

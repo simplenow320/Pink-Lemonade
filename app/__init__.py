@@ -133,6 +133,10 @@ def create_app():
     from app.api.smart_reporting_phase6 import bp as smart_reporting_phase6_bp
     flask_app.register_blueprint(smart_reporting_phase6_bp)
     
+    # Register Email Invitations blueprint for SendGrid integration
+    from app.api.email_invitations import bp as email_invitations_bp
+    flask_app.register_blueprint(email_invitations_bp)
+    
     # Initialize monitoring
     from app.services.monitoring_service import init_monitoring
     init_monitoring(flask_app)

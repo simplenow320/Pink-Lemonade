@@ -22,6 +22,7 @@ const Scraper = lazy(() => import('./pages/Scraper'));
 const Analytics = lazy(() => import('./pages/Analytics'));
 const WritingAssistant = lazy(() => import('./pages/WritingAssistant'));
 const SmartTools = lazy(() => import('./pages/SmartTools'));
+const Survey = lazy(() => import('./pages/Survey'));
 
 // Loading component for suspense fallback
 const PageLoader = () => (
@@ -234,6 +235,14 @@ function App() {
                   element={
                     <ErrorBoundary>
                       <SmartTools />
+                    </ErrorBoundary>
+                  }
+                />
+                <Route
+                  path="/survey/:projectId"
+                  element={
+                    <ErrorBoundary>
+                      <Survey />
                     </ErrorBoundary>
                   }
                 />
