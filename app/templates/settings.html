@@ -31,29 +31,31 @@
 
         .settings-section {
             background: var(--white);
-            border-radius: 0.5rem;
-            padding: 1.5rem;
-            margin-bottom: 1.5rem;
+            border-radius: 0.75rem;
+            padding: 2rem;
+            margin-bottom: 2rem;
             border: 1px solid var(--border);
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
         }
 
         .section-title {
-            font-size: 1.25rem;
+            font-size: 1.375rem;
             font-weight: 600;
-            margin-bottom: 1rem;
+            margin-bottom: 1.5rem;
             color: var(--black);
             border-bottom: 2px solid var(--pink-matte);
-            padding-bottom: 0.5rem;
+            padding-bottom: 0.75rem;
         }
 
         .form-input, .form-textarea, .form-select {
             width: 100%;
-            padding: 0.75rem;
+            padding: 0.875rem 1rem;
             border: 1px solid var(--border);
-            border-radius: 0.375rem;
+            border-radius: 0.5rem;
             background: var(--white);
             color: var(--black);
-            transition: border-color 0.2s;
+            transition: all 0.2s;
+            font-size: 0.95rem;
         }
 
         .form-input:focus, .form-textarea:focus, .form-select:focus {
@@ -64,9 +66,50 @@
 
         .form-label {
             display: block;
-            margin-bottom: 0.5rem;
-            font-weight: 500;
+            margin-bottom: 0.625rem;
+            font-weight: 600;
             color: var(--grey-dark);
+            font-size: 0.925rem;
+        }
+
+        .program-entry {
+            border: 1px solid var(--border);
+            border-radius: 0.75rem;
+            padding: 1.5rem;
+            background: #FAFBFC;
+            position: relative;
+            margin-bottom: 1rem;
+        }
+
+        .checkbox-option {
+            transition: all 0.2s ease;
+        }
+
+        .checkbox-option:hover {
+            background-color: #FEF7F0;
+            border-color: var(--pink-matte);
+        }
+
+        .checkbox-option input[type="checkbox"]:checked + span {
+            color: var(--pink-matte);
+            font-weight: 600;
+        }
+
+        .remove-program {
+            position: absolute;
+            top: 0.75rem;
+            right: 0.75rem;
+            background: #DC2626;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            font-size: 12px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
 
         .btn-primary {
@@ -192,19 +235,35 @@
         }
 
         .tab-button {
-            padding: 0.75rem 1.5rem;
-            background: var(--grey-light);
+            padding: 1.25rem 2rem;
+            background: transparent;
             color: var(--grey);
             border: none;
-            border-radius: 0.375rem 0.375rem 0 0;
+            border-bottom: 3px solid transparent;
             cursor: pointer;
-            transition: all 0.2s;
+            transition: all 0.3s ease;
+            font-weight: 500;
+            font-size: 1rem;
+            margin-right: 0.5rem;
+            position: relative;
+        }
+
+        .tab-button:hover {
+            color: var(--pink-matte);
+            border-bottom-color: rgba(184, 137, 154, 0.3);
         }
 
         .tab-button.active {
-            background: var(--white);
+            background: transparent;
             color: var(--black);
-            border-bottom: 2px solid var(--pink-matte);
+            border-bottom: 3px solid var(--pink-matte);
+            font-weight: 600;
+        }
+
+        .tabs-container {
+            border-bottom: 1px solid var(--border);
+            background: var(--white);
+            margin-bottom: 0;
         }
 
         .tab-content {
@@ -228,23 +287,26 @@
     </div>
 
     <!-- Main Content -->
-    <div class="max-w-4xl mx-auto px-4 py-6">
+    <div class="max-w-4xl mx-auto">
         <!-- Tabs -->
-        <div class="flex space-x-1 mb-6">
-            <button class="tab-button active" data-tab="profile">Organization Info</button>
-            <button class="tab-button" data-tab="security">Security</button>
-            <button class="tab-button" data-tab="notifications">Notifications</button>
-            <button class="tab-button" data-tab="preferences">Preferences</button>
+        <div class="tabs-container">
+            <div class="flex space-x-0 px-6">
+                <button class="tab-button active" data-tab="profile">Organization Info</button>
+                <button class="tab-button" data-tab="security">Security</button>
+                <button class="tab-button" data-tab="notifications">Notifications</button>
+                <button class="tab-button" data-tab="preferences">Preferences</button>
+            </div>
         </div>
 
         <!-- Profile Tab -->
         <div id="profile-tab" class="tab-content active">
-            <div class="settings-section">
+            <div class="px-6 py-8">
+                <div class="settings-section">
                 <h2 class="section-title">Organization Information</h2>
-                <p class="text-gray-600 mb-6">Update your organization profile and details from onboarding here</p>
+                <p class="text-gray-600 mb-8 text-lg leading-relaxed">Update your organization profile and details from onboarding here</p>
                 
                 <form id="profile-form">
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
                         <div>
                             <label class="form-label">Organization Name *</label>
                             <input type="text" id="org_name" class="form-input" placeholder="Nitrogen Network" required>
@@ -255,7 +317,7 @@
                         </div>
                     </div>
 
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
                         <div>
                             <label class="form-label">Organization Type *</label>
                             <select id="org_type" class="form-select" required>
@@ -280,12 +342,12 @@
                         </div>
                     </div>
 
-                    <div class="mb-6">
+                    <div class="mb-8">
                         <label class="form-label">Mission Statement *</label>
                         <textarea id="mission" class="form-textarea" rows="3" placeholder="Describe your organization's mission and primary purpose..." required></textarea>
                     </div>
 
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
                         <div>
                             <label class="form-label">Website URL</label>
                             <input type="url" id="website" class="form-input" placeholder="https://nitrogennetwork.org">
@@ -296,53 +358,78 @@
                         </div>
                     </div>
 
-                    <div class="mb-6">
+                    <div class="mb-8">
                         <label class="form-label">Primary Focus Areas (select all that apply)</label>
-                        <div class="grid grid-cols-2 md:grid-cols-3 gap-3 mt-2">
-                            <label class="flex items-center">
-                                <input type="checkbox" value="education" class="mr-2"> Education
-                            </label>
-                            <label class="flex items-center">
-                                <input type="checkbox" value="healthcare" class="mr-2"> Healthcare
-                            </label>
-                            <label class="flex items-center">
-                                <input type="checkbox" value="housing" class="mr-2"> Housing
-                            </label>
-                            <label class="flex items-center">
-                                <input type="checkbox" value="youth" class="mr-2"> Youth Development
-                            </label>
-                            <label class="flex items-center">
-                                <input type="checkbox" value="seniors" class="mr-2"> Senior Services
-                            </label>
-                            <label class="flex items-center">
-                                <input type="checkbox" value="community" class="mr-2"> Community Development
-                            </label>
-                            <label class="flex items-center">
-                                <input type="checkbox" value="environment" class="mr-2"> Environment
-                            </label>
-                            <label class="flex items-center">
-                                <input type="checkbox" value="arts" class="mr-2"> Arts & Culture
-                            </label>
-                            <label class="flex items-center">
-                                <input type="checkbox" value="faith" class="mr-2"> Faith-Based Ministry
-                            </label>
+                        <div class="mt-4 space-y-3">
+                            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                                <label class="flex items-center p-3 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer">
+                                    <input type="checkbox" value="education" class="mr-3 text-pink-600 focus:ring-pink-500"> 
+                                    <span class="text-sm font-medium">Education</span>
+                                </label>
+                                <label class="flex items-center p-3 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer">
+                                    <input type="checkbox" value="healthcare" class="mr-3 text-pink-600 focus:ring-pink-500"> 
+                                    <span class="text-sm font-medium">Healthcare</span>
+                                </label>
+                                <label class="flex items-center p-3 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer">
+                                    <input type="checkbox" value="housing" class="mr-3 text-pink-600 focus:ring-pink-500"> 
+                                    <span class="text-sm font-medium">Housing</span>
+                                </label>
+                                <label class="flex items-center p-3 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer">
+                                    <input type="checkbox" value="youth" class="mr-3 text-pink-600 focus:ring-pink-500"> 
+                                    <span class="text-sm font-medium">Youth Development</span>
+                                </label>
+                                <label class="flex items-center p-3 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer">
+                                    <input type="checkbox" value="seniors" class="mr-3 text-pink-600 focus:ring-pink-500"> 
+                                    <span class="text-sm font-medium">Senior Services</span>
+                                </label>
+                                <label class="flex items-center p-3 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer">
+                                    <input type="checkbox" value="community" class="mr-3 text-pink-600 focus:ring-pink-500"> 
+                                    <span class="text-sm font-medium">Community Development</span>
+                                </label>
+                                <label class="flex items-center p-3 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer">
+                                    <input type="checkbox" value="environment" class="mr-3 text-pink-600 focus:ring-pink-500"> 
+                                    <span class="text-sm font-medium">Environment</span>
+                                </label>
+                                <label class="flex items-center p-3 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer">
+                                    <input type="checkbox" value="arts" class="mr-3 text-pink-600 focus:ring-pink-500"> 
+                                    <span class="text-sm font-medium">Arts & Culture</span>
+                                </label>
+                                <label class="flex items-center p-3 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer">
+                                    <input type="checkbox" value="faith" class="mr-3 text-pink-600 focus:ring-pink-500"> 
+                                    <span class="text-sm font-medium">Faith-Based Ministry</span>
+                                </label>
+                            </div>
                         </div>
                     </div>
 
-                    <div class="mb-6">
+                    <div class="mb-8">
                         <label class="form-label">Primary Programs & Services</label>
-                        <textarea id="programs" class="form-textarea" rows="3" placeholder="Describe your main programs, services, and activities..."></textarea>
+                        <div id="programs-container">
+                            <div class="program-entry mb-4">
+                                <div class="flex justify-between items-center mb-2">
+                                    <label class="text-sm font-medium text-gray-700">Program 1</label>
+                                </div>
+                                <input type="text" class="form-input mb-2" placeholder="Program name (e.g., Youth Mentorship Program)">
+                                <textarea class="form-textarea" rows="2" placeholder="Brief description of this program's goals and activities..."></textarea>
+                            </div>
+                        </div>
+                        <button type="button" id="add-program" class="btn-secondary mt-4">+ Add Another Program</button>
                     </div>
 
-                    <button type="submit" class="btn-primary">Save Changes</button>
+                    <div class="pt-6 border-t border-gray-200">
+                        <button type="submit" class="btn-primary">Save Changes</button>
+                    </div>
                 </form>
+                </div>
             </div>
         </div>
 
         <!-- Security Tab -->
         <div id="security-tab" class="tab-content">
-            <div class="settings-section">
+            <div class="px-6 py-8">
+                <div class="settings-section">
                 <h2 class="section-title">Password & Security</h2>
+                <p class="text-gray-600 mb-8 text-lg leading-relaxed">Manage your password and security settings</p>
                 
                 <form id="password-form" class="mb-8">
                     <div class="mb-6">
@@ -389,7 +476,8 @@
 
         <!-- Notifications Tab -->
         <div id="notifications-tab" class="tab-content">
-            <div class="settings-section">
+            <div class="px-6 py-8">
+                <div class="settings-section">
                 <h2 class="section-title">Notification Preferences</h2>
                 <p class="text-gray-600 mb-6">Choose how you'd like to receive updates</p>
 
@@ -449,7 +537,8 @@
 
         <!-- Preferences Tab -->
         <div id="preferences-tab" class="tab-content">
-            <div class="settings-section">
+            <div class="px-6 py-8">
+                <div class="settings-section">
                 <h2 class="section-title">System Preferences</h2>
                 
                 <form id="preferences-form">
@@ -539,6 +628,7 @@
         document.addEventListener('DOMContentLoaded', () => {
             loadUserSettings();
             setupEventListeners();
+            setupProgramManagement();
         });
 
         function setupEventListeners() {
@@ -573,15 +663,27 @@
                 if (response.ok) {
                     const data = await response.json();
                     
-                    // Populate profile fields
-                    document.getElementById('first_name').value = data.first_name || '';
-                    document.getElementById('last_name').value = data.last_name || '';
-                    document.getElementById('email').value = data.email || '';
-                    document.getElementById('phone').value = data.phone || '';
-                    document.getElementById('title').value = data.title || '';
-                    document.getElementById('department').value = data.department || '';
-                    document.getElementById('organization').value = data.organization || '';
-                    document.getElementById('bio').value = data.bio || '';
+                    // Populate organization fields
+                    document.getElementById('org_name').value = data.org_name || '';
+                    document.getElementById('ein').value = data.ein || '';
+                    document.getElementById('org_type').value = data.org_type || '';
+                    document.getElementById('budget_range').value = data.budget_range || '';
+                    document.getElementById('mission').value = data.mission || '';
+                    document.getElementById('website').value = data.website || '';
+                    document.getElementById('service_area').value = data.service_area || '';
+                    
+                    // Populate focus areas checkboxes
+                    const focusAreas = data.focus_areas || [];
+                    document.querySelectorAll('input[type="checkbox"]').forEach(checkbox => {
+                        if (focusAreas.includes(checkbox.value)) {
+                            checkbox.checked = true;
+                        }
+                    });
+                    
+                    // Load programs
+                    if (data.programs) {
+                        loadPrograms(data.programs);
+                    }
                     
                     // Populate notification preferences
                     const notifications = data.notifications || {};
@@ -603,15 +705,35 @@
         }
 
         async function saveProfile() {
+            // Collect focus areas
+            const focusAreas = [];
+            document.querySelectorAll('input[type="checkbox"]:checked').forEach(checkbox => {
+                focusAreas.push(checkbox.value);
+            });
+            
+            // Collect programs
+            const programs = [];
+            document.querySelectorAll('.program-entry').forEach(entry => {
+                const nameInput = entry.querySelector('input[type="text"]');
+                const descInput = entry.querySelector('textarea');
+                if (nameInput.value.trim()) {
+                    programs.push({
+                        name: nameInput.value.trim(),
+                        description: descInput.value.trim()
+                    });
+                }
+            });
+
             const profileData = {
-                first_name: document.getElementById('first_name').value,
-                last_name: document.getElementById('last_name').value,
-                email: document.getElementById('email').value,
-                phone: document.getElementById('phone').value,
-                title: document.getElementById('title').value,
-                department: document.getElementById('department').value,
-                organization: document.getElementById('organization').value,
-                bio: document.getElementById('bio').value
+                org_name: document.getElementById('org_name').value,
+                ein: document.getElementById('ein').value,
+                org_type: document.getElementById('org_type').value,
+                budget_range: document.getElementById('budget_range').value,
+                mission: document.getElementById('mission').value,
+                website: document.getElementById('website').value,
+                service_area: document.getElementById('service_area').value,
+                focus_areas: focusAreas,
+                programs: programs
             };
 
             try {
@@ -742,6 +864,69 @@
                 if (confirm('This will permanently delete all your data. Are you absolutely sure?')) {
                     showNotification('Account deletion is not available in this demo', 'error');
                 }
+            }
+        }
+
+        function setupProgramManagement() {
+            let programCount = 1;
+            
+            document.getElementById('add-program').addEventListener('click', () => {
+                programCount++;
+                const programsContainer = document.getElementById('programs-container');
+                const programEntry = document.createElement('div');
+                programEntry.className = 'program-entry mb-4';
+                programEntry.innerHTML = `
+                    <div class="flex justify-between items-center mb-2">
+                        <label class="text-sm font-medium text-gray-700">Program ${programCount}</label>
+                        <button type="button" class="remove-program" onclick="removeProgram(this)">×</button>
+                    </div>
+                    <input type="text" class="form-input mb-2" placeholder="Program name (e.g., Youth Mentorship Program)">
+                    <textarea class="form-textarea" rows="2" placeholder="Brief description of this program's goals and activities..."></textarea>
+                `;
+                programsContainer.appendChild(programEntry);
+            });
+        }
+
+        function removeProgram(button) {
+            const programEntry = button.closest('.program-entry');
+            programEntry.remove();
+            
+            // Renumber remaining programs
+            document.querySelectorAll('.program-entry').forEach((entry, index) => {
+                const label = entry.querySelector('label');
+                label.textContent = `Program ${index + 1}`;
+            });
+        }
+
+        function loadPrograms(programs) {
+            const container = document.getElementById('programs-container');
+            container.innerHTML = ''; // Clear existing
+            
+            programs.forEach((program, index) => {
+                const programEntry = document.createElement('div');
+                programEntry.className = 'program-entry mb-4';
+                programEntry.innerHTML = `
+                    <div class="flex justify-between items-center mb-2">
+                        <label class="text-sm font-medium text-gray-700">Program ${index + 1}</label>
+                        ${index > 0 ? '<button type="button" class="remove-program" onclick="removeProgram(this)">×</button>' : ''}
+                    </div>
+                    <input type="text" class="form-input mb-2" placeholder="Program name (e.g., Youth Mentorship Program)" value="${program.name || ''}">
+                    <textarea class="form-textarea" rows="2" placeholder="Brief description of this program's goals and activities...">${program.description || ''}</textarea>
+                `;
+                container.appendChild(programEntry);
+            });
+            
+            // Ensure at least one program entry exists
+            if (programs.length === 0) {
+                container.innerHTML = `
+                    <div class="program-entry mb-4">
+                        <div class="flex justify-between items-center mb-2">
+                            <label class="text-sm font-medium text-gray-700">Program 1</label>
+                        </div>
+                        <input type="text" class="form-input mb-2" placeholder="Program name (e.g., Youth Mentorship Program)">
+                        <textarea class="form-textarea" rows="2" placeholder="Brief description of this program's goals and activities..."></textarea>
+                    </div>
+                `;
             }
         }
 
