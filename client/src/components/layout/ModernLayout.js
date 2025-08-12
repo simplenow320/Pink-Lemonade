@@ -1,14 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
-import { useAuth } from '../../context/AuthContext';
 
 const ModernLayout = ({ children }) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [scrollPosition, setScrollPosition] = useState(0);
   const location = useLocation();
-  const navigate = useNavigate();
-  const { authenticated, logout } = useAuth();
 
   // Track scroll position for header styling
   useEffect(() => {
@@ -134,38 +131,11 @@ const ModernLayout = ({ children }) => {
               ))}
             </nav>
 
-            {/* User actions - desktop only */}
-            <div className="hidden md:flex items-center space-x-2">
-              {authenticated ? (
-                <button
-                  onClick={() => {
-                    logout();
-                    navigate('/');
-                  }}
-                  className="inline-flex items-center px-3 py-1.5 text-sm rounded-md font-medium text-gray-600 hover:text-pink-600 hover:bg-pink-50 transition-colors"
-                >
-                  Logout
-                </button>
-              ) : (
-                <>
-                  <button
-                    onClick={() => navigate('/login')}
-                    className="inline-flex items-center px-3 py-1.5 text-sm font-medium text-gray-600 hover:text-pink-600 transition-colors"
-                  >
-                    Sign In
-                  </button>
-                  <button
-                    onClick={() => navigate('/register')}
-                    className="inline-flex items-center px-4 py-2 border border-transparent text-sm rounded-md font-medium text-white bg-pink-500 hover:bg-pink-600 transition-colors"
-                  >
-                    Get Started
-                  </button>
-                </>
-              )}
-              
+            {/* Help button - desktop only */}
+            <div className="hidden md:flex items-center">
               <button
                 type="button"
-                className="ml-2 inline-flex items-center px-3 py-1.5 border border-transparent text-xs rounded-md font-medium text-orange-600 bg-orange-50 hover:bg-orange-100 transition-colors"
+                className="ml-3 inline-flex items-center px-3 py-1.5 border border-transparent text-xs rounded-md font-medium text-orange-600 bg-orange-50 hover:bg-orange-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500"
               >
                 <QuestionIcon className="mr-1.5 h-4 w-4" />
                 Help
@@ -256,36 +226,6 @@ const ModernLayout = ({ children }) => {
                     </Link>
                   </motion.div>
                 ))}
-                
-                {/* Mobile Auth Actions */}
-                <div className="border-t border-gray-200 pt-4 pb-3 mt-4">
-                  {authenticated ? (
-                    <button
-                      onClick={() => {
-                        logout();
-                        navigate('/');
-                      }}
-                      className="w-full text-left px-3 py-2 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50 hover:text-pink-600"
-                    >
-                      Logout
-                    </button>
-                  ) : (
-                    <div className="space-y-2">
-                      <button
-                        onClick={() => navigate('/login')}
-                        className="w-full text-left px-3 py-2 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50 hover:text-pink-600"
-                      >
-                        Sign In
-                      </button>
-                      <button
-                        onClick={() => navigate('/register')}
-                        className="w-full text-left px-3 py-2 rounded-md text-sm font-medium text-white bg-pink-500 hover:bg-pink-600"
-                      >
-                        Get Started
-                      </button>
-                    </div>
-                  )}
-                </div>
               </motion.div>
             </motion.div>
           )}
