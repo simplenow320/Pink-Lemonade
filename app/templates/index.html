@@ -1,8 +1,24 @@
-{% extends "base.html" %}
-{% block title %}Pink Lemonade · AI-Powered Grant Management{% endblock %}
-{% block content %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pink Lemonade · AI-Powered Grant Management</title>
+    <link rel="icon" href="/static/logo.png" type="image/png">
+    <link rel="stylesheet" href="/static/css/brand.css">
+</head>
+<body>
+
+<!-- NO NAVIGATION - Landing page only -->
+
+<main>
   <!-- Hero Section -->
-  <section style="min-height:80vh;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;padding:80px 20px;background:#FAFAFA">
+  <section style="min-height:100vh;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;padding:80px 20px;background:#FAFAFA">
+    
+    <!-- Pink Lemonade Logo - 4x bigger, TOP CENTERED -->
+    <div style="margin-bottom:60px">
+      <img src="/static/logo.png" alt="Pink Lemonade" style="height:320px;width:auto" />
+    </div>
     
     <!-- Main Headline -->
     <h1 style="font-size:3.2rem;font-weight:300;color:#2A2A2A;margin:0 0 24px 0;line-height:1.2;max-width:900px;letter-spacing:-0.01em">
@@ -120,4 +136,7 @@
     </div>
   </section>
 
-{% endblock %}
+</main>
+
+</body>
+</html>
