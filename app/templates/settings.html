@@ -231,7 +231,7 @@
     <div class="max-w-4xl mx-auto px-4 py-6">
         <!-- Tabs -->
         <div class="flex space-x-1 mb-6">
-            <button class="tab-button active" data-tab="profile">Personal Info</button>
+            <button class="tab-button active" data-tab="profile">Organization Info</button>
             <button class="tab-button" data-tab="security">Security</button>
             <button class="tab-button" data-tab="notifications">Notifications</button>
             <button class="tab-button" data-tab="preferences">Preferences</button>
@@ -240,51 +240,98 @@
         <!-- Profile Tab -->
         <div id="profile-tab" class="tab-content active">
             <div class="settings-section">
-                <h2 class="section-title">Personal Information</h2>
-                <p class="text-gray-600 mb-6">Update your personal details from onboarding here</p>
+                <h2 class="section-title">Organization Information</h2>
+                <p class="text-gray-600 mb-6">Update your organization profile and details from onboarding here</p>
                 
                 <form id="profile-form">
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
                         <div>
-                            <label class="form-label">First Name *</label>
-                            <input type="text" id="first_name" class="form-input" required>
+                            <label class="form-label">Organization Name *</label>
+                            <input type="text" id="org_name" class="form-input" placeholder="Nitrogen Network" required>
                         </div>
                         <div>
-                            <label class="form-label">Last Name *</label>
-                            <input type="text" id="last_name" class="form-input" required>
+                            <label class="form-label">EIN/Tax ID *</label>
+                            <input type="text" id="ein" class="form-input" placeholder="12-3456789" required>
                         </div>
                     </div>
 
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
                         <div>
-                            <label class="form-label">Email Address *</label>
-                            <input type="email" id="email" class="form-input" required>
+                            <label class="form-label">Organization Type *</label>
+                            <select id="org_type" class="form-select" required>
+                                <option value="">Select organization type</option>
+                                <option value="501c3">501(c)(3) Public Charity</option>
+                                <option value="501c3_private">501(c)(3) Private Foundation</option>
+                                <option value="religious">Religious Organization</option>
+                                <option value="government">Government Agency</option>
+                                <option value="other">Other Nonprofit</option>
+                            </select>
                         </div>
                         <div>
-                            <label class="form-label">Phone Number</label>
-                            <input type="tel" id="phone" class="form-input">
+                            <label class="form-label">Annual Budget Range</label>
+                            <select id="budget_range" class="form-select">
+                                <option value="">Select budget range</option>
+                                <option value="under_100k">Under $100,000</option>
+                                <option value="100k_500k">$100,000 - $500,000</option>
+                                <option value="500k_1m">$500,000 - $1,000,000</option>
+                                <option value="1m_5m">$1,000,000 - $5,000,000</option>
+                                <option value="over_5m">Over $5,000,000</option>
+                            </select>
                         </div>
+                    </div>
+
+                    <div class="mb-6">
+                        <label class="form-label">Mission Statement *</label>
+                        <textarea id="mission" class="form-textarea" rows="3" placeholder="Describe your organization's mission and primary purpose..." required></textarea>
                     </div>
 
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
                         <div>
-                            <label class="form-label">Job Title</label>
-                            <input type="text" id="title" class="form-input" placeholder="Grant Manager">
+                            <label class="form-label">Website URL</label>
+                            <input type="url" id="website" class="form-input" placeholder="https://nitrogennetwork.org">
                         </div>
                         <div>
-                            <label class="form-label">Department</label>
-                            <input type="text" id="department" class="form-input" placeholder="Development">
+                            <label class="form-label">Geographic Area Served</label>
+                            <input type="text" id="service_area" class="form-input" placeholder="Detroit Metro Area">
                         </div>
                     </div>
 
                     <div class="mb-6">
-                        <label class="form-label">Organization</label>
-                        <input type="text" id="organization" class="form-input" placeholder="Nitrogen Network">
+                        <label class="form-label">Primary Focus Areas (select all that apply)</label>
+                        <div class="grid grid-cols-2 md:grid-cols-3 gap-3 mt-2">
+                            <label class="flex items-center">
+                                <input type="checkbox" value="education" class="mr-2"> Education
+                            </label>
+                            <label class="flex items-center">
+                                <input type="checkbox" value="healthcare" class="mr-2"> Healthcare
+                            </label>
+                            <label class="flex items-center">
+                                <input type="checkbox" value="housing" class="mr-2"> Housing
+                            </label>
+                            <label class="flex items-center">
+                                <input type="checkbox" value="youth" class="mr-2"> Youth Development
+                            </label>
+                            <label class="flex items-center">
+                                <input type="checkbox" value="seniors" class="mr-2"> Senior Services
+                            </label>
+                            <label class="flex items-center">
+                                <input type="checkbox" value="community" class="mr-2"> Community Development
+                            </label>
+                            <label class="flex items-center">
+                                <input type="checkbox" value="environment" class="mr-2"> Environment
+                            </label>
+                            <label class="flex items-center">
+                                <input type="checkbox" value="arts" class="mr-2"> Arts & Culture
+                            </label>
+                            <label class="flex items-center">
+                                <input type="checkbox" value="faith" class="mr-2"> Faith-Based Ministry
+                            </label>
+                        </div>
                     </div>
 
                     <div class="mb-6">
-                        <label class="form-label">Bio</label>
-                        <textarea id="bio" class="form-textarea" rows="4" placeholder="Tell us about yourself and your role..."></textarea>
+                        <label class="form-label">Primary Programs & Services</label>
+                        <textarea id="programs" class="form-textarea" rows="3" placeholder="Describe your main programs, services, and activities..."></textarea>
                     </div>
 
                     <button type="submit" class="btn-primary">Save Changes</button>
