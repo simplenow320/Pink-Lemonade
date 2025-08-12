@@ -82,6 +82,10 @@ def applications():
 def settings():
     return render_template("settings.html", active="settings")
 
+@pages.get("/smart-tools")
+def smart_tools():
+    return render_template("smart_tools.html", active="smart-tools")
+
 # Onboarding routes
 @pages.get("/onboarding/step1")
 @login_required
