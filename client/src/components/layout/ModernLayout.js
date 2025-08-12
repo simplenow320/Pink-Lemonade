@@ -431,6 +431,4 @@ function QuestionIcon(props) {
   );
 }
 
-
-
 export default ModernLayout;
