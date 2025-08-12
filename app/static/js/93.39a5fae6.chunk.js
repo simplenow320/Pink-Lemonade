@@ -1,0 +1,2 @@
+"use strict";(self.webpackChunkgrantflow_client=self.webpackChunkgrantflow_client||[]).push([[93],{2093:(e,a,s)=>{s.r(a),s.d(a,{default:()=>t});s(5563);var r=s(6779);const t=()=>(0,r.jsxs)("div",{className:"bg-white shadow-sm rounded-lg p-6",children:[(0,r.jsx)("h1",{className:"text-2xl font-bold text-gray-900 mb-4",children:"Grant Scraper"}),(0,r.jsx)("p",{className:"text-gray-600 mb-4",children:"This is a placeholder for the grant scraper configuration page."})]})}}]);
+//# sourceMappingURL=93.39a5fae6.chunk.js.map

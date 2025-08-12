@@ -1,0 +1,2 @@
+"use strict";(self.webpackChunkgrantflow_client=self.webpackChunkgrantflow_client||[]).push([[283],{6283:(a,s,e)=>{e.r(s),e.d(s,{default:()=>l});e(5563);var t=e(6779);const l=()=>(0,t.jsxs)("div",{className:"bg-white shadow-sm rounded-lg p-6",children:[(0,t.jsx)("h1",{className:"text-2xl font-bold text-gray-900 mb-4",children:"Grant Analytics"}),(0,t.jsx)("p",{className:"text-gray-600 mb-4",children:"This is a placeholder for the grant analytics dashboard."})]})}}]);
+//# sourceMappingURL=283.20e9b0cf.chunk.js.map

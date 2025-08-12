@@ -72,6 +72,31 @@ const Grants = () => {
     fetchOpportunities();
   }, []);
 
+  // Check if user should see profile completion prompt
+  useEffect(() => {
+    const checkUserProfile = async () => {
+      try {
+        const response = await fetch('/api/organization/get', {
+          credentials: 'include'
+        });
+        if (response.ok) {
+          const data = await response.json();
+          // Show prompt if organization profile is incomplete
+          const org = data.organization;
+          const isIncomplete = !org?.mission || !org?.primary_focus_areas || 
+                              org?.primary_focus_areas?.length === 0;
+          setShowProfilePrompt(isIncomplete && opportunities.length > 0);
+        }
+      } catch (error) {
+        console.error('Error checking profile:', error);
+      }
+    };
+    
+    if (opportunities.length > 0) {
+      checkUserProfile();
+    }
+  }, [opportunities]);
+
   // Show welcome state for first-time users
   if (!loading && opportunities.length === 0 && !runningNow) {
     return (
@@ -147,31 +172,6 @@ const Grants = () => {
       </div>
     );
   }
-
-  // Check if user should see profile completion prompt
-  useEffect(() => {
-    const checkUserProfile = async () => {
-      try {
-        const response = await fetch('/api/organization/get', {
-          credentials: 'include'
-        });
-        if (response.ok) {
-          const data = await response.json();
-          // Show prompt if organization profile is incomplete
-          const org = data.organization;
-          const isIncomplete = !org?.mission || !org?.primary_focus_areas || 
-                              org?.primary_focus_areas?.length === 0;
-          setShowProfilePrompt(isIncomplete && opportunities.length > 0);
-        }
-      } catch (error) {
-        console.error('Error checking profile:', error);
-      }
-    };
-    
-    if (opportunities.length > 0) {
-      checkUserProfile();
-    }
-  }, [opportunities]);
 
   // Regular view when grants are loaded
   return (
