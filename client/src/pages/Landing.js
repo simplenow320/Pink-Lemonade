@@ -6,12 +6,12 @@ const Landing = () => {
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center px-4">
-      {/* New Pink Lemonade Logo - 3.5x bigger, TOP CENTERED */}
-      <div className="mb-12">
+      {/* Pink Lemonade Logo - 4x bigger, TOP CENTERED */}
+      <div className="mb-16">
         <img 
           src="/assets/pink-lemonade-logo.png" 
           alt="Pink Lemonade" 
-          className="h-96 w-auto mx-auto"
+          className="h-[32rem] w-auto mx-auto"
         />
       </div>
       {/* Main Heading */}
