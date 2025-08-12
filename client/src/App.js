@@ -2,15 +2,20 @@ import React, { useState, useEffect, lazy, Suspense } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { initializeOrganization, ApiError } from './utils/api';
 import { useNotification } from './context/NotificationContext';
+import { useAuth } from './context/AuthContext';
 import ErrorBoundary from './components/ErrorBoundary';
+import ProtectedRoute from './components/ProtectedRoute';
 import './App.css';
 
-// CHANGING THIS TO BREAK THE APP INTENTIONALLY
 // Modern layout
 import ModernLayout from './components/layout/ModernLayout';
 
 // Import pages using lazy loading for better performance
 const Landing = lazy(() => import('./pages/Landing'));
+const Login = lazy(() => import('./pages/Login'));
+const Register = lazy(() => import('./pages/Register'));
+const OrganizationOnboarding = lazy(() => import('./pages/OrganizationOnboarding'));
+const Paywall = lazy(() => import('./pages/Paywall'));
 const Dashboard = lazy(() => import('./pages/Dashboard'));
 const Grants = lazy(() => import('./pages/Grants'));
 const GrantDetail = lazy(() => import('./pages/GrantDetail'));
@@ -41,13 +46,17 @@ function App() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const { addError } = useNotification();
+  const { authenticated, loading: authLoading } = useAuth();
 
-  // Initialize app data on first load
+  // Initialize app data on first load, but only if authenticated
   useEffect(() => {
     const initialize = async () => {
       try {
         console.log('Pink Lemonade application initialized');
-        const result = await initializeOrganization();
+        // Only initialize organization data if user is authenticated
+        if (authenticated) {
+          const result = await initializeOrganization();
+        }
       } catch (err) {
         console.error('Error initializing application:', err);
 
@@ -63,11 +72,14 @@ function App() {
       }
     };
 
-    initialize();
-  }, [addError]);
+    // Wait for auth check to complete before initializing
+    if (!authLoading) {
+      initialize();
+    }
+  }, [addError, authenticated, authLoading]);
 
-  // App loading screen
-  if (loading) {
+  // App loading screen (show if auth or app is loading)
+  if (loading || authLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-gray-50">
         <div className="text-center">
@@ -117,11 +129,11 @@ function App() {
     );
   }
 
-  // Modern app layout with all routes
+  // Modern app layout with authentication routes
   return (
     <Suspense fallback={<PageLoader />}>
       <Routes>
-        {/* Landing page without layout */}
+        {/* Public routes - Landing page */}
         <Route
           path="/"
           element={
@@ -130,155 +142,194 @@ function App() {
             </ErrorBoundary>
           }
         />
+
+        {/* Authentication routes - no layout */}
+        <Route
+          path="/login"
+          element={
+            <ErrorBoundary>
+              <Login />
+            </ErrorBoundary>
+          }
+        />
+        <Route
+          path="/register"
+          element={
+            <ErrorBoundary>
+              <Register />
+            </ErrorBoundary>
+          }
+        />
+
+        {/* Organization onboarding - protected, no layout */}
+        <Route
+          path="/onboarding"
+          element={
+            <ErrorBoundary>
+              <ProtectedRoute>
+                <OrganizationOnboarding />
+              </ProtectedRoute>
+            </ErrorBoundary>
+          }
+        />
+
+        {/* Paywall - protected, no layout */}
+        <Route
+          path="/paywall"
+          element={
+            <ErrorBoundary>
+              <ProtectedRoute>
+                <Paywall />
+              </ProtectedRoute>
+            </ErrorBoundary>
+          }
+        />
+
+        {/* Survey route - public access with project ID */}
+        <Route
+          path="/survey/:projectId"
+          element={
+            <ErrorBoundary>
+              <Survey />
+            </ErrorBoundary>
+          }
+        />
         
-        {/* All other pages with ModernLayout */}
+        {/* Protected app routes with ModernLayout */}
         <Route
           path="/*"
           element={
-            <ModernLayout>
-              <Routes>
-                <Route
-                  path="/dashboard"
-                  element={
-                    <ErrorBoundary>
-                      <Dashboard />
-                    </ErrorBoundary>
-                  }
-                />
-                <Route
-                  path="/grants"
-                  element={
-                    <ErrorBoundary>
-                      <Grants />
-                    </ErrorBoundary>
-                  }
-                />
-                <Route
-                  path="/grants/:id"
-                  element={
-                    <ErrorBoundary>
-                      <GrantDetail />
-                    </ErrorBoundary>
-                  }
-                />
-                <Route
-                  path="/organization"
-                  element={
-                    <ErrorBoundary>
-                      <Organization />
-                    </ErrorBoundary>
-                  }
-                />
-                <Route
-                  path="/profile"
-                  element={
-                    <ErrorBoundary>
-                      <Profile />
-                    </ErrorBoundary>
-                  }
-                />
-                <Route
-                  path="/onboarding"
-                  element={
-                    <ErrorBoundary>
-                      <Onboarding />
-                    </ErrorBoundary>
-                  }
-                />
-                <Route
-                  path="/narratives/:grantId"
-                  element={
-                    <ErrorBoundary>
-                      <Narrative />
-                    </ErrorBoundary>
-                  }
-                />
-                <Route
-                  path="/scraper"
-                  element={
-                    <ErrorBoundary>
-                      <Scraper />
-                    </ErrorBoundary>
-                  }
-                />
-                <Route
-                  path="/analytics"
-                  element={
-                    <ErrorBoundary>
-                      <Analytics />
-                    </ErrorBoundary>
-                  }
-                />
-                <Route
-                  path="/writing-assistant"
-                  element={
-                    <ErrorBoundary>
-                      <WritingAssistant />
-                    </ErrorBoundary>
-                  }
-                />
-                <Route
-                  path="/writing-assistant/:grantId"
-                  element={
-                    <ErrorBoundary>
-                      <WritingAssistant />
-                    </ErrorBoundary>
-                  }
-                />
-                <Route
-                  path="/smart-tools"
-                  element={
-                    <ErrorBoundary>
-                      <SmartTools />
-                    </ErrorBoundary>
-                  }
-                />
-                <Route
-                  path="/smart-tools/:toolId"
-                  element={
-                    <ErrorBoundary>
-                      <SmartTools />
-                    </ErrorBoundary>
-                  }
-                />
-                <Route
-                  path="/case-support"
-                  element={
-                    <ErrorBoundary>
-                      <CaseSupport />
-                    </ErrorBoundary>
-                  }
-                />
-                <Route
-                  path="/grant-pitch"
-                  element={
-                    <ErrorBoundary>
-                      <GrantPitch />
-                    </ErrorBoundary>
-                  }
-                />
-                <Route
-                  path="/impact-report"
-                  element={
-                    <ErrorBoundary>
-                      <ImpactReport />
-                    </ErrorBoundary>
-                  }
-                />
-                {/* Redirect /reports to /smart-tools */}
-                <Route path="/reports" element={<Navigate to="/smart-tools" replace />} />
-                <Route
-                  path="/survey/:projectId"
-                  element={
-                    <ErrorBoundary>
-                      <Survey />
-                    </ErrorBoundary>
-                  }
-                />
-                {/* Fallback route for any other paths */}
-                <Route path="*" element={<Navigate to="/dashboard" replace />} />
-              </Routes>
-            </ModernLayout>
+            <ProtectedRoute requireOrganization={true}>
+              <ModernLayout>
+                <Routes>
+                  <Route
+                    path="/dashboard"
+                    element={
+                      <ErrorBoundary>
+                        <Dashboard />
+                      </ErrorBoundary>
+                    }
+                  />
+                  <Route
+                    path="/grants"
+                    element={
+                      <ErrorBoundary>
+                        <Grants />
+                      </ErrorBoundary>
+                    }
+                  />
+                  <Route
+                    path="/grants/:id"
+                    element={
+                      <ErrorBoundary>
+                        <GrantDetail />
+                      </ErrorBoundary>
+                    }
+                  />
+                  <Route
+                    path="/organization"
+                    element={
+                      <ErrorBoundary>
+                        <Organization />
+                      </ErrorBoundary>
+                    }
+                  />
+                  <Route
+                    path="/profile"
+                    element={
+                      <ErrorBoundary>
+                        <Profile />
+                      </ErrorBoundary>
+                    }
+                  />
+                  <Route
+                    path="/narratives/:grantId"
+                    element={
+                      <ErrorBoundary>
+                        <Narrative />
+                      </ErrorBoundary>
+                    }
+                  />
+                  <Route
+                    path="/scraper"
+                    element={
+                      <ErrorBoundary>
+                        <Scraper />
+                      </ErrorBoundary>
+                    }
+                  />
+                  <Route
+                    path="/analytics"
+                    element={
+                      <ErrorBoundary>
+                        <Analytics />
+                      </ErrorBoundary>
+                    }
+                  />
+                  <Route
+                    path="/writing-assistant"
+                    element={
+                      <ErrorBoundary>
+                        <WritingAssistant />
+                      </ErrorBoundary>
+                    }
+                  />
+                  <Route
+                    path="/writing-assistant/:grantId"
+                    element={
+                      <ErrorBoundary>
+                        <WritingAssistant />
+                      </ErrorBoundary>
+                    }
+                  />
+                  <Route
+                    path="/smart-tools"
+                    element={
+                      <ErrorBoundary>
+                        <SmartTools />
+                      </ErrorBoundary>
+                    }
+                  />
+                  <Route
+                    path="/smart-tools/:toolId"
+                    element={
+                      <ErrorBoundary>
+                        <SmartTools />
+                      </ErrorBoundary>
+                    }
+                  />
+                  <Route
+                    path="/case-support"
+                    element={
+                      <ErrorBoundary>
+                        <CaseSupport />
+                      </ErrorBoundary>
+                    }
+                  />
+                  <Route
+                    path="/grant-pitch"
+                    element={
+                      <ErrorBoundary>
+                        <GrantPitch />
+                      </ErrorBoundary>
+                    }
+                  />
+                  <Route
+                    path="/impact-report"
+                    element={
+                      <ErrorBoundary>
+                        <ImpactReport />
+                      </ErrorBoundary>
+                    }
+                  />
+                  {/* Redirect /reports to /smart-tools */}
+                  <Route path="/reports" element={<Navigate to="/smart-tools" replace />} />
+                  
+                  {/* Fallback route for any other paths */}
+                  <Route path="*" element={<Navigate to="/dashboard" replace />} />
+                </Routes>
+              </ModernLayout>
+            </ProtectedRoute>
           }
         />
       </Routes>
