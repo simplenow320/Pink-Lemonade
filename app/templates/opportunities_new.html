@@ -456,7 +456,11 @@ function saveOpportunity(id) {
 }
 
 function applyToOpportunity(id) {
-    window.location.href = `/grant/${id}`;
+    // Open government website in new tab
+    const grant = opportunities.find(opp => opp.id === id);
+    if (grant && grant.link) {
+        window.open(grant.link, '_blank');
+    }
 }
 </script>
 {% endblock %}
