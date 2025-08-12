@@ -74,9 +74,7 @@ def opportunities():
 def saved():
     return render_template("saved.html", active="saved")
 
-@pages.get("/applications")
-def applications():
-    return render_template("applications.html", active="apps")
+
 
 @pages.get("/settings")
 def settings():

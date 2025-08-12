@@ -125,6 +125,9 @@ def create_app():
     from app.api.real_grants import real_grants_bp
     flask_app.register_blueprint(real_grants_bp)
     
+    from app.api.live_grants import live_grants_bp
+    flask_app.register_blueprint(live_grants_bp)
+    
     # Register onboarding journey endpoints
     from app.api.onboarding import onboarding_bp
     flask_app.register_blueprint(onboarding_bp)

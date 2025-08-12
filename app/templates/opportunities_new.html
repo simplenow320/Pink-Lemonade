@@ -76,12 +76,9 @@
     <div>
       <label style="display:block;margin-bottom:8px;font-weight:500;color:#2A2A2A;font-size:0.9rem">Source</label>
       <select id="sourceFilter" name="source" style="width:100%;padding:12px;border-radius:12px;border:1px solid #E8E8E8;background:#FAFAFA;color:#2A2A2A;font-size:0.95rem">
-        <option value="">All Sources</option>
-        <option value="grants_gov">Grants.gov</option>
-        <option value="foundation">Foundations</option>
-        <option value="corporate">Corporate</option>
-        <option value="state">State & Local</option>
-        <option value="federal">Federal</option>
+        <option value="all">All Government Sources</option>
+        <option value="federal_register">Federal Register</option>
+        <option value="usaspending">USAspending.gov</option>
       </select>
     </div>
     
@@ -282,14 +279,19 @@ async function loadOpportunities() {
     params.append('page', currentPage);
     
     try {
-        const response = await fetch(`/api/opportunities/search?${params.toString()}`);
+        const response = await fetch(`/api/live-grants/search?${params.toString()}`);
         const data = await response.json();
         
-        opportunities = data.opportunities || [];
+        opportunities = data.grants || data.opportunities || [];
         totalPages = data.total_pages || 1;
         
         // Update UI
         resultCountNumber.textContent = data.total || 0;
+        
+        // Show data source message if this is live data
+        if (data.is_live_data) {
+            console.log('Displaying real government grant data from:', data.sources_queried);
+        }
         
         if (opportunities.length > 0) {
             sortOpportunities();
