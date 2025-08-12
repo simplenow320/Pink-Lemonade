@@ -36,7 +36,7 @@ const Landing = () => {
         onClick={() => navigate('/grants')}
         className="px-12 py-5 bg-pink-500 text-white text-xl font-semibold rounded-lg hover:bg-pink-600 transition-colors shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition-all"
       >
-        Get Started
+        Start Finding Grants
       </button>
     </div>
   );
