@@ -1,53 +1,40 @@
 import os
-from flask import Flask, send_from_directory, send_file
-from flask_sqlalchemy import SQLAlchemy
-from sqlalchemy.orm import DeclarativeBase
-from werkzeug.middleware.proxy_fix import ProxyFix
+from flask import send_from_directory, send_file
+from app import create_app
 
-class Base(DeclarativeBase):
-    pass
-
-db = SQLAlchemy(model_class=Base)
-
-# create the app
-app = Flask(__name__, 
-            static_folder='client/build/static',
-            static_url_path='/static')
-
-app.secret_key = os.environ.get("SESSION_SECRET", "dev-secret-key")
-app.wsgi_app = ProxyFix(app.wsgi_app, x_proto=1, x_host=1)
-
-# configure the database, relative to the app instance folder
-app.config["SQLALCHEMY_DATABASE_URI"] = os.environ.get("DATABASE_URL", "sqlite:///app.db")
-app.config["SQLALCHEMY_ENGINE_OPTIONS"] = {
-    "pool_recycle": 300,
-    "pool_pre_ping": True,
-}
-
-# initialize the app with the extension, flask-sqlalchemy >= 3.0.x
-db.init_app(app)
+# Create the Flask app using the factory function
+app = create_app()
 
 # Serve React App
 @app.route('/')
 def serve_react_app():
-    return send_file('client/build/index.html')
+    try:
+        return send_file('client/build/index.html')
+    except:
+        # If build doesn't exist, serve from public
+        try:
+            return send_file('client/public/index.html')
+        except:
+            # Fallback to templates
+            return send_file('templates/index.html')
 
 @app.route('/assets/<path:filename>')
 def serve_assets(filename):
     return send_from_directory('client/public/assets', filename)
 
-# Catch all other routes and serve React app
+# Catch all other routes and serve React app (for client-side routing)
 @app.route('/<path:path>')
 def catch_all(path):
-    return send_file('client/build/index.html')
-
-with app.app_context():
-    # Make sure to import the models here or their tables won't be created
+    # Don't catch API routes
+    if path.startswith('api/'):
+        return {'error': 'API endpoint not found'}, 404
     try:
-        import models  # noqa: F401
-        db.create_all()
-    except ImportError:
-        print("No models.py found - creating basic tables")
+        return send_file('client/build/index.html')
+    except:
+        try:
+            return send_file('client/public/index.html')
+        except:
+            return send_file('templates/index.html')
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)

@@ -111,6 +111,75 @@ class EmailService:
         
         return self.send_email(to_email, subject, html_content, text_content)
     
+    def send_verification_email(self, to_email: str, first_name: str, verification_token: str) -> Dict[str, Any]:
+        """Send email verification link to new user"""
+        subject = "Welcome to Pink Lemonade - Verify Your Email"
+        
+        verification_url = f"{os.getenv('APP_URL', 'http://localhost:5000')}/verify-email?token={verification_token}"
+        
+        html_content = f"""
+        <html>
+            <body style="font-family: Arial, sans-serif; background-color: #f5f5f5; padding: 20px;">
+                <div style="max-width: 600px; margin: 0 auto; background-color: white; padding: 30px; border-radius: 10px;">
+                    <h1 style="color: #333;">Welcome to Pink Lemonade, {first_name}!</h1>
+                    <p style="color: #666; font-size: 16px;">Thank you for registering. Please verify your email address to get started.</p>
+                    <div style="text-align: center; margin: 30px 0;">
+                        <a href="{verification_url}" style="background-color: #ec4899; color: white; padding: 15px 30px; text-decoration: none; border-radius: 5px; display: inline-block;">Verify Email</a>
+                    </div>
+                    <p style="color: #999; font-size: 14px;">Or copy this link: {verification_url}</p>
+                    <p style="color: #999; font-size: 14px; margin-top: 30px;">This link will expire in 24 hours.</p>
+                </div>
+            </body>
+        </html>
+        """
+        
+        text_content = f"""
+        Welcome to Pink Lemonade, {first_name}!
+        
+        Please verify your email address by clicking the link below:
+        {verification_url}
+        
+        This link will expire in 24 hours.
+        """
+        
+        return self.send_email(to_email, subject, html_content, text_content)
+    
+    def send_password_reset_email(self, to_email: str, first_name: str, reset_token: str) -> Dict[str, Any]:
+        """Send password reset link to user"""
+        subject = "Pink Lemonade - Password Reset Request"
+        
+        reset_url = f"{os.getenv('APP_URL', 'http://localhost:5000')}/reset-password?token={reset_token}"
+        
+        html_content = f"""
+        <html>
+            <body style="font-family: Arial, sans-serif; background-color: #f5f5f5; padding: 20px;">
+                <div style="max-width: 600px; margin: 0 auto; background-color: white; padding: 30px; border-radius: 10px;">
+                    <h1 style="color: #333;">Password Reset Request</h1>
+                    <p style="color: #666; font-size: 16px;">Hi {first_name},</p>
+                    <p style="color: #666; font-size: 16px;">We received a request to reset your password. Click the button below to create a new password:</p>
+                    <div style="text-align: center; margin: 30px 0;">
+                        <a href="{reset_url}" style="background-color: #ec4899; color: white; padding: 15px 30px; text-decoration: none; border-radius: 5px; display: inline-block;">Reset Password</a>
+                    </div>
+                    <p style="color: #999; font-size: 14px;">Or copy this link: {reset_url}</p>
+                    <p style="color: #999; font-size: 14px; margin-top: 30px;">If you didn't request this, please ignore this email. This link will expire in 24 hours.</p>
+                </div>
+            </body>
+        </html>
+        """
+        
+        text_content = f"""
+        Password Reset Request
+        
+        Hi {first_name},
+        
+        We received a request to reset your password. Click the link below to create a new password:
+        {reset_url}
+        
+        If you didn't request this, please ignore this email. This link will expire in 24 hours.
+        """
+        
+        return self.send_email(to_email, subject, html_content, text_content)
+    
     def send_system_alert(self, to_emails: List[str], alert_type: str, message: str) -> Dict[str, Any]:
         """Send system alert to administrators"""
         subject = f"🚨 System Alert: {alert_type}"

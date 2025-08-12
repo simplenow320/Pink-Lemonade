@@ -283,5 +283,10 @@ def init_monitoring(app):
             str(e),
             request.endpoint
         )
-        # Re-raise the exception for normal handling
+        # Don't re-raise 404 errors
+        from werkzeug.exceptions import NotFound
+        if isinstance(e, NotFound):
+            from flask import jsonify
+            return jsonify({'error': 'Not found'}), 404
+        # Re-raise other exceptions for normal handling
         raise e

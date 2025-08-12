@@ -109,6 +109,14 @@ def create_app():
     from app.api.final_completion import bp as final_completion_bp
     flask_app.register_blueprint(final_completion_bp)
     
+    # Register health check endpoints
+    from app.api.health import bp as health_bp
+    flask_app.register_blueprint(health_bp)
+    
+    # Register Smart Tools endpoints
+    from app.api.smart_tools import bp as smart_tools_bp
+    flask_app.register_blueprint(smart_tools_bp)
+    
     # Register live data integration endpoints
     from app.api.live_data import bp as live_data_bp
     flask_app.register_blueprint(live_data_bp)

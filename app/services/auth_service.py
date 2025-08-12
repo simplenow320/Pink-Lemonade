@@ -24,16 +24,15 @@ class AuthService:
                 return {'success': False, 'error': 'Email already registered'}
             
             # Create new user
-            user = User(
-                email=email,
-                password_hash=generate_password_hash(password),
-                org_name=org_name,
-                first_name=first_name,
-                last_name=last_name,
-                job_title=job_title,
-                is_verified=False,
-                created_at=datetime.utcnow()
-            )
+            user = User()
+            user.email = email
+            user.password_hash = generate_password_hash(password)
+            user.org_name = org_name
+            user.first_name = first_name
+            user.last_name = last_name
+            user.job_title = job_title
+            user.is_verified = False
+            user.created_at = datetime.utcnow()
             
             # Generate verification token
             verification_token = self.generate_verification_token()
