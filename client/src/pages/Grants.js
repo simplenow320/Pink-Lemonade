@@ -1,13 +1,16 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import Toast from '../components/Toast';
 import api from '../utils/api';
 
 const Grants = () => {
+  const navigate = useNavigate();
   const [opportunities, setOpportunities] = useState([]);
   const [loading, setLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [toast, setToast] = useState(null);
   const [runningNow, setRunningNow] = useState(false);
+  const [showProfilePrompt, setShowProfilePrompt] = useState(false);
   
   // Get organization ID (hardcoded for now, should come from context/auth)
   const orgId = 1; // TODO: Get from user context
@@ -145,9 +148,69 @@ const Grants = () => {
     );
   }
 
+  // Check if user should see profile completion prompt
+  useEffect(() => {
+    const checkUserProfile = async () => {
+      try {
+        const response = await fetch('/api/organization/get', {
+          credentials: 'include'
+        });
+        if (response.ok) {
+          const data = await response.json();
+          // Show prompt if organization profile is incomplete
+          const org = data.organization;
+          const isIncomplete = !org?.mission || !org?.primary_focus_areas || 
+                              org?.primary_focus_areas?.length === 0;
+          setShowProfilePrompt(isIncomplete && opportunities.length > 0);
+        }
+      } catch (error) {
+        console.error('Error checking profile:', error);
+      }
+    };
+    
+    if (opportunities.length > 0) {
+      checkUserProfile();
+    }
+  }, [opportunities]);
+
   // Regular view when grants are loaded
   return (
     <div className="p-6">
+      {/* Profile completion prompt for new users */}
+      {showProfilePrompt && (
+        <div className="mb-6 bg-gradient-to-r from-pink-50 to-purple-50 border border-pink-200 rounded-lg p-6">
+          <div className="flex items-start">
+            <div className="flex-shrink-0">
+              <div className="w-10 h-10 bg-pink-100 rounded-full flex items-center justify-center">
+                <svg className="w-6 h-6 text-pink-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </div>
+            </div>
+            <div className="ml-4 flex-1">
+              <h3 className="text-lg font-semibold text-gray-900">Improve Your Grant Matches!</h3>
+              <p className="mt-1 text-gray-600">
+                Complete your organization profile to get better grant recommendations tailored to your mission and focus areas.
+              </p>
+              <div className="mt-4 flex items-center space-x-3">
+                <button
+                  onClick={() => navigate('/organization')}
+                  className="px-4 py-2 bg-pink-500 text-white rounded-lg hover:bg-pink-600 transition-colors font-medium"
+                >
+                  Complete Profile
+                </button>
+                <button
+                  onClick={() => setShowProfilePrompt(false)}
+                  className="px-4 py-2 text-gray-600 hover:text-gray-800 transition-colors"
+                >
+                  Later
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Header with Run Now button */}
       <div className="flex justify-between items-center mb-6">
         <div>
