@@ -1,7 +1,9 @@
 <!-- Navigation for Landing Page (Logo Only) -->
 {% if request.endpoint == 'index' %}
 <nav class="nav-centered" role="navigation" aria-label="Primary">
-  <img src="{{ url_for('static', filename='logo.png') }}" alt="Pink Lemonade" class="logo-5x" />
+  <a href="/" class="landing-logo-link">
+    <img src="{{ url_for('static', filename='logo.png') }}" alt="Pink Lemonade" class="logo-5x" />
+  </a>
 </nav>
 {% else %}
 <!-- Navigation for All Other Pages (Logo + Hamburger Menu) -->
@@ -26,7 +28,9 @@
   <!-- Navigation Menu -->
   <div class="nav-menu" id="navMenu">
     <div class="nav-menu-header">
-      <img src="{{ url_for('static', filename='logo-no-bg.png') }}" alt="Pink Lemonade" class="logo-3x" />
+      <a href="/" class="menu-header-logo-link">
+        <img src="{{ url_for('static', filename='logo-no-bg.png') }}" alt="Pink Lemonade" class="logo-3x" />
+      </a>
       <button class="close-btn" id="closeBtn" aria-label="Close navigation menu">
         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <line x1="18" y1="6" x2="6" y2="18"></line>
@@ -209,7 +213,16 @@
   background: #FAFAFA;
 }
 
-.nav-menu-header img {
+.menu-header-logo-link {
+  display: inline-block;
+  transition: all 0.2s ease;
+}
+
+.menu-header-logo-link:hover {
+  opacity: 0.8;
+}
+
+.menu-header-logo-link img {
   height: 60px; /* 2x bigger menu logo size */
 }
 
@@ -291,6 +304,17 @@
 /* Hide hamburger on landing page */
 .nav-centered .hamburger-btn {
   display: none;
+}
+
+/* Landing page logo link styling */
+.landing-logo-link {
+  display: inline-block;
+  transition: all 0.2s ease;
+}
+
+.landing-logo-link:hover {
+  opacity: 0.8;
+  transform: translateY(-1px);
 }
 </style>
 
