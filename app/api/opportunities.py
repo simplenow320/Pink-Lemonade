@@ -7,6 +7,7 @@ from app.services.matching_service import assemble_results, build_tokens
 from app.services.grants_gov_client import get_grants_gov_client
 from app.services.candid_client import get_candid_client
 from app.services.candid_v3_client import get_candid_v3_client
+from app.services.candid_grants_client import get_candid_grants_client
 from app.services.federal_register_client import get_federal_register_client
 from app.services.usaspending_client import get_usaspending_client
 from app.services.pnd_client import get_pnd_client
@@ -94,15 +95,43 @@ def get_opportunities():
             except Exception as e:
                 logger.error(f"Error fetching PND opportunities: {e}")
         
-        # 5. Get Foundation Data from Multiple Sources
-        if not source_filter or source_filter in ['foundation', 'private']:
+        # 5. Get REAL Grant Data from Candid Grants API (WORKING!)
+        if not source_filter or source_filter in ['foundation', 'candid', 'private']:
             try:
-                aggregator = get_foundation_aggregator()
-                foundation_opps = aggregator.get_all_foundation_opportunities(search_query or focus_area)
-                all_opportunities.extend(foundation_opps)
-                logger.info(f"Added {len(foundation_opps)} foundation opportunities")
+                client = get_candid_grants_client()
+                
+                # Get summary first to verify connection
+                summary = client.get_summary()
+                if summary:
+                    logger.info(f"Candid API Connected: {summary.get('number_of_grants', 0):,} grants available")
+                
+                # Search for grants based on criteria
+                keyword = search_query or focus_area or ""
+                candid_grants = client.search_grants(
+                    keyword=keyword,
+                    state=city[:2].upper() if city and len(city) >= 2 else "",
+                    limit=25
+                )
+                
+                # If no specific grants found, get top funders instead
+                if not candid_grants:
+                    funders = client.get_funders(limit=10)
+                    all_opportunities.extend(funders)
+                    logger.info(f"Added {len(funders)} Candid funders")
+                else:
+                    all_opportunities.extend(candid_grants)
+                    logger.info(f"Added {len(candid_grants)} Candid grants")
+                    
             except Exception as e:
-                logger.error(f"Error fetching foundation data: {e}")
+                logger.error(f"Error fetching Candid data: {e}")
+                # Fallback to major foundations if Candid fails
+                try:
+                    aggregator = get_foundation_aggregator()
+                    foundation_opps = aggregator.get_all_foundation_opportunities(search_query or focus_area)
+                    all_opportunities.extend(foundation_opps)
+                    logger.info(f"Added {len(foundation_opps)} foundation opportunities (fallback)")
+                except Exception as e2:
+                    logger.error(f"Error fetching foundation data: {e2}")
         
         # 6. Try old Candid API for news (backup)
         if False:  # Disabled for now since we have v3 working
