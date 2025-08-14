@@ -95,7 +95,7 @@ class CandidClient:
                 
             headers = {
                 'Accept': 'application/json',
-                'Subscription-Key': api_key
+                'X-API-KEY': api_key
             }
             
             req = urllib.request.Request(full_url, headers=headers)
@@ -127,11 +127,11 @@ class CandidClient:
     def search_news(self, query: str, start_date: Optional[str] = None, 
                    region: Optional[str] = None, page: int = 1, size: int = 25) -> Dict:
         """Search Candid news"""
-        url = "https://api.candid.org/news/v1/search"
+        url = "https://api.candid.org/funding/v1/news"
         params = {
             'query': query,
             'page': page,
-            'page_size': size
+            'size': size
         }
         if start_date:
             params['start_date'] = start_date
@@ -142,11 +142,11 @@ class CandidClient:
     
     def search_transactions(self, query: str, page: int = 1, size: int = 25) -> Dict:
         """Search grant transactions"""
-        url = "https://api.candid.org/grants/v1/transactions"
+        url = "https://api.candid.org/funding/v1/grants"
         params = {
             'query': query,
             'page': page,
-            'page_size': size
+            'size': size
         }
         return self.get_json(url, params, service="grants")
 

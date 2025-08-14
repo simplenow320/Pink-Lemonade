@@ -196,6 +196,10 @@ def create_app():
         # Blueprint already registered
         pass
     
+    # Register Demo Opportunities API
+    from app.api.demo_opportunities import bp as demo_opportunities_bp
+    flask_app.register_blueprint(demo_opportunities_bp)
+    
     # Initialize monitoring
     from app.services.monitoring_service import init_monitoring
     init_monitoring(flask_app)

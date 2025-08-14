@@ -51,7 +51,7 @@ def get_opportunities():
                 for grant in federal_grants:
                     grant['source_type'] = 'Federal'
                     grant['source_name'] = 'Government Database'
-                    all_opportunities.extend(federal_grants)
+                all_opportunities.extend(federal_grants)
                     
                 logger.info(f"Found {len(federal_grants)} federal grants")
             except Exception as e:
