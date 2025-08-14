@@ -17,16 +17,16 @@ class CandidV3Client:
     BASE_URL = "https://api.candid.org"
     
     def __init__(self):
-        # Get API keys from environment
-        self.grants_keys = os.environ.get('CANDID_GRANTS_KEYS', '').split(',')
-        self.news_keys = os.environ.get('CANDID_NEWS_KEYS', '').split(',')
-        self.primary_key = os.environ.get('CANDID_API_KEY', self.grants_keys[0] if self.grants_keys else '')
+        # Get API keys from environment - use the new working keys
+        self.grants_keys = os.environ.get('CANDID_GRANTS_KEYS', 'cd6150ff5b27410899495f96969451ea,243699cfa8c9422f9347b970e391fb59').split(',')
+        self.news_keys = os.environ.get('CANDID_NEWS_KEYS', '7647f9fe2d9645d48def7a04b6835083,0da558d408e74654baa000836cb88bef').split(',')
+        self.primary_key = os.environ.get('CANDID_API_KEY', 'cd6150ff5b27410899495f96969451ea')
         self.current_key_index = 0
         self.timeout = 30
         
     def search_foundations(self, search_term: str = "", state: str = "", limit: int = 25) -> List[Dict]:
         """
-        Search for foundations using Premier API v3
+        Search for foundations using Essentials API v3 (works with trial keys)
         
         Args:
             search_term: Keywords to search
@@ -37,7 +37,7 @@ class CandidV3Client:
             List of foundation profiles
         """
         try:
-            # Use search endpoint
+            # Use Essentials API v3 search endpoint (works with trial keys)
             params = {}
             if search_term:
                 params['search_terms'] = search_term
@@ -45,7 +45,7 @@ class CandidV3Client:
                 params['state'] = state
             params['page_size'] = str(limit)
             
-            url = f"{self.BASE_URL}/premier/v3/search"
+            url = f"{self.BASE_URL}/essentials/v3/search"
             if params:
                 url += '?' + urllib.parse.urlencode(params)
             
