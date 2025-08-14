@@ -184,6 +184,10 @@ def create_app():
     from app.api.matching import matching_bp
     flask_app.register_blueprint(matching_bp)
     
+    # Register Platform Stats API endpoints
+    from app.api.platform_stats import bp as platform_stats_bp
+    flask_app.register_blueprint(platform_stats_bp)
+    
     # Initialize monitoring
     from app.services.monitoring_service import init_monitoring
     init_monitoring(flask_app)
