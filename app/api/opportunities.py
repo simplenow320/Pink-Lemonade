@@ -8,6 +8,7 @@ from app.services.grants_gov_client import get_grants_gov_client
 from app.services.candid_client import get_candid_client
 from app.services.federal_register_client import get_federal_register_client
 from app.services.usaspending_client import get_usaspending_client
+from app.services.pnd_client import get_pnd_client
 from app import db
 from app.models import Grant, Organization
 
@@ -81,8 +82,18 @@ def get_opportunities():
             except Exception as e:
                 logger.error(f"Error fetching USAspending: {e}")
         
-        # 4. Get Foundation Grants from Candid News (if API keys available)
-        if not source_filter or source_filter in ['foundation', 'candid_news', 'private']:
+        # 4. Get Foundation Opportunities from PND (FREE RSS Feed)
+        if not source_filter or source_filter in ['foundation', 'pnd', 'private']:
+            try:
+                client = get_pnd_client()
+                foundation_opps = client.get_foundation_opportunities()
+                all_opportunities.extend(foundation_opps[:25])  # Limit to 25
+                logger.info(f"Added {len(foundation_opps[:25])} foundation opportunities from PND")
+            except Exception as e:
+                logger.error(f"Error fetching PND opportunities: {e}")
+        
+        # 5. Try Candid API if keys are available
+        if not source_filter or source_filter in ['candid']:
             try:
                 client = get_candid_client()
                 
@@ -99,7 +110,7 @@ def get_opportunities():
                         opportunity = {
                             'source': 'candid_news',
                             'source_type': 'Foundation',
-                            'source_name': 'Foundation News',
+                            'source_name': 'Candid Foundation News',
                             'title': article.get('title', 'Foundation Opportunity'),
                             'funder': article.get('publisher', 'Foundation'),
                             'description': article.get('summary', ''),
