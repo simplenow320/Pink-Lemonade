@@ -188,6 +188,14 @@ def create_app():
     from app.api.platform_stats import bp as platform_stats_bp
     flask_app.register_blueprint(platform_stats_bp)
     
+    # Register Opportunities API endpoints
+    try:
+        from app.api.opportunities import bp as opportunities_bp
+        flask_app.register_blueprint(opportunities_bp)
+    except ValueError:
+        # Blueprint already registered
+        pass
+    
     # Initialize monitoring
     from app.services.monitoring_service import init_monitoring
     init_monitoring(flask_app)

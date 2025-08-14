@@ -1,305 +1,251 @@
 """
-Opportunities API endpoints
-Fetches grant opportunities from the API Manager
+Opportunities API - Aggregates all grant sources
 """
-
-from flask import Blueprint, request, jsonify
-from datetime import datetime, timedelta
-from app import db
-from app.models import Grant
-from app.models import Organization
-from app.services.apiManager import api_manager
-from app.services.ai_service import ai_service
 import logging
+from flask import Blueprint, request, jsonify
+from app.services.matching_service import assemble_results, build_tokens
+from app.services.grants_gov_client import get_grants_gov_client
+from app.services.candid_client import get_candid_client
+from app import db
+from app.models import Grant, Organization
 
 logger = logging.getLogger(__name__)
 
-bp = Blueprint('opportunities', __name__, url_prefix='/api')
+bp = Blueprint('opportunities_api', __name__)
 
-@bp.route('/opportunities/search', methods=['GET'])
-def search_opportunities():
-    """Search endpoint that returns simplified data from database"""
+@bp.route('/api/opportunities', methods=['GET'])
+def get_opportunities():
+    """
+    Get all opportunities from all sources
+    Combines federal grants, foundation news, and database grants
+    """
     try:
         # Get query parameters
-        search_query = request.args.get('search', '')
+        search_query = request.args.get('q', '')
         city = request.args.get('city', '')
-        focus_area = request.args.get('focus_area', '')
-        deadline_days = request.args.get('deadline_days', '')
-        source = request.args.get('source', '')
-        page = int(request.args.get('page', 1))
-        per_page = 20
+        focus_area = request.args.get('focus', '')
+        source_filter = request.args.get('source', '')
+        org_id = request.args.get('orgId')
+        limit = int(request.args.get('limit', 100))
         
-        # Get grants from database
-        query = Grant.query.filter(Grant.status != 'abandoned')
+        all_opportunities = []
         
-        # Apply search filter
-        if search_query:
-            search_pattern = f'%{search_query}%'
-            query = query.filter(db.or_(
-                Grant.title.ilike(search_pattern),
-                Grant.funder.ilike(search_pattern),
-                Grant.eligibility.ilike(search_pattern)
-            ))
+        # 1. Get Federal Grants from Grants.gov
+        if not source_filter or source_filter in ['grants.gov', 'federal']:
+            try:
+                client = get_grants_gov_client()
+                search_params = {
+                    "opportunity_status": "open",
+                    "page_size": 25
+                }
+                
+                # Add search keywords
+                if search_query:
+                    search_params["keywords"] = [search_query]
+                elif focus_area:
+                    search_params["keywords"] = [focus_area]
+                    
+                federal_grants = client.search_opportunities(search_params)
+                
+                # Add source info and type
+                for grant in federal_grants:
+                    grant['source_type'] = 'Federal'
+                    grant['source_name'] = 'Government Database'
+                    all_opportunities.extend(federal_grants)
+                    
+                logger.info(f"Found {len(federal_grants)} federal grants")
+            except Exception as e:
+                logger.error(f"Error fetching federal grants: {e}")
         
-        # Apply city filter
+        # 2. Get Foundation Grants from Candid News
+        if not source_filter or source_filter in ['foundation', 'candid_news', 'private']:
+            try:
+                client = get_candid_client()
+                
+                # Build search query for news
+                news_query = search_query or focus_area or "grant OR foundation OR RFP OR funding"
+                
+                # Search news for grant opportunities
+                news_results = client.search_news(news_query, page=1, size=25)
+                
+                if news_results and not news_results.get("error"):
+                    articles = news_results.get("articles", [])
+                    for article in articles:
+                        # Transform news to opportunity format
+                        opportunity = {
+                            'source': 'candid_news',
+                            'source_type': 'Foundation',
+                            'source_name': 'Foundation News',
+                            'title': article.get('title', 'Foundation Opportunity'),
+                            'funder': article.get('publisher', 'Foundation'),
+                            'description': article.get('summary', ''),
+                            'url': article.get('url', ''),
+                            'published_date': article.get('published_date'),
+                            'keywords': article.get('keywords', [])
+                        }
+                        all_opportunities.append(opportunity)
+                    
+                    logger.info(f"Found {len(articles)} foundation opportunities from news")
+            except Exception as e:
+                logger.error(f"Error fetching Candid news: {e}")
+        
+        # 3. Get Historical Grants from Candid Transactions
+        if not source_filter or source_filter in ['foundation', 'candid_grants', 'historical']:
+            try:
+                client = get_candid_client()
+                
+                # Build search for transactions
+                trans_query = search_query or focus_area or "education"
+                
+                transactions = client.search_transactions(trans_query, page=1, size=15)
+                
+                if transactions and not transactions.get("error"):
+                    grants_data = transactions.get("grants", [])
+                    for grant in grants_data:
+                        # Transform transaction to opportunity format
+                        opportunity = {
+                            'source': 'candid_grants',
+                            'source_type': 'Historical Grant',
+                            'source_name': 'Grant History Database',
+                            'title': f"{grant.get('funder_name', 'Funder')} - {grant.get('description', 'Grant')}",
+                            'funder': grant.get('funder_name', 'Foundation'),
+                            'description': grant.get('description', ''),
+                            'amount': grant.get('amount'),
+                            'grant_date': grant.get('grant_date'),
+                            'recipient': grant.get('recipient_name')
+                        }
+                        all_opportunities.append(opportunity)
+                    
+                    logger.info(f"Found {len(grants_data)} historical grants")
+            except Exception as e:
+                logger.error(f"Error fetching Candid transactions: {e}")
+        
+        # 4. Get grants from database
+        if not source_filter or source_filter == 'saved':
+            try:
+                db_grants = Grant.query.all()
+                for grant in db_grants:
+                    opportunity = {
+                        'source': 'database',
+                        'source_type': 'Saved',
+                        'source_name': 'Your Saved Grants',
+                        'id': grant.id,
+                        'title': grant.title or 'Saved Grant',
+                        'funder': grant.funder or 'Unknown',
+                        'deadline': grant.deadline.isoformat() if grant.deadline else None,
+                        'amount_min': grant.amount_min,
+                        'amount_max': grant.amount_max,
+                        'status': grant.status or 'available'
+                    }
+                    all_opportunities.append(opportunity)
+                    
+                logger.info(f"Found {len(db_grants)} saved grants")
+            except Exception as e:
+                logger.error(f"Error fetching database grants: {e}")
+        
+        # Apply city filter if specified
         if city:
-            query = query.filter(Grant.geography.ilike(f'%{city}%'))
+            filtered = []
+            for opp in all_opportunities:
+                # Check various location fields
+                if city.lower() in str(opp.get('geography', '')).lower() or \
+                   city.lower() in str(opp.get('location', '')).lower() or \
+                   city.lower() in str(opp.get('state', '')).lower():
+                    filtered.append(opp)
+            all_opportunities = filtered
         
         # Apply focus area filter
         if focus_area:
-            query = query.filter(Grant.eligibility.ilike(f'%{focus_area}%'))
+            filtered = []
+            for opp in all_opportunities:
+                # Check if focus area matches
+                if focus_area.lower() in str(opp.get('title', '')).lower() or \
+                   focus_area.lower() in str(opp.get('description', '')).lower() or \
+                   focus_area.lower() in str(opp.get('keywords', [])).lower():
+                    filtered.append(opp)
+            all_opportunities = filtered
         
-        # Apply deadline filter
-        if deadline_days:
-            cutoff_date = datetime.now().date() + timedelta(days=int(deadline_days))
-            query = query.filter(Grant.deadline <= cutoff_date)
-        
-        # Apply source filter
-        if source:
-            query = query.filter(Grant.source_name == source)
-        
-        # Order by deadline and created date
-        query = query.order_by(Grant.deadline.asc().nullslast(), Grant.created_at.desc())
-        
-        # Paginate
-        paginated = query.paginate(page=page, per_page=per_page, error_out=False)
-        
-        # Format results
-        opportunities = []
-        for grant in paginated.items:
-            opportunities.append({
-                'id': grant.id,
-                'title': grant.title,
-                'funder': grant.funder,
-                'description': grant.eligibility or '',
-                'amount_min': grant.amount_min,
-                'amount_max': grant.amount_max,
-                'deadline': grant.deadline.isoformat() if grant.deadline else None,
-                'source': grant.source_name,
-                'status': grant.status,
-                'fit_score': grant.match_score,
-                'fit_reason': grant.match_reason,
-                'location': grant.geography,
-                'focus_areas': grant.eligibility
-            })
+        # Limit results
+        all_opportunities = all_opportunities[:limit]
         
         return jsonify({
-            'opportunities': opportunities,
-            'total': paginated.total,
-            'page': page,
-            'per_page': per_page,
-            'total_pages': paginated.pages
+            'success': True,
+            'opportunities': all_opportunities,
+            'total': len(all_opportunities),
+            'sources': {
+                'federal': sum(1 for o in all_opportunities if o.get('source_type') == 'Federal'),
+                'foundation': sum(1 for o in all_opportunities if o.get('source_type') == 'Foundation'),
+                'historical': sum(1 for o in all_opportunities if o.get('source_type') == 'Historical Grant'),
+                'saved': sum(1 for o in all_opportunities if o.get('source_type') == 'Saved')
+            }
         })
         
     except Exception as e:
-        logger.error(f"Error searching opportunities: {e}")
+        logger.error(f"Error in opportunities endpoint: {e}")
         return jsonify({
+            'success': False,
+            'error': str(e),
             'opportunities': [],
-            'total': 0,
-            'page': 1,
-            'per_page': 20,
-            'total_pages': 0,
-            'error': str(e)
+            'total': 0
         })
 
-@bp.route('/opportunities', methods=['GET'])
-def get_opportunities():
+@bp.route('/api/opportunities/locations', methods=['GET'])
+def get_available_locations():
     """
-    Fetch opportunities from various sources via API Manager
-    Supports search, filtering, and pagination
+    Get all available locations from current opportunities
+    Dynamic list based on actual data
     """
     try:
-        # Get query parameters
-        page = int(request.args.get('page', 1))
-        per_page = 20
-        search_query = request.args.get('search', '')
-        city = request.args.get('city', '')
-        focus_area = request.args.get('focus_area', '')
-        deadline_days = request.args.get('deadline_days', '')
-        source = request.args.get('source', '')
+        locations = set()
         
-        # Get current organization
-        org = Organization.query.first()
-        org_data = org.to_dict() if org else {}
+        # Get locations from federal grants
+        try:
+            client = get_grants_gov_client()
+            federal_grants = client.search_opportunities({"opportunity_status": "open", "page_size": 50})
+            for grant in federal_grants:
+                if grant.get('geography'):
+                    locations.add(grant['geography'])
+                if grant.get('state'):
+                    locations.add(grant['state'])
+        except:
+            pass
         
-        # Fetch opportunities from API Manager
-        all_opportunities = []
-        sources_to_query = [source] if source else ['grants_gov', 'philanthropy_news', 'federal_register', 
-                                                     'govinfo', 'michigan_portal', 'georgia_portal']
+        # Get locations from database
+        try:
+            db_grants = Grant.query.all()
+            for grant in db_grants:
+                if hasattr(grant, 'geography') and grant.geography:
+                    locations.add(grant.geography)
+        except:
+            pass
         
-        for src in sources_to_query:
-            try:
-                # Build search parameters for each source
-                params = {'query': search_query} if search_query else {}
-                
-                # Add location filter if specified
-                if city:
-                    params['location'] = city
-                
-                # Add focus area filter
-                if focus_area:
-                    params['keyword'] = focus_area
-                
-                # Fetch from source using the correct method
-                grants = api_manager.get_grants_from_source(src, params)
-                
-                if grants and isinstance(grants, list):
-                    # Process each grant
-                    for grant in grants:
-                        # Add source information
-                        grant['source'] = src
-                        
-                        # Calculate fit score if AI is enabled
-                        if ai_service.is_enabled() and org:
-                            score, reason = ai_service.match_grant(org_data, grant)
-                            grant['fit_score'] = score
-                            grant['fit_reason'] = reason
-                        else:
-                            grant['fit_score'] = None
-                            grant['fit_reason'] = None
-                        
-                        # Apply deadline filter
-                        if deadline_days:
-                            deadline_date = grant.get('deadline') or grant.get('close_date')
-                            if deadline_date:
-                                try:
-                                    deadline = datetime.fromisoformat(deadline_date.replace('Z', '+00:00'))
-                                    cutoff = datetime.now() + timedelta(days=int(deadline_days))
-                                    if deadline > cutoff:
-                                        continue
-                                except:
-                                    pass
-                        
-                        # Apply focus area filter (additional filtering)
-                        if focus_area and focus_area.lower() not in grant.get('description', '').lower():
-                            continue
-                        
-                        # Apply city filter (additional filtering)
-                        if city and city.lower() not in grant.get('eligible_applicants', '').lower():
-                            continue
-                        
-                        all_opportunities.append(grant)
-                        
-            except Exception as e:
-                logger.warning(f"Failed to fetch from {src}: {e}")
-                continue
+        # Add major cities as defaults
+        default_cities = [
+            "National", "New York", "Los Angeles", "Chicago", "Houston", "Phoenix",
+            "Philadelphia", "San Antonio", "San Diego", "Dallas", "San Jose",
+            "Austin", "Jacksonville", "Fort Worth", "Columbus", "Indianapolis",
+            "Charlotte", "San Francisco", "Seattle", "Denver", "Washington DC",
+            "Boston", "Nashville", "Detroit", "Portland", "Memphis", "Oklahoma City",
+            "Las Vegas", "Louisville", "Baltimore", "Milwaukee", "Albuquerque",
+            "Tucson", "Fresno", "Sacramento", "Kansas City", "Atlanta", "Miami",
+            "Oakland", "Minneapolis", "Cleveland", "Tampa", "St. Louis", "Pittsburgh",
+            "Cincinnati", "Orlando", "Newark", "Buffalo", "Raleigh", "Richmond"
+        ]
         
-        # Apply search filter across all fields
-        if search_query:
-            search_lower = search_query.lower()
-            all_opportunities = [
-                opp for opp in all_opportunities
-                if search_lower in str(opp.get('title', '') + ' ' + 
-                                      opp.get('description', '') + ' ' + 
-                                      opp.get('funder', '')).lower()
-            ]
+        for city in default_cities:
+            locations.add(city)
         
-        # Sort by deadline (soonest first) and fit score (highest first)
-        all_opportunities.sort(key=lambda x: (
-            x.get('deadline') or '9999-12-31',
-            -(x.get('fit_score') or 0)
-        ))
-        
-        # Paginate results
-        total = len(all_opportunities)
-        start = (page - 1) * per_page
-        end = start + per_page
-        paginated = all_opportunities[start:end]
-        
-        # Transform for frontend
-        formatted_opportunities = []
-        for idx, opp in enumerate(paginated):
-            formatted_opportunities.append({
-                'id': start + idx + 1,  # Temporary ID for frontend
-                'title': opp.get('title', 'Untitled'),
-                'funder': opp.get('agency_name') or opp.get('funder') or 'Unknown',
-                'description': opp.get('description', ''),
-                'fit_score': opp.get('fit_score'),
-                'fit_reason': opp.get('fit_reason'),
-                'amount_min': parse_amount(opp.get('award_floor')) or 0,
-                'amount_max': parse_amount(opp.get('award_ceiling')) or parse_amount(opp.get('amount')) or 0,
-                'deadline': opp.get('close_date') or opp.get('deadline'),
-                'source': opp.get('source'),
-                'url': opp.get('url') or opp.get('link'),
-                'opportunity_number': opp.get('opportunity_number'),
-                '_raw': opp  # Keep raw data for save/apply actions
-            })
-        
-        # Always use LIVE mode - no mock data allowed
-        import os
-        data_mode = 'LIVE'  # Always live data, never mock
-        mode = 'live'
-        
-        return jsonify({
-            'opportunities': formatted_opportunities,
-            'total': total,
-            'page': page,
-            'per_page': per_page,
-            'total_pages': (total + per_page - 1) // per_page,
-            'mode': mode,
-            'demo': False  # Never demo - always real data
-        })
-        
-    except Exception as e:
-        logger.error(f"Error fetching opportunities: {e}")
-        return jsonify({'error': str(e)}), 500
-
-@bp.route('/opportunities/save/<int:grant_id>', methods=['POST'])
-def save_opportunity(grant_id):
-    """Save an existing grant to user's saved list"""
-    try:
-        # Get the grant from database
-        grant = Grant.query.get_or_404(grant_id)
-        
-        # Change status to saved/prospect
-        grant.status = 'prospect'
-        db.session.commit()
+        # Sort alphabetically
+        sorted_locations = sorted(list(locations))
         
         return jsonify({
             'success': True,
-            'message': 'Grant saved to your library',
-            'grant_id': grant.id
+            'locations': sorted_locations
         })
         
     except Exception as e:
-        logger.error(f"Error saving opportunity: {e}")
-        db.session.rollback()
-        return jsonify({'error': str(e)}), 500
-
-@bp.route('/opportunities/apply/<int:grant_id>', methods=['POST'])
-def apply_to_opportunity(grant_id):
-    """Start application process for a grant"""
-    try:
-        # Get the grant from database
-        grant = Grant.query.get_or_404(grant_id)
-        
-        # Change status to drafting (application started)
-        grant.status = 'drafting'
-        db.session.commit()
-        
+        logger.error(f"Error getting locations: {e}")
         return jsonify({
-            'success': True,
-            'message': 'Application started successfully',
-            'application_id': grant.id
+            'success': False,
+            'locations': ["National"]
         })
-        
-    except Exception as e:
-        logger.error(f"Error creating application: {e}")
-        db.session.rollback()
-        return jsonify({'error': str(e)}), 500
-
-def parse_amount(amount_str):
-    """Parse amount string to integer"""
-    if not amount_str:
-        return None
-    
-    if isinstance(amount_str, (int, float)):
-        return int(amount_str)
-    
-    # Remove currency symbols and commas
-    amount_str = str(amount_str).replace('$', '').replace(',', '').strip()
-    
-    try:
-        return int(float(amount_str))
-    except:
-        return None
