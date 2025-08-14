@@ -14,18 +14,19 @@ logger = logging.getLogger(__name__)
 class GrantsGovClient:
     """Client for Grants.gov API"""
     
-    BASE_URL = "https://api.grants.gov/v1/api"
+    BASE_URL = "https://api.grants.gov/v1"
     
     def __init__(self):
         self.timeout = 30
         
     def _post_json(self, endpoint: str, payload: Dict) -> Optional[Dict]:
         """Make POST request with JSON payload"""
-        url = f"{self.BASE_URL}/{endpoint}"
+        url = f"{self.BASE_URL}/api/{endpoint}"
         
         headers = {
             'Content-Type': 'application/json',
-            'Accept': 'application/json'
+            'Accept': 'application/json',
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
         }
         
         try:
@@ -56,14 +57,21 @@ class GrantsGovClient:
             List of normalized opportunity dicts
         """
         try:
-            result = self._post_json("search2", payload)
+            # Ensure payload has proper structure for Grants.gov API
+            search_payload = {
+                "keyword": payload.get("keywords", ["grant"])[0] if payload.get("keywords") else "grant",
+                "oppStatuses": payload.get("oppStatuses", ["posted"]),
+                "sortBy": "openDate|desc"
+            }
+            
+            result = self._post_json("search2", search_payload)
             if not result:
                 return []
                 
             opportunities = []
             
-            # Extract opportunities from response
-            opps_data = result.get("opportunities", [])
+            # Extract opportunities from response - they come in oppHits
+            opps_data = result.get("oppHits", [])
             if isinstance(opps_data, list):
                 for opp in opps_data:
                     normalized = self._normalize_opportunity(opp)

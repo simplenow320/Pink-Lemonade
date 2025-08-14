@@ -6,6 +6,8 @@ from flask import Blueprint, request, jsonify
 from app.services.matching_service import assemble_results, build_tokens
 from app.services.grants_gov_client import get_grants_gov_client
 from app.services.candid_client import get_candid_client
+from app.services.federal_register_client import get_federal_register_client
+from app.services.usaspending_client import get_usaspending_client
 from app import db
 from app.models import Grant, Organization
 
@@ -57,7 +59,29 @@ def get_opportunities():
             except Exception as e:
                 logger.error(f"Error fetching federal grants: {e}")
         
-        # 2. Get Foundation Grants from Candid News
+        # 2. Get Federal Register Notices (FREE API)
+        if not source_filter or source_filter in ['federal_register', 'federal']:
+            try:
+                client = get_federal_register_client()
+                search_term = search_query or focus_area or "grant"
+                notices = client.search_grant_notices(keywords=search_term, days_back=30)
+                all_opportunities.extend(notices)
+                logger.info(f"Added {len(notices)} Federal Register notices")
+            except Exception as e:
+                logger.error(f"Error fetching Federal Register: {e}")
+        
+        # 3. Get USAspending Historical Awards (FREE API)
+        if not source_filter or source_filter in ['usaspending', 'historical']:
+            try:
+                client = get_usaspending_client()
+                search_term = search_query or focus_area or ""
+                awards = client.search_assistance_listings(keywords=search_term)
+                all_opportunities.extend(awards[:20])  # Limit to 20 for performance
+                logger.info(f"Added {len(awards[:20])} USAspending awards")
+            except Exception as e:
+                logger.error(f"Error fetching USAspending: {e}")
+        
+        # 4. Get Foundation Grants from Candid News (if API keys available)
         if not source_filter or source_filter in ['foundation', 'candid_news', 'private']:
             try:
                 client = get_candid_client()
