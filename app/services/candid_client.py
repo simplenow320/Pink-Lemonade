@@ -3,11 +3,14 @@ Candid API Client with Key Rotation and Caching
 """
 import os
 import json
+import logging
 import urllib.request
 import urllib.parse
 import urllib.error
 from datetime import datetime, timedelta
 from typing import Optional, Dict, Any, List, Tuple
+
+logger = logging.getLogger(__name__)
 
 class RotatingKeyPool:
     """Rotating key pool for API keys"""
@@ -21,7 +24,9 @@ class RotatingKeyPool:
         if not self.keys:
             return None
         key = self.keys[self.current_index]
+        old_index = self.current_index
         self.current_index = (self.current_index + 1) % len(self.keys)
+        logger.info(f"Using API key at index {old_index} of {len(self.keys)} total keys")
         return key
     
     def has_keys(self) -> bool:
@@ -47,9 +52,11 @@ class CandidClient:
         if key in self.cache:
             expires_at, data = self.cache[key]
             if datetime.now() < expires_at:
+                logger.info(f"Cache HIT for {url}")
                 return data
             else:
                 del self.cache[key]
+        logger.info(f"Cache MISS for {url}")
         return None
     
     def _set_cache(self, url: str, params: Dict, data: Dict, ttl_seconds: int = 300):
@@ -95,12 +102,15 @@ class CandidClient:
             
             try:
                 with urllib.request.urlopen(req, timeout=30) as response:
+                    logger.info(f"Candid API {service} endpoint hit: {url}, status: {response.status}")
                     if response.status == 200:
                         data = json.loads(response.read().decode('utf-8'))
                         self._set_cache(url, params, data)
                         return data
             except urllib.error.HTTPError as e:
+                logger.info(f"Candid API {service} endpoint hit: {url}, status: {e.code}")
                 if e.code in [401, 429]:
+                    logger.warning(f"Key rotation triggered, status: {e.code}")
                     # Rotate key and retry
                     last_error = e
                     continue

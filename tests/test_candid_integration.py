@@ -5,7 +5,7 @@ import os
 import json
 import unittest
 from unittest.mock import patch, MagicMock
-from app.services.candid_client import CandidClient, KeyRotator, SimpleCache
+from app.services.candid_client import CandidClient, RotatingKeyPool
 
 class TestCandidIntegration(unittest.TestCase):
     
@@ -17,33 +17,27 @@ class TestCandidIntegration(unittest.TestCase):
         
     def test_key_rotation(self):
         """Test key rotation logic"""
-        keys = ['key1', 'key2', 'key3']
-        rotator = KeyRotator(keys)
-        
-        # Test round-robin
-        self.assertEqual(rotator.get_next_key(), 'key1')
-        self.assertEqual(rotator.get_next_key(), 'key2')
-        self.assertEqual(rotator.get_next_key(), 'key3')
-        self.assertEqual(rotator.get_next_key(), 'key1')  # Back to start
-        
-        # Mark a key as failed
-        rotator.mark_failed('key2')
-        
-        # Should skip failed key
-        rotator.current_index = 0
-        self.assertEqual(rotator.get_next_key(), 'key1')
-        self.assertEqual(rotator.get_next_key(), 'key3')  # Skips key2
+        # Mock environment with test keys
+        with patch.dict(os.environ, {'TEST_KEYS': 'key1,key2,key3'}):
+            pool = RotatingKeyPool('TEST_KEYS')
+            
+            # Test round-robin
+            self.assertEqual(pool.get_next_key(), 'key1')
+            self.assertEqual(pool.get_next_key(), 'key2')
+            self.assertEqual(pool.get_next_key(), 'key3')
+            self.assertEqual(pool.get_next_key(), 'key1')  # Back to start
         
     def test_cache(self):
-        """Test simple cache functionality"""
-        cache = SimpleCache()
+        """Test simple cache functionality in CandidClient"""
+        client = CandidClient()
         
-        # Test set and get
-        cache.set('test_key', 'test_value', ttl=5)
-        self.assertEqual(cache.get('test_key'), 'test_value')
+        # Test cache by mocking a response
+        test_data = {"test": "data"}
+        client._set_cache("http://test.com", {"q": "test"}, test_data)
         
-        # Test missing key
-        self.assertIsNone(cache.get('missing_key'))
+        # Should retrieve from cache
+        cached = client._get_from_cache("http://test.com", {"q": "test"})
+        self.assertEqual(cached, test_data)
         
         # Test TTL expiry (mock time)
         from datetime import datetime, timedelta

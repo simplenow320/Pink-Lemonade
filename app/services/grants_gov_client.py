@@ -2,11 +2,14 @@
 Grants.gov API Client
 """
 import json
+import logging
 import urllib.request
 import urllib.parse
 import urllib.error
 from datetime import datetime
 from typing import Optional, Dict, List
+
+logger = logging.getLogger(__name__)
 
 class GrantsGovClient:
     """Client for Grants.gov API"""
@@ -30,13 +33,14 @@ class GrantsGovClient:
             req = urllib.request.Request(url, data=data, headers=headers, method='POST')
             
             with urllib.request.urlopen(req, timeout=self.timeout) as response:
+                logger.info(f"Grants.gov API endpoint hit: {url}, status: {response.status}")
                 if response.status == 200:
                     return json.loads(response.read().decode('utf-8'))
         except urllib.error.HTTPError as e:
-            print(f"HTTP Error {e.code}: {e.reason}")
+            logger.error(f"Grants.gov API endpoint hit: {url}, HTTP Error {e.code}: {e.reason}")
             return None
         except Exception as e:
-            print(f"Request error: {e}")
+            logger.error(f"Grants.gov API request error: {e}")
             return None
             
         return None
