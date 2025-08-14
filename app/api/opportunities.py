@@ -6,9 +6,11 @@ from flask import Blueprint, request, jsonify
 from app.services.matching_service import assemble_results, build_tokens
 from app.services.grants_gov_client import get_grants_gov_client
 from app.services.candid_client import get_candid_client
+from app.services.candid_v3_client import get_candid_v3_client
 from app.services.federal_register_client import get_federal_register_client
 from app.services.usaspending_client import get_usaspending_client
 from app.services.pnd_client import get_pnd_client
+from app.services.foundation_aggregator import get_foundation_aggregator
 from app import db
 from app.models import Grant, Organization
 
@@ -92,8 +94,18 @@ def get_opportunities():
             except Exception as e:
                 logger.error(f"Error fetching PND opportunities: {e}")
         
-        # 5. Try Candid API if keys are available
-        if not source_filter or source_filter in ['candid']:
+        # 5. Get Foundation Data from Multiple Sources
+        if not source_filter or source_filter in ['foundation', 'private']:
+            try:
+                aggregator = get_foundation_aggregator()
+                foundation_opps = aggregator.get_all_foundation_opportunities(search_query or focus_area)
+                all_opportunities.extend(foundation_opps)
+                logger.info(f"Added {len(foundation_opps)} foundation opportunities")
+            except Exception as e:
+                logger.error(f"Error fetching foundation data: {e}")
+        
+        # 6. Try old Candid API for news (backup)
+        if False:  # Disabled for now since we have v3 working
             try:
                 client = get_candid_client()
                 
