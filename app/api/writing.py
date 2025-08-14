@@ -184,6 +184,19 @@ def create_case_support():
             'impact_metrics': org.impact_metrics or {}
         }
         
+        # Get funding context from matching service if available
+        funding_context = None
+        source_notes = []
+        try:
+            from app.services.matching_service import build_tokens, context_snapshot
+            tokens = build_tokens(org.id)
+            context = context_snapshot(tokens)
+            if context and context.get('median_award'):
+                funding_context = f"In the last year, funders awarded a median of ${context['median_award']:,.0f} in your area, drawn from Candid Grants transactions."
+                source_notes.append(f"Candid Grants API: {context.get('source_notes', '')}")
+        except Exception as e:
+            logger.debug(f"Could not get funding context: {e}")
+        
         # Get grant context if specified
         grant_data = {}
         funder_profile = None
@@ -256,10 +269,13 @@ Generate the comprehensive Case for Support now:"""
             max_tokens=3000
         )
         
-        content = response.choices[0].message.content
+        content = response.choices[0].message.content or ""
         
-        # Add source note
-        content += "\n\n---\n**Source Notes:** This Case for Support is based only on verified organizational data provided by the user. No statistics or program details have been fabricated."
+        # Add source note with funding context if available
+        if source_notes:
+            content += f"\n\n---\n**Source Notes:**\n" + "\n".join(source_notes)
+        else:
+            content += "\n\n---\n**Source Notes:** This Case for Support is based only on verified organizational data provided by the user. No statistics or program details have been fabricated."
         
         return jsonify({
             'success': True,
@@ -391,7 +407,7 @@ Generate the three grant pitch formats now:"""
             max_tokens=2000
         )
         
-        content = response.choices[0].message.content
+        content = response.choices[0].message.content or ""
         
         # Add source note
         content += "\n\n---\n**Source Notes:** These grant pitches are based only on verified organizational data provided by the user. No statistics or program details have been fabricated."
@@ -586,7 +602,7 @@ Generate the comprehensive impact report now:"""
             max_tokens=2500
         )
         
-        content = response.choices[0].message.content
+        content = response.choices[0].message.content or ""
         
         # Add source note
         content += "\n\n---\n**Source Notes:** This Impact Report is based only on verified data provided by the user. No fictional numbers or fabricated data points have been generated."

@@ -17,6 +17,7 @@ from app.services.analytics_service import (
     get_grant_timeline,
     update_success_metrics
 )
+from app.services.matching_service import build_tokens, context_snapshot
 # Removed unused imports
 
 # Set up logger
@@ -24,6 +25,32 @@ logger = logging.getLogger(__name__)
 
 # Create blueprint
 bp = Blueprint('analytics', __name__, url_prefix='/api/analytics')
+
+@bp.route('/context', methods=['GET'])
+def get_analytics_context():
+    """Get funding context snapshot for organization"""
+    try:
+        org_id = request.args.get('orgId', type=int)
+        if not org_id:
+            return jsonify({"error": "orgId parameter required"}), 400
+            
+        # Build tokens and get context
+        tokens = build_tokens(org_id)
+        context = context_snapshot(tokens)
+        
+        # Return context data or empty object
+        if context:
+            return jsonify(context)
+        else:
+            return jsonify({
+                "award_count": 0,
+                "median_award": None,
+                "recent_funders": [],
+                "source_notes": "No data available for this organization's focus area"
+            })
+            
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 @bp.route('', methods=['GET'])
 def get_analytics():

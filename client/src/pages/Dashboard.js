@@ -15,6 +15,25 @@ const Dashboard = () => {
   const { grants, loading, error, dashboardData } = useGrants({ includeDashboard: true });
   const [upcomingGrants, setUpcomingGrants] = useState([]);
   const [topMatchingGrants, setTopMatchingGrants] = useState([]);
+  const [analyticsContext, setAnalyticsContext] = useState(null);
+
+  // Fetch analytics context
+  useEffect(() => {
+    const fetchContext = async () => {
+      try {
+        const response = await fetch('/api/analytics/context?orgId=1', {
+          credentials: 'include'
+        });
+        if (response.ok) {
+          const data = await response.json();
+          setAnalyticsContext(data);
+        }
+      } catch (error) {
+        console.log('Analytics context not available');
+      }
+    };
+    fetchContext();
+  }, []);
 
   useEffect(() => {
     if (grants && grants.length > 0) {

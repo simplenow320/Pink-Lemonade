@@ -15,9 +15,25 @@ const Grants = () => {
   // Get organization ID (hardcoded for now, should come from context/auth)
   const orgId = 1; // TODO: Get from user context
 
-  // Fetch opportunities
+  // Fetch opportunities using matching endpoint
   const fetchOpportunities = async () => {
     setLoading(true);
+    try {
+      // Try new matching endpoint first
+      const matchingResponse = await api.get(`/matching?orgId=${orgId}&limit=50`);
+      if (matchingResponse.data) {
+        // Combine federal and news results
+        const federal = matchingResponse.data.federal || [];
+        const news = matchingResponse.data.news || [];
+        const combined = [...federal, ...news].sort((a, b) => (b.score || 0) - (a.score || 0));
+        setOpportunities(combined);
+        return;
+      }
+    } catch (error) {
+      console.log('Matching endpoint not available, falling back to opportunities');
+    }
+    
+    // Fallback to original opportunities endpoint
     try {
       const response = await api.get(`/opportunities?orgId=${orgId}`);
       setOpportunities(response.data.opportunities || []);

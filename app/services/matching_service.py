@@ -28,24 +28,24 @@ def build_tokens(org_id: int) -> Dict:
             keywords = []
             
             # Add focus areas
-            if org.focus_areas:
-                keywords.extend([fa.strip() for fa in org.focus_areas.split(',') if fa.strip()])
+            if org.primary_focus_areas:
+                keywords.extend(org.primary_focus_areas if isinstance(org.primary_focus_areas, list) else [])
             
             # Add keywords from mission
             if org.keywords:
                 keywords.extend([kw.strip() for kw in org.keywords.split(',') if kw.strip()])
                 
-            # Extract geo from location or state
+            # Extract geo from location or state  
             geo = ""
-            if org.state:
-                geo = org.state
-            elif org.location:
-                geo = org.location
+            if org.primary_state:
+                geo = org.primary_state
+            elif org.primary_city:
+                geo = org.primary_city
                 
-            # Extract populations served
+            # Extract populations served  
             populations = []
-            if org.populations_served:
-                populations = [p.strip() for p in org.populations_served.split(',') if p.strip()]
+            if org.target_demographics:
+                populations = org.target_demographics if isinstance(org.target_demographics, list) else []
                 
             return {
                 "keywords": keywords or ["nonprofit", "community"],
