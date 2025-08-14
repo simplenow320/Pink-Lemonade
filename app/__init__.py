@@ -173,6 +173,10 @@ def create_app():
     from app.api.email_notifications import bp as email_notifications_bp
     flask_app.register_blueprint(email_notifications_bp)
     
+    # Register Candid API blueprint
+    from app.api.candid import bp as candid_bp
+    flask_app.register_blueprint(candid_bp)
+    
     # Initialize monitoring
     from app.services.monitoring_service import init_monitoring
     init_monitoring(flask_app)
