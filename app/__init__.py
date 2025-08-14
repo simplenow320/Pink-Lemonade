@@ -173,9 +173,16 @@ def create_app():
     from app.api.email_notifications import bp as email_notifications_bp
     flask_app.register_blueprint(email_notifications_bp)
     
-    # Register Candid API blueprint
-    from app.api.candid import bp as candid_bp
-    flask_app.register_blueprint(candid_bp)
+    # Register Candid API integration endpoints
+    try:
+        from app.api.candid import bp as candid_bp
+        flask_app.register_blueprint(candid_bp)
+    except ImportError:
+        pass  # Candid API not yet available
+    
+    # Register Matching API endpoints
+    from app.api.matching import matching_bp
+    flask_app.register_blueprint(matching_bp)
     
     # Initialize monitoring
     from app.services.monitoring_service import init_monitoring
