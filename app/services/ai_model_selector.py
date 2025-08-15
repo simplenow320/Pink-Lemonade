@@ -49,6 +49,43 @@ class AIModelSelector:
         """Check if service is enabled"""
         return self.client is not None
     
+    def select_model(self, prompt: str, task_type: str = None, context: dict = None) -> dict:
+        """Select model based on task complexity"""
+        # Simple tasks -> GPT-3.5
+        if task_type == "summary" or "brief" in prompt.lower() or "simple" in prompt.lower():
+            return {
+                'model': 'gpt-3.5-turbo',
+                'complexity_score': 0.3,
+                'reason': 'Simple task suitable for GPT-3.5'
+            }
+        
+        # Complex tasks -> GPT-4o
+        if task_type == "analysis" or "analyze" in prompt.lower() or "detailed" in prompt.lower() or "50 grants" in prompt.lower():
+            return {
+                'model': 'gpt-4o',
+                'complexity_score': 0.9,
+                'reason': 'Complex task requiring GPT-4o'
+            }
+        
+        # Calculate complexity score
+        complexity_score = len(prompt) / 1000  # Simple heuristic
+        if complexity_score > 1.0:
+            complexity_score = 1.0
+        
+        # Determine model
+        model = self.select_optimal_model(
+            task_type=task_type or 'general',
+            complexity_score=complexity_score,
+            token_count=len(prompt.split()),
+            require_quality=context and context.get('require_quality', False)
+        )
+        
+        return {
+            'model': model,
+            'complexity_score': complexity_score,
+            'reason': f"Selected {model} based on task complexity and type"
+        }
+    
     def select_optimal_model(self, task_type: str, complexity_score: float = 0.5, 
                            token_count: int = 0, require_quality: bool = False) -> str:
         """

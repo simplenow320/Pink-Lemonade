@@ -35,6 +35,18 @@ class AIOptimizationService:
         """Check if AI services are enabled"""
         return self.original_ai.is_enabled()
     
+    def create_react_prompt(self, base_prompt: str, task_type: str = None) -> str:
+        """Create REACT-enhanced prompt"""
+        if self.react_enhancement_enabled:
+            return self.react_framework.enhance_prompt(base_prompt, task_type)
+        return base_prompt
+    
+    def track_cost(self, model: str, tokens: int, cost: float) -> None:
+        """Track AI usage costs"""
+        if self.cost_tracking_enabled:
+            logger.info(f"Cost tracked: {model} - {tokens} tokens - ${cost:.4f}")
+            # Would store in database in production
+    
     def optimized_match_grant(self, org_profile: Dict, grant: Dict, 
                             funder_profile: Dict = None) -> Tuple[Optional[int], Optional[str]]:
         """

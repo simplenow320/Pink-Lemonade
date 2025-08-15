@@ -46,6 +46,17 @@ class EnhancedAIService:
         """Check if AI services are enabled"""
         return self.original_service.is_enabled()
     
+    def generate_response(self, prompt: str, context: dict = None) -> str:
+        """Generate AI response with optimization"""
+        if self.optimization_enabled and self.optimization_service:
+            try:
+                return self.optimization_service.generate_optimized_response(prompt, context)
+            except Exception as e:
+                logger.warning(f"Optimized response failed, using original: {e}")
+        
+        # Fallback to original service
+        return self.original_service.generate_response(prompt)
+    
     def match_grant(self, org_profile: Dict, grant: Dict, funder_profile: Dict = None) -> Tuple[Optional[int], Optional[str]]:
         """
         Grant matching with optional optimization

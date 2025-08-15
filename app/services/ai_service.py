@@ -529,6 +529,10 @@ Provide a JSON analysis with:
         )
         
         return result
+    
+    def generate_grant_match(self, org_profile: dict, grant: dict) -> tuple:
+        """Legacy method for backward compatibility - alias for match_grant"""
+        return self.match_grant(org_profile, grant)
 
 
 # Initialize global AI service instance

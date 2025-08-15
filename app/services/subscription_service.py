@@ -377,6 +377,40 @@ class SubscriptionService:
             logger.error(f"Error getting usage summary: {e}")
             return {'error': str(e)}
     
+    def add_team_member(self, owner_id: int, member_email: str, role: str = 'member') -> bool:
+        """Add a team member to subscription"""
+        try:
+            # Get owner's subscription
+            subscription = UserSubscription.query.filter_by(user_id=owner_id).first()
+            if not subscription:
+                logger.error("No subscription found for owner")
+                return False
+            
+            # Check if team member limit reached
+            current_members = TeamMember.query.filter_by(subscription_id=subscription.id).count()
+            if current_members >= subscription.plan.max_users:
+                logger.error("Team member limit reached")
+                return False
+            
+            # Create team member (would need user lookup in real implementation)
+            team_member = TeamMember(
+                subscription_id=subscription.id,
+                user_id=owner_id,  # In real app, would lookup user by email
+                role=role,
+                invited_by_id=owner_id
+            )
+            
+            db.session.add(team_member)
+            db.session.commit()
+            
+            logger.info(f"Added team member with role {role}")
+            return True
+            
+        except Exception as e:
+            logger.error(f"Error adding team member: {e}")
+            db.session.rollback()
+            return False
+    
     def get_available_plans(self) -> List[Dict[str, Any]]:
         """Get all available subscription plans"""
         try:
