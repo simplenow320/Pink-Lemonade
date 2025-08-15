@@ -145,6 +145,13 @@ def create_app():
     except ImportError as e:
         print(f"Smart Tools blueprint not available: {e}")
     
+    # Register Payment endpoints (Phase 6)
+    try:
+        from app.api.payments import payments_bp
+        flask_app.register_blueprint(payments_bp)
+    except ImportError as e:
+        print(f"Payments blueprint not available: {e}")
+    
     # Register health check endpoints
     from app.api.health import bp as health_bp
     flask_app.register_blueprint(health_bp)
