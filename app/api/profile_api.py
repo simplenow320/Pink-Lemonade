@@ -33,14 +33,27 @@ def allowed_file(filename):
 def get_user_profile():
     """Get current user profile"""
     try:
-        # For now, return mock user data
-        # In production, this would get the authenticated user
+        # Get real user from session
+        from flask import session
+        from app.models import User
+        
+        user_id = session.get('user_id')
+        if not user_id:
+            return jsonify({'error': 'Not authenticated'}), 401
+            
+        user = User.query.get(user_id)
+        if not user:
+            return jsonify({'error': 'User not found'}), 404
+        
+        # Return real user data
         user_data = {
-            'first_name': 'John',
-            'last_name': 'Doe',
-            'email': 'john@nitrogennetwork.org',
-            'phone': '(555) 123-4567',
-            'title': 'Grant Manager'
+            'first_name': user.first_name or '',
+            'last_name': user.last_name or '',
+            'email': user.email,
+            'phone': user.phone or '',
+            'title': user.job_title or '',
+            'org_name': user.org_name or '',
+            'role': user.role or 'member'
         }
         
         return jsonify(user_data)

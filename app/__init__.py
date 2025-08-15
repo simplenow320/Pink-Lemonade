@@ -173,6 +173,20 @@ def create_app():
     except ImportError as e:
         print(f"Integrations blueprint not available: {e}")
     
+    # Register Real Grants API
+    try:
+        from app.api.real_grants import real_grants_bp
+        flask_app.register_blueprint(real_grants_bp)
+    except ImportError as e:
+        print(f"Real grants blueprint not available: {e}")
+    
+    # Register Live Grants API
+    try:
+        from app.api.live_grants import live_grants_bp
+        flask_app.register_blueprint(live_grants_bp)
+    except ImportError as e:
+        print(f"Live grants blueprint not available: {e}")
+    
     # Register health check endpoints
     from app.api.health import bp as health_bp
     flask_app.register_blueprint(health_bp)
@@ -180,13 +194,6 @@ def create_app():
     # Register live data integration endpoints
     from app.api.live_data import bp as live_data_bp
     flask_app.register_blueprint(live_data_bp)
-    
-    # Register real grants API endpoints  
-    from app.api.real_grants import real_grants_bp
-    flask_app.register_blueprint(real_grants_bp)
-    
-    from app.api.live_grants import live_grants_bp
-    flask_app.register_blueprint(live_grants_bp)
     
     # Register onboarding journey endpoints
     from app.api.onboarding import onboarding_bp

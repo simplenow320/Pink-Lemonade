@@ -387,7 +387,7 @@ class Module(db.Model):
 class OrgModule(db.Model):
     __tablename__ = "org_modules"
     id = db.Column(db.Integer, primary_key=True)
-    org_id = db.Column(db.Integer, db.ForeignKey("orgs.id"), nullable=False)
+    org_id = db.Column(db.Integer, db.ForeignKey("organizations.id"), nullable=False)
     module_key = db.Column(db.String(50), db.ForeignKey("modules.key"), nullable=False)
     enabled = db.Column(db.Boolean, default=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
@@ -404,7 +404,7 @@ class OrgModule(db.Model):
 class OrgAsset(db.Model):
     __tablename__ = "org_assets"
     id = db.Column(db.Integer, primary_key=True)
-    org_id = db.Column(db.Integer, db.ForeignKey("orgs.id"), nullable=False)
+    org_id = db.Column(db.Integer, db.ForeignKey("organizations.id"), nullable=False)
     type = db.Column(db.String(20))  # 'web'|'pdf'|'text'
     title = db.Column(db.String(255))
     url_or_path = db.Column(db.Text)
@@ -426,7 +426,7 @@ class OrgAsset(db.Model):
 
 class OrgVoiceProfile(db.Model):
     __tablename__ = "org_voice_profiles"
-    org_id = db.Column(db.Integer, db.ForeignKey("orgs.id"), primary_key=True)
+    org_id = db.Column(db.Integer, db.ForeignKey("organizations.id"), primary_key=True)
     reading_level = db.Column(db.String(50))
     formality = db.Column(db.Integer)  # 1..5
     faith_language = db.Column(db.Boolean)
@@ -521,7 +521,7 @@ class LovedGrant(db.Model):
 class Grant(db.Model):
     __tablename__ = "grants"
     id = db.Column(db.Integer, primary_key=True)
-    org_id = db.Column(db.Integer, db.ForeignKey("orgs.id"))
+    org_id = db.Column(db.Integer, db.ForeignKey("organizations.id"))
     title = db.Column(db.String(500), nullable=False)
     funder = db.Column(db.String(255))
     link = db.Column(db.Text)
@@ -622,7 +622,7 @@ class GrantContact(db.Model):
 class CaseSupportDoc(db.Model):
     __tablename__ = "case_support_docs"
     id = db.Column(db.Integer, primary_key=True)
-    org_id = db.Column(db.Integer, db.ForeignKey("orgs.id"), nullable=False)
+    org_id = db.Column(db.Integer, db.ForeignKey("organizations.id"), nullable=False)
     title = db.Column(db.String(255))
     sections = db.Column(db.JSON, default=dict)  # { "Executive Summary": "...", ... }
     sources = db.Column(db.JSON, default=dict)   # source map
@@ -643,7 +643,7 @@ class CaseSupportDoc(db.Model):
 class GrantPitchDoc(db.Model):
     __tablename__ = "grant_pitch_docs"
     id = db.Column(db.Integer, primary_key=True)
-    org_id = db.Column(db.Integer, db.ForeignKey("orgs.id"), nullable=False)
+    org_id = db.Column(db.Integer, db.ForeignKey("organizations.id"), nullable=False)
     funder = db.Column(db.String(255))
     sections = db.Column(db.JSON, default=dict)
     sources = db.Column(db.JSON, default=dict)
@@ -664,7 +664,7 @@ class GrantPitchDoc(db.Model):
 class ImpactReport(db.Model):
     __tablename__ = "impact_reports"
     id = db.Column(db.Integer, primary_key=True)
-    org_id = db.Column(db.Integer, db.ForeignKey("orgs.id"), nullable=False)
+    org_id = db.Column(db.Integer, db.ForeignKey("organizations.id"), nullable=False)
     grant_id = db.Column(db.Integer, db.ForeignKey("grants.id"))
     period_start = db.Column(db.Date)
     period_end = db.Column(db.Date)
@@ -693,7 +693,7 @@ class ImpactReport(db.Model):
 class Contribution(db.Model):
     __tablename__ = "contributions"
     id = db.Column(db.Integer, primary_key=True)
-    org_id = db.Column(db.Integer, db.ForeignKey("orgs.id"), nullable=False)
+    org_id = db.Column(db.Integer, db.ForeignKey("organizations.id"), nullable=False)
     raw = db.Column(db.Text)
     clean = db.Column(db.Text)
     facts = db.Column(db.JSON, default=list)     # [{"key":"", "value":"", "date":"", ...}]
@@ -718,7 +718,7 @@ class Contribution(db.Model):
 class EditLearningEvent(db.Model):
     __tablename__ = "edit_learning_events"
     id = db.Column(db.Integer, primary_key=True)
-    org_id = db.Column(db.Integer, db.ForeignKey("orgs.id"), nullable=False)
+    org_id = db.Column(db.Integer, db.ForeignKey("organizations.id"), nullable=False)
     draft_type = db.Column(db.String(40))  # case_support|pitch|report
     draft_id = db.Column(db.Integer)
     phrases_added = db.Column(db.JSON, default=list)
@@ -741,7 +741,7 @@ class EditLearningEvent(db.Model):
 class Watchlist(db.Model):
     __tablename__ = "watchlists"
     id = db.Column(db.Integer, primary_key=True)
-    org_id = db.Column(db.Integer, db.ForeignKey("orgs.id"), nullable=False)
+    org_id = db.Column(db.Integer, db.ForeignKey("organizations.id"), nullable=False)
     city = db.Column(db.String(120))
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     

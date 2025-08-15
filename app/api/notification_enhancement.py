@@ -4,8 +4,9 @@ Enhanced notification endpoints with grant match alerts, watchlist notifications
 """
 
 from flask import Blueprint, request, jsonify, session
+from app import db
 from app.services.notification_enhancement import NotificationEnhancementService
-from app.models import User, Grant, Watchlist
+from app.models import User, Grant, Watchlist, Organization
 from functools import wraps
 import logging
 
@@ -53,14 +54,53 @@ def test_grant_match_notification():
             if not grant:
                 return jsonify({'error': 'Grant not found'}), 404
         
-        # Create mock analysis data
-        mock_analysis = {
-            'match_score': 85,
-            'confidence': 'high',
-            'reasoning': 'This grant aligns well with your organization\'s mission and focus areas. The funding amount matches your typical project scale, and the eligibility requirements are a strong fit.'
-        }
+        # Get real analysis data from AI service if available
+        try:
+            from app.services.ai_service import AIService
+            ai_service = AIService()
+            
+            # Get organization for matching
+            org_id = user.org_id if hasattr(user, 'org_id') else None
+            org = Organization.query.filter_by(id=org_id).first() if org_id else None
+            
+            if org and grant:
+                # Try to use real AI analysis
+                if hasattr(ai_service, 'match_grant'):
+                    analysis = ai_service.match_grant(org, grant)
+                else:
+                    # Calculate basic match score from real data
+                    match_score = 0
+                    if org.primary_focus_areas and grant.eligibility:
+                        # Check for focus area overlap
+                        for area in org.primary_focus_areas:
+                            if area.lower() in grant.eligibility.lower():
+                                match_score += 25
+                    if org.annual_budget_range and grant.amount_min:
+                        # Check budget compatibility
+                        if grant.amount_min < 1000000:  # Reasonable grant size
+                            match_score += 25
+                    
+                    analysis = {
+                        'match_score': min(match_score, 100),
+                        'confidence': 'medium' if match_score > 0 else 'low',
+                        'reasoning': f'Based on organization focus areas and grant eligibility criteria.'
+                    }
+            else:
+                # Provide minimal real data
+                analysis = {
+                    'match_score': 0,
+                    'confidence': 'low',
+                    'reasoning': 'Unable to analyze - missing organization or grant data'
+                }
+        except ImportError:
+            # AI service not available, use basic matching
+            analysis = {
+                'match_score': 50,
+                'confidence': 'low',
+                'reasoning': 'Basic compatibility check - AI service unavailable'
+            }
         
-        result = notification_service.send_grant_match_alert(user, grant, mock_analysis)
+        result = notification_service.send_grant_match_alert(user, grant, analysis)
         
         return jsonify({
             'success': True,
@@ -83,17 +123,39 @@ def test_watchlist_notification():
         if not user:
             return jsonify({'error': 'User not found'}), 404
         
-        # Create mock watchlist
-        mock_watchlist = type('Watchlist', (), {
-            'id': 1,
-            'name': 'Urban Ministry Grants',
-            'user_id': user.id
-        })()
+        # Get user's organization
+        org_id = user.org_id if hasattr(user, 'org_id') else None
+        if not org_id:
+            # Create default org if needed
+            org = Organization.query.first()
+            if not org:
+                org = Organization(name='Default Organization')
+                db.session.add(org)
+                db.session.commit()
+            org_id = org.id
         
-        # Get some sample grants
-        sample_grants = Grant.query.limit(3).all()
+        # Get real watchlist from database or create one
+        watchlist = Watchlist.query.filter_by(org_id=org_id).first()
         
-        result = notification_service.send_watchlist_notification(mock_watchlist, sample_grants)
+        if not watchlist:
+            # Create a real watchlist if none exists
+            watchlist = Watchlist(
+                org_id=org_id,
+                city=user.org_name if hasattr(user, 'org_name') else 'Default City'
+            )
+            db.session.add(watchlist)
+            db.session.commit()
+        
+        # Get real grants based on watchlist city or recent grants
+        grants_query = Grant.query
+        if watchlist.city:
+            # Filter by geography if city is set
+            grants_query = grants_query.filter(Grant.geography.contains(watchlist.city))
+        
+        # Get filtered grants
+        watchlist_grants = grants_query.limit(3).all()
+        
+        result = notification_service.send_watchlist_notification(watchlist, watchlist_grants)
         
         return jsonify({
             'success': True,

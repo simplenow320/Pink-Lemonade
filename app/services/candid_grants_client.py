@@ -17,9 +17,10 @@ class CandidGrantsClient:
     BASE_URL = "https://api.candid.org/grants/v1"
     
     def __init__(self):
-        # Use the working API keys
-        self.primary_key = os.environ.get('CANDID_API_KEY', 'cd6150ff5b27410899495f96969451ea')
-        self.secondary_key = '243699cfa8c9422f9347b970e391fb59'
+        # Use environment variable for API key - no hardcoded keys
+        self.primary_key = os.environ.get('CANDID_GRANTS_KEYS')
+        if not self.primary_key:
+            logger.warning("CANDID_GRANTS_KEYS not set - Candid Grants API disabled")
         self.timeout = 30
         
     def get_summary(self) -> Dict:
