@@ -170,6 +170,10 @@ def create_app():
     from app.api.phase5_reporting import phase5_bp
     flask_app.register_blueprint(phase5_bp)
     
+    # Register Payment API endpoints (Phase 3 of 100% Completion Plan)
+    from app.api.payment import payment_bp
+    flask_app.register_blueprint(payment_bp, url_prefix='/api/payment')
+    
     # Register Smart Reporting endpoints
     from app.api.smart_reporting import bp as smart_reporting_bp
     flask_app.register_blueprint(smart_reporting_bp)
