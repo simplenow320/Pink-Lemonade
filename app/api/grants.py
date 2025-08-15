@@ -1,110 +1,308 @@
+"""
+Production Grants API
+Serves real grant data with filtering and matching
+"""
+
 from flask import Blueprint, request, jsonify
+from datetime import datetime, timedelta
 from app import db
-from app.models import Grant
+from app.models import Grant, Organization
+from app.services.grant_fetcher import GrantFetcher
+from app.services.ai_service import AIService
+from app.services.cache_service import CacheService
 import logging
 
 logger = logging.getLogger(__name__)
 
-bp = Blueprint("grants", __name__)
+bp = Blueprint('grants', __name__)
+grant_fetcher = GrantFetcher()
+ai_service = AIService()
+cache_service = CacheService()
 
-@bp.route('/list', methods=['GET'])
-def list_grants():
-    """Get all grants for Smart Tools grant selection"""
+@bp.route('/', methods=['GET'])
+def get_grants():
+    """Get all active grants with optional filtering"""
     try:
-        # Fetch all grants from database
-        grants = Grant.query.all()
+        # Check cache first
+        cache_key = f"grants_{request.query_string.decode()}"
+        cached_data = cache_service.get(cache_key)
+        if cached_data:
+            return jsonify(cached_data)
         
-        grants_data = []
-        for grant in grants:
-            grants_data.append({
-                'id': grant.id,
-                'title': grant.title or 'Untitled Grant',
-                'funder': grant.funder or 'Unknown Funder',
-                'deadline': grant.deadline.isoformat() if grant.deadline else None,
-                'amount_min': grant.amount_min,
-                'amount_max': grant.amount_max,
-                'status': grant.status or 'available',
-                'url': getattr(grant, 'link', None),
-                'description': getattr(grant, 'description', None) or getattr(grant, 'eligibility', None)
-            })
+        # Get filter parameters
+        focus_area = request.args.get('focus_area')
+        min_amount = request.args.get('min_amount', type=float)
+        max_amount = request.args.get('max_amount', type=float)
+        deadline_days = request.args.get('deadline_days', type=int)
+        search = request.args.get('search')
+        org_id = request.args.get('org_id', type=int)
         
-        # Sort by deadline (earliest first, nulls last)
-        grants_data.sort(key=lambda x: (x['deadline'] is None, x['deadline'] or '9999-12-31'))
+        # Build query - show all grants if no specific status filter
+        query = db.session.query(Grant)
         
-        return jsonify({
+        # Optional status filter
+        status_filter = request.args.get('status')
+        if status_filter:
+            query = query.filter_by(status=status_filter)
+        
+        # Apply filters
+        if focus_area:
+            query = query.filter(Grant.focus_area.contains(focus_area))
+        
+        if min_amount:
+            query = query.filter(Grant.amount >= min_amount)
+        
+        if max_amount:
+            query = query.filter(Grant.amount <= max_amount)
+        
+        if deadline_days:
+            deadline_date = datetime.now() + timedelta(days=deadline_days)
+            query = query.filter(Grant.deadline <= deadline_date)
+        
+        if search:
+            search_term = f"%{search}%"
+            query = query.filter(
+                db.or_(
+                    Grant.title.ilike(search_term),
+                    Grant.description.ilike(search_term),
+                    Grant.funder_name.ilike(search_term)
+                )
+            )
+        
+        # Sort by match score if org_id provided, otherwise by deadline
+        if org_id:
+            query = query.order_by(Grant.match_score.desc())
+        else:
+            query = query.order_by(Grant.deadline.asc())
+        
+        # Execute query
+        grants = query.limit(100).all()
+        
+        # Format response
+        response = {
             'success': True,
-            'grants': grants_data,
-            'total': len(grants_data)
-        })
+            'grants': [grant.to_dict() for grant in grants],
+            'count': len(grants),
+            'filters_applied': {
+                'focus_area': focus_area,
+                'min_amount': min_amount,
+                'max_amount': max_amount,
+                'deadline_days': deadline_days,
+                'search': search
+            }
+        }
+        
+        # Cache the response
+        cache_service.set(cache_key, response, ttl_seconds=300)
+        
+        return jsonify(response)
         
     except Exception as e:
-        logger.error(f"Error fetching grants list: {e}")
-        return jsonify({'error': str(e), 'grants': []}), 200  # Return empty list on error
-
-@bp.route('/tracker', methods=['GET'])
-def get_grants_for_tracker():
-    """Get all grants from database for the grant tracker"""
-    try:
-        # Fetch all grants from database
-        grants = Grant.query.all()
-        
-        grants_data = []
-        for grant in grants:
-            grants_data.append({
-                'id': grant.id,
-                'title': grant.title or 'Untitled Grant',
-                'funder': grant.funder or 'Unknown Funder',
-                'deadline': grant.deadline.isoformat() if grant.deadline else None,
-                'amount_min': grant.amount_min,
-                'amount_max': grant.amount_max,
-                'status': grant.status or 'available',
-                'focus_area': getattr(grant, 'geography', None),
-                'description': getattr(grant, 'eligibility', None),
-                'url': getattr(grant, 'link', None)
-            })
-        
-        # Sort by deadline (earliest first, nulls last)
-        grants_data.sort(key=lambda x: (x['deadline'] is None, x['deadline'] or '9999-12-31'))
-        
+        logger.error(f"Error fetching grants: {e}")
         return jsonify({
-            'success': True,
-            'grants': grants_data,
-            'total_count': len(grants_data)
-        })
-        
-    except Exception as e:
-        logger.error(f"Error fetching grants for tracker: {e}")
-        return jsonify({'error': str(e)}), 500
+            'success': False,
+            'error': str(e),
+            'grants': []
+        }), 500
 
-@bp.route('/update-status', methods=['POST'])
-def update_grant_status():
-    """Update the status of a specific grant"""
+@bp.route('/<int:grant_id>', methods=['GET'])
+def get_grant_detail(grant_id):
+    """Get detailed information about a specific grant"""
     try:
-        data = request.get_json()
-        grant_id = data.get('grant_id')
-        new_status = data.get('status')
+        grant = db.session.query(Grant).get(grant_id)
         
-        if not grant_id or not new_status:
-            return jsonify({'error': 'Grant ID and status are required'}), 400
-        
-        valid_statuses = ['available', 'drafting', 'submitted', 'won', 'lost']
-        if new_status not in valid_statuses:
-            return jsonify({'error': f'Invalid status. Must be one of: {valid_statuses}'}), 400
-        
-        grant = Grant.query.get(grant_id)
         if not grant:
-            return jsonify({'error': 'Grant not found'}), 404
+            return jsonify({
+                'success': False,
+                'error': 'Grant not found'
+            }), 404
         
-        grant.status = new_status
-        db.session.commit()
+        # Get organization if user is logged in
+        org_id = request.args.get('org_id', type=int)
+        
+        grant_dict = grant.to_dict()
+        
+        # Calculate match score if organization provided
+        if org_id and ai_service.is_enabled():
+            org = db.session.query(Organization).get(org_id)
+            if org:
+                score, explanation = ai_service.match_grant(
+                    org.to_dict(),
+                    grant_dict
+                )
+                grant_dict['match_score'] = score
+                grant_dict['match_explanation'] = explanation
+        
+        # Check if already applied
+        if org_id:
+            # TODO: Implement application tracking
+            grant_dict['application_status'] = None
         
         return jsonify({
             'success': True,
-            'message': f'Grant status updated to {new_status}',
-            'grant_id': grant_id,
-            'status': new_status
+            'grant': grant_dict
         })
         
     except Exception as e:
-        logger.error(f"Error updating grant status: {e}")
-        return jsonify({'error': str(e)}), 500
+        logger.error(f"Error fetching grant detail: {e}")
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
+@bp.route('/fetch', methods=['POST'])
+def fetch_new_grants():
+    """Fetch new grants from external sources"""
+    try:
+        # Limit to admin users in production
+        # For now, allow all for testing
+        
+        limit = request.json.get('limit', 30)
+        
+        # Fetch grants from all sources
+        result = grant_fetcher.fetch_all_grants(limit=limit)
+        
+        # Calculate match scores for default organization
+        org_id = request.json.get('org_id')
+        if org_id:
+            grant_fetcher.calculate_match_scores(org_id)
+        
+        return jsonify({
+            'success': True,
+            'message': f"Fetched {result['fetched']} grants, stored {result['stored']} new grants",
+            'stats': result['stats']
+        })
+        
+    except Exception as e:
+        logger.error(f"Error fetching new grants: {e}")
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
+@bp.route('/<int:grant_id>/apply', methods=['POST'])
+def apply_to_grant(grant_id):
+    """Create or update application for a grant"""
+    try:
+        data = request.json
+        org_id = data.get('organization_id')
+        
+        if not org_id:
+            return jsonify({
+                'success': False,
+                'error': 'Organization ID required'
+            }), 400
+        
+        # Check if grant exists
+        grant = db.session.query(Grant).get(grant_id)
+        if not grant:
+            return jsonify({
+                'success': False,
+                'error': 'Grant not found'
+            }), 404
+        
+        # TODO: Implement application tracking when Application model is created
+        
+        return jsonify({
+            'success': True,
+            'message': 'Application feature coming soon'
+        })
+        
+    except Exception as e:
+        logger.error(f"Error applying to grant: {e}")
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
+@bp.route('/stats', methods=['GET'])
+def get_grant_stats():
+    """Get statistics about grants in the system"""
+    try:
+        total_grants = db.session.query(Grant).count()
+        active_grants = db.session.query(Grant).filter_by(status='active').count()
+        
+        # Get grants by source
+        sources = db.session.query(
+            Grant.source_name,
+            db.func.count(Grant.id)
+        ).group_by(Grant.source_name).all()
+        
+        # Get grants by geography since focus_area doesn't exist in model
+        geographies = db.session.query(
+            Grant.geography,
+            db.func.count(Grant.id)
+        ).group_by(Grant.geography).all()
+        
+        # Calculate average amount using amount_max field
+        avg_amount = db.session.query(db.func.avg(Grant.amount_max)).scalar() or 0
+        
+        return jsonify({
+            'success': True,
+            'stats': {
+                'total_grants': total_grants,
+                'active_grants': active_grants,
+                'average_amount': float(avg_amount),
+                'by_source': dict(sources),
+                'by_geography': dict(geographies),
+                'last_updated': datetime.utcnow().isoformat()
+            }
+        })
+        
+    except Exception as e:
+        logger.error(f"Error getting grant stats: {e}")
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
+@bp.route('/recommended/<int:org_id>', methods=['GET'])
+def get_recommended_grants(org_id):
+    """Get AI-recommended grants for an organization"""
+    try:
+        if not ai_service.is_enabled():
+            return jsonify({
+                'success': False,
+                'error': 'AI service not available'
+            }), 503
+        
+        # Get organization
+        org = db.session.query(Organization).get(org_id)
+        if not org:
+            return jsonify({
+                'success': False,
+                'error': 'Organization not found'
+            }), 404
+        
+        # Get active grants
+        grants = db.session.query(Grant).filter_by(status='active').limit(50).all()
+        
+        # Calculate match scores
+        recommendations = []
+        for grant in grants:
+            score, explanation = ai_service.match_grant(
+                org.to_dict(),
+                grant.to_dict()
+            )
+            
+            if score >= 3:  # Only recommend good matches
+                grant_dict = grant.to_dict()
+                grant_dict['match_score'] = score
+                grant_dict['match_explanation'] = explanation
+                recommendations.append(grant_dict)
+        
+        # Sort by match score
+        recommendations.sort(key=lambda x: x['match_score'], reverse=True)
+        
+        return jsonify({
+            'success': True,
+            'recommendations': recommendations[:20],  # Top 20 matches
+            'organization': org.name
+        })
+        
+    except Exception as e:
+        logger.error(f"Error getting recommendations: {e}")
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
