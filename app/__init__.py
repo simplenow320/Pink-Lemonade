@@ -152,6 +152,13 @@ def create_app():
     except ImportError as e:
         print(f"Payments blueprint not available: {e}")
     
+    # Register Team Collaboration endpoints (Phase 7)
+    try:
+        from app.api.team import team_bp
+        flask_app.register_blueprint(team_bp)
+    except ImportError as e:
+        print(f"Team blueprint not available: {e}")
+    
     # Register health check endpoints
     from app.api.health import bp as health_bp
     flask_app.register_blueprint(health_bp)

@@ -69,15 +69,15 @@ Each section must be detailed (multiple sentences), include guardrails to preven
 - **Design**: Mobile-first responsive design.
 - **Enhanced Features**: Animated progress indicators, personalized dashboard welcome, contextual help tooltips, gamified profile completion rewards, and interactive error message visualizations.
 
-### Feature Specifications (Phases 1-5 Complete ✅)
+### Feature Specifications (Phases 1-7 Complete ✅)
 - **Real Grant Discovery** (Phase 1): Federal Register API integration, live grant data
 - **AI Matching with REACTO** (Phase 2): 1-5 scoring, detailed analysis, narrative generation
 - **8-Stage Workflow Pipeline** (Phase 3): Discovery→Researching→Writing→Review→Submitted→Pending→Awarded/Declined→Reporting
 - **Smart Tools Suite** (Phase 4): Grant Pitch, Case for Support, Impact Reports, Thank You Letters, Social Media
 - **Analytics Dashboard** (Phase 5): Success rates, ROI tracking, funding forecasts, performance benchmarks
-- **Payment Processing** (Phase 6 - Next): Stripe integration for subscriptions
-- **Team Collaboration** (Phase 7): Multi-user support, role management
-- **Mobile Optimization** (Phase 8): Responsive design improvements
+- **Payment Processing** (Phase 6): Stripe integration, $79-499/month pricing
+- **Team Collaboration** (Phase 7): 5-role RBAC, invitations, comments, activity tracking
+- **Mobile Optimization** (Phase 8 - Next): Responsive design improvements
 - **Advanced Integrations** (Phase 9): Calendar, CRM, document management
 - **Production Deployment** (Phase 10): Final optimization and launch
 
