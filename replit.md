@@ -6,6 +6,17 @@ Pink Lemonade is an AI-powered grant management platform for nonprofits. It stre
 ## User Preferences
 Preferred communication style: Simple, everyday language.
 
+### Prompt Generation Structure (REACTO)
+When generating prompts for AI-driven tasks, use the REACTO framework:
+- **R - Role**: Define the exact role with clear scope and responsibilities
+- **E - Example**: Provide a vivid model of successful results
+- **A - Application**: Step-by-step instructions with guardrails
+- **C - Context**: Background, constraints, branding, and goals
+- **T - Tone**: Style, personality, and feel of output
+- **O - Output**: Exact deliverables with structure, formatting, and testing steps
+
+Each section must be detailed (multiple sentences), include guardrails to prevent scope creep, and testing/debugging steps for technical outputs. Avoid placeholder text and keep language non-technical unless requested.
+
 ## System Architecture
 
 ### Backend Architecture
