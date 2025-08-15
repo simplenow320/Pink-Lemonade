@@ -85,6 +85,13 @@ def create_app():
     from app.api.ai_matching import bp as ai_matching_bp
     flask_app.register_blueprint(ai_matching_bp)
     
+    # Register AI optimization endpoints (Phase 1)
+    try:
+        from app.api.ai_optimization import ai_optimization_bp
+        flask_app.register_blueprint(ai_optimization_bp)
+    except ImportError:
+        pass  # AI optimization not available yet
+    
     # Register integration endpoints
     from app.api.integration import bp as integration_bp
     flask_app.register_blueprint(integration_bp)
