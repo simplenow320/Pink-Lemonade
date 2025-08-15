@@ -116,8 +116,8 @@ def create_app():
     from app.api.production_readiness import bp as production_bp
     flask_app.register_blueprint(production_bp)
     
-    # Register deployment endpoints
-    from app.api.deployment import bp as deployment_bp
+    # Register deployment endpoints (Phase 10)
+    from app.api.deployment import deployment_bp
     flask_app.register_blueprint(deployment_bp)
     
     # Register final completion endpoints
