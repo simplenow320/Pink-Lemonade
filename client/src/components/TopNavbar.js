@@ -27,6 +27,7 @@ const TopNavbar = () => {
     { name: 'Dashboard', href: '/', icon: 'dashboard' },
     { name: 'Grants', href: '/grants', icon: 'document' },
     { name: 'Smart Tools', href: '/smart-tools', icon: 'tools' },
+    { name: 'Templates', href: '/templates', icon: 'template' },
     { name: 'Analytics', href: '/analytics', icon: 'chart' },
     { name: 'Scraper', href: '/scraper', icon: 'search' },
     { name: 'Organization', href: '/organization', icon: 'organization' },
@@ -334,6 +335,28 @@ const renderIcon = (iconName, isActive) => {
           />
           <path
             d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"
+            stroke="currentColor"
+            strokeWidth="1.5"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+        </svg>
+      );
+    case 'template':
+      return (
+        <svg
+          className={`w-5 h-5 ${color}`}
+          viewBox="0 0 24 24"
+          fill="none"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <path
+            d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+            fill="currentColor"
+            opacity="0.2"
+          />
+          <path
+            d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
             stroke="currentColor"
             strokeWidth="1.5"
             strokeLinecap="round"

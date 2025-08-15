@@ -17,6 +17,7 @@ def create_app():
         # Import models so they are registered
         import app.models
         import app.models_extended
+        import app.models_templates
 
         
         # Create all tables
@@ -173,6 +174,10 @@ def create_app():
     # Register Payment API endpoints (Phase 3 of 100% Completion Plan)
     from app.api.payment import payment_bp
     flask_app.register_blueprint(payment_bp, url_prefix='/api/payment')
+    
+    # Register Smart Templates API endpoints (Phase 5 of 100% Completion Plan)
+    from app.api.templates import templates_bp
+    flask_app.register_blueprint(templates_bp)
     
     # Register Smart Reporting endpoints
     from app.api.smart_reporting import bp as smart_reporting_bp

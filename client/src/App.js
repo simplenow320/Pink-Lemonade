@@ -31,6 +31,7 @@ const Survey = lazy(() => import('./pages/Survey'));
 const CaseSupport = lazy(() => import('./pages/CaseSupport'));
 const GrantPitch = lazy(() => import('./pages/GrantPitch'));
 const ImpactReport = lazy(() => import('./pages/ImpactReport'));
+const Templates = lazy(() => import('./pages/Templates'));
 
 // Loading component for suspense fallback
 const PageLoader = () => (
@@ -295,6 +296,14 @@ function App() {
                     element={
                       <ErrorBoundary>
                         <SmartTools />
+                      </ErrorBoundary>
+                    }
+                  />
+                  <Route
+                    path="/templates"
+                    element={
+                      <ErrorBoundary>
+                        <Templates />
                       </ErrorBoundary>
                     }
                   />
