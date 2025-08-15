@@ -131,6 +131,20 @@ def create_app():
     except ImportError as e:
         print(f"AI grants blueprint not available: {e}")
     
+    # Register Workflow Management endpoints
+    try:
+        from app.api.workflow import workflow_bp
+        flask_app.register_blueprint(workflow_bp)
+    except ImportError as e:
+        print(f"Workflow blueprint not available: {e}")
+    
+    # Register Smart Tools endpoints (Phase 4)
+    try:
+        from app.api.smart_tools import smart_tools_bp
+        flask_app.register_blueprint(smart_tools_bp)
+    except ImportError as e:
+        print(f"Smart Tools blueprint not available: {e}")
+    
     # Register health check endpoints
     from app.api.health import bp as health_bp
     flask_app.register_blueprint(health_bp)

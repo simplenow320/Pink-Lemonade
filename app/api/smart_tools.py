@@ -1,158 +1,280 @@
-"""Smart Tools API endpoints"""
-from flask import Blueprint, jsonify, request, session
-from app.services.ai_service import AIService
+"""
+Smart Tools API Endpoints
+AI-powered tools for grant writing and impact reporting
+"""
+
+from flask import Blueprint, jsonify, request
+from app.services.smart_tools import SmartToolsService
+from app.models import Organization, Grant, db
 import logging
 
 logger = logging.getLogger(__name__)
-bp = Blueprint('smart_tools', __name__, url_prefix='/api')
 
-# Initialize services
-ai_service = AIService()
+smart_tools_bp = Blueprint('smart_tools', __name__, url_prefix='/api/smart-tools')
+smart_tools = SmartToolsService()
 
-@bp.route('/ai/generate-pitch', methods=['POST'])
+# ============= GRANT PITCH ENDPOINTS =============
+
+@smart_tools_bp.route('/pitch/generate', methods=['POST'])
 def generate_pitch():
-    """Generate grant pitch using AI"""
+    """Generate a grant pitch (elevator, executive, or detailed)"""
     try:
-        data = request.get_json()
-        org_data = data.get('org_data', {})
-        grant_data = data.get('grant_data', {})
+        data = request.json
+        org_id = data.get('org_id')
+        grant_id = data.get('grant_id')
+        pitch_type = data.get('pitch_type', 'elevator')
         
-        # Generate pitch using AI service
-        pitch = ai_service.generate_grant_narrative(
-            org_profile=org_data,
-            grant=grant_data,
-            section='executive_summary'
-        )
+        if not org_id:
+            return jsonify({
+                'success': False,
+                'error': 'org_id is required'
+            }), 400
         
-        result = {
-            'pitch': pitch,
-            'org_name': org_data.get('name'),
-            'grant_title': grant_data.get('title')
-        }
+        if pitch_type not in ['elevator', 'executive', 'detailed']:
+            return jsonify({
+                'success': False,
+                'error': 'Invalid pitch_type. Use: elevator, executive, or detailed'
+            }), 400
         
-        return jsonify(result), 200
+        result = smart_tools.generate_grant_pitch(org_id, grant_id, pitch_type)
         
+        if result['success']:
+            return jsonify(result)
+        else:
+            return jsonify(result), 500
+            
     except Exception as e:
         logger.error(f"Error generating pitch: {e}")
-        return jsonify({'error': str(e)}), 500
+        return jsonify({'success': False, 'error': str(e)}), 500
 
-@bp.route('/ai/generate-case-support', methods=['POST'])
-def generate_case_support():
-    """Generate case for support using AI"""
+# ============= CASE FOR SUPPORT ENDPOINTS =============
+
+@smart_tools_bp.route('/case/generate', methods=['POST'])
+def generate_case():
+    """Generate a comprehensive case for support"""
     try:
-        data = request.get_json()
-        org_data = data.get('org_data', {})
-        
-        # Generate case for support
-        case_statement = ai_service.generate_grant_narrative(
-            org_profile=org_data,
-            grant=None,
-            section='statement_of_need'
-        )
-        
-        result = {
-            'case_statement': case_statement,
-            'org_name': org_data.get('name')
+        data = request.json
+        org_id = data.get('org_id')
+        campaign_details = {
+            'goal': data.get('campaign_goal', 100000),
+            'purpose': data.get('campaign_purpose', 'general support'),
+            'timeline': data.get('timeline', '12 months'),
+            'target_donors': data.get('target_donors', 'major donors')
         }
         
-        return jsonify(result), 200
+        if not org_id:
+            return jsonify({
+                'success': False,
+                'error': 'org_id is required'
+            }), 400
         
+        result = smart_tools.generate_case_for_support(org_id, campaign_details)
+        
+        if result['success']:
+            return jsonify(result)
+        else:
+            return jsonify(result), 500
+            
     except Exception as e:
-        logger.error(f"Error generating case for support: {e}")
-        return jsonify({'error': str(e)}), 500
+        logger.error(f"Error generating case: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
 
-@bp.route('/ai/generate-impact-report', methods=['POST'])
+# ============= IMPACT REPORTING ENDPOINTS =============
+
+@smart_tools_bp.route('/impact/generate', methods=['POST'])
 def generate_impact_report():
-    """Generate impact report using AI"""
+    """Generate an impact report with metrics and stories"""
     try:
-        data = request.get_json()
-        org_data = data.get('org_data', {})
-        program_data = data.get('program_data', {})
-        
-        # Generate impact report with program data
-        org_with_program = {**org_data}
-        org_with_program['program_name'] = program_data.get('name', 'Program')
-        org_with_program['program_description'] = program_data.get('description', '')
-        org_with_program['beneficiaries'] = program_data.get('beneficiaries', '')
-        
-        report = ai_service.generate_grant_narrative(
-            org_profile=org_with_program,
-            grant=None,
-            section='project_description'
-        )
-        
-        result = {
-            'report': report,
-            'program_name': program_data.get('name')
+        data = request.json
+        org_id = data.get('org_id')
+        report_period = {
+            'start': data.get('period_start', '2024-01-01'),
+            'end': data.get('period_end', '2024-12-31')
         }
+        metrics_data = data.get('metrics', {
+            'grants_submitted': 10,
+            'grants_won': 3,
+            'funding_secured': 250000,
+            'beneficiaries_served': 500,
+            'programs_delivered': 5
+        })
         
-        return jsonify(result), 200
+        if not org_id:
+            return jsonify({
+                'success': False,
+                'error': 'org_id is required'
+            }), 400
         
+        result = smart_tools.generate_impact_report(org_id, report_period, metrics_data)
+        
+        if result['success']:
+            return jsonify(result)
+        else:
+            return jsonify(result), 500
+            
     except Exception as e:
         logger.error(f"Error generating impact report: {e}")
-        return jsonify({'error': str(e)}), 500
+        return jsonify({'success': False, 'error': str(e)}), 500
 
-@bp.route('/ai/improve-text', methods=['POST'])
-def improve_text():
-    """Improve text using AI writing assistant"""
+# ============= QUICK TOOLS ENDPOINTS =============
+
+@smart_tools_bp.route('/thank-you/generate', methods=['POST'])
+def generate_thank_you():
+    """Generate a personalized thank you letter"""
     try:
-        data = request.get_json()
-        text = data.get('text', '')
-        improvement_type = data.get('improvement_type', 'general')
+        data = request.json
+        org_id = data.get('org_id')
+        donor_info = {
+            'name': data.get('donor_name', 'Valued Supporter'),
+            'amount': data.get('donation_amount', 0),
+            'purpose': data.get('donation_purpose', 'general support'),
+            'is_recurring': data.get('is_recurring', False)
+        }
         
-        # Improve text using AI
-        improved_text = ai_service.improve_text(text, improvement_type)
+        if not org_id:
+            return jsonify({
+                'success': False,
+                'error': 'org_id is required'
+            }), 400
         
-        return jsonify({
-            'original': text,
-            'improved': improved_text,
-            'improvement_type': improvement_type
-        }), 200
+        result = smart_tools.generate_thank_you_letter(org_id, donor_info)
         
+        if result['success']:
+            return jsonify(result)
+        else:
+            return jsonify(result), 500
+            
     except Exception as e:
-        logger.error(f"Error improving text: {e}")
-        return jsonify({'error': str(e)}), 500
+        logger.error(f"Error generating thank you: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
 
-@bp.route('/smart-tools/templates', methods=['GET'])
-def get_templates():
-    """Get available Smart Tools templates"""
-    return jsonify({
-        'templates': [
+@smart_tools_bp.route('/social/generate', methods=['POST'])
+def generate_social_post():
+    """Generate platform-optimized social media content"""
+    try:
+        data = request.json
+        org_id = data.get('org_id')
+        platform = data.get('platform', 'twitter')
+        topic = data.get('topic', 'impact story')
+        
+        if not org_id:
+            return jsonify({
+                'success': False,
+                'error': 'org_id is required'
+            }), 400
+        
+        if platform not in ['twitter', 'facebook', 'instagram', 'linkedin']:
+            return jsonify({
+                'success': False,
+                'error': 'Invalid platform. Use: twitter, facebook, instagram, or linkedin'
+            }), 400
+        
+        result = smart_tools.generate_social_media_post(org_id, platform, topic)
+        
+        if result['success']:
+            return jsonify(result)
+        else:
+            return jsonify(result), 500
+            
+    except Exception as e:
+        logger.error(f"Error generating social post: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+# ============= TOOL INFORMATION ENDPOINTS =============
+
+@smart_tools_bp.route('/tools', methods=['GET'])
+def get_available_tools():
+    """Get list of all available Smart Tools"""
+    try:
+        tools = [
             {
                 'id': 'grant_pitch',
-                'name': 'Grant Pitch',
-                'description': 'Create compelling grant pitches tailored to specific opportunities',
-                'icon': '💡'
+                'name': 'Grant Pitch Generator',
+                'description': 'Create compelling elevator, executive, or detailed pitches',
+                'endpoint': '/api/smart-tools/pitch/generate',
+                'icon': '🎯',
+                'categories': ['fundraising', 'communication'],
+                'time_to_generate': '10-15 seconds'
             },
             {
-                'id': 'case_support',
-                'name': 'Case for Support',
-                'description': 'Build comprehensive case statements for your organization',
-                'icon': '📋'
+                'id': 'case_for_support',
+                'name': 'Case for Support Builder',
+                'description': 'Generate comprehensive fundraising case documents',
+                'endpoint': '/api/smart-tools/case/generate',
+                'icon': '📋',
+                'categories': ['fundraising', 'strategy'],
+                'time_to_generate': '20-30 seconds'
             },
             {
                 'id': 'impact_report',
-                'name': 'Impact Report',
-                'description': 'Generate data-driven impact reports for funders',
-                'icon': '📊'
+                'name': 'Impact Report Creator',
+                'description': 'Transform metrics into compelling impact stories',
+                'endpoint': '/api/smart-tools/impact/generate',
+                'icon': '📊',
+                'categories': ['reporting', 'evaluation'],
+                'time_to_generate': '15-20 seconds'
             },
             {
-                'id': 'writing_assistant',
-                'name': 'Writing Assistant',
-                'description': 'Improve and refine your grant narratives',
-                'icon': '✍️'
+                'id': 'thank_you_letter',
+                'name': 'Thank You Letter Writer',
+                'description': 'Personalized donor appreciation messages',
+                'endpoint': '/api/smart-tools/thank-you/generate',
+                'icon': '💌',
+                'categories': ['stewardship', 'communication'],
+                'time_to_generate': '5-10 seconds'
             },
             {
-                'id': 'analytics',
-                'name': 'Analytics Dashboard',
-                'description': 'Track success rates and funding trends',
-                'icon': '📈'
-            },
-            {
-                'id': 'smart_reports',
-                'name': 'Smart Reports',
-                'description': 'Generate automated reports with AI insights',
-                'icon': '🤖'
+                'id': 'social_media',
+                'name': 'Social Media Post Creator',
+                'description': 'Platform-optimized social content',
+                'endpoint': '/api/smart-tools/social/generate',
+                'icon': '📱',
+                'categories': ['marketing', 'communication'],
+                'time_to_generate': '5-10 seconds'
             }
         ]
-    }), 200
+        
+        return jsonify({
+            'success': True,
+            'tools': tools,
+            'total': len(tools)
+        })
+        
+    except Exception as e:
+        logger.error(f"Error getting tools: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@smart_tools_bp.route('/stats/<int:org_id>', methods=['GET'])
+def get_tool_usage_stats(org_id):
+    """Get Smart Tools usage statistics for an organization"""
+    try:
+        from app.models import Narrative
+        
+        # Get usage counts by tool type
+        narratives = Narrative.query.filter_by(
+            org_id=org_id,
+            ai_generated=True
+        ).all()
+        
+        tool_usage = {
+            'pitches': len([n for n in narratives if 'pitch' in n.section]),
+            'cases': len([n for n in narratives if 'case' in n.section]),
+            'reports': len([n for n in narratives if 'impact' in n.section]),
+            'thank_yous': len([n for n in narratives if 'thank' in n.section]),
+            'total_generated': len(narratives)
+        }
+        
+        # Calculate time saved (estimate 2 hours per document)
+        time_saved_hours = tool_usage['total_generated'] * 2
+        
+        return jsonify({
+            'success': True,
+            'org_id': org_id,
+            'usage': tool_usage,
+            'time_saved_hours': time_saved_hours,
+            'time_saved_days': round(time_saved_hours / 8, 1)
+        })
+        
+    except Exception as e:
+        logger.error(f"Error getting stats: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
