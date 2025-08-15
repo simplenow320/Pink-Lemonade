@@ -25,7 +25,7 @@ def create_app():
     # Register blueprints
     from app.pages import pages as pages_bp
     from app.api.auth import bp as auth_bp, init_auth
-    from app.api.analytics import bp as analytics_bp
+    from app.api.analytics import analytics_bp
     from app.api.dashboard import dashboard_bp
     from app.api.scraper import bp as scraper_bp
     from app.api.opportunities import bp as opportunities_bp
