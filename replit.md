@@ -74,6 +74,12 @@ Pink Lemonade is an AI-powered grant management platform for nonprofits. It stre
 ## User Preferences
 Preferred communication style: Simple, everyday language.
 
+## Business Strategy
+- Tiered SaaS pricing model targeting nonprofits by size
+- Core value proposition: Grant matching and AI-powered writing
+- Target market: 1.5M nonprofits in US with $299/month sweet spot
+- Freemium acquisition strategy with clear upgrade path
+
 ## System Architecture
 
 ### Backend Architecture
