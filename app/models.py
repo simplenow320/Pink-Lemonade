@@ -916,3 +916,242 @@ class Analytics(db.Model):
             "grant_id": self.grant_id,
             "created_at": self.created_at.isoformat() if self.created_at else None
         }
+
+# Phase 2: Subscription Management Models
+from enum import Enum
+
+class PlanTier(Enum):
+    """Subscription plan tiers with aggressive competitive pricing"""
+    DISCOVERY = "discovery"      # $79/month - Entry level
+    PROFESSIONAL = "professional" # $149/month - Small nonprofits  
+    ENTERPRISE = "enterprise"     # $299/month - Large organizations
+    UNLIMITED = "unlimited"       # $499/month - Full access
+
+class SubscriptionPlan(db.Model):
+    """Subscription plans with competitive pricing structure"""
+    __tablename__ = "subscription_plans"
+    
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(50), unique=True, nullable=False)
+    tier = db.Column(db.String(20), nullable=False)
+    price_monthly = db.Column(db.Float, nullable=False)
+    price_yearly = db.Column(db.Float)
+    
+    # Feature limits
+    max_users = db.Column(db.Integer, default=1)
+    max_grants_tracked = db.Column(db.Integer, default=10)
+    max_applications_monthly = db.Column(db.Integer, default=5)
+    max_ai_requests_monthly = db.Column(db.Integer, default=100)
+    max_reports_monthly = db.Column(db.Integer, default=10)
+    
+    # Feature flags
+    has_ai_matching = db.Column(db.Boolean, default=True)
+    has_ai_writing = db.Column(db.Boolean, default=False)
+    has_analytics = db.Column(db.Boolean, default=False)
+    has_smart_tools = db.Column(db.Boolean, default=False)
+    has_team_collaboration = db.Column(db.Boolean, default=False)
+    has_api_access = db.Column(db.Boolean, default=False)
+    has_white_label = db.Column(db.Boolean, default=False)
+    has_priority_support = db.Column(db.Boolean, default=False)
+    has_custom_integrations = db.Column(db.Boolean, default=False)
+    
+    # Plan details
+    description = db.Column(db.Text)
+    features_list = db.Column(db.JSON)
+    is_active = db.Column(db.Boolean, default=True)
+    stripe_price_id = db.Column(db.String(100))
+    stripe_product_id = db.Column(db.String(100))
+    
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'name': self.name,
+            'tier': self.tier,
+            'price_monthly': self.price_monthly,
+            'price_yearly': self.price_yearly,
+            'max_users': self.max_users,
+            'max_grants_tracked': self.max_grants_tracked,
+            'max_applications_monthly': self.max_applications_monthly,
+            'max_ai_requests_monthly': self.max_ai_requests_monthly,
+            'features': {
+                'ai_matching': self.has_ai_matching,
+                'ai_writing': self.has_ai_writing,
+                'analytics': self.has_analytics,
+                'smart_tools': self.has_smart_tools,
+                'team_collaboration': self.has_team_collaboration,
+                'api_access': self.has_api_access,
+                'white_label': self.has_white_label,
+                'priority_support': self.has_priority_support,
+                'custom_integrations': self.has_custom_integrations
+            },
+            'description': self.description,
+            'features_list': self.features_list or [],
+            'is_active': self.is_active
+        }
+
+class UserSubscription(db.Model):
+    """User subscription tracking and billing"""
+    __tablename__ = "user_subscriptions"
+    
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
+    plan_id = db.Column(db.Integer, db.ForeignKey("subscription_plans.id"), nullable=False)
+    
+    # Subscription status
+    status = db.Column(db.String(20), default='trial')
+    trial_ends_at = db.Column(db.DateTime)
+    current_period_start = db.Column(db.DateTime)
+    current_period_end = db.Column(db.DateTime)
+    canceled_at = db.Column(db.DateTime)
+    
+    # Billing information
+    stripe_customer_id = db.Column(db.String(100))
+    stripe_subscription_id = db.Column(db.String(100))
+    payment_method_type = db.Column(db.String(20))
+    last_payment_amount = db.Column(db.Float)
+    last_payment_date = db.Column(db.DateTime)
+    next_billing_date = db.Column(db.DateTime)
+    
+    # Usage tracking
+    grants_tracked_count = db.Column(db.Integer, default=0)
+    applications_count_monthly = db.Column(db.Integer, default=0)
+    ai_requests_count_monthly = db.Column(db.Integer, default=0)
+    reports_count_monthly = db.Column(db.Integer, default=0)
+    usage_reset_date = db.Column(db.DateTime)
+    
+    # Relationships
+    user = db.relationship('User', backref='subscription')
+    plan = db.relationship('SubscriptionPlan', backref='subscriptions')
+    
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    
+    def is_active(self):
+        """Check if subscription is currently active"""
+        return self.status in ['trial', 'active']
+    
+    def is_within_limits(self, feature_type):
+        """Check if user is within plan limits for a feature"""
+        if not self.plan:
+            return False
+            
+        if feature_type == 'grants':
+            return self.grants_tracked_count < self.plan.max_grants_tracked
+        elif feature_type == 'applications':
+            return self.applications_count_monthly < self.plan.max_applications_monthly
+        elif feature_type == 'ai_requests':
+            return self.ai_requests_count_monthly < self.plan.max_ai_requests_monthly
+        elif feature_type == 'reports':
+            return self.reports_count_monthly < self.plan.max_reports_monthly
+        
+        return True
+    
+    def reset_monthly_usage(self):
+        """Reset monthly usage counters"""
+        self.applications_count_monthly = 0
+        self.ai_requests_count_monthly = 0
+        self.reports_count_monthly = 0
+        self.usage_reset_date = datetime.utcnow()
+        db.session.commit()
+    
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'user_id': self.user_id,
+            'plan': self.plan.to_dict() if self.plan else None,
+            'status': self.status,
+            'trial_ends_at': self.trial_ends_at.isoformat() if self.trial_ends_at else None,
+            'current_period_end': self.current_period_end.isoformat() if self.current_period_end else None,
+            'is_active': self.is_active(),
+            'usage': {
+                'grants_tracked': f"{self.grants_tracked_count}/{self.plan.max_grants_tracked if self.plan else 0}",
+                'applications_monthly': f"{self.applications_count_monthly}/{self.plan.max_applications_monthly if self.plan else 0}",
+                'ai_requests_monthly': f"{self.ai_requests_count_monthly}/{self.plan.max_ai_requests_monthly if self.plan else 0}",
+                'reports_monthly': f"{self.reports_count_monthly}/{self.plan.max_reports_monthly if self.plan else 0}"
+            }
+        }
+
+class TeamMember(db.Model):
+    """Team members for organizational accounts"""
+    __tablename__ = "team_members"
+    
+    id = db.Column(db.Integer, primary_key=True)
+    organization_id = db.Column(db.Integer, db.ForeignKey("organizations.id"), nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
+    
+    # Role-based access control
+    role = db.Column(db.String(20), default='member')
+    permissions = db.Column(db.JSON)
+    
+    # Team member details
+    invited_by_user_id = db.Column(db.Integer, db.ForeignKey("users.id"))
+    invitation_token = db.Column(db.String(100))
+    invitation_sent_at = db.Column(db.DateTime)
+    invitation_accepted_at = db.Column(db.DateTime)
+    
+    # Activity tracking
+    last_active_at = db.Column(db.DateTime)
+    is_active = db.Column(db.Boolean, default=True)
+    
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    
+    def has_permission(self, permission):
+        """Check if team member has specific permission"""
+        if self.role == 'owner':
+            return True
+        if self.role == 'admin' and permission != 'billing':
+            return True
+        if self.permissions:
+            return permission in self.permissions
+        return False
+    
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'user_id': self.user_id,
+            'role': self.role,
+            'permissions': self.permissions or [],
+            'is_active': self.is_active,
+            'last_active_at': self.last_active_at.isoformat() if self.last_active_at else None
+        }
+
+class UsageLog(db.Model):
+    """Track feature usage for billing and analytics"""
+    __tablename__ = "usage_logs"
+    
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
+    subscription_id = db.Column(db.Integer, db.ForeignKey("user_subscriptions.id"))
+    
+    # Usage details
+    feature_type = db.Column(db.String(50), nullable=False)
+    feature_name = db.Column(db.String(100))
+    usage_count = db.Column(db.Integer, default=1)
+    
+    # AI-specific tracking for cost optimization
+    ai_model_used = db.Column(db.String(50))
+    ai_tokens_used = db.Column(db.Integer)
+    ai_cost_estimate = db.Column(db.Float)
+    
+    # Extra data
+    extra_data = db.Column(db.JSON)
+    ip_address = db.Column(db.String(45))
+    user_agent = db.Column(db.String(255))
+    
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'user_id': self.user_id,
+            'feature_type': self.feature_type,
+            'feature_name': self.feature_name,
+            'usage_count': self.usage_count,
+            'ai_model_used': self.ai_model_used,
+            'ai_tokens_used': self.ai_tokens_used,
+            'created_at': self.created_at.isoformat() if self.created_at else None
+        }

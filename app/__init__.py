@@ -92,6 +92,13 @@ def create_app():
     except ImportError:
         pass  # AI optimization not available yet
     
+    # Register subscription management endpoints (Phase 2)
+    try:
+        from app.api.subscription import subscription_bp
+        flask_app.register_blueprint(subscription_bp)
+    except ImportError:
+        pass  # Subscription management not available yet
+    
     # Register integration endpoints
     from app.api.integration import bp as integration_bp
     flask_app.register_blueprint(integration_bp)
