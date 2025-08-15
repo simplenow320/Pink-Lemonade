@@ -166,6 +166,13 @@ def create_app():
     except ImportError as e:
         print(f"Mobile blueprint not available: {e}")
     
+    # Register Advanced Integration endpoints (Phase 9)
+    try:
+        from app.api.integrations import integrations_bp
+        flask_app.register_blueprint(integrations_bp)
+    except ImportError as e:
+        print(f"Integrations blueprint not available: {e}")
+    
     # Register health check endpoints
     from app.api.health import bp as health_bp
     flask_app.register_blueprint(health_bp)

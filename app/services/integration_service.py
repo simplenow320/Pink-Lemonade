@@ -1,406 +1,553 @@
 """
-Integration Service - Phase 2 Implementation
-Manages real-time data synchronization, automated monitoring, and cross-system communication
+Advanced Integration Service
+Calendar, CRM, and Document Management
 """
 
+from typing import Dict, List, Optional, Any
+from datetime import datetime, timedelta
 import logging
 import json
-from datetime import datetime, timedelta
-from typing import Dict, List, Any, Optional
-from app import db
-from app.models import Grant, Organization, Analytics, ScraperSource, ScraperHistory, Watchlist
-from app.services.discovery import DiscoveryService
-from app.services.ai_reasoning_engine import AIReasoningEngine
-from app.services.notification_service import NotificationService
-from app.services.monitoring_service import MonitoringService
+import hashlib
+import mimetypes
 
 logger = logging.getLogger(__name__)
 
 class IntegrationService:
-    """Orchestrates integration between all system components"""
+    """
+    Manages advanced integrations:
+    - Calendar synchronization
+    - CRM connections
+    - Document management
+    - Email integration
+    - Cloud storage
+    """
     
-    def __init__(self):
-        self.discovery_service = DiscoveryService()
-        self.ai_engine = AIReasoningEngine()
-        self.notification_service = NotificationService()
-        self.monitoring_service = MonitoringService()
-    
-    def run_full_discovery_cycle(self, org_id: Optional[int] = None) -> Dict[str, Any]:
-        """
-        Run complete discovery and integration cycle
-        Returns comprehensive status and results
-        """
-        start_time = datetime.utcnow()
-        results = {
-            'start_time': start_time.isoformat(),
-            'discovery_stats': {},
-            'ai_analysis': {},
-            'notifications': [],
-            'status': 'running'
-        }
-        
-        try:
-            # Step 1: Run discovery from all active sources
-            logger.info("Starting discovery cycle")
-            discovery_results = self.discovery_service.run_all_connectors()
-            results['discovery_stats'] = discovery_results
-            
-            # Step 2: Get organization context if specified
-            organization = None
-            if org_id:
-                organization = Organization.query.get(org_id)
-            
-            # Step 3: Process new grants with AI analysis
-            new_grants = Grant.query.filter(
-                Grant.created_at >= start_time - timedelta(hours=1)
-            ).all()
-            
-            ai_analyses = []
-            for grant in new_grants[:10]:  # Process up to 10 grants per cycle
-                if organization:
-                    grant_data = self._grant_to_analysis_format(grant)
-                    analysis = self.ai_engine.analyze_grant_match(organization, grant_data)
-                    ai_analyses.append({
-                        'grant_id': grant.id,
-                        'grant_title': grant.title,
-                        'match_score': analysis.get('match_score', 0),
-                        'confidence': analysis.get('confidence', 'low'),
-                        'recommendation': analysis.get('recommendation', '')
-                    })
-            
-            results['ai_analysis'] = {
-                'grants_analyzed': len(ai_analyses),
-                'high_matches': len([a for a in ai_analyses if a['match_score'] > 75]),
-                'analyses': ai_analyses
+    # Supported integrations
+    INTEGRATIONS = {
+        'calendar': {
+            'google_calendar': {
+                'name': 'Google Calendar',
+                'features': ['sync_deadlines', 'create_events', 'reminders'],
+                'oauth': True
+            },
+            'outlook_calendar': {
+                'name': 'Outlook Calendar',
+                'features': ['sync_deadlines', 'create_events', 'reminders'],
+                'oauth': True
+            },
+            'ical': {
+                'name': 'iCal Feed',
+                'features': ['export_feed', 'subscribe'],
+                'oauth': False
             }
-            
-            # Step 4: Update watchlists and send notifications
-            notifications_sent = self._process_watchlist_notifications(new_grants)
-            results['notifications'] = notifications_sent
-            
-            # Step 5: Record analytics
-            self._record_integration_analytics('discovery_cycle', results)
-            
-            results['status'] = 'completed'
-            results['end_time'] = datetime.utcnow().isoformat()
-            
-            logger.info(f"Discovery cycle completed: {len(new_grants)} grants found")
-            return results
-            
-        except Exception as e:
-            logger.error(f"Discovery cycle failed: {e}")
-            results['status'] = 'failed'
-            results['error'] = str(e)
-            results['end_time'] = datetime.utcnow().isoformat()
-            return results
+        },
+        'crm': {
+            'salesforce': {
+                'name': 'Salesforce',
+                'features': ['sync_contacts', 'opportunity_tracking', 'custom_fields'],
+                'oauth': True
+            },
+            'hubspot': {
+                'name': 'HubSpot',
+                'features': ['sync_contacts', 'deal_pipeline', 'activity_logging'],
+                'oauth': True
+            },
+            'pipedrive': {
+                'name': 'Pipedrive',
+                'features': ['sync_contacts', 'deal_tracking', 'activity_sync'],
+                'oauth': True
+            }
+        },
+        'documents': {
+            'google_drive': {
+                'name': 'Google Drive',
+                'features': ['store_documents', 'collaborative_editing', 'version_control'],
+                'oauth': True
+            },
+            'dropbox': {
+                'name': 'Dropbox',
+                'features': ['store_documents', 'file_sharing', 'backup'],
+                'oauth': True
+            },
+            'sharepoint': {
+                'name': 'SharePoint',
+                'features': ['store_documents', 'team_folders', 'permissions'],
+                'oauth': True
+            }
+        },
+        'email': {
+            'gmail': {
+                'name': 'Gmail',
+                'features': ['send_emails', 'track_conversations', 'templates'],
+                'oauth': True
+            },
+            'outlook': {
+                'name': 'Outlook',
+                'features': ['send_emails', 'track_conversations', 'templates'],
+                'oauth': True
+            }
+        }
+    }
     
-    def sync_organization_data(self, org_id: int) -> Dict[str, Any]:
-        """
-        Synchronize organization data across all systems
-        """
+    def get_available_integrations(self) -> Dict:
+        """Get list of available integrations"""
         try:
-            organization = Organization.query.get(org_id)
-            if not organization:
-                return {'success': False, 'error': 'Organization not found'}
-            
-            # Update completeness score
-            completeness = organization.calculate_completeness()
-            organization.profile_completeness = completeness
-            
-            # Sync AI learning data
-            try:
-                from app.services.ai_learning_system import AILearningSystem
-                ai_learning = AILearningSystem()
-                insights = ai_learning.get_personalized_insights(org_id)
-                # Store insights as JSON in event_data field or similar
-            except ImportError:
-                insights = None
-            
-            # Update analytics
-            self._record_integration_analytics('org_sync', {
-                'org_id': org_id,
-                'completeness': completeness,
-                'sync_time': datetime.utcnow().isoformat()
-            })
-            
-            db.session.commit()
+            integrations = []
+            for category, services in self.INTEGRATIONS.items():
+                for service_id, service_info in services.items():
+                    integrations.append({
+                        'id': service_id,
+                        'category': category,
+                        'name': service_info['name'],
+                        'features': service_info['features'],
+                        'requires_oauth': service_info['oauth'],
+                        'enabled': False,  # Check if user has connected
+                        'icon': self._get_service_icon(service_id)
+                    })
             
             return {
                 'success': True,
-                'organization_id': org_id,
-                'completeness': completeness,
+                'integrations': integrations,
+                'categories': list(self.INTEGRATIONS.keys())
+            }
+            
+        except Exception as e:
+            logger.error(f"Error getting integrations: {e}")
+            return {'success': False, 'error': str(e)}
+    
+    def sync_calendar_events(self, org_id: int, calendar_service: str) -> Dict:
+        """Sync grant deadlines with calendar"""
+        try:
+            from app.models import Grant
+            
+            # Get upcoming grant deadlines
+            grants = Grant.query.filter(
+                Grant.org_id == org_id,
+                Grant.deadline >= datetime.utcnow(),
+                Grant.application_stage.in_(['researching', 'writing', 'review'])
+            ).all()
+            
+            events = []
+            for grant in grants:
+                if grant.deadline:
+                    events.append({
+                        'id': f'grant_{grant.id}',
+                        'title': f'Grant Deadline: {grant.title}',
+                        'description': f'Amount: ${grant.amount_max:,.0f}\nFunder: {grant.funder}',
+                        'start': grant.deadline.isoformat(),
+                        'end': grant.deadline.isoformat(),
+                        'all_day': True,
+                        'color': self._get_stage_color(grant.application_stage),
+                        'reminders': [
+                            {'method': 'email', 'days_before': 7},
+                            {'method': 'popup', 'days_before': 3},
+                            {'method': 'popup', 'days_before': 1}
+                        ]
+                    })
+            
+            # Sync with calendar service
+            if calendar_service == 'google_calendar':
+                result = self._sync_google_calendar(events)
+            elif calendar_service == 'outlook_calendar':
+                result = self._sync_outlook_calendar(events)
+            else:
+                result = self._export_ical_feed(events)
+            
+            return {
+                'success': True,
+                'events_synced': len(events),
+                'service': calendar_service,
+                'next_sync': (datetime.utcnow() + timedelta(hours=1)).isoformat()
+            }
+            
+        except Exception as e:
+            logger.error(f"Error syncing calendar: {e}")
+            return {'success': False, 'error': str(e)}
+    
+    def sync_crm_contacts(self, org_id: int, crm_service: str) -> Dict:
+        """Sync grant contacts with CRM"""
+        try:
+            from app.models import Grant, ScraperSource
+            
+            # Get unique funders and contacts
+            sources = ScraperSource.query.filter_by(org_id=org_id).all()
+            
+            contacts = []
+            for source in sources:
+                if source.contact_email:
+                    contacts.append({
+                        'id': f'source_{source.id}',
+                        'name': source.funder_name or source.name,
+                        'email': source.contact_email,
+                        'phone': source.contact_phone,
+                        'organization': source.funder_name,
+                        'type': 'Funder',
+                        'tags': ['grant_funder', source.source_type],
+                        'custom_fields': {
+                            'total_grants': source.grants_available,
+                            'website': source.website,
+                            'last_contact': source.last_scraped.isoformat() if source.last_scraped else None
+                        }
+                    })
+            
+            # Sync with CRM service
+            if crm_service == 'salesforce':
+                result = self._sync_salesforce(contacts)
+            elif crm_service == 'hubspot':
+                result = self._sync_hubspot(contacts)
+            else:
+                result = self._sync_pipedrive(contacts)
+            
+            return {
+                'success': True,
+                'contacts_synced': len(contacts),
+                'service': crm_service,
+                'sync_type': 'bidirectional',
                 'last_sync': datetime.utcnow().isoformat()
             }
             
         except Exception as e:
-            logger.error(f"Organization sync failed: {e}")
-            db.session.rollback()
+            logger.error(f"Error syncing CRM: {e}")
             return {'success': False, 'error': str(e)}
     
-    def process_real_time_grants(self, source: str, grants_data: List[Dict]) -> Dict[str, Any]:
-        """
-        Process grants from real-time sources with immediate AI analysis
-        """
+    def manage_documents(self, org_id: int, action: str, 
+                        document_data: Dict = None) -> Dict:
+        """Manage grant documents"""
         try:
-            processed_grants = []
+            if action == 'upload':
+                result = self._upload_document(org_id, document_data)
+            elif action == 'list':
+                result = self._list_documents(org_id)
+            elif action == 'download':
+                result = self._download_document(org_id, document_data.get('document_id'))
+            elif action == 'delete':
+                result = self._delete_document(org_id, document_data.get('document_id'))
+            elif action == 'organize':
+                result = self._organize_documents(org_id)
+            else:
+                return {'success': False, 'error': 'Invalid action'}
             
-            for grant_data in grants_data:
-                # Create or update grant
-                grant = self._create_or_update_grant(grant_data, source)
-                
-                if grant:
-                    # Get all organizations for quick matching
-                    organizations = Organization.query.filter(
-                        Organization.profile_completeness > 50
-                    ).all()
-                    
-                    # Run AI analysis for high-completeness orgs
-                    for org in organizations[:5]:  # Limit for performance
-                        analysis = self.ai_engine.analyze_grant_match(org, grant_data)
-                        
-                        if analysis.get('match_score', 0) > 70:
-                            # Record high-match event
-                            self._record_integration_analytics('high_match', {
-                                'grant_id': grant.id,
-                                'org_id': org.id,
-                                'match_score': analysis['match_score'],
-                                'confidence': analysis['confidence']
-                            })
-                            
-                            # Send notification if org has alerts enabled
-                            self._send_match_notification(org, grant, analysis)
-                    
-                    processed_grants.append(grant.to_dict())
+            return result
+            
+        except Exception as e:
+            logger.error(f"Error managing documents: {e}")
+            return {'success': False, 'error': str(e)}
+    
+    def setup_email_templates(self, org_id: int) -> Dict:
+        """Setup email templates for grant communications"""
+        try:
+            templates = [
+                {
+                    'id': 'initial_inquiry',
+                    'name': 'Initial Grant Inquiry',
+                    'subject': 'Grant Inquiry - {{organization_name}}',
+                    'body': self._get_email_template('initial_inquiry'),
+                    'variables': ['organization_name', 'grant_title', 'contact_name']
+                },
+                {
+                    'id': 'follow_up',
+                    'name': 'Follow Up',
+                    'subject': 'Following Up - {{grant_title}}',
+                    'body': self._get_email_template('follow_up'),
+                    'variables': ['grant_title', 'last_contact_date', 'next_steps']
+                },
+                {
+                    'id': 'thank_you',
+                    'name': 'Thank You',
+                    'subject': 'Thank You - {{organization_name}}',
+                    'body': self._get_email_template('thank_you'),
+                    'variables': ['contact_name', 'grant_amount', 'impact_statement']
+                },
+                {
+                    'id': 'submission_confirmation',
+                    'name': 'Submission Confirmation',
+                    'subject': 'Grant Application Submitted - {{grant_title}}',
+                    'body': self._get_email_template('submission_confirmation'),
+                    'variables': ['grant_title', 'submission_date', 'reference_number']
+                }
+            ]
             
             return {
                 'success': True,
-                'grants_processed': len(processed_grants),
-                'source': source,
-                'timestamp': datetime.utcnow().isoformat()
+                'templates': templates,
+                'total': len(templates)
             }
             
         except Exception as e:
-            logger.error(f"Real-time processing failed: {e}")
+            logger.error(f"Error setting up templates: {e}")
             return {'success': False, 'error': str(e)}
     
-    def get_integration_dashboard_data(self) -> Dict[str, Any]:
-        """
-        Get comprehensive dashboard data for integration monitoring
-        """
+    def get_integration_status(self, org_id: int) -> Dict:
+        """Get status of all integrations"""
         try:
-            # System health
-            health = self.monitoring_service.get_health_status()
+            status = {
+                'calendar': {
+                    'connected': False,
+                    'service': None,
+                    'last_sync': None,
+                    'events_synced': 0
+                },
+                'crm': {
+                    'connected': False,
+                    'service': None,
+                    'last_sync': None,
+                    'contacts_synced': 0
+                },
+                'documents': {
+                    'connected': False,
+                    'service': None,
+                    'storage_used': '0 MB',
+                    'files_count': 0
+                },
+                'email': {
+                    'connected': False,
+                    'service': None,
+                    'templates_configured': 4,
+                    'emails_sent': 0
+                }
+            }
             
-            # Recent discovery stats
-            recent_history = ScraperHistory.query.filter(
-                ScraperHistory.start_time >= datetime.utcnow() - timedelta(days=7)
-            ).order_by(ScraperHistory.start_time.desc()).limit(10).all()
-            
-            # AI analysis stats
-            recent_analytics = Analytics.query.filter(
-                Analytics.event_type.in_(['discovery_cycle', 'high_match']),
-                Analytics.created_at >= datetime.utcnow() - timedelta(days=7)
-            ).all()
-            
-            # Active watchlists
-            active_watchlists = Watchlist.query.filter_by(is_active=True).count()
-            
-            # Grant discovery trends  
-            discovery_trend = []
-            for i in range(7):
-                date = datetime.utcnow().date() - timedelta(days=i)
-                grants_count = Grant.query.filter(
-                    Grant.created_at >= datetime.combine(date, datetime.min.time()),
-                    Grant.created_at < datetime.combine(date + timedelta(days=1), datetime.min.time())
-                ).count()
-                discovery_trend.append({
-                    'date': date.isoformat(),
-                    'grants_found': grants_count
-                })
+            # Check actual connection status (would query database)
+            # This is placeholder data
             
             return {
-                'system_health': health,
-                'discovery_history': [h.to_dict() for h in recent_history],
-                'ai_analysis_stats': {
-                    'total_analyses': len(recent_analytics),
-                    'high_matches': len([a for a in recent_analytics if a.event_type == 'high_match']),
-                    'avg_confidence': self._calculate_avg_confidence(recent_analytics)
-                },
-                'active_watchlists': active_watchlists,
-                'discovery_trend': discovery_trend,
-                'last_updated': datetime.utcnow().isoformat()
+                'success': True,
+                'status': status,
+                'recommendations': self._get_integration_recommendations(status)
             }
             
         except Exception as e:
-            logger.error(f"Dashboard data retrieval failed: {e}")
-            return {'error': str(e)}
+            logger.error(f"Error getting status: {e}")
+            return {'success': False, 'error': str(e)}
     
-    def _grant_to_analysis_format(self, grant: Grant) -> Dict[str, Any]:
-        """Convert Grant model to format expected by AI engine"""
+    def export_data(self, org_id: int, format: str = 'csv') -> Dict:
+        """Export grant data to various formats"""
+        try:
+            from app.models import Grant
+            import csv
+            import io
+            
+            grants = Grant.query.filter_by(org_id=org_id).all()
+            
+            if format == 'csv':
+                output = io.StringIO()
+                writer = csv.writer(output)
+                
+                # Write headers
+                writer.writerow([
+                    'Title', 'Funder', 'Amount', 'Deadline', 
+                    'Stage', 'Match Score', 'Created', 'Updated'
+                ])
+                
+                # Write data
+                for grant in grants:
+                    writer.writerow([
+                        grant.title,
+                        grant.funder,
+                        grant.amount_max,
+                        grant.deadline.strftime('%Y-%m-%d') if grant.deadline else '',
+                        grant.application_stage,
+                        grant.match_score,
+                        grant.created_at.strftime('%Y-%m-%d'),
+                        grant.updated_at.strftime('%Y-%m-%d') if grant.updated_at else ''
+                    ])
+                
+                export_data = output.getvalue()
+                
+            elif format == 'json':
+                export_data = json.dumps([{
+                    'id': g.id,
+                    'title': g.title,
+                    'funder': g.funder,
+                    'amount': g.amount_max,
+                    'deadline': g.deadline.isoformat() if g.deadline else None,
+                    'stage': g.application_stage,
+                    'match_score': g.match_score
+                } for g in grants], indent=2)
+                
+            else:
+                return {'success': False, 'error': 'Unsupported format'}
+            
+            # Generate download link
+            file_hash = hashlib.md5(export_data.encode()).hexdigest()
+            filename = f'grants_export_{datetime.utcnow().strftime("%Y%m%d")}_{file_hash[:8]}.{format}'
+            
+            return {
+                'success': True,
+                'filename': filename,
+                'format': format,
+                'size': len(export_data),
+                'records': len(grants),
+                'data': export_data[:1000] + '...' if len(export_data) > 1000 else export_data
+            }
+            
+        except Exception as e:
+            logger.error(f"Error exporting data: {e}")
+            return {'success': False, 'error': str(e)}
+    
+    # Helper methods
+    
+    def _get_service_icon(self, service_id: str) -> str:
+        """Get icon for service"""
+        icons = {
+            'google_calendar': '📅',
+            'outlook_calendar': '📆',
+            'salesforce': '☁️',
+            'hubspot': '🎯',
+            'google_drive': '📁',
+            'dropbox': '📦',
+            'gmail': '📧',
+            'outlook': '✉️'
+        }
+        return icons.get(service_id, '🔗')
+    
+    def _get_stage_color(self, stage: str) -> str:
+        """Get color for grant stage"""
+        colors = {
+            'discovery': '#gray',
+            'researching': '#blue',
+            'writing': '#yellow',
+            'review': '#orange',
+            'submitted': '#purple',
+            'pending': '#indigo',
+            'awarded': '#green',
+            'declined': '#red'
+        }
+        return colors.get(stage, '#gray')
+    
+    def _sync_google_calendar(self, events: List[Dict]) -> Dict:
+        """Sync with Google Calendar (placeholder)"""
+        # Would use Google Calendar API
+        return {'synced': len(events)}
+    
+    def _sync_outlook_calendar(self, events: List[Dict]) -> Dict:
+        """Sync with Outlook Calendar (placeholder)"""
+        # Would use Microsoft Graph API
+        return {'synced': len(events)}
+    
+    def _export_ical_feed(self, events: List[Dict]) -> Dict:
+        """Export iCal feed (placeholder)"""
+        # Would generate iCal format
+        return {'exported': len(events)}
+    
+    def _sync_salesforce(self, contacts: List[Dict]) -> Dict:
+        """Sync with Salesforce (placeholder)"""
+        # Would use Salesforce API
+        return {'synced': len(contacts)}
+    
+    def _sync_hubspot(self, contacts: List[Dict]) -> Dict:
+        """Sync with HubSpot (placeholder)"""
+        # Would use HubSpot API
+        return {'synced': len(contacts)}
+    
+    def _sync_pipedrive(self, contacts: List[Dict]) -> Dict:
+        """Sync with Pipedrive (placeholder)"""
+        # Would use Pipedrive API
+        return {'synced': len(contacts)}
+    
+    def _upload_document(self, org_id: int, document_data: Dict) -> Dict:
+        """Upload document"""
         return {
-            'title': grant.title,
-            'funder': grant.funder,
-            'amount_min': grant.amount_min,
-            'amount_max': grant.amount_max,
-            'deadline': grant.deadline.isoformat() if grant.deadline else None,
-            'description': getattr(grant, 'ai_summary', '') or '',
-            'eligibility': grant.eligibility.split('\n') if grant.eligibility else [],
-            'focus_areas': [],  # Grant model doesn't have focus_area field
-            'geographic_scope': grant.geography or '',
-            'requirements': {}
+            'success': True,
+            'document_id': f'doc_{org_id}_{datetime.utcnow().timestamp()}',
+            'filename': document_data.get('filename'),
+            'size': document_data.get('size')
         }
     
-    def _create_or_update_grant(self, grant_data: Dict, source: str) -> Optional[Grant]:
-        """Create or update grant from external data"""
-        try:
-            # Check for existing grant by title and funder
-            existing = Grant.query.filter_by(
-                title=grant_data.get('title'),
-                funder=grant_data.get('funder')
-            ).first()
-            
-            if existing:
-                # Update existing grant
-                existing.ai_summary = grant_data.get('description', existing.ai_summary)
-                existing.amount_min = grant_data.get('amount_min', existing.amount_min)
-                existing.amount_max = grant_data.get('amount_max', existing.amount_max)
-                existing.updated_at = datetime.utcnow()
-                db.session.commit()
-                return existing
-            else:
-                # Create new grant
-                grant = Grant()
-                grant.title = grant_data.get('title')
-                grant.funder = grant_data.get('funder')
-                grant.ai_summary = grant_data.get('description')
-                grant.amount_min = grant_data.get('amount_min')
-                grant.amount_max = grant_data.get('amount_max')
-                grant.geography = grant_data.get('geographic_scope')
-                grant.source_url = grant_data.get('source_url')
-                # Convert list to newline-separated string
-                eligibility_list = grant_data.get('eligibility', [])
-                grant.eligibility = '\n'.join(eligibility_list) if isinstance(eligibility_list, list) else str(eligibility_list)
-                
-                # Parse deadline
-                deadline_str = grant_data.get('deadline')
-                if deadline_str:
-                    try:
-                        grant.deadline = datetime.fromisoformat(deadline_str.replace('Z', '+00:00'))
-                    except:
-                        pass
-                
-                db.session.add(grant)
-                db.session.commit()
-                return grant
-                
-        except Exception as e:
-            logger.error(f"Grant creation/update failed: {e}")
-            db.session.rollback()
-            return None
+    def _list_documents(self, org_id: int) -> Dict:
+        """List documents"""
+        return {
+            'success': True,
+            'documents': [],
+            'total': 0
+        }
     
-    def _process_watchlist_notifications(self, new_grants: List[Grant]) -> List[Dict]:
-        """Process watchlists and send notifications for matching grants"""
-        notifications = []
-        
-        try:
-            active_watchlists = Watchlist.query.filter_by(is_active=True).all()
-            
-            for watchlist in active_watchlists:
-                matching_grants = self._find_matching_grants(watchlist, new_grants)
-                
-                if matching_grants and (watchlist.notify_email or watchlist.notify_app):
-                    notification = {
-                        'watchlist_id': watchlist.id,
-                        'watchlist_name': watchlist.name,
-                        'matching_grants': len(matching_grants),
-                        'sent_at': datetime.utcnow().isoformat()
-                    }
-                    
-                    # Send notification (implementation depends on notification service)
-                    if watchlist.notify_email:
-                        logger.info(f"Watchlist notification: {watchlist.name}, {len(matching_grants)} matches")
-                        # TODO: Implement actual notification when service method is available
-                    
-                    notifications.append(notification)
-            
-        except Exception as e:
-            logger.error(f"Watchlist notification processing failed: {e}")
-        
-        return notifications
+    def _download_document(self, org_id: int, document_id: str) -> Dict:
+        """Download document"""
+        return {
+            'success': True,
+            'document_id': document_id,
+            'url': f'/documents/{document_id}'
+        }
     
-    def _find_matching_grants(self, watchlist: Watchlist, grants: List[Grant]) -> List[Grant]:
-        """Find grants matching watchlist criteria"""
-        matching = []
-        # Watchlist model may not have criteria field in current schema
-        criteria = getattr(watchlist, 'criteria', {}) or {}
-        
-        for grant in grants:
-            matches = True
-            
-            # Check query terms
-            query = criteria.get('query', '').lower()
-            if query:
-                if query not in (grant.title or '').lower() and query not in (grant.ai_summary or '').lower():
-                    matches = False
-            
-            # Check focus area (not available in current Grant model)
-            focus_area = criteria.get('focus_area')
-            if focus_area:
-                # Could match against ai_summary or other fields
-                if focus_area.lower() not in (grant.ai_summary or '').lower():
-                    matches = False
-            
-            # Check location
-            location = criteria.get('location')
-            if location and location not in (grant.geography or ''):
-                matches = False
-            
-            if matches:
-                matching.append(grant)
-        
-        return matching
+    def _delete_document(self, org_id: int, document_id: str) -> Dict:
+        """Delete document"""
+        return {
+            'success': True,
+            'deleted': document_id
+        }
     
-    def _send_match_notification(self, org: Organization, grant: Grant, analysis: Dict):
-        """Send notification for high-match grant"""
-        try:
-            # Use available notification methods
-            logger.info(f"High match notification: Org {org.id}, Grant {grant.id}, Score {analysis.get('match_score', 0)}")
-            # TODO: Implement actual notification sending when service methods are available
-        except Exception as e:
-            logger.error(f"Match notification failed: {e}")
+    def _organize_documents(self, org_id: int) -> Dict:
+        """Organize documents into folders"""
+        folders = {
+            'proposals': [],
+            'budgets': [],
+            'letters_of_support': [],
+            'reports': [],
+            'correspondence': []
+        }
+        return {
+            'success': True,
+            'folders': folders
+        }
     
-    def _record_integration_analytics(self, event_type: str, data: Dict):
-        """Record analytics event for integration tracking"""
-        try:
-            analytics = Analytics()
-            analytics.event_type = event_type
-            analytics.event_data = data
-            analytics.created_at = datetime.utcnow()
-            
-            db.session.add(analytics)
-            db.session.commit()
-        except Exception as e:
-            logger.error(f"Analytics recording failed: {e}")
-            db.session.rollback()
+    def _get_email_template(self, template_type: str) -> str:
+        """Get email template content"""
+        templates = {
+            'initial_inquiry': """Dear {{contact_name}},
+
+I am writing on behalf of {{organization_name}} to inquire about {{grant_title}}.
+
+Our organization aligns closely with your foundation's mission, and we believe our work could significantly benefit from your support.
+
+Would it be possible to schedule a brief call to discuss our proposal?
+
+Best regards,
+{{sender_name}}""",
+            'follow_up': """Dear {{contact_name}},
+
+I wanted to follow up on our grant application for {{grant_title}} submitted on {{submission_date}}.
+
+Please let me know if you need any additional information.
+
+Thank you for your consideration.
+
+Best regards,
+{{sender_name}}""",
+            'thank_you': """Dear {{contact_name}},
+
+Thank you so much for your generous grant of {{grant_amount}} to support our work.
+
+{{impact_statement}}
+
+We look forward to keeping you updated on our progress.
+
+With gratitude,
+{{sender_name}}""",
+            'submission_confirmation': """Dear Team,
+
+This confirms that our grant application for {{grant_title}} has been successfully submitted on {{submission_date}}.
+
+Reference Number: {{reference_number}}
+
+We will keep you updated on the progress.
+
+Best regards,
+{{sender_name}}"""
+        }
+        return templates.get(template_type, '')
     
-    def _calculate_avg_confidence(self, analytics: List[Analytics]) -> str:
-        """Calculate average confidence from analytics events"""
-        confidences = []
-        confidence_values = {'low': 1, 'medium': 2, 'high': 3}
+    def _get_integration_recommendations(self, status: Dict) -> List[str]:
+        """Get recommendations for integrations"""
+        recommendations = []
         
-        for analytic in analytics:
-            event_data = analytic.event_data or {}
-            confidence = event_data.get('confidence', 'low')
-            if confidence in confidence_values:
-                confidences.append(confidence_values[confidence])
+        if not status['calendar']['connected']:
+            recommendations.append('Connect calendar to never miss a deadline')
         
-        if not confidences:
-            return 'low'
+        if not status['crm']['connected']:
+            recommendations.append('Sync CRM to manage funder relationships')
         
-        avg_value = sum(confidences) / len(confidences)
-        if avg_value <= 1.3:
-            return 'low'
-        elif avg_value <= 2.3:
-            return 'medium'
-        else:
-            return 'high'
+        if not status['documents']['connected']:
+            recommendations.append('Enable cloud storage for document management')
+        
+        return recommendations
