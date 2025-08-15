@@ -140,6 +140,10 @@ def create_app():
     from app.api.phase1_matching import phase1_bp
     flask_app.register_blueprint(phase1_bp)
     
+    # Register Phase 2 Application Workflow endpoints
+    from app.api.phase2_workflow import phase2_bp
+    flask_app.register_blueprint(phase2_bp)
+    
     # Register Smart Reporting endpoints
     from app.api.smart_reporting import bp as smart_reporting_bp
     flask_app.register_blueprint(smart_reporting_bp)

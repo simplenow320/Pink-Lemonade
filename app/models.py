@@ -547,6 +547,19 @@ class Grant(db.Model):
     ai_summary = db.Column(db.Text)
     last_intelligence_update = db.Column(db.DateTime)
     
+    # Phase 2: Workflow fields
+    application_stage = db.Column(db.String(50), default='discovery')
+    priority_level = db.Column(db.String(20), default='medium')
+    checklist = db.Column(db.JSON)
+    team_members = db.Column(db.JSON)
+    activity_log = db.Column(db.JSON)
+    requirements = db.Column(db.JSON)
+    user_id = db.Column(db.Integer, db.ForeignKey("users.id"))
+    grant_name = db.Column(db.String(500))
+    funding_organization = db.Column(db.String(255))
+    grant_amount = db.Column(db.Integer)
+    submission_deadline = db.Column(db.DateTime)
+    
     def to_dict(self):
         return {
             'id': self.id,
