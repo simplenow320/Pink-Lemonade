@@ -131,6 +131,7 @@ Preferred communication style: Simple, everyday language.
 - **Federal Register API**: 571+ government NOFOs and funding notices (LIVE).
 - **USAspending.gov API**: Historical federal grant awards and spending data (LIVE).
 - **Candid Grants API**: 28.9 million grants, $2 trillion in funding, 259k foundations (LIVE - Summary endpoint working).
+- **Candid News API**: 10,000+ articles about grants and foundations updated daily (LIVE - Search endpoint working).
 - **Grants.gov REST API**: Federal grant opportunities (ready with proper authentication).
 - **Major Foundations Directory**: Direct access to top 8 foundations (LIVE).
 - **Multi-Source Aggregation**: Single unified search across all data sources.

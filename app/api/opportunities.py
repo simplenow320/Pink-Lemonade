@@ -8,6 +8,7 @@ from app.services.grants_gov_client import get_grants_gov_client
 from app.services.candid_client import get_candid_client
 from app.services.candid_v3_client import get_candid_v3_client
 from app.services.candid_grants_client import get_candid_grants_client
+from app.services.candid_news_client import get_candid_news_client
 from app.services.federal_register_client import get_federal_register_client
 from app.services.usaspending_client import get_usaspending_client
 from app.services.pnd_client import get_pnd_client
@@ -133,8 +134,20 @@ def get_opportunities():
                 except Exception as e2:
                     logger.error(f"Error fetching foundation data: {e2}")
         
-        # 6. Try old Candid API for news (backup)
-        if False:  # Disabled for now since we have v3 working
+        # 6. Get Grant News from Candid News API (WORKING!)
+        if not source_filter or source_filter in ['news', 'candid']:
+            try:
+                news_client = get_candid_news_client()
+                news_opps = news_client.get_grant_news_opportunities(
+                    keyword=search_query or focus_area or "grant opportunity"
+                )
+                all_opportunities.extend(news_opps[:5])  # Add top 5 news items
+                logger.info(f"Added {len(news_opps[:5])} Candid news opportunities")
+            except Exception as e:
+                logger.error(f"Error fetching Candid news: {e}")
+        
+        # 7. Old Candid API (deprecated)
+        if False:  # Disabled - using new APIs
             try:
                 client = get_candid_client()
                 
