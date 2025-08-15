@@ -152,6 +152,10 @@ def create_app():
     from app.api.phase4_writer import phase4_bp
     flask_app.register_blueprint(phase4_bp)
     
+    # Register Phase 5 Impact Reporting endpoints
+    from app.api.phase5_reporting import phase5_bp
+    flask_app.register_blueprint(phase5_bp)
+    
     # Register Smart Reporting endpoints
     from app.api.smart_reporting import bp as smart_reporting_bp
     flask_app.register_blueprint(smart_reporting_bp)
