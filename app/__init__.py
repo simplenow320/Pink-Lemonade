@@ -124,6 +124,13 @@ def create_app():
     from app.api.final_completion import bp as final_completion_bp
     flask_app.register_blueprint(final_completion_bp)
     
+    # Register AI grants endpoints with REACTO
+    try:
+        from app.api.ai_grants import ai_grants_bp
+        flask_app.register_blueprint(ai_grants_bp, url_prefix='/api/ai-grants')
+    except ImportError as e:
+        print(f"AI grants blueprint not available: {e}")
+    
     # Register health check endpoints
     from app.api.health import bp as health_bp
     flask_app.register_blueprint(health_bp)

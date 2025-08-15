@@ -72,6 +72,23 @@ class AIService:
         
         return None
     
+    def generate_json_response(self, prompt: str, max_tokens: int = 2000) -> Optional[Dict]:
+        """Generate a JSON response from a prompt"""
+        if not self.client:
+            logger.warning("AI Service not enabled - no API key")
+            return None
+        
+        messages = [
+            {"role": "system", "content": "You are an expert grant analyst. Always respond with valid JSON."},
+            {"role": "user", "content": prompt}
+        ]
+        
+        return self._make_request(
+            messages=messages,
+            response_format={"type": "json_object"},
+            max_tokens=max_tokens
+        )
+    
     def match_grant(self, org_profile: Dict, grant: Dict, funder_profile: Dict = None) -> Tuple[Optional[int], Optional[str]]:
         """
         Enhanced grant matching with comprehensive organization data and authentic funder intelligence
