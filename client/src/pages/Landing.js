@@ -71,12 +71,9 @@ const Landing = () => {
           transition={{ duration: 0.8, delay: 0.2 }}
         >
           <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold mb-4">
-            <span className="text-gray-900">Change takes</span><br />
-            <span className="text-gray-900">funding.</span><br />
-            <span className="text-gray-900">Funding takes</span><br />
-            <span className="text-gray-900">time.</span><br />
-            <span className="text-pink-400">We save you</span><br />
-            <span className="text-pink-400">both.</span>
+            <span className="text-gray-900">More grants.</span><br />
+            <span className="text-gray-900">Less work.</span><br />
+            <span className="text-pink-400">Better results.</span>
           </h1>
         </motion.div>
 
