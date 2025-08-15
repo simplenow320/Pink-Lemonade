@@ -179,6 +179,10 @@ def create_app():
     from app.api.templates import templates_bp
     flask_app.register_blueprint(templates_bp)
     
+    # Register Governance & Compliance API endpoints (Phase 6)
+    from app.api.governance import governance_bp
+    flask_app.register_blueprint(governance_bp, url_prefix='/api/governance')
+    
     # Register Smart Reporting endpoints
     from app.api.smart_reporting import bp as smart_reporting_bp
     flask_app.register_blueprint(smart_reporting_bp)

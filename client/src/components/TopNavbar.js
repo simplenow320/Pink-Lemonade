@@ -31,6 +31,7 @@ const TopNavbar = () => {
     { name: 'Analytics', href: '/analytics', icon: 'chart' },
     { name: 'Scraper', href: '/scraper', icon: 'search' },
     { name: 'Organization', href: '/organization', icon: 'organization' },
+    { name: 'Governance', href: '/governance', icon: 'shield' },
   ];
 
   const isActive = (path) => {
@@ -210,6 +211,35 @@ const renderIcon = (iconName, isActive) => {
           />
           <path
             d="M9 12H15M9 16H15M13 3L19 9M19 9H15C13.8954 9 13 8.10457 13 7V3M5 5C5 3.89543 5.89543 3 7 3H13M5 5V19C5 20.1046 5.89543 21 7 21H17C18.1046 21 19 20.1046 19 19V9M5 5H3M13 3H15"
+            stroke="currentColor"
+            strokeWidth="1.5"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+        </svg>
+      );
+    case 'shield':
+      return (
+        <svg
+          className={`w-5 h-5 ${color}`}
+          viewBox="0 0 24 24"
+          fill="none"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <path
+            d="M12 2L4 7V11.09C4 16.14 7.41 20.85 12 22C16.59 20.85 20 16.14 20 11.09V7L12 2Z"
+            fill="currentColor"
+            opacity="0.2"
+          />
+          <path
+            d="M12 2L4 7V11.09C4 16.14 7.41 20.85 12 22C16.59 20.85 20 16.14 20 11.09V7L12 2Z"
+            stroke="currentColor"
+            strokeWidth="1.5"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+          <path
+            d="M9 12L11 14L15 10"
             stroke="currentColor"
             strokeWidth="1.5"
             strokeLinecap="round"
