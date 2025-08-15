@@ -132,6 +132,14 @@ def create_app():
     from app.api.onboarding import onboarding_bp
     flask_app.register_blueprint(onboarding_bp)
     
+    # Register Phase 0 Smart Onboarding endpoints
+    from app.api.phase0_onboarding import phase0_bp
+    flask_app.register_blueprint(phase0_bp)
+    
+    # Register Phase 1 World-Class Matching endpoints
+    from app.api.phase1_matching import phase1_bp
+    flask_app.register_blueprint(phase1_bp)
+    
     # Register Smart Reporting endpoints
     from app.api.smart_reporting import bp as smart_reporting_bp
     flask_app.register_blueprint(smart_reporting_bp)

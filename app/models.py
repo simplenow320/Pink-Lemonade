@@ -260,6 +260,9 @@ class Organization(db.Model):
     funding_priorities = db.Column(db.Text)  # Current funding needs
     exclusions = db.Column(db.JSON)  # Things they DON'T do/want
     
+    # PHASE 0: Custom Fields Support
+    custom_fields = db.Column(db.JSON)  # Store all "Other" inputs from dropdowns
+    
     # Profile Completion
     profile_completeness = db.Column(db.Integer, default=0)  # Percentage
     onboarding_completed_at = db.Column(db.DateTime)
@@ -487,6 +490,32 @@ class GrantDocument(db.Model):
             'description': self.description,
             'uploaded_by': self.uploaded_by,
             'uploaded_at': self.uploaded_at.isoformat() if self.uploaded_at else None
+        }
+
+# PHASE 0: Loved Grants (Favorites) Model
+class LovedGrant(db.Model):
+    __tablename__ = "loved_grants"
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
+    grant_id = db.Column(db.Integer, db.ForeignKey("grants.id"))
+    opportunity_data = db.Column(db.JSON)  # Store opportunity data if not in grants table
+    status = db.Column(db.String(50), default="interested")  # interested, applying, applied, won, lost
+    notes = db.Column(db.Text)
+    loved_at = db.Column(db.DateTime, default=datetime.utcnow)
+    reminder_date = db.Column(db.DateTime)
+    progress_percentage = db.Column(db.Integer, default=0)
+    
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'user_id': self.user_id,
+            'grant_id': self.grant_id,
+            'opportunity_data': self.opportunity_data or {},
+            'status': self.status,
+            'notes': self.notes,
+            'loved_at': self.loved_at.isoformat() if self.loved_at else None,
+            'reminder_date': self.reminder_date.isoformat() if self.reminder_date else None,
+            'progress_percentage': self.progress_percentage
         }
 
 class Grant(db.Model):
