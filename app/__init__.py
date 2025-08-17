@@ -265,6 +265,18 @@ def create_app():
     from app.api.email_invitations import bp as email_invitations_bp
     flask_app.register_blueprint(email_invitations_bp)
     
+    # Register AI Optimizer blueprint for cost optimization
+    from app.api.ai_optimizer import bp as ai_optimizer_bp
+    flask_app.register_blueprint(ai_optimizer_bp)
+    
+    # Register Adaptive Discovery blueprint for dynamic questioning
+    from app.api.adaptive_discovery import bp as adaptive_discovery_bp
+    flask_app.register_blueprint(adaptive_discovery_bp)
+    
+    # Register REACTO Prompts blueprint for world-class prompt engineering
+    from app.api.reacto_prompts import bp as reacto_prompts_bp
+    flask_app.register_blueprint(reacto_prompts_bp)
+    
     # Register new feature blueprints
     from app.api.grant_matching import bp as grant_matching_bp
     flask_app.register_blueprint(grant_matching_bp)

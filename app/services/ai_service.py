@@ -11,23 +11,25 @@ from typing import Dict, List, Optional, Tuple, Any
 from datetime import datetime
 import openai
 from openai import OpenAI
+from app.services.ai_optimizer_service import ai_optimizer, TaskComplexity
 
 logger = logging.getLogger(__name__)
 
 class AIService:
-    """Central AI service for grant-related AI operations"""
+    """Central AI service for grant-related AI operations with intelligent model routing"""
     
     def __init__(self):
-        """Initialize AI service with API key from environment"""
+        """Initialize AI service with API key from environment and optimizer"""
         self.api_key = os.environ.get("OPENAI_API_KEY")
         self.client = None
-        self.model = "gpt-4o"  # Latest OpenAI model as of 2024
+        self.model = "gpt-4o"  # Default model, optimizer will override
         self.max_retries = 3
         self.retry_delay = 2  # seconds
+        self.optimizer = ai_optimizer  # Use intelligent model routing
         
         if self.api_key:
             self.client = OpenAI(api_key=self.api_key)
-            logger.info("AI Service initialized with API key")
+            logger.info("AI Service initialized with API key and cost optimizer")
         else:
             logger.warning("AI Service initialized without API key - AI features disabled")
     
@@ -37,38 +39,60 @@ class AIService:
     
     def _make_request(self, messages: List[Dict], 
                      response_format: Optional[Dict] = None,
-                     max_tokens: int = 1000) -> Optional[Dict]:
-        """Make request to OpenAI with retry logic"""
+                     max_tokens: int = 1000,
+                     task_type: str = "general") -> Optional[Dict]:
+        """Make request to OpenAI with intelligent model routing via optimizer"""
         if not self.client:
             logger.warning("AI Service not enabled - no API key")
             return None
         
-        for attempt in range(self.max_retries):
-            try:
-                kwargs = {
-                    "model": self.model,
-                    "messages": messages,
-                    "max_tokens": max_tokens,
-                    "temperature": 0.7
-                }
-                
-                if response_format:
-                    kwargs["response_format"] = response_format
-                
-                response = self.client.chat.completions.create(**kwargs)
-                content = response.choices[0].message.content
-                
-                # Parse JSON if response format was JSON
-                if response_format and response_format.get("type") == "json_object":
-                    return json.loads(content)
-                return {"content": content}
-                
-            except Exception as e:
-                logger.error(f"OpenAI API error (attempt {attempt + 1}): {e}")
-                if attempt < self.max_retries - 1:
-                    time.sleep(self.retry_delay * (attempt + 1))
-                else:
-                    return None
+        # Use optimizer for intelligent model routing
+        prompt = messages[-1]["content"] if messages else ""
+        context = {
+            "max_tokens": max_tokens,
+            "temperature": 0.7,
+            "json_output": response_format and response_format.get("type") == "json_object"
+        }
+        
+        # Use optimizer to route request to appropriate model
+        result = self.optimizer.optimize_request(
+            task_type=task_type,
+            prompt=prompt,
+            context=context
+        )
+        
+        if result.get("success"):
+            logger.info(f"AI request successful: {result.get('explanation')}")
+            return result.get("content")
+        else:
+            # Fallback to direct API call if optimizer fails
+            logger.warning(f"Optimizer failed, using direct API call: {result.get('error')}")
+            for attempt in range(self.max_retries):
+                try:
+                    kwargs = {
+                        "model": self.model,
+                        "messages": messages,
+                        "max_tokens": max_tokens,
+                        "temperature": 0.7
+                    }
+                    
+                    if response_format:
+                        kwargs["response_format"] = response_format
+                    
+                    response = self.client.chat.completions.create(**kwargs)
+                    content = response.choices[0].message.content
+                    
+                    # Parse JSON if response format was JSON
+                    if response_format and response_format.get("type") == "json_object":
+                        return json.loads(content)
+                    return {"content": content}
+                    
+                except Exception as e:
+                    logger.error(f"OpenAI API error (attempt {attempt + 1}): {e}")
+                    if attempt < self.max_retries - 1:
+                        time.sleep(self.retry_delay * (attempt + 1))
+                    else:
+                        return None
         
         return None
     
@@ -135,7 +159,8 @@ Provide detailed JSON response:
         result = self._make_request(
             messages, 
             response_format={"type": "json_object"},
-            max_tokens=500
+            max_tokens=500,
+            task_type="score_grant_match"  # Critical task - uses GPT-4o
         )
         
         if result:
