@@ -1,0 +1,160 @@
+<svg width="1200" height="800" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background -->
+  <rect width="1200" height="800" fill="#f8f9fa"/>
+  
+  <!-- Title -->
+  <text x="600" y="40" text-anchor="middle" font-family="Arial, sans-serif" font-size="24" font-weight="bold" fill="#333">
+    Pink Lemonade AI System Flow
+  </text>
+  
+  <!-- User Journey Column -->
+  <rect x="50" y="80" width="200" height="60" rx="10" fill="#e3f2fd" stroke="#2196f3" stroke-width="2"/>
+  <text x="150" y="100" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" font-weight="bold" fill="#1976d2">USER JOURNEY</text>
+  <text x="150" y="120" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" fill="#1976d2">What Users Experience</text>
+  
+  <!-- User Steps -->
+  <rect x="70" y="160" width="160" height="40" rx="5" fill="#fff" stroke="#2196f3"/>
+  <text x="150" y="175" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" fill="#333">1. Click "Find Grants"</text>
+  <text x="150" y="190" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" fill="#333">Starts Smart Questions</text>
+  
+  <rect x="70" y="220" width="160" height="40" rx="5" fill="#fff" stroke="#2196f3"/>
+  <text x="150" y="235" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" fill="#333">2. Answer Questions</text>
+  <text x="150" y="250" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" fill="#333">Questions Adapt (40-60% faster)</text>
+  
+  <rect x="70" y="280" width="160" height="40" rx="5" fill="#fff" stroke="#2196f3"/>
+  <text x="150" y="295" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" fill="#333">3. See Grant Matches</text>
+  <text x="150" y="310" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" fill="#333">AI-Powered Scoring</text>
+  
+  <rect x="70" y="340" width="160" height="40" rx="5" fill="#fff" stroke="#2196f3"/>
+  <text x="150" y="355" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" fill="#333">4. Generate Content</text>
+  <text x="150" y="370" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" fill="#333">Professional Quality</text>
+  
+  <!-- AI System Column -->
+  <rect x="350" y="80" width="200" height="60" rx="10" fill="#f3e5f5" stroke="#9c27b0" stroke-width="2"/>
+  <text x="450" y="100" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" font-weight="bold" fill="#7b1fa2">AI SYSTEM COMPONENTS</text>
+  <text x="450" y="120" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" fill="#7b1fa2">What Happens Behind Scenes</text>
+  
+  <!-- AI Components -->
+  <rect x="320" y="160" width="260" height="50" rx="5" fill="#fff" stroke="#9c27b0"/>
+  <text x="450" y="175" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" font-weight="bold" fill="#333">AI Cost Optimizer</text>
+  <text x="450" y="190" text-anchor="middle" font-family="Arial, sans-serif" font-size="9" fill="#333">Smart Model Routing: GPT-3.5 vs GPT-4o</text>
+  <text x="450" y="202" text-anchor="middle" font-family="Arial, sans-serif" font-size="9" fill="#ff5722">Saves 30-60% on AI costs automatically</text>
+  
+  <rect x="320" y="230" width="260" height="50" rx="5" fill="#fff" stroke="#9c27b0"/>
+  <text x="450" y="245" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" font-weight="bold" fill="#333">Adaptive Discovery</text>
+  <text x="450" y="260" text-anchor="middle" font-family="Arial, sans-serif" font-size="9" fill="#333">Dynamic Question Priority & Adaptation</text>
+  <text x="450" y="272" text-anchor="middle" font-family="Arial, sans-serif" font-size="9" fill="#ff5722">Saves 40-60% time vs static forms</text>
+  
+  <rect x="320" y="300" width="260" height="50" rx="5" fill="#fff" stroke="#9c27b0"/>
+  <text x="450" y="315" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" font-weight="bold" fill="#333">REACTO Prompt Engineering</text>
+  <text x="450" y="330" text-anchor="middle" font-family="Arial, sans-serif" font-size="9" fill="#333">6-Section Expert Prompt Framework</text>
+  <text x="450" y="342" text-anchor="middle" font-family="Arial, sans-serif" font-size="9" fill="#ff5722">3-5x better AI output quality</text>
+  
+  <rect x="320" y="370" width="260" height="50" rx="5" fill="#fff" stroke="#9c27b0"/>
+  <text x="450" y="385" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" font-weight="bold" fill="#333">Grant Intelligence Engine</text>
+  <text x="450" y="400" text-anchor="middle" font-family="Arial, sans-serif" font-size="9" fill="#333">Matching, Analysis & Content Generation</text>
+  <text x="450" y="412" text-anchor="middle" font-family="Arial, sans-serif" font-size="9" fill="#ff5722">Professional-grade results every time</text>
+  
+  <!-- Technical Details Column -->
+  <rect x="650" y="80" width="200" height="60" rx="10" fill="#e8f5e8" stroke="#4caf50" stroke-width="2"/>
+  <text x="750" y="100" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" font-weight="bold" fill="#2e7d32">TECHNICAL FLOW</text>
+  <text x="750" y="120" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" fill="#2e7d32">How It Actually Works</text>
+  
+  <!-- Technical Steps -->
+  <rect x="620" y="160" width="260" height="40" rx="5" fill="#fff" stroke="#4caf50"/>
+  <text x="750" y="175" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" fill="#333">API Call → Complexity Analysis → Model Selection</text>
+  <text x="750" y="190" text-anchor="middle" font-family="Arial, sans-serif" font-size="9" fill="#666">Every AI request goes through optimizer first</text>
+  
+  <rect x="620" y="220" width="260" height="40" rx="5" fill="#fff" stroke="#4caf50"/>
+  <text x="750" y="235" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" fill="#333">Question Priority Engine → Adaptive Logic</text>
+  <text x="750" y="250" text-anchor="middle" font-family="Arial, sans-serif" font-size="9" fill="#666">Questions change based on previous answers</text>
+  
+  <rect x="620" y="280" width="260" height="40" rx="5" fill="#fff" stroke="#4caf50"/>
+  <text x="750" y="295" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" fill="#333">REACTO Template → Expert Prompt → AI Call</text>
+  <text x="750" y="310" text-anchor="middle" font-family="Arial, sans-serif" font-size="9" fill="#666">5,400+ character prompts vs 141 standard</text>
+  
+  <rect x="620" y="340" width="260" height="40" rx="5" fill="#fff" stroke="#4caf50"/>
+  <text x="750" y="355" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" fill="#333">Structured JSON Response → Frontend Display</text>
+  <text x="750" y="370" text-anchor="middle" font-family="Arial, sans-serif" font-size="9" fill="#666">Consistent, professional outputs</text>
+  
+  <!-- Arrows connecting sections -->
+  <!-- User to AI System -->
+  <path d="M 250 180 L 320 180" stroke="#333" stroke-width="2" marker-end="url(#arrowhead)" fill="none"/>
+  <path d="M 250 240 L 320 240" stroke="#333" stroke-width="2" marker-end="url(#arrowhead)" fill="none"/>
+  <path d="M 250 300 L 320 300" stroke="#333" stroke-width="2" marker-end="url(#arrowhead)" fill="none"/>
+  <path d="M 250 360 L 320 360" stroke="#333" stroke-width="2" marker-end="url(#arrowhead)" fill="none"/>
+  
+  <!-- AI System to Technical -->
+  <path d="M 580 180 L 620 180" stroke="#333" stroke-width="2" marker-end="url(#arrowhead)" fill="none"/>
+  <path d="M 580 240 L 620 240" stroke="#333" stroke-width="2" marker-end="url(#arrowhead)" fill="none"/>
+  <path d="M 580 300 L 620 300" stroke="#333" stroke-width="2" marker-end="url(#arrowhead)" fill="none"/>
+  <path d="M 580 360 L 620 360" stroke="#333" stroke-width="2" marker-end="url(#arrowhead)" fill="none"/>
+  
+  <!-- Benefits Box -->
+  <rect x="950" y="150" width="200" height="200" rx="10" fill="#fff3e0" stroke="#ff9800" stroke-width="2"/>
+  <text x="1050" y="175" text-anchor="middle" font-family="Arial, sans-serif" font-size="14" font-weight="bold" fill="#f57c00">SYSTEM BENEFITS</text>
+  
+  <text x="1050" y="200" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" font-weight="bold" fill="#e65100">Cost Savings</text>
+  <text x="1050" y="215" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" fill="#333">$150-300/month saved</text>
+  <text x="1050" y="228" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" fill="#333">30-60% AI cost reduction</text>
+  
+  <text x="1050" y="250" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" font-weight="bold" fill="#e65100">Time Savings</text>
+  <text x="1050" y="265" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" fill="#333">40-60% faster discovery</text>
+  <text x="1050" y="278" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" fill="#333">Smart adaptive questions</text>
+  
+  <text x="1050" y="300" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" font-weight="bold" fill="#e65100">Quality Boost</text>
+  <text x="1050" y="315" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" fill="#333">3-5x better AI outputs</text>
+  <text x="1050" y="328" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" fill="#333">Professional consistency</text>
+  
+  <!-- API Endpoints Box -->
+  <rect x="50" y="450" width="800" height="300" rx="10" fill="#f5f5f5" stroke="#666" stroke-width="2"/>
+  <text x="450" y="480" text-anchor="middle" font-family="Arial, sans-serif" font-size="16" font-weight="bold" fill="#333">API ENDPOINTS FOR YOUR DEVELOPER</text>
+  
+  <!-- Cost Optimizer APIs -->
+  <rect x="80" y="500" width="180" height="80" rx="5" fill="#e3f2fd" stroke="#2196f3"/>
+  <text x="170" y="520" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" font-weight="bold" fill="#1976d2">AI Cost Optimizer</text>
+  <text x="170" y="535" text-anchor="middle" font-family="Arial, sans-serif" font-size="9" fill="#333">/api/ai-optimizer/test-routing</text>
+  <text x="170" y="550" text-anchor="middle" font-family="Arial, sans-serif" font-size="9" fill="#333">/api/ai-optimizer/usage-report</text>
+  <text x="170" y="565" text-anchor="middle" font-family="Arial, sans-serif" font-size="9" fill="#333">/api/ai-optimizer/test-tasks</text>
+  
+  <!-- Adaptive Discovery APIs -->
+  <rect x="280" y="500" width="180" height="80" rx="5" fill="#f3e5f5" stroke="#9c27b0"/>
+  <text x="370" y="520" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" font-weight="bold" fill="#7b1fa2">Adaptive Discovery</text>
+  <text x="370" y="535" text-anchor="middle" font-family="Arial, sans-serif" font-size="9" fill="#333">/api/adaptive-discovery/start</text>
+  <text x="370" y="550" text-anchor="middle" font-family="Arial, sans-serif" font-size="9" fill="#333">/api/adaptive-discovery/answer</text>
+  <text x="370" y="565" text-anchor="middle" font-family="Arial, sans-serif" font-size="9" fill="#333">/api/adaptive-discovery/summary</text>
+  
+  <!-- REACTO APIs -->
+  <rect x="480" y="500" width="180" height="80" rx="5" fill="#e8f5e8" stroke="#4caf50"/>
+  <text x="570" y="520" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" font-weight="bold" fill="#2e7d32">REACTO Prompts</text>
+  <text x="570" y="535" text-anchor="middle" font-family="Arial, sans-serif" font-size="9" fill="#333">/api/reacto-prompts/generate</text>
+  <text x="570" y="550" text-anchor="middle" font-family="Arial, sans-serif" font-size="9" fill="#333">/api/reacto-prompts/compare</text>
+  <text x="570" y="565" text-anchor="middle" font-family="Arial, sans-serif" font-size="9" fill="#333">/api/reacto-prompts/types</text>
+  
+  <!-- Grant Intelligence APIs -->
+  <rect x="680" y="500" width="180" height="80" rx="5" fill="#fff3e0" stroke="#ff9800"/>
+  <text x="770" y="520" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" font-weight="bold" fill="#f57c00">Grant Intelligence</text>
+  <text x="770" y="535" text-anchor="middle" font-family="Arial, sans-serif" font-size="9" fill="#333">/api/ai-grants/match</text>
+  <text x="770" y="550" text-anchor="middle" font-family="Arial, sans-serif" font-size="9" fill="#333">/api/ai-grants/analyze</text>
+  <text x="770" y="565" text-anchor="middle" font-family="Arial, sans-serif" font-size="9" fill="#333">/api/ai-grants/generate-narrative</text>
+  
+  <!-- Implementation Priority -->
+  <rect x="80" y="620" width="780" height="100" rx="5" fill="#fff" stroke="#ff5722" stroke-width="2"/>
+  <text x="470" y="645" text-anchor="middle" font-family="Arial, sans-serif" font-size="14" font-weight="bold" fill="#d84315">DEVELOPER IMPLEMENTATION PRIORITY</text>
+  
+  <text x="120" y="670" font-family="Arial, sans-serif" font-size="11" font-weight="bold" fill="#d84315">1. HIGH PRIORITY:</text>
+  <text x="250" y="670" font-family="Arial, sans-serif" font-size="10" fill="#333">Integrate AI Optimizer into all AI calls</text>
+  
+  <text x="120" y="690" font-family="Arial, sans-serif" font-size="11" font-weight="bold" fill="#ff9800">2. MEDIUM:</text>
+  <text x="200" y="690" font-family="Arial, sans-serif" font-size="10" fill="#333">Replace static forms with Adaptive Discovery</text>
+  
+  <text x="120" y="710" font-family="Arial, sans-serif" font-size="11" font-weight="bold" fill="#4caf50">3. NICE TO HAVE:</text>
+  <text x="230" y="710" font-family="Arial, sans-serif" font-size="10" fill="#333">Add progress bars and cost dashboards</text>
+  
+  <!-- Arrow marker definition -->
+  <defs>
+    <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#333"/>
+    </marker>
+  </defs>
+</svg>
