@@ -107,13 +107,14 @@ class AIService:
             {"role": "user", "content": prompt}
         ]
         
-        return self._make_request(
+        result = self._make_request(
             messages=messages,
             response_format={"type": "json_object"},
             max_tokens=max_tokens
         )
+        return result if result else {}
     
-    def match_grant(self, org_profile: Dict, grant: Dict, funder_profile: Dict = None) -> Tuple[Optional[int], Optional[str]]:
+    def match_grant(self, org_profile: Dict, grant: Dict, funder_profile: Optional[Dict] = None) -> Tuple[Optional[int], Optional[str]]:
         """
         Enhanced grant matching with comprehensive organization data and authentic funder intelligence
         Returns: (fit_score: 1-5, reason: str) or (None, None) if disabled
@@ -304,7 +305,7 @@ Provide detailed JSON response:
         
         return '\n'.join(context_parts)
     
-    def _build_grant_context_with_funder_intelligence(self, grant: Dict, funder_profile: Dict = None) -> str:
+    def _build_grant_context_with_funder_intelligence(self, grant: Dict, funder_profile: Optional[Dict] = None) -> str:
         """Build grant context enhanced with authentic funder intelligence"""
         
         context_parts = []
@@ -393,7 +394,7 @@ Provide detailed JSON response:
             max_tokens=1500
         )
         
-        return result if result else {}
+        return result or {}
     
     def extract_grant_info(self, text: str) -> Optional[Dict]:
         """
@@ -508,7 +509,13 @@ Write a professional, compelling narrative (300-500 words) that:
         
         result = self._make_request(messages, max_tokens=1500)
         
-        return result.get("content") if result else None
+        if result:
+            # Handle both string and dict responses
+            if isinstance(result, dict):
+                return result.get("content")
+            else:
+                return result
+        return None
     
     def improve_text(self, text: str, improvement_type: str) -> Optional[str]:
         """

@@ -32,7 +32,7 @@ class REACTOPromptService:
     def _initialize_templates(self) -> Dict[str, Dict[str, str]]:
         """Initialize REACTO templates for each prompt type"""
         return {
-            PromptType.GRANT_MATCH: {
+            PromptType.GRANT_MATCH.value: {
                 "role": """You are a Senior Grant Strategy Advisor with 20+ years experience matching nonprofits with perfect-fit funders. 
                 You've successfully secured over $50M in grants and have deep knowledge of foundation preferences, federal programs, and scoring matrices. 
                 Your expertise includes pattern recognition in successful applications and understanding subtle alignment factors that make or break grant awards.""",
@@ -106,7 +106,7 @@ class REACTOPromptService:
                 }"""
             },
             
-            PromptType.NARRATIVE: {
+            PromptType.NARRATIVE.value: {
                 "role": """You are a Master Grant Writer who has written 500+ winning proposals totaling $200M in awards. 
                 Former foundation program officer who reviewed 1,000+ applications. Published author on grant writing best practices.
                 Expert in neuroscience-based persuasion, storytelling frameworks, and data visualization for maximum impact.""",
@@ -178,7 +178,7 @@ class REACTOPromptService:
                 }"""
             },
             
-            PromptType.CASE_SUPPORT: {
+            PromptType.CASE_SUPPORT.value: {
                 "role": """You are a Chief Development Officer with expertise in major gift fundraising and campaign strategy. 
                 You've raised $500M+ through compelling cases for support, led 20+ capital campaigns, and trained 500+ fundraisers.
                 Former journalist who understands how to make complex issues accessible and urgent.""",
@@ -298,10 +298,10 @@ class REACTOPromptService:
         Generate a complete REACTO prompt for any grant-related task
         Returns formatted prompt ready for AI processing
         """
-        template = self.templates.get(prompt_type)
+        template = self.templates.get(prompt_type.value)
         if not template:
             logger.error(f"No template found for prompt type: {prompt_type}")
-            return None
+            return ""
         
         # Build complete REACTO prompt
         prompt_sections = []

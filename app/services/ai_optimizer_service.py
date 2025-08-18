@@ -69,8 +69,8 @@ class AIOptimizerService:
         
         # Cost tracking
         self.usage_stats = {
-            ModelType.TURBO_35: {"calls": 0, "tokens": 0, "estimated_cost": 0},
-            ModelType.GPT_4O: {"calls": 0, "tokens": 0, "estimated_cost": 0}
+            ModelType.TURBO_35: {"calls": 0, "tokens": 0, "estimated_cost": 0.0},
+            ModelType.GPT_4O: {"calls": 0, "tokens": 0, "estimated_cost": 0.0}
         }
     
     def determine_complexity(self, task_type: str, context: Dict[str, Any]) -> TaskComplexity:
@@ -186,6 +186,7 @@ Quality check: Ensure no placeholder text, all statistics are realistic, and ton
             
             # Track usage for cost optimization
             usage = response.usage
+            cost = 0.0  # Initialize cost
             if usage:
                 self.usage_stats[model]["calls"] += 1
                 self.usage_stats[model]["tokens"] += usage.total_tokens
@@ -200,7 +201,7 @@ Quality check: Ensure no placeholder text, all statistics are realistic, and ton
             
             # Parse response
             content = response.choices[0].message.content
-            if context.get("json_output"):
+            if context.get("json_output") and content:
                 try:
                     content = json.loads(content)
                 except json.JSONDecodeError:
