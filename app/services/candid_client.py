@@ -95,7 +95,7 @@ class CandidClient:
                 
             headers = {
                 'Accept': 'application/json',
-                'X-API-KEY': api_key
+                'Subscription-Key': api_key
             }
             
             req = urllib.request.Request(full_url, headers=headers)
@@ -124,30 +124,72 @@ class CandidClient:
             return {"error": f"All keys failed: HTTP {last_error.code}"}
         return {"error": "Request failed"}
     
-    def search_news(self, query: str, start_date: Optional[str] = None, 
-                   region: Optional[str] = None, page: int = 1, size: int = 25) -> Dict:
-        """Search Candid news"""
-        url = "https://api.candid.org/funding/v1/news"
-        params = {
-            'query': query,
-            'page': page,
-            'size': size
-        }
-        if start_date:
-            params['start_date'] = start_date
-        if region:
-            params['region'] = region
+    def get_grants_summary(self, **filters) -> Dict:
+        """Get grants summary data"""
+        url = "https://api.candid.org/grants/v1/summary"
+        params = {}
+        
+        # Add common filters if provided
+        if 'subject' in filters:
+            params['subject'] = filters['subject']
+        if 'state' in filters:
+            params['state'] = filters['state']
+        if 'year' in filters:
+            params['year'] = filters['year']
             
-        return self.get_json(url, params, service="news")
+        return self.get_json(url, params, service="grants")
     
-    def search_transactions(self, query: str, page: int = 1, size: int = 25) -> Dict:
+    def search_transactions(self, **filters) -> Dict:
         """Search grant transactions"""
-        url = "https://api.candid.org/funding/v1/grants"
-        params = {
-            'query': query,
-            'page': page,
-            'size': size
-        }
+        url = "https://api.candid.org/grants/v1/transactions"
+        params = {}
+        
+        # Add common filters
+        if 'subject' in filters:
+            params['subject'] = filters['subject']
+        if 'funder_name' in filters:
+            params['funder_name'] = filters['funder_name']
+        if 'recipient_name' in filters:
+            params['recipient_name'] = filters['recipient_name']
+        if 'state' in filters:
+            params['state'] = filters['state']
+        if 'year' in filters:
+            params['year'] = filters['year']
+        if 'limit' in filters:
+            params['limit'] = min(filters['limit'], 1000)  # API limit
+            
+        return self.get_json(url, params, service="grants")
+    
+    def search_funders(self, **filters) -> Dict:
+        """Search funders"""
+        url = "https://api.candid.org/grants/v1/funders"
+        params = {}
+        
+        if 'subject' in filters:
+            params['subject'] = filters['subject']
+        if 'state' in filters:
+            params['state'] = filters['state']
+        if 'funder_name' in filters:
+            params['funder_name'] = filters['funder_name']
+        if 'limit' in filters:
+            params['limit'] = min(filters['limit'], 1000)
+            
+        return self.get_json(url, params, service="grants")
+    
+    def search_recipients(self, **filters) -> Dict:
+        """Search recipients"""
+        url = "https://api.candid.org/grants/v1/recipients"
+        params = {}
+        
+        if 'subject' in filters:
+            params['subject'] = filters['subject']
+        if 'state' in filters:
+            params['state'] = filters['state']
+        if 'recipient_name' in filters:
+            params['recipient_name'] = filters['recipient_name']
+        if 'limit' in filters:
+            params['limit'] = min(filters['limit'], 1000)
+            
         return self.get_json(url, params, service="grants")
 
 # Singleton instance
