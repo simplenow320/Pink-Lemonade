@@ -140,23 +140,19 @@ class CandidClient:
         return self.get_json(url, params, service="grants")
     
     def search_transactions(self, **filters) -> Dict:
-        """Search grant transactions"""
+        """Search grant transactions - max 25 results"""
         url = "https://api.candid.org/grants/v1/transactions"
         params = {}
         
-        # Add common filters
+        # Use query parameter for text search (searches funder name, recipient name, etc.)
+        if 'query' in filters:
+            params['query'] = filters['query']
         if 'subject' in filters:
             params['subject'] = filters['subject']
-        if 'funder_name' in filters:
-            params['funder_name'] = filters['funder_name']
-        if 'recipient_name' in filters:
-            params['recipient_name'] = filters['recipient_name']
         if 'state' in filters:
             params['state'] = filters['state']
         if 'year' in filters:
             params['year'] = filters['year']
-        if 'limit' in filters:
-            params['limit'] = min(filters['limit'], 1000)  # API limit
             
         return self.get_json(url, params, service="grants")
     
@@ -165,30 +161,30 @@ class CandidClient:
         url = "https://api.candid.org/grants/v1/funders"
         params = {}
         
+        if 'query' in filters:
+            params['query'] = filters['query']
         if 'subject' in filters:
             params['subject'] = filters['subject']
         if 'state' in filters:
             params['state'] = filters['state']
-        if 'funder_name' in filters:
-            params['funder_name'] = filters['funder_name']
-        if 'limit' in filters:
-            params['limit'] = min(filters['limit'], 1000)
+        if 'year' in filters:
+            params['year'] = filters['year']
             
         return self.get_json(url, params, service="grants")
     
     def search_recipients(self, **filters) -> Dict:
-        """Search recipients"""
+        """Search recipients - max 25 results"""
         url = "https://api.candid.org/grants/v1/recipients"
         params = {}
         
+        if 'query' in filters:
+            params['query'] = filters['query']
         if 'subject' in filters:
             params['subject'] = filters['subject']
         if 'state' in filters:
             params['state'] = filters['state']
-        if 'recipient_name' in filters:
-            params['recipient_name'] = filters['recipient_name']
-        if 'limit' in filters:
-            params['limit'] = min(filters['limit'], 1000)
+        if 'year' in filters:
+            params['year'] = filters['year']
             
         return self.get_json(url, params, service="grants")
 
