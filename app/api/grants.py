@@ -65,7 +65,7 @@ def get_grants():
                 db.or_(
                     Grant.title.ilike(search_term),
                     Grant.description.ilike(search_term),
-                    Grant.funder_name.ilike(search_term)
+                    Grant.funder.ilike(search_term)
                 )
             )
         
