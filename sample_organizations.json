@@ -1,0 +1,28 @@
+[
+  {
+    "name": "Example Foundation",
+    "legal_name": "Example Foundation Inc.",
+    "ein": "12-3456789",
+    "mission": "Supporting education and community development",
+    "website": "https://example.org",
+    "email": "info@example.org",
+    "phone": "(555) 123-4567",
+    "address": "123 Main Street",
+    "city": "Detroit",
+    "state": "MI",
+    "zip_code": "48201",
+    "year_founded": 2010,
+    "annual_budget": 500000,
+    "staff_size": 10,
+    "tax_status": "501c3",
+    "focus_areas": [
+      "Education",
+      "Community Development"
+    ],
+    "keywords": [
+      "youth",
+      "urban",
+      "education"
+    ]
+  }
+]
