@@ -67,8 +67,8 @@ def dashboard():
 
 @pages.get("/opportunities")
 def opportunities():
-    # Use the new opportunities template with full filtering
-    return render_template("opportunities_new.html", active="opportunities")
+    # Use the comprehensive opportunities template with all 50 states and Candid access
+    return render_template("opportunities.html", active="opportunities")
 
 @pages.get("/saved")
 def saved():
