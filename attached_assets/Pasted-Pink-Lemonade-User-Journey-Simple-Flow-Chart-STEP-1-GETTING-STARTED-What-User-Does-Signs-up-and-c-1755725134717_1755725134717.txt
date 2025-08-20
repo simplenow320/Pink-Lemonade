@@ -1,0 +1,67 @@
+Pink Lemonade User Journey: Simple Flow Chart
+STEP 1: GETTING STARTED
+What User Does: Signs up and creates account
+Behind the Scenes: AI starts adaptive discovery system
+User Sees: Welcome screen with simple questions
+
+STEP 2: SMART PROFILE BUILDING
+What User Does: Answers questions about their organization
+Behind the Scenes: AI optimizer uses smart questioning (not boring forms) that learns as you answer
+User Sees: Questions get smarter - like "Since you help kids, do you focus on education or health?"
+
+STEP 3: FINDING GRANTS
+What User Does: Clicks "Find Grants" button
+Behind the Scenes: AI searches 259,000 foundations and 28 million grants using:
+
+Government databases (Federal Register)
+Candid foundation database
+Smart keyword matching
+User Sees: List of grants that actually fit their organization
+STEP 4: SMART MATCHING
+What User Does: Looks at grant suggestions
+Behind the Scenes: REACTO AI system (like having a grant expert) analyzes:
+
+How well your mission matches the funder
+Your organization size vs grant amount
+Your location vs funder requirements
+Success probability
+User Sees: Each grant gets a 1-5 star rating with explanation like "Great fit because you both focus on urban youth"
+STEP 5: GRANT INTELLIGENCE
+What User Does: Clicks on a promising grant
+Behind the Scenes: AI extracts and analyzes:
+
+Application deadlines
+Required documents
+Evaluation criteria
+Past winning strategies
+User Sees: Clear breakdown of "Here's what they want" and "Here's how to win"
+STEP 6: SMART WRITING TOOLS
+What User Does: Starts writing application
+Behind the Scenes: AI generates professional content using:
+
+Your organization's specific info
+The funder's priorities
+Winning proposal patterns
+User Sees: High-quality draft paragraphs for:
+Executive summary
+Statement of need
+Project description
+Budget narrative
+STEP 7: WORKFLOW TRACKING
+What User Does: Submits application
+Behind the Scenes: System tracks through 8 stages:
+Discovery → Research → Writing → Review → Submit → Pending → Awarded/Declined → Reporting
+User Sees: Simple progress tracker showing where each grant application stands
+
+THE MAGIC: COST OPTIMIZATION
+Behind Every Step: AI automatically chooses cheaper or expensive AI models based on task complexity
+User Benefit: Gets expensive AI quality at 60-85% lower cost
+User Sees: Fast, smart responses without the high bill
+
+SIMPLE SUMMARY
+Tell us about your organization (smart questions)
+We find matching grants (259K foundations searched)
+We rank them 1-5 stars (AI expert analysis)
+We help you understand requirements (grant intelligence)
+We help you write applications (AI writing assistant)
+We track your progress (workflow management)
