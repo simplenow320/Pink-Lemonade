@@ -25,9 +25,10 @@ def serve_assets(filename):
 # Catch all other routes and serve React app (for client-side routing)
 @app.route('/<path:path>')
 def catch_all(path):
-    # Don't catch API routes
+    # Don't catch API routes - let blueprints handle them
     if path.startswith('api/'):
-        return {'error': 'API endpoint not found'}, 404
+        from flask import abort
+        abort(404)  # Let Flask handle 404 properly for API routes
     try:
         return send_file('client/build/index.html')
     except:

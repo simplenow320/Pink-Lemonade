@@ -38,7 +38,7 @@ def get_pipeline(org_id):
 def move_grant_stage():
     """Move a grant to a new stage"""
     try:
-        data = request.json
+        data = request.get_json() or {}
         grant_id = data.get('grant_id')
         new_stage = data.get('stage')
         notes = data.get('notes', '')
@@ -66,7 +66,7 @@ def move_grant_stage():
 def batch_move_stages():
     """Move multiple grants to same stage"""
     try:
-        data = request.json
+        data = request.get_json() or {}
         grant_ids = data.get('grant_ids', [])
         new_stage = data.get('stage')
         
@@ -104,7 +104,7 @@ def get_checklist(grant_id):
 def update_checklist():
     """Update a checklist item"""
     try:
-        data = request.json
+        data = request.get_json() or {}
         grant_id = data.get('grant_id')
         item_id = data.get('item_id')
         completed = data.get('completed', False)

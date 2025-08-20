@@ -309,6 +309,13 @@ def create_app():
     from app.api.platform_stats import bp as platform_stats_bp
     flask_app.register_blueprint(platform_stats_bp)
     
+    # Register Impact QR Code & Two-Sided Reporting endpoints
+    try:
+        from app.api.impact_qr import impact_qr_bp
+        flask_app.register_blueprint(impact_qr_bp)
+    except ImportError as e:
+        print(f"Impact QR blueprint not available: {e}")
+    
     # Register Opportunities API endpoints
     try:
         from app.api.opportunities import bp as opportunities_bp

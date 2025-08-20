@@ -159,7 +159,7 @@ def analyze_grant_fit(grant_id, org_id):
 def generate_narrative():
     """Generate grant narrative section using REACTO"""
     try:
-        data = request.json
+        data = request.get_json() or {}
         grant_id = data.get('grant_id')
         org_id = data.get('org_id')
         section = data.get('section', 'executive_summary')

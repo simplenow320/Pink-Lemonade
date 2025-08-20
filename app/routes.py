@@ -83,7 +83,7 @@ def dashboard():
 @bp.route('/opportunities')
 def opportunities():
     """Render the opportunities page"""
-    return render_template('opportunities_new.html', active='opportunities')
+    return render_template('opportunities.html', active='opportunities')
 
 @bp.route('/settings')
 def settings():

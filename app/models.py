@@ -876,7 +876,7 @@ class GrantSuccessMetrics(db.Model):
 class Narrative(db.Model):
     __tablename__ = "narratives"
     id = db.Column(db.Integer, primary_key=True)
-    grant_id = db.Column(db.Integer, db.ForeignKey("grants.id"), nullable=False)
+    grant_id = db.Column(db.Integer, db.ForeignKey("grants.id"), nullable=True)  # Allow null for general org content
     section = db.Column(db.String(100), nullable=False)
     content = db.Column(db.Text)
     ai_generated = db.Column(db.Boolean, default=False)

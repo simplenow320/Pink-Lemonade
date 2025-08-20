@@ -19,7 +19,7 @@ smart_tools = SmartToolsService()
 def generate_pitch():
     """Generate a grant pitch (elevator, executive, or detailed)"""
     try:
-        data = request.json
+        data = request.get_json() or {}
         org_id = data.get('org_id')
         grant_id = data.get('grant_id')
         pitch_type = data.get('pitch_type', 'elevator')
@@ -53,7 +53,7 @@ def generate_pitch():
 def generate_case():
     """Generate a comprehensive case for support"""
     try:
-        data = request.json
+        data = request.get_json() or {}
         org_id = data.get('org_id')
         campaign_details = {
             'goal': data.get('campaign_goal', 100000),
@@ -85,7 +85,7 @@ def generate_case():
 def generate_impact_report():
     """Generate an impact report with metrics and stories"""
     try:
-        data = request.json
+        data = request.get_json() or {}
         org_id = data.get('org_id')
         report_period = {
             'start': data.get('period_start', '2024-01-01'),
@@ -122,7 +122,7 @@ def generate_impact_report():
 def generate_thank_you():
     """Generate a personalized thank you letter"""
     try:
-        data = request.json
+        data = request.get_json() or {}
         org_id = data.get('org_id')
         donor_info = {
             'name': data.get('donor_name', 'Valued Supporter'),
@@ -152,7 +152,7 @@ def generate_thank_you():
 def generate_social_post():
     """Generate platform-optimized social media content"""
     try:
-        data = request.json
+        data = request.get_json() or {}
         org_id = data.get('org_id')
         platform = data.get('platform', 'twitter')
         topic = data.get('topic', 'impact story')
