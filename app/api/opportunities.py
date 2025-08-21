@@ -20,6 +20,146 @@ logger = logging.getLogger(__name__)
 
 bp = Blueprint('opportunities_api', __name__)
 
+@bp.route('/api/opportunities/search', methods=['POST'])
+def search_opportunities():
+    """
+    Search opportunities with POST request
+    Accepts filters in request body
+    """
+    try:
+        # Get search data from request body
+        data = request.get_json() or {}
+        
+        # Extract search parameters
+        search_query = data.get('query', '')
+        location = data.get('location', '')
+        focus_area = data.get('focus_area', '')
+        amount = data.get('amount', '')
+        deadline = data.get('deadline', '')
+        source = data.get('source', '')
+        grant_type = data.get('type', '')
+        
+        all_opportunities = []
+        
+        # Get opportunities based on filters
+        if not source or source in ['federal_grants', 'grants.gov', 'federal']:
+            try:
+                # Get federal grants
+                from app.services.grants_gov_client import get_grants_gov_client
+                client = get_grants_gov_client()
+                
+                search_params = {
+                    "opportunity_status": "open",
+                    "page_size": 25
+                }
+                
+                # Add search keywords
+                if search_query:
+                    search_params["keywords"] = [search_query]
+                elif focus_area:
+                    # Map focus areas to keywords
+                    focus_keywords = {
+                        'education': ['education', 'school', 'learning'],
+                        'health': ['health', 'medical', 'wellness'],
+                        'arts': ['arts', 'culture', 'creative'],
+                        'environment': ['environment', 'climate', 'conservation'],
+                        'social_services': ['social', 'community', 'services'],
+                        'youth': ['youth', 'children', 'adolescent']
+                    }
+                    search_params["keywords"] = focus_keywords.get(focus_area, [focus_area])
+                
+                federal_grants = client.search_opportunities(search_params)
+                
+                # Add source info
+                for grant in federal_grants:
+                    grant['source_type'] = 'Federal'
+                    grant['source_name'] = 'Grants.gov'
+                    
+                all_opportunities.extend(federal_grants)
+                
+            except Exception as e:
+                logger.error(f"Error fetching federal grants: {e}")
+        
+        # Get foundation grants if requested
+        if not source or source in ['foundation_news', 'foundations']:
+            try:
+                from app.services.candid_grants_client import CandidGrantsClient
+                candid_client = CandidGrantsClient()
+                
+                foundation_grants = candid_client.search_grants(
+                    keyword=search_query or focus_area,
+                    limit=20
+                )
+                
+                all_opportunities.extend(foundation_grants)
+                
+            except Exception as e:
+                logger.error(f"Error fetching foundation grants: {e}")
+        
+        # Filter by amount if specified
+        if amount:
+            amount_ranges = {
+                'under_10k': (0, 10000),
+                '10k_50k': (10000, 50000),
+                '50k_100k': (50000, 100000),
+                '100k_500k': (100000, 500000),
+                'over_500k': (500000, float('inf'))
+            }
+            
+            if amount in amount_ranges:
+                min_amt, max_amt = amount_ranges[amount]
+                all_opportunities = [
+                    opp for opp in all_opportunities
+                    if opp.get('amount_min', 0) >= min_amt or opp.get('amount_max', float('inf')) <= max_amt
+                ]
+        
+        # Filter by location if specified
+        if location:
+            location_keywords = {
+                'michigan': ['Michigan', 'MI', 'Detroit', 'Grand Rapids'],
+                'national': ['National', 'United States', 'USA', 'Nationwide'],
+                'midwest': ['Midwest', 'Michigan', 'Ohio', 'Illinois', 'Indiana', 'Wisconsin']
+            }
+            
+            if location in location_keywords:
+                keywords = location_keywords[location]
+                all_opportunities = [
+                    opp for opp in all_opportunities
+                    if any(kw.lower() in str(opp.get('location', '')).lower() or 
+                          kw.lower() in str(opp.get('geography', '')).lower() 
+                          for kw in keywords)
+                ]
+        
+        # Sort by relevance/date
+        all_opportunities.sort(
+            key=lambda x: x.get('deadline') or '9999-12-31',
+            reverse=False
+        )
+        
+        # Limit results
+        all_opportunities = all_opportunities[:100]
+        
+        return jsonify({
+            'success': True,
+            'grants': all_opportunities,
+            'count': len(all_opportunities),
+            'filters_applied': {
+                'query': search_query,
+                'location': location,
+                'focus_area': focus_area,
+                'amount': amount,
+                'source': source
+            }
+        })
+        
+    except Exception as e:
+        logger.error(f"Error searching opportunities: {e}")
+        return jsonify({
+            'success': False,
+            'error': 'Error searching grants. Please try again.',
+            'grants': []
+        }), 500
+
 @bp.route('/api/opportunities', methods=['GET'])
 def get_opportunities():
     """
