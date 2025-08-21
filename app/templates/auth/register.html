@@ -1,323 +1,166 @@
 {% extends "base.html" %}
-{% block title %}Register - Pink Lemonade{% endblock %}
+
+{% block title %}Sign Up - Pink Lemonade{% endblock %}
+
 {% block content %}
-<style>
-.auth-container {
-  max-width: 450px;
-  margin: 80px auto;
-  padding: 40px;
-  background: white;
-  border-radius: 12px;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
-}
+<div class="min-h-screen bg-gradient-to-br from-pink-50 via-white to-pink-50 flex items-center justify-center px-4 py-12">
+    <div class="max-w-md w-full">
+        <!-- Logo/Header -->
+        <div class="text-center mb-8">
+            <h1 class="text-4xl font-bold text-gray-900 mb-2">Pink Lemonade</h1>
+            <p class="text-gray-600">Start Finding Perfect Grant Matches</p>
+        </div>
 
-.auth-header {
-  text-align: center;
-  margin-bottom: 40px;
-}
-
-.auth-header h2 {
-  font-size: 28px;
-  font-weight: 300;
-  color: #2A2A2A;
-  margin: 0 0 10px 0;
-}
-
-.auth-header p {
-  color: #666;
-  font-size: 14px;
-}
-
-.form-group {
-  margin-bottom: 24px;
-}
-
-.form-group label {
-  display: block;
-  margin-bottom: 8px;
-  color: #2A2A2A;
-  font-size: 14px;
-  font-weight: 500;
-}
-
-.form-group input {
-  width: 100%;
-  padding: 12px 16px;
-  border: 1px solid #E0E0E0;
-  border-radius: 8px;
-  font-size: 14px;
-  transition: all 0.2s ease;
-}
-
-.form-group input:focus {
-  outline: none;
-  border-color: #B8899A;
-  box-shadow: 0 0 0 3px rgba(184, 137, 154, 0.1);
-}
-
-.form-group small {
-  display: block;
-  margin-top: 6px;
-  color: #666;
-  font-size: 12px;
-}
-
-.password-strength {
-  margin-top: 8px;
-  height: 4px;
-  background: #F0F0F0;
-  border-radius: 2px;
-  overflow: hidden;
-}
-
-.password-strength-bar {
-  height: 100%;
-  width: 0;
-  transition: all 0.3s ease;
-}
-
-.strength-weak { background: #FF6B6B; width: 33%; }
-.strength-medium { background: #FFA500; width: 66%; }
-.strength-strong { background: #4CAF50; width: 100%; }
-
-.btn-register {
-  width: 100%;
-  padding: 14px;
-  background: linear-gradient(135deg, #B8899A 0%, #A67989 100%);
-  color: white;
-  border: none;
-  border-radius: 8px;
-  font-size: 16px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.3s ease;
-}
-
-.btn-register:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(184, 137, 154, 0.3);
-}
-
-.btn-register:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-}
-
-.auth-footer {
-  margin-top: 32px;
-  text-align: center;
-  padding-top: 24px;
-  border-top: 1px solid #F0F0F0;
-}
-
-.auth-footer p {
-  color: #666;
-  font-size: 14px;
-}
-
-.auth-footer a {
-  color: #B8899A;
-  text-decoration: none;
-  font-weight: 500;
-}
-
-.auth-footer a:hover {
-  text-decoration: underline;
-}
-
-.error-message {
-  background: #FEE;
-  color: #C33;
-  padding: 12px;
-  border-radius: 6px;
-  margin-bottom: 20px;
-  font-size: 14px;
-  display: none;
-}
-
-.success-message {
-  background: #E8F5E9;
-  color: #2E7D32;
-  padding: 12px;
-  border-radius: 6px;
-  margin-bottom: 20px;
-  font-size: 14px;
-  display: none;
-}
-
-.checkbox-group {
-  display: flex;
-  align-items: flex-start;
-  gap: 12px;
-  margin-bottom: 24px;
-}
-
-.checkbox-group input[type="checkbox"] {
-  margin-top: 3px;
-}
-
-.checkbox-group label {
-  font-size: 14px;
-  color: #666;
-  flex: 1;
-}
-</style>
-
-<div class="auth-container">
-  <div class="auth-header">
-    <h2>Register Your Organization</h2>
-    <p>Join Pink Lemonade to discover and win more grants for your nonprofit</p>
-  </div>
-
-  <div id="errorMessage" class="error-message"></div>
-  <div id="successMessage" class="success-message"></div>
-
-  <form id="registerForm">
-    <div class="form-group">
-      <label for="orgName">Organization Name *</label>
-      <input type="text" id="orgName" name="org_name" required placeholder="Enter your nonprofit's name">
+        <!-- Register Card -->
+        <div class="bg-white rounded-2xl shadow-xl p-8">
+            <h2 class="text-2xl font-bold text-gray-900 mb-2">Create Your Account</h2>
+            <p class="text-gray-600 mb-6">Join 500+ nonprofits finding their perfect grants</p>
+            
+            <!-- Flash Messages -->
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <div class="mb-4 p-3 rounded-lg {% if category == 'error' %}bg-red-50 text-red-700 border border-red-200{% else %}bg-blue-50 text-blue-700 border border-blue-200{% endif %}">
+                            {{ message }}
+                        </div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+            
+            <form method="POST" action="{{ url_for('auth.register') }}">
+                <div class="space-y-4">
+                    <!-- Name Fields -->
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label for="first_name" class="block text-sm font-medium text-gray-700 mb-1">
+                                First Name <span class="text-red-500">*</span>
+                            </label>
+                            <input type="text" 
+                                   id="first_name"
+                                   name="first_name" 
+                                   class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-pink-500"
+                                   placeholder="Jane"
+                                   value="{{ first_name if first_name else '' }}"
+                                   required>
+                        </div>
+                        <div>
+                            <label for="last_name" class="block text-sm font-medium text-gray-700 mb-1">
+                                Last Name
+                            </label>
+                            <input type="text" 
+                                   id="last_name"
+                                   name="last_name" 
+                                   class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-pink-500"
+                                   placeholder="Doe"
+                                   value="{{ last_name if last_name else '' }}">
+                        </div>
+                    </div>
+                    
+                    <!-- Email -->
+                    <div>
+                        <label for="email" class="block text-sm font-medium text-gray-700 mb-1">
+                            Email Address <span class="text-red-500">*</span>
+                        </label>
+                        <input type="email" 
+                               id="email"
+                               name="email" 
+                               class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-pink-500"
+                               placeholder="you@organization.org"
+                               value="{{ email if email else '' }}"
+                               required>
+                    </div>
+                    
+                    <!-- Organization (Optional) -->
+                    <div>
+                        <label for="org_name" class="block text-sm font-medium text-gray-700 mb-1">
+                            Organization Name <span class="text-gray-400">(Optional)</span>
+                        </label>
+                        <input type="text" 
+                               id="org_name"
+                               name="org_name" 
+                               class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-pink-500"
+                               placeholder="Your nonprofit name"
+                               value="{{ org_name if org_name else '' }}">
+                    </div>
+                    
+                    <!-- Password -->
+                    <div>
+                        <label for="password" class="block text-sm font-medium text-gray-700 mb-1">
+                            Password <span class="text-red-500">*</span>
+                        </label>
+                        <input type="password" 
+                               id="password"
+                               name="password" 
+                               class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-pink-500"
+                               placeholder="At least 8 characters"
+                               required
+                               minlength="8">
+                        <p class="mt-1 text-xs text-gray-500">Must be at least 8 characters</p>
+                    </div>
+                    
+                    <!-- Confirm Password -->
+                    <div>
+                        <label for="confirm_password" class="block text-sm font-medium text-gray-700 mb-1">
+                            Confirm Password <span class="text-red-500">*</span>
+                        </label>
+                        <input type="password" 
+                               id="confirm_password"
+                               name="confirm_password" 
+                               class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-pink-500"
+                               placeholder="Re-enter your password"
+                               required>
+                    </div>
+                    
+                    <!-- Terms -->
+                    <div class="flex items-start">
+                        <input type="checkbox" 
+                               id="terms"
+                               name="terms" 
+                               class="mt-1 h-4 w-4 text-pink-600 focus:ring-pink-500 border-gray-300 rounded"
+                               required>
+                        <label for="terms" class="ml-2 text-sm text-gray-700">
+                            I agree to the <a href="#" class="text-pink-600 hover:text-pink-700">Terms of Service</a> 
+                            and <a href="#" class="text-pink-600 hover:text-pink-700">Privacy Policy</a>
+                        </label>
+                    </div>
+                </div>
+                
+                <!-- Submit Button -->
+                <button type="submit" 
+                        class="w-full mt-6 px-6 py-3 bg-pink-500 text-white font-semibold rounded-lg hover:bg-pink-600 transition-all transform hover:scale-105 shadow-lg">
+                    Create Account
+                </button>
+            </form>
+            
+            <!-- Login Link -->
+            <div class="mt-6 text-center">
+                <p class="text-gray-600">
+                    Already have an account? 
+                    <a href="{{ url_for('auth.login') }}" class="text-pink-600 hover:text-pink-700 font-semibold">
+                        Sign in
+                    </a>
+                </p>
+            </div>
+        </div>
+        
+        <!-- Value Proposition -->
+        <div class="mt-8 bg-white rounded-lg p-4 shadow">
+            <h3 class="font-semibold text-gray-800 mb-2 text-center">What You Get Free:</h3>
+            <div class="grid grid-cols-2 gap-2 text-sm text-gray-600">
+                <div class="flex items-center">
+                    <span class="text-green-500 mr-1">✓</span> AI Grant Matching
+                </div>
+                <div class="flex items-center">
+                    <span class="text-green-500 mr-1">✓</span> 28.9M+ Grants
+                </div>
+                <div class="flex items-center">
+                    <span class="text-green-500 mr-1">✓</span> Smart Tools
+                </div>
+                <div class="flex items-center">
+                    <span class="text-green-500 mr-1">✓</span> Application Tracking
+                </div>
+            </div>
+        </div>
     </div>
-
-    <div class="form-group">
-      <label for="email">Organization Email *</label>
-      <input type="email" id="email" name="email" required placeholder="admin@yournonprofit.org">
-      <small>This will be your login email</small>
-    </div>
-
-    <div class="form-group">
-      <label for="firstName">Administrator First Name *</label>
-      <input type="text" id="firstName" name="first_name" required placeholder="Primary contact first name">
-    </div>
-
-    <div class="form-group">
-      <label for="lastName">Administrator Last Name *</label>
-      <input type="text" id="lastName" name="last_name" required placeholder="Primary contact last name">
-    </div>
-    
-    <div class="form-group">
-      <label for="jobTitle">Your Role/Title</label>
-      <input type="text" id="jobTitle" name="job_title" placeholder="e.g., Executive Director, Grant Manager">
-    </div>
-
-    <div class="form-group">
-      <label for="password">Password *</label>
-      <input type="password" id="password" name="password" required placeholder="Create a strong password">
-      <small>Minimum 8 characters, include uppercase, lowercase, numbers and symbols</small>
-      <div class="password-strength">
-        <div id="passwordStrengthBar" class="password-strength-bar"></div>
-      </div>
-    </div>
-
-    <div class="form-group">
-      <label for="confirmPassword">Confirm Password *</label>
-      <input type="password" id="confirmPassword" name="confirm_password" required placeholder="Re-enter your password">
-    </div>
-
-    <div class="checkbox-group">
-      <input type="checkbox" id="terms" name="terms" required>
-      <label for="terms">
-        I agree to the <a href="/terms" target="_blank">Terms of Service</a> and 
-        <a href="/privacy" target="_blank">Privacy Policy</a>
-      </label>
-    </div>
-
-    <button type="submit" class="btn-register" id="submitBtn">Register Organization</button>
-  </form>
-
-  <div class="auth-footer">
-    <p>Already have an account? <a href="/login">Sign in</a></p>
-  </div>
 </div>
-
-<script>
-// Password strength checker
-document.getElementById('password').addEventListener('input', function(e) {
-  const password = e.target.value;
-  const strengthBar = document.getElementById('passwordStrengthBar');
-  
-  let strength = 0;
-  if (password.length >= 8) strength++;
-  if (password.match(/[a-z]/) && password.match(/[A-Z]/)) strength++;
-  if (password.match(/[0-9]/)) strength++;
-  if (password.match(/[^a-zA-Z0-9]/)) strength++;
-  
-  strengthBar.className = 'password-strength-bar';
-  if (password.length > 0) {
-    if (strength <= 1) strengthBar.classList.add('strength-weak');
-    else if (strength === 2 || strength === 3) strengthBar.classList.add('strength-medium');
-    else strengthBar.classList.add('strength-strong');
-  }
-});
-
-// Form validation and submission
-document.getElementById('registerForm').addEventListener('submit', async function(e) {
-  e.preventDefault();
-  
-  const errorMsg = document.getElementById('errorMessage');
-  const successMsg = document.getElementById('successMessage');
-  const submitBtn = document.getElementById('submitBtn');
-  
-  errorMsg.style.display = 'none';
-  successMsg.style.display = 'none';
-  
-  // Validate passwords match
-  const password = document.getElementById('password').value;
-  const confirmPassword = document.getElementById('confirmPassword').value;
-  
-  if (password !== confirmPassword) {
-    errorMsg.textContent = 'Passwords do not match';
-    errorMsg.style.display = 'block';
-    return;
-  }
-  
-  // Validate password strength
-  if (password.length < 8) {
-    errorMsg.textContent = 'Password must be at least 8 characters long';
-    errorMsg.style.display = 'block';
-    return;
-  }
-  
-  // Prepare form data
-  const formData = new FormData(e.target);
-  const data = Object.fromEntries(formData.entries());
-  delete data.confirm_password;
-  delete data.terms;
-  
-  submitBtn.disabled = true;
-  submitBtn.textContent = 'Registering Organization...';
-  
-  try {
-    const response = await fetch('/api/auth/register', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(data)
-    });
-    
-    const result = await response.json();
-    
-    if (response.ok) {
-      successMsg.textContent = 'Organization registered successfully! Check your email to verify your account.';
-      successMsg.style.display = 'block';
-      e.target.reset();
-      
-      // Redirect to login after 3 seconds
-      setTimeout(() => {
-        window.location.href = '/login';
-      }, 3000);
-    } else {
-      errorMsg.textContent = result.error || 'Registration failed. Please try again.';
-      errorMsg.style.display = 'block';
-      submitBtn.disabled = false;
-      submitBtn.textContent = 'Register Organization';
-    }
-  } catch (error) {
-    errorMsg.textContent = 'An error occurred. Please try again.';
-    errorMsg.style.display = 'block';
-    submitBtn.disabled = false;
-    submitBtn.textContent = 'Create Account';
-  }
-});
-</script>
 {% endblock %}

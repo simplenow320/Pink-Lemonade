@@ -1,0 +1,270 @@
+{% extends "base.html" %}
+
+{% block title %}Organization Profile - Capacity & History{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gradient-to-br from-pink-50 to-white">
+    <div class="max-w-4xl mx-auto px-4 py-8">
+        <!-- Progress Bar -->
+        <div class="mb-8">
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="text-lg font-semibold text-gray-700">Final Step!</h2>
+                <span class="text-sm text-gray-600">Step 3 of 3 • ~2 minutes</span>
+            </div>
+            <div class="relative">
+                <div class="overflow-hidden h-3 mb-4 text-xs flex rounded-full bg-gray-200">
+                    <div style="width:100%" class="shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center bg-pink-500 transition-all duration-500"></div>
+                </div>
+                <div class="flex justify-between text-xs text-gray-600">
+                    <span class="text-green-600">✓ Basic Info</span>
+                    <span class="text-green-600">✓ Mission & Programs</span>
+                    <span class="font-semibold text-pink-600">Capacity & History</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Almost There Message -->
+        <div class="bg-gradient-to-r from-pink-100 to-pink-50 border-l-4 border-pink-500 p-4 mb-6">
+            <div class="flex">
+                <div class="flex-shrink-0">
+                    <svg class="h-5 w-5 text-pink-500" viewBox="0 0 20 20" fill="currentColor">
+                        <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/>
+                    </svg>
+                </div>
+                <div class="ml-3">
+                    <p class="text-sm text-pink-700 font-semibold">
+                        You're almost done! This final step helps match you with grants that fit your organization's capacity.
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Form Card -->
+        <div class="bg-white rounded-2xl shadow-xl p-8">
+            <div class="mb-6">
+                <h1 class="text-2xl font-bold text-gray-900 mb-2">Capacity & Grant History</h1>
+                <p class="text-gray-600">Help us understand your organization's size and experience</p>
+            </div>
+
+            <form id="step3Form" method="POST" action="{{ url_for('onboarding.save_step3') }}">
+                <div class="space-y-6">
+                    <!-- Annual Budget -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                            Annual Operating Budget <span class="text-red-500">*</span>
+                        </label>
+                        <select name="annual_budget" 
+                                id="annual_budget"
+                                class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-pink-500"
+                                required
+                                onchange="updateGrantSuggestions()">
+                            <option value="">Select your budget range...</option>
+                            <option value="under_50k" {{ 'selected' if org and org.annual_budget == 'under_50k' else '' }}>Under $50,000</option>
+                            <option value="50k_100k" {{ 'selected' if org and org.annual_budget == '50k_100k' else '' }}>$50,000 - $100,000</option>
+                            <option value="100k_250k" {{ 'selected' if org and org.annual_budget == '100k_250k' else '' }}>$100,000 - $250,000</option>
+                            <option value="250k_500k" {{ 'selected' if org and org.annual_budget == '250k_500k' else '' }}>$250,000 - $500,000</option>
+                            <option value="500k_1m" {{ 'selected' if org and org.annual_budget == '500k_1m' else '' }}>$500,000 - $1 Million</option>
+                            <option value="1m_5m" {{ 'selected' if org and org.annual_budget == '1m_5m' else '' }}>$1 Million - $5 Million</option>
+                            <option value="over_5m" {{ 'selected' if org and org.annual_budget == 'over_5m' else '' }}>Over $5 Million</option>
+                        </select>
+                        <p class="mt-1 text-sm text-gray-500">Helps us find grants sized appropriately for your organization</p>
+                    </div>
+
+                    <!-- Staff Size -->
+                    <div class="grid md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">
+                                Full-Time Staff <span class="text-red-500">*</span>
+                            </label>
+                            <input type="number" 
+                                   name="staff_count" 
+                                   min="0"
+                                   class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-pink-500"
+                                   placeholder="e.g., 5"
+                                   required
+                                   value="{{ org.staff_count if org else '' }}">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">
+                                Board Members <span class="text-gray-400">(Optional)</span>
+                            </label>
+                            <input type="number" 
+                                   name="board_members" 
+                                   min="0"
+                                   class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-pink-500"
+                                   placeholder="e.g., 12"
+                                   value="{{ org.board_members if org else '' }}">
+                        </div>
+                    </div>
+
+                    <!-- Grant Experience -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                            Grant Experience Level <span class="text-red-500">*</span>
+                        </label>
+                        <select name="grant_experience" 
+                                id="grant_experience"
+                                class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-pink-500"
+                                required
+                                onchange="showExperienceTips()">
+                            <option value="">Select your experience level...</option>
+                            <option value="new" {{ 'selected' if org and org.grant_experience == 'new' else '' }}>New to Grants (0-1 grants)</option>
+                            <option value="emerging" {{ 'selected' if org and org.grant_experience == 'emerging' else '' }}>Emerging (2-5 grants)</option>
+                            <option value="experienced" {{ 'selected' if org and org.grant_experience == 'experienced' else '' }}>Experienced (6-20 grants)</option>
+                            <option value="advanced" {{ 'selected' if org and org.grant_experience == 'advanced' else '' }}>Advanced (20+ grants)</option>
+                        </select>
+                    </div>
+
+                    <!-- Experience Tips -->
+                    <div id="experienceTips" class="hidden bg-blue-50 rounded-lg p-4">
+                        <p class="text-sm text-blue-800" id="tipContent"></p>
+                    </div>
+
+                    <!-- Previous Grants -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                            Recent Grant Success <span class="text-gray-400">(Optional but valuable)</span>
+                        </label>
+                        <textarea name="previous_grants" 
+                                  rows="3"
+                                  class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-pink-500"
+                                  placeholder="List 1-3 recent grants you've received (funder name and amount)">{{ org.previous_grants if org else '' }}</textarea>
+                        <p class="mt-1 text-sm text-gray-500">Helps identify similar funders who might support you</p>
+                    </div>
+                </div>
+
+                <!-- Grant Suggestions Preview -->
+                <div id="grantSuggestions" class="hidden mt-8 p-6 bg-gradient-to-r from-green-50 to-green-100 rounded-lg">
+                    <h3 class="text-lg font-semibold text-gray-800 mb-3">
+                        <span class="text-green-600">💰</span> Perfect Grant Size for You
+                    </h3>
+                    <p class="text-gray-700 mb-3">Based on your budget, we'll prioritize grants in these ranges:</p>
+                    <div id="suggestedRanges" class="space-y-2">
+                        <!-- Dynamically populated -->
+                    </div>
+                    <p class="text-sm text-gray-600 mt-3">Ready to see your personalized matches!</p>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="flex justify-between items-center mt-8 pt-6 border-t">
+                    <a href="{{ url_for('onboarding.step2') }}" 
+                       class="text-gray-600 hover:text-gray-800 font-medium">
+                        ← Back
+                    </a>
+                    <div class="flex gap-4">
+                        <button type="button" 
+                                onclick="saveAndSkip()"
+                                class="px-6 py-3 bg-gray-200 text-gray-700 font-medium rounded-lg hover:bg-gray-300 transition-all">
+                            Skip for Now
+                        </button>
+                        <button type="submit" 
+                                class="px-8 py-4 bg-gradient-to-r from-pink-500 to-pink-600 text-white font-semibold rounded-lg hover:from-pink-600 hover:to-pink-700 transition-all transform hover:scale-105 shadow-lg">
+                            Complete Setup & Find Grants 🎉
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+
+        <!-- Final Encouragement -->
+        <div class="mt-6 text-center">
+            <p class="text-gray-600">
+                <span class="text-2xl">🎯</span> 
+                <span class="font-semibold">You're one click away from discovering perfect grant matches!</span>
+            </p>
+        </div>
+    </div>
+</div>
+
+<script>
+// Show grant size suggestions based on budget
+function updateGrantSuggestions() {
+    const budget = document.getElementById('annual_budget').value;
+    
+    if (budget) {
+        document.getElementById('grantSuggestions').classList.remove('hidden');
+        
+        let ranges = '';
+        switch(budget) {
+            case 'under_50k':
+                ranges = `
+                    <div class="bg-white p-3 rounded border-l-4 border-green-500">
+                        <strong>Small Grants:</strong> $5,000 - $25,000 (Perfect for your size)
+                    </div>
+                    <div class="bg-white p-3 rounded border-l-4 border-green-400">
+                        <strong>Seed Funding:</strong> $1,000 - $10,000 (Great for new programs)
+                    </div>`;
+                break;
+            case '50k_100k':
+                ranges = `
+                    <div class="bg-white p-3 rounded border-l-4 border-green-500">
+                        <strong>Operating Support:</strong> $10,000 - $50,000 (25-50% of budget)
+                    </div>
+                    <div class="bg-white p-3 rounded border-l-4 border-green-400">
+                        <strong>Program Grants:</strong> $5,000 - $25,000 (Specific initiatives)
+                    </div>`;
+                break;
+            case '100k_250k':
+                ranges = `
+                    <div class="bg-white p-3 rounded border-l-4 border-green-500">
+                        <strong>Major Grants:</strong> $25,000 - $100,000 (Significant impact)
+                    </div>
+                    <div class="bg-white p-3 rounded border-l-4 border-green-400">
+                        <strong>Capacity Building:</strong> $10,000 - $50,000 (Growth support)
+                    </div>`;
+                break;
+            default:
+                ranges = `
+                    <div class="bg-white p-3 rounded border-l-4 border-green-500">
+                        <strong>Optimal Range:</strong> 10-40% of your annual budget
+                    </div>
+                    <div class="bg-white p-3 rounded border-l-4 border-green-400">
+                        <strong>Multi-Year Support:</strong> Available for established organizations
+                    </div>`;
+        }
+        
+        document.getElementById('suggestedRanges').innerHTML = ranges;
+    }
+}
+
+// Show tips based on experience level
+function showExperienceTips() {
+    const experience = document.getElementById('grant_experience').value;
+    const tipsDiv = document.getElementById('experienceTips');
+    const tipContent = document.getElementById('tipContent');
+    
+    if (experience) {
+        tipsDiv.classList.remove('hidden');
+        
+        switch(experience) {
+            case 'new':
+                tipContent.textContent = '🌟 Perfect! We\'ll prioritize smaller, beginner-friendly grants with simple applications and helpful program officers.';
+                break;
+            case 'emerging':
+                tipContent.textContent = '📈 Great progress! We\'ll find grants that help you scale up, including capacity-building opportunities.';
+                break;
+            case 'experienced':
+                tipContent.textContent = '💪 Excellent! You\'re ready for competitive grants. We\'ll match you with major funders and federal opportunities.';
+                break;
+            case 'advanced':
+                tipContent.textContent = '🏆 Outstanding! We\'ll focus on large, multi-year grants and help you diversify your funding portfolio.';
+                break;
+        }
+    }
+}
+
+// Save and skip
+function saveAndSkip() {
+    const form = document.getElementById('step3Form');
+    const formData = new FormData(form);
+    formData.append('skip', 'true');
+    
+    fetch('{{ url_for("onboarding.save_step3") }}', {
+        method: 'POST',
+        body: formData
+    }).then(() => {
+        window.location.href = '{{ url_for("dashboard.index") }}';
+    });
+}
+</script>
+{% endblock %}

@@ -1,0 +1,269 @@
+{% extends "base.html" %}
+
+{% block title %}Organization Profile - Mission & Programs{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gradient-to-br from-pink-50 to-white">
+    <div class="max-w-4xl mx-auto px-4 py-8">
+        <!-- Progress Bar -->
+        <div class="mb-8">
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="text-lg font-semibold text-gray-700">Setting Up Your Profile</h2>
+                <span class="text-sm text-gray-600">Step 2 of 3 • ~3 minutes</span>
+            </div>
+            <div class="relative">
+                <div class="overflow-hidden h-3 mb-4 text-xs flex rounded-full bg-gray-200">
+                    <div style="width:66%" class="shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center bg-pink-500 transition-all duration-500"></div>
+                </div>
+                <div class="flex justify-between text-xs text-gray-600">
+                    <span class="text-green-600">✓ Basic Info</span>
+                    <span class="font-semibold text-pink-600">Mission & Programs</span>
+                    <span>Capacity & History</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Encouragement Message -->
+        <div class="bg-green-50 border-l-4 border-green-400 p-4 mb-6">
+            <div class="flex">
+                <div class="flex-shrink-0">
+                    <svg class="h-5 w-5 text-green-400" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+                    </svg>
+                </div>
+                <div class="ml-3">
+                    <p class="text-sm text-green-700">
+                        Great progress! This section helps our AI understand your impact and match you with aligned funders.
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Form Card -->
+        <div class="bg-white rounded-2xl shadow-xl p-8">
+            <div class="mb-6">
+                <h1 class="text-2xl font-bold text-gray-900 mb-2">Mission & Programs</h1>
+                <p class="text-gray-600">Tell us about your organization's purpose and impact</p>
+            </div>
+
+            <form id="step2Form" method="POST" action="{{ url_for('onboarding.save_step2') }}">
+                <div class="space-y-6">
+                    <!-- Mission Statement -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                            Mission Statement <span class="text-red-500">*</span>
+                        </label>
+                        <textarea name="mission_statement" 
+                                  id="mission_statement"
+                                  rows="4"
+                                  class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-pink-500"
+                                  placeholder="What is your organization's purpose? What change do you create?"
+                                  required
+                                  onkeyup="updateCharCount('mission_statement', 500)">{{ org.mission_statement if org else '' }}</textarea>
+                        <div class="flex justify-between mt-1">
+                            <p class="text-sm text-gray-500">Your mission in 2-3 sentences</p>
+                            <span id="mission_statement_count" class="text-sm text-gray-500">0/500</span>
+                        </div>
+                    </div>
+
+                    <!-- Focus Areas -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                            Primary Focus Areas <span class="text-red-500">*</span>
+                            <span class="text-gray-400 text-xs ml-2">(Select up to 3)</span>
+                        </label>
+                        <div class="grid md:grid-cols-2 gap-3">
+                            {% set focus_options = [
+                                ('education', 'Education & Literacy'),
+                                ('youth', 'Youth Development'),
+                                ('housing', 'Housing & Shelter'),
+                                ('healthcare', 'Healthcare & Wellness'),
+                                ('arts', 'Arts & Culture'),
+                                ('environment', 'Environment & Conservation'),
+                                ('social_justice', 'Social Justice & Equity'),
+                                ('economic', 'Economic Development'),
+                                ('faith', 'Faith & Spirituality'),
+                                ('seniors', 'Senior Services'),
+                                ('food', 'Food Security'),
+                                ('mental_health', 'Mental Health'),
+                                ('workforce', 'Workforce Development'),
+                                ('community', 'Community Building')
+                            ] %}
+                            {% for value, label in focus_options %}
+                            <label class="flex items-start">
+                                <input type="checkbox" 
+                                       name="focus_areas" 
+                                       value="{{ value }}"
+                                       class="mt-1 h-4 w-4 text-pink-600 focus:ring-pink-500 border-gray-300 rounded"
+                                       onchange="checkFocusLimit(this); showImpactPreview()"
+                                       {{ 'checked' if org and org.focus_areas and value in org.focus_areas else '' }}>
+                                <span class="ml-2 text-sm text-gray-700">{{ label }}</span>
+                            </label>
+                            {% endfor %}
+                        </div>
+                    </div>
+
+                    <!-- Target Population -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                            Who Do You Serve? <span class="text-red-500">*</span>
+                        </label>
+                        <input type="text" 
+                               name="target_population" 
+                               id="target_population"
+                               class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-pink-500"
+                               placeholder="e.g., At-risk youth ages 12-18 in urban communities"
+                               required
+                               value="{{ org.target_population if org else '' }}"
+                               onblur="showImpactPreview()">
+                        <p class="mt-1 text-sm text-gray-500">Be specific about demographics, age groups, and communities</p>
+                    </div>
+
+                    <!-- Geographic Scope -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                            Geographic Scope <span class="text-red-500">*</span>
+                        </label>
+                        <select name="geographic_scope" 
+                                id="geographic_scope"
+                                class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-pink-500"
+                                required
+                                onchange="showImpactPreview()">
+                            <option value="">Select your service area...</option>
+                            <option value="neighborhood" {{ 'selected' if org and org.geographic_scope == 'neighborhood' else '' }}>Neighborhood/Local</option>
+                            <option value="city" {{ 'selected' if org and org.geographic_scope == 'city' else '' }}>Citywide</option>
+                            <option value="county" {{ 'selected' if org and org.geographic_scope == 'county' else '' }}>County</option>
+                            <option value="regional" {{ 'selected' if org and org.geographic_scope == 'regional' else '' }}>Multi-County/Regional</option>
+                            <option value="statewide" {{ 'selected' if org and org.geographic_scope == 'statewide' else '' }}>Statewide</option>
+                            <option value="national" {{ 'selected' if org and org.geographic_scope == 'national' else '' }}>National</option>
+                            <option value="international" {{ 'selected' if org and org.geographic_scope == 'international' else '' }}>International</option>
+                        </select>
+                    </div>
+
+                    <!-- Key Programs -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                            Key Programs & Services <span class="text-gray-400">(Optional but helpful)</span>
+                        </label>
+                        <textarea name="key_programs" 
+                                  rows="3"
+                                  class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-pink-500"
+                                  placeholder="Briefly describe your main programs or services">{{ org.key_programs if org else '' }}</textarea>
+                        <p class="mt-1 text-sm text-gray-500">List your 2-3 main programs or services</p>
+                    </div>
+                </div>
+
+                <!-- Impact Preview -->
+                <div id="impactPreview" class="hidden mt-8 p-6 bg-gradient-to-r from-blue-50 to-blue-100 rounded-lg">
+                    <h3 class="text-lg font-semibold text-gray-800 mb-3">
+                        <span class="text-blue-600">🎯</span> Your Impact Profile is Taking Shape!
+                    </h3>
+                    <p class="text-gray-700 mb-3">Based on your mission, we're identifying funders who care about:</p>
+                    <div id="previewAlignment" class="space-y-2">
+                        <!-- Dynamically populated -->
+                    </div>
+                    <p class="text-sm text-gray-600 mt-3">One more step to unlock all matching features!</p>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="flex justify-between items-center mt-8 pt-6 border-t">
+                    <a href="{{ url_for('onboarding.step1') }}" 
+                       class="text-gray-600 hover:text-gray-800 font-medium">
+                        ← Back
+                    </a>
+                    <div class="flex gap-4">
+                        <button type="button" 
+                                onclick="saveAndSkip()"
+                                class="px-6 py-3 bg-gray-200 text-gray-700 font-medium rounded-lg hover:bg-gray-300 transition-all">
+                            Skip for Now
+                        </button>
+                        <button type="submit" 
+                                class="px-8 py-3 bg-pink-500 text-white font-semibold rounded-lg hover:bg-pink-600 transition-all transform hover:scale-105 shadow-lg">
+                            Continue to Capacity →
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+
+        <!-- Quality Reminder -->
+        <div class="mt-6 bg-pink-50 rounded-lg p-4 text-center">
+            <p class="text-gray-700">
+                <span class="font-semibold text-pink-600">Tip:</span> 
+                The more specific your mission and programs, the better our AI can match you with aligned funders!
+            </p>
+        </div>
+    </div>
+</div>
+
+<script>
+// Character counter
+function updateCharCount(fieldId, maxLength) {
+    const field = document.getElementById(fieldId);
+    const counter = document.getElementById(fieldId + '_count');
+    const length = field.value.length;
+    counter.textContent = `${length}/${maxLength}`;
+    
+    if (length > maxLength) {
+        counter.classList.add('text-red-500');
+    } else {
+        counter.classList.remove('text-red-500');
+    }
+}
+
+// Limit focus area selections to 3
+function checkFocusLimit(checkbox) {
+    const checkboxes = document.querySelectorAll('input[name="focus_areas"]:checked');
+    const unchecked = document.querySelectorAll('input[name="focus_areas"]:not(:checked)');
+    
+    if (checkboxes.length >= 3) {
+        unchecked.forEach(cb => cb.disabled = true);
+    } else {
+        unchecked.forEach(cb => cb.disabled = false);
+    }
+}
+
+// Show impact preview
+function showImpactPreview() {
+    const focusAreas = document.querySelectorAll('input[name="focus_areas"]:checked');
+    const population = document.getElementById('target_population').value;
+    
+    if (focusAreas.length > 0 && population) {
+        document.getElementById('impactPreview').classList.remove('hidden');
+        
+        let alignments = [];
+        focusAreas.forEach(area => {
+            const label = area.parentElement.querySelector('span').textContent;
+            alignments.push(`<div class="bg-white p-3 rounded border-l-4 border-blue-500">
+                <strong>${label}</strong> programs for <span class="text-blue-600">${population}</span>
+            </div>`);
+        });
+        
+        document.getElementById('previewAlignment').innerHTML = alignments.join('');
+    }
+}
+
+// Save and skip
+function saveAndSkip() {
+    const form = document.getElementById('step2Form');
+    const formData = new FormData(form);
+    formData.append('skip', 'true');
+    
+    fetch('{{ url_for("onboarding.save_step2") }}', {
+        method: 'POST',
+        body: formData
+    }).then(() => {
+        window.location.href = '{{ url_for("dashboard.index") }}';
+    });
+}
+
+// Initialize character counter
+document.addEventListener('DOMContentLoaded', () => {
+    const mission = document.getElementById('mission_statement');
+    if (mission.value) {
+        updateCharCount('mission_statement', 500);
+    }
+    checkFocusLimit(null);
+});
+</script>
+{% endblock %}

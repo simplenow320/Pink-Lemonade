@@ -272,6 +272,23 @@ class Organization(db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     created_by_user_id = db.Column(db.Integer, db.ForeignKey("users.id"))
+    user_id = db.Column(db.Integer, db.ForeignKey("users.id"))  # Owner of the organization
+    
+    # Compatibility fields for onboarding
+    type = db.Column(db.String(50))  # Alias for org_type
+    city = db.Column(db.String(100))  # Alias for primary_city  
+    state = db.Column(db.String(50))  # Alias for primary_state
+    year_established = db.Column(db.Integer)  # Alias for year_founded
+    mission_statement = db.Column(db.Text)  # Alias for mission
+    focus_areas = db.Column(db.JSON)  # Alias for primary_focus_areas
+    target_population = db.Column(db.Text)  # Simplified demographics
+    geographic_scope = db.Column(db.String(50))  # Alias for service_area_type
+    key_programs = db.Column(db.Text)  # Alias for programs_services
+    annual_budget = db.Column(db.String(50))  # Alias for annual_budget_range
+    staff_count = db.Column(db.Integer)  # Numeric version of staff_size
+    board_members = db.Column(db.Integer)  # Alias for board_size
+    previous_grants = db.Column(db.Text)  # Text description of grant history
+    grant_experience = db.Column(db.Text)  # Experience level with grants
     
     def calculate_completeness(self):
         """Calculate profile completion percentage"""
