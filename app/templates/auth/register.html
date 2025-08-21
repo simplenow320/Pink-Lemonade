@@ -30,9 +30,9 @@
             <form method="POST" action="{{ url_for('auth.register') }}">
                 <div class="space-y-5">
                     <!-- Name Fields Row -->
-                    <div class="flex gap-4">
+                    <div style="display: flex; gap: 1rem;">
                         <!-- First Name -->
-                        <div class="flex-1">
+                        <div style="flex: 1;">
                             <label for="first_name" class="block text-sm text-gray-800 mb-1.5">
                                 First Name <span class="text-red-500">*</span>
                             </label>
@@ -46,7 +46,7 @@
                         </div>
                         
                         <!-- Last Name -->
-                        <div class="flex-1">
+                        <div style="flex: 1;">
                             <label for="last_name" class="block text-sm text-gray-800 mb-1.5">
                                 Last Name
                             </label>
