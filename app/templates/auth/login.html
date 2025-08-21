@@ -3,17 +3,17 @@
 {% block title %}Login - Pink Lemonade{% endblock %}
 
 {% block body_content %}
-<div class="min-h-screen bg-gradient-to-br from-pink-50 via-white to-pink-50 flex items-center justify-center px-4 py-12">
+<div class="min-h-screen bg-white flex items-center justify-center px-4 py-12">
     <div class="max-w-md w-full">
         <!-- Logo/Header -->
         <div class="text-center mb-8">
-            <h1 class="text-4xl font-bold text-gray-900 mb-2">Pink Lemonade</h1>
-            <p class="text-gray-600">AI-Powered Grant Discovery Platform</p>
+            <h1 class="text-5xl font-serif font-bold text-gray-900 mb-3">Pink Lemonade</h1>
+            <p class="text-lg text-gray-700">AI-Powered Grant Discovery Platform</p>
         </div>
 
         <!-- Login Card -->
-        <div class="bg-white rounded-2xl shadow-xl p-8">
-            <h2 class="text-2xl font-bold text-gray-900 mb-6">Welcome Back</h2>
+        <div class="bg-white p-8">
+            <h2 class="text-3xl font-bold text-gray-900 mb-6">Welcome Back</h2>
             
             <!-- Flash Messages -->
             {% with messages = get_flashed_messages(with_categories=true) %}
@@ -30,13 +30,13 @@
                 <div class="space-y-4">
                     <!-- Email -->
                     <div>
-                        <label for="email" class="block text-sm font-medium text-gray-700 mb-1">
+                        <label for="email" class="block text-sm font-normal text-gray-800 mb-2">
                             Email Address
                         </label>
                         <input type="email" 
                                id="email"
                                name="email" 
-                               class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-pink-500"
+                               class="w-full px-4 py-2.5 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900"
                                placeholder="you@organization.org"
                                required
                                autofocus>
@@ -44,13 +44,13 @@
                     
                     <!-- Password -->
                     <div>
-                        <label for="password" class="block text-sm font-medium text-gray-700 mb-1">
+                        <label for="password" class="block text-sm font-normal text-gray-800 mb-2">
                             Password
                         </label>
                         <input type="password" 
                                id="password"
                                name="password" 
-                               class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-pink-500"
+                               class="w-full px-4 py-2.5 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900"
                                placeholder="Enter your password"
                                required>
                     </div>
@@ -58,10 +58,10 @@
                     <!-- Remember Me & Forgot Password -->
                     <div class="flex items-center justify-between">
                         <label class="flex items-center">
-                            <input type="checkbox" name="remember" class="h-4 w-4 text-pink-600 focus:ring-pink-500 border-gray-300 rounded">
+                            <input type="checkbox" name="remember" class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
                             <span class="ml-2 text-sm text-gray-700">Remember me</span>
                         </label>
-                        <a href="#" class="text-sm text-pink-600 hover:text-pink-700">
+                        <a href="#" class="text-sm text-blue-600 hover:text-blue-700 underline">
                             Forgot password?
                         </a>
                     </div>
@@ -69,16 +69,16 @@
                 
                 <!-- Submit Button -->
                 <button type="submit" 
-                        class="w-full mt-6 px-6 py-3 bg-pink-500 text-white font-semibold rounded-lg hover:bg-pink-600 transition-all transform hover:scale-105 shadow-lg">
+                        class="w-full mt-6 px-6 py-3 bg-blue-600 text-white font-medium rounded-md hover:bg-blue-700 transition-colors">
                     Sign In
                 </button>
             </form>
             
             <!-- Register Link -->
             <div class="mt-6 text-center">
-                <p class="text-gray-600">
+                <p class="text-gray-700">
                     Don't have an account? 
-                    <a href="{{ url_for('auth.register') }}" class="text-pink-600 hover:text-pink-700 font-semibold">
+                    <a href="{{ url_for('auth.register') }}" class="text-blue-600 hover:text-blue-700 underline">
                         Sign up free
                     </a>
                 </p>
@@ -86,7 +86,7 @@
         </div>
         
         <!-- Benefits Reminder -->
-        <div class="mt-8 text-center text-gray-600">
+        <div class="mt-8 text-center text-gray-700">
             <p class="text-sm">Access to 28.9 million grants • AI-powered matching • Smart application tools</p>
         </div>
     </div>
