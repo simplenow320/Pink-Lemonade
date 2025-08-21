@@ -6,14 +6,18 @@
     <title>{% block title %}Pink Lemonade{% endblock %}</title>
     <link rel="icon" href="{{ url_for('static', filename='logo.png') }}" type="image/png">
 
+    <!-- Tailwind CSS for modern styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/brand.css') }}">
     {% block extra_css %}{% endblock %}
   </head>
   <body>
+    {% block body_content %}
     <div class="container">
       {% include 'partials/_nav.html' %}
       <main>{% block content %}{% endblock %}</main>
       <footer class="small">© {{ current_year }} • Pink Lemonade • Brand locked to matte pink white grey black.</footer>
     </div>
+    {% endblock %}
   </body>
 </html>

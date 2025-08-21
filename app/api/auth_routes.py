@@ -14,7 +14,7 @@ auth_bp = Blueprint('auth', __name__, url_prefix='/auth')
 def login():
     """Handle user login"""
     if request.method == 'GET':
-        return render_template('auth/login.html')
+        return render_template('auth/login_standalone.html')
     
     email = request.form.get('email', '').lower().strip()
     password = request.form.get('password', '')
@@ -22,14 +22,14 @@ def login():
     # Validate input
     if not email or not password:
         flash('Please enter both email and password.', 'error')
-        return render_template('auth/login.html')
+        return render_template('auth/login_standalone.html')
     
     # Find user
     user = User.query.filter_by(email=email).first()
     
     if not user or not user.check_password(password):
         flash('Invalid email or password. Please try again.', 'error')
-        return render_template('auth/login.html')
+        return render_template('auth/login_standalone.html')
     
     # Log user in
     AuthManager.login_user(user)
@@ -48,7 +48,7 @@ def login():
 def register():
     """Handle user registration"""
     if request.method == 'GET':
-        return render_template('auth/register.html')
+        return render_template('auth/register_standalone.html')
     
     # Get form data
     email = request.form.get('email', '').lower().strip()
@@ -79,7 +79,7 @@ def register():
     if errors:
         for error in errors:
             flash(error, 'error')
-        return render_template('auth/register.html', 
+        return render_template('auth/register_standalone.html', 
                              email=email, 
                              first_name=first_name,
                              last_name=last_name,
