@@ -9,11 +9,27 @@
 </head>
 <body>
 
-<!-- NO NAVIGATION - Landing page only -->
+<!-- Header with Auth Buttons -->
+<header style="position:fixed;top:0;left:0;right:0;background:rgba(250,250,250,0.95);backdrop-filter:blur(10px);z-index:100;padding:20px 40px;border-bottom:1px solid #E8E8E8">
+  <div style="max-width:1400px;margin:0 auto;display:flex;justify-content:space-between;align-items:center">
+    <!-- Logo/Brand -->
+    <div style="font-size:1.4rem;font-weight:500;color:#B8899A">Pink Lemonade</div>
+    
+    <!-- Auth Buttons -->
+    <div style="display:flex;gap:16px;align-items:center">
+      <a href="/auth/login" style="color:#6B6B6B;text-decoration:none;font-weight:500;padding:8px 16px;transition:color 0.3s ease">
+        Sign In
+      </a>
+      <a href="/auth/register" style="background:#B8899A;color:white;padding:10px 24px;border-radius:20px;text-decoration:none;font-weight:500;transition:all 0.3s ease;box-shadow:0 2px 8px rgba(184,137,154,0.15)">
+        Get Started Free
+      </a>
+    </div>
+  </div>
+</header>
 
 <main>
   <!-- Hero Section -->
-  <section style="min-height:100vh;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;padding:80px 20px;background:#FAFAFA">
+  <section style="min-height:100vh;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;padding:120px 20px 80px;background:#FAFAFA">
     
     <!-- Pink Lemonade Logo - 2x smaller, TOP CENTERED -->
     <div style="margin-bottom:20px">
@@ -32,10 +48,15 @@
       Pink Lemonade combines federal databases, foundation sources, and AI intelligence to help you discover, match, and win more grants—all while you focus on your mission.
     </p>
 
-    <!-- CTA Button -->
-    <a href="/opportunities" style="background:#B8899A;color:white;padding:16px 32px;border-radius:24px;text-decoration:none;font-size:1.05rem;font-weight:500;box-shadow:0 2px 12px rgba(184,137,154,0.15);transition:all 0.3s ease;display:inline-block">
-      Start Finding Grants
-    </a>
+    <!-- CTA Buttons -->
+    <div style="display:flex;gap:20px;justify-content:center;flex-wrap:wrap">
+      <a href="/auth/register" style="background:#B8899A;color:white;padding:16px 32px;border-radius:24px;text-decoration:none;font-size:1.05rem;font-weight:500;box-shadow:0 2px 12px rgba(184,137,154,0.15);transition:all 0.3s ease;display:inline-block">
+        Start Finding Grants
+      </a>
+      <a href="/auth/login" style="background:transparent;color:#B8899A;padding:16px 32px;border-radius:24px;text-decoration:none;font-size:1.05rem;font-weight:500;border:2px solid #B8899A;transition:all 0.3s ease;display:inline-block">
+        Sign In
+      </a>
+    </div>
 
   </section>
 
