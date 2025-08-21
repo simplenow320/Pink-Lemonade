@@ -41,36 +41,86 @@ def search_opportunities():
         
         all_opportunities = []
         
-        # Get opportunities based on filters
+        # First, get grants from our database
+        try:
+            from app.models import Grant
+            query = Grant.query
+            
+            # Apply filters to database grants
+            if search_query:
+                query = query.filter(
+                    db.or_(
+                        Grant.title.ilike(f'%{search_query}%'),
+                        Grant.eligibility.ilike(f'%{search_query}%'),
+                        Grant.funder.ilike(f'%{search_query}%')
+                    )
+                )
+            
+            if location:
+                # Handle location filter for database grants
+                if location == 'michigan':
+                    query = query.filter(
+                        db.or_(
+                            Grant.geography.ilike('%michigan%'),
+                            Grant.geography.ilike('%detroit%'),
+                            Grant.geography.ilike('%MI%')
+                        )
+                    )
+                elif location == 'national':
+                    query = query.filter(
+                        db.or_(
+                            Grant.geography.ilike('%national%'),
+                            Grant.geography.ilike('%nationwide%'),
+                            Grant.geography.ilike('%USA%')
+                        )
+                    )
+            
+            if focus_area:
+                # Filter by focus area in eligibility text since focus_areas column doesn't exist
+                query = query.filter(Grant.eligibility.ilike(f'%{focus_area}%'))
+            
+            # Get database grants
+            db_grants = query.limit(50).all()
+            
+            for grant in db_grants:
+                opportunity = {
+                    'source': 'database',
+                    'source_type': 'Grant Database',
+                    'source_name': 'Pink Lemonade Database',
+                    'id': grant.id,
+                    'title': grant.title or 'Grant Opportunity',
+                    'funder': grant.funder or 'Foundation',
+                    'description': grant.eligibility or '',
+                    'deadline': grant.deadline.isoformat() if grant.deadline else None,
+                    'amount_min': grant.amount_min,
+                    'amount_max': grant.amount_max,
+                    'geography': grant.geography,
+                    'focus_areas': '',  # Not in model
+                    'status': grant.status or 'available'
+                }
+                all_opportunities.append(opportunity)
+            
+            logger.info(f"Found {len(db_grants)} grants from database")
+            
+        except Exception as e:
+            logger.error(f"Error fetching database grants: {e}")
+        
+        # Try to get federal grants if available
         if not source or source in ['federal_grants', 'grants.gov', 'federal']:
             try:
-                # Get federal grants
                 from app.services.grants_gov_client import get_grants_gov_client
                 client = get_grants_gov_client()
                 
                 search_params = {
                     "opportunity_status": "open",
-                    "page_size": 25
+                    "page_size": 10
                 }
                 
-                # Add search keywords
                 if search_query:
                     search_params["keywords"] = [search_query]
-                elif focus_area:
-                    # Map focus areas to keywords
-                    focus_keywords = {
-                        'education': ['education', 'school', 'learning'],
-                        'health': ['health', 'medical', 'wellness'],
-                        'arts': ['arts', 'culture', 'creative'],
-                        'environment': ['environment', 'climate', 'conservation'],
-                        'social_services': ['social', 'community', 'services'],
-                        'youth': ['youth', 'children', 'adolescent']
-                    }
-                    search_params["keywords"] = focus_keywords.get(focus_area, [focus_area])
                 
                 federal_grants = client.search_opportunities(search_params)
                 
-                # Add source info
                 for grant in federal_grants:
                     grant['source_type'] = 'Federal'
                     grant['source_name'] = 'Grants.gov'
@@ -78,7 +128,7 @@ def search_opportunities():
                 all_opportunities.extend(federal_grants)
                 
             except Exception as e:
-                logger.error(f"Error fetching federal grants: {e}")
+                logger.warning(f"Could not fetch federal grants: {e}")
         
         # Get foundation grants if requested
         if not source or source in ['foundation_news', 'foundations']:
