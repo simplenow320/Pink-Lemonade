@@ -93,9 +93,17 @@ def register():
         )
         
         if result['success']:
+            # Automatically log in the user after registration
+            session['user_id'] = result['user']['id']
+            session['user_email'] = result['user']['email']
+            session.permanent = False  # Don't remember by default on registration
+            
+            logger.info(f"User registered and logged in: {email}")
+            
             return jsonify({
-                'message': 'Registration successful! Check your email to verify your account.',
-                'user': result['user']
+                'message': 'Registration successful! Starting your onboarding journey...',
+                'user': result['user'],
+                'redirect': '/onboarding/step1'
             }), 201
         else:
             return jsonify({'error': result['error']}), 400

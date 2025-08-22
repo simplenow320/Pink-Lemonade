@@ -341,12 +341,12 @@
                 const data = await response.json();
                 
                 if (response.ok) {
-                    successDiv.textContent = 'Registration successful! Starting your onboarding journey...';
+                    successDiv.textContent = data.message || 'Registration successful! Starting your onboarding journey...';
                     successDiv.style.display = 'block';
                     
-                    // Redirect to onboarding after success
+                    // Redirect to the URL provided by the backend (onboarding)
                     setTimeout(() => {
-                        window.location.href = '/onboarding/step1';
+                        window.location.href = data.redirect || '/onboarding/step1';
                     }, 1500);
                 } else {
                     errorDiv.textContent = data.error || 'Registration failed. Please try again.';
