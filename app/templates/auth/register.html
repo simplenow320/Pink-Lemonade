@@ -13,7 +13,7 @@
         
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #ffc0cb 0%, #ffb6c1 100%);
             min-height: 100vh;
             display: flex;
             align-items: center;
@@ -24,7 +24,7 @@
         .container {
             background: white;
             border-radius: 20px;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            box-shadow: 0 20px 60px rgba(255, 192, 203, 0.3);
             width: 100%;
             max-width: 500px;
             padding: 40px;
@@ -38,7 +38,7 @@
         .logo {
             width: 60px;
             height: 60px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #ff69b4 0%, #ffc0cb 100%);
             border-radius: 15px;
             display: inline-flex;
             align-items: center;
@@ -87,28 +87,28 @@
         input[type="password"] {
             width: 100%;
             padding: 12px 16px;
-            border: 2px solid #e2e8f0;
+            border: 2px solid #ffd0dd;
             border-radius: 10px;
             font-size: 16px;
             transition: all 0.3s ease;
-            background: #f7fafc;
+            background: #fff5f7;
         }
         
         input:focus {
             outline: none;
-            border-color: #4299e1;
+            border-color: #ff69b4;
             background: white;
-            box-shadow: 0 0 0 3px rgba(66, 153, 225, 0.1);
+            box-shadow: 0 0 0 3px rgba(255, 105, 180, 0.1);
         }
         
         input::placeholder {
-            color: #a0aec0;
+            color: #ffc0cb;
         }
         
         .password-requirements {
             margin-top: 8px;
             padding: 12px;
-            background: #f7fafc;
+            background: #fff5f7;
             border-radius: 8px;
             font-size: 13px;
             color: #718096;
@@ -128,13 +128,17 @@
         .password-requirements li:before {
             content: "✓";
             margin-right: 8px;
-            color: #cbd5e0;
+            color: #ffc0cb;
+        }
+        
+        .password-requirements li.valid:before {
+            color: #ff69b4;
         }
         
         .submit-btn {
             width: 100%;
             padding: 14px;
-            background: #4299e1;
+            background: #ff69b4;
             color: white;
             border: none;
             border-radius: 10px;
@@ -146,9 +150,9 @@
         }
         
         .submit-btn:hover {
-            background: #3182ce;
+            background: #ff1493;
             transform: translateY(-1px);
-            box-shadow: 0 10px 20px rgba(66, 153, 225, 0.3);
+            box-shadow: 0 10px 20px rgba(255, 105, 180, 0.3);
         }
         
         .submit-btn:active {
@@ -156,7 +160,7 @@
         }
         
         .error-message {
-            background: #fed7d7;
+            background: #fed7e2;
             color: #c53030;
             padding: 12px;
             border-radius: 8px;
@@ -166,8 +170,8 @@
         }
         
         .success-message {
-            background: #c6f6d5;
-            color: #22543d;
+            background: #ffe0ec;
+            color: #831843;
             padding: 12px;
             border-radius: 8px;
             margin-bottom: 20px;
@@ -188,7 +192,7 @@
             left: 0;
             right: 0;
             height: 1px;
-            background: #e2e8f0;
+            background: #ffd0dd;
         }
         
         .divider span {
@@ -206,7 +210,7 @@
         }
         
         .login-link a {
-            color: #4299e1;
+            color: #ff69b4;
             text-decoration: none;
             font-weight: 600;
         }
@@ -274,10 +278,10 @@
                 <input type="password" id="password" name="password" placeholder="Create a strong password" required>
                 <div class="password-requirements">
                     <ul>
-                        <li>At least 8 characters long</li>
-                        <li>One uppercase letter</li>
-                        <li>One lowercase letter</li>
-                        <li>One number</li>
+                        <li id="req-length">At least 8 characters long</li>
+                        <li id="req-upper">One uppercase letter</li>
+                        <li id="req-lower">One lowercase letter</li>
+                        <li id="req-number">One number</li>
                     </ul>
                 </div>
             </div>
@@ -324,11 +328,13 @@
                 const data = await response.json();
                 
                 if (response.ok) {
-                    successDiv.textContent = data.message || 'Registration successful! Redirecting to login...';
+                    successDiv.textContent = 'Registration successful! Starting your onboarding journey...';
                     successDiv.style.display = 'block';
+                    
+                    // Store user info and redirect to onboarding
                     setTimeout(() => {
-                        window.location.href = '/login';
-                    }, 2000);
+                        window.location.href = '/onboarding/step1';
+                    }, 1500);
                 } else {
                     errorDiv.textContent = data.error || 'Registration failed. Please try again.';
                     errorDiv.style.display = 'block';
@@ -342,25 +348,44 @@
         // Real-time password validation
         document.getElementById('password').addEventListener('input', function(e) {
             const password = e.target.value;
-            const requirements = document.querySelectorAll('.password-requirements li');
             
-            // Check each requirement
-            requirements[0].style.color = password.length >= 8 ? '#48bb78' : '#718096';
-            requirements[1].style.color = /[A-Z]/.test(password) ? '#48bb78' : '#718096';
-            requirements[2].style.color = /[a-z]/.test(password) ? '#48bb78' : '#718096';
-            requirements[3].style.color = /[0-9]/.test(password) ? '#48bb78' : '#718096';
+            // Check each requirement and update visual feedback
+            const reqLength = document.getElementById('req-length');
+            const reqUpper = document.getElementById('req-upper');
+            const reqLower = document.getElementById('req-lower');
+            const reqNumber = document.getElementById('req-number');
             
-            // Update checkmarks
-            requirements.forEach((req, index) => {
-                const hasRequirement = [
-                    password.length >= 8,
-                    /[A-Z]/.test(password),
-                    /[a-z]/.test(password),
-                    /[0-9]/.test(password)
-                ][index];
-                
-                req.style.color = hasRequirement ? '#48bb78' : '#718096';
-            });
+            if (password.length >= 8) {
+                reqLength.classList.add('valid');
+                reqLength.style.color = '#ff69b4';
+            } else {
+                reqLength.classList.remove('valid');
+                reqLength.style.color = '#718096';
+            }
+            
+            if (/[A-Z]/.test(password)) {
+                reqUpper.classList.add('valid');
+                reqUpper.style.color = '#ff69b4';
+            } else {
+                reqUpper.classList.remove('valid');
+                reqUpper.style.color = '#718096';
+            }
+            
+            if (/[a-z]/.test(password)) {
+                reqLower.classList.add('valid');
+                reqLower.style.color = '#ff69b4';
+            } else {
+                reqLower.classList.remove('valid');
+                reqLower.style.color = '#718096';
+            }
+            
+            if (/[0-9]/.test(password)) {
+                reqNumber.classList.add('valid');
+                reqNumber.style.color = '#ff69b4';
+            } else {
+                reqNumber.classList.remove('valid');
+                reqNumber.style.color = '#718096';
+            }
         });
     </script>
 </body>
