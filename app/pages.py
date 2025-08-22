@@ -22,6 +22,11 @@ def home():
 def register():
     return render_template("auth/register.html")
 
+@pages.get("/test-register")
+def test_register():
+    """Test route to verify template changes are working"""
+    return render_template("auth/test_register.html")
+
 @pages.get("/login")
 def login():
     return render_template("auth/login.html")
