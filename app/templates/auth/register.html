@@ -3,7 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Create Account - Pink Lemonade</title>
+    <title>Create Account · Pink Lemonade</title>
+    <link rel="icon" href="/static/logo.png" type="image/png">
     <style>
         * {
             margin: 0;
@@ -12,8 +13,8 @@
         }
         
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
-            background: linear-gradient(135deg, #ffc0cb 0%, #ffb6c1 100%);
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: #FAFAFA;
             min-height: 100vh;
             display: flex;
             align-items: center;
@@ -22,41 +23,43 @@
         }
         
         .container {
-            background: white;
-            border-radius: 20px;
-            box-shadow: 0 20px 60px rgba(255, 192, 203, 0.3);
             width: 100%;
             max-width: 500px;
-            padding: 40px;
         }
         
         .logo-section {
             text-align: center;
-            margin-bottom: 30px;
+            margin-bottom: 40px;
         }
         
-        .logo {
-            width: 60px;
-            height: 60px;
-            background: linear-gradient(135deg, #ff69b4 0%, #ffc0cb 100%);
-            border-radius: 15px;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 30px;
-            margin-bottom: 15px;
+        .logo-section img {
+            height: 120px;
+            width: auto;
+            margin-bottom: 24px;
+        }
+        
+        .form-card {
+            background: white;
+            border: 1px solid #E8E8E8;
+            border-radius: 16px;
+            padding: 40px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.02);
         }
         
         h1 {
-            color: #1a202c;
-            font-size: 28px;
-            font-weight: 700;
+            font-size: 2rem;
+            font-weight: 500;
+            color: #2A2A2A;
             margin-bottom: 8px;
+            text-align: center;
+            letter-spacing: -0.01em;
         }
         
         .subtitle {
-            color: #718096;
-            font-size: 16px;
+            color: #6B6B6B;
+            text-align: center;
+            margin-bottom: 32px;
+            font-size: 1rem;
         }
         
         .form-group {
@@ -65,7 +68,7 @@
         
         .form-row {
             display: flex;
-            gap: 15px;
+            gap: 16px;
             margin-bottom: 20px;
         }
         
@@ -76,9 +79,9 @@
         
         label {
             display: block;
-            color: #4a5568;
-            font-size: 14px;
+            font-size: 0.9rem;
             font-weight: 500;
+            color: #4A4A4A;
             margin-bottom: 8px;
         }
         
@@ -87,31 +90,30 @@
         input[type="password"] {
             width: 100%;
             padding: 12px 16px;
-            border: 2px solid #ffd0dd;
-            border-radius: 10px;
-            font-size: 16px;
-            transition: all 0.3s ease;
-            background: #fff5f7;
+            border: 1px solid #E8E8E8;
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: all 0.2s ease;
+            background: #FAFAFA;
         }
         
         input:focus {
             outline: none;
-            border-color: #ff69b4;
+            border-color: #B8899A;
             background: white;
-            box-shadow: 0 0 0 3px rgba(255, 105, 180, 0.1);
         }
         
         input::placeholder {
-            color: #ffc0cb;
+            color: #9B9B9B;
         }
         
         .password-requirements {
             margin-top: 8px;
             padding: 12px;
-            background: #fff5f7;
+            background: #FAFAFA;
             border-radius: 8px;
-            font-size: 13px;
-            color: #718096;
+            font-size: 0.85rem;
+            color: #6B6B6B;
         }
         
         .password-requirements ul {
@@ -120,39 +122,42 @@
         }
         
         .password-requirements li {
-            padding: 2px 0;
+            padding: 3px 0;
             display: flex;
             align-items: center;
         }
         
         .password-requirements li:before {
-            content: "✓";
+            content: "○";
             margin-right: 8px;
-            color: #ffc0cb;
+            color: #B8899A;
+            font-size: 12px;
         }
         
         .password-requirements li.valid:before {
-            color: #ff69b4;
+            content: "●";
+            color: #B8899A;
         }
         
         .submit-btn {
             width: 100%;
-            padding: 14px;
-            background: #ff69b4;
+            padding: 14px 24px;
+            background: #B8899A;
             color: white;
             border: none;
-            border-radius: 10px;
-            font-size: 16px;
-            font-weight: 600;
+            border-radius: 24px;
+            font-size: 1rem;
+            font-weight: 500;
             cursor: pointer;
             transition: all 0.3s ease;
-            margin-top: 20px;
+            box-shadow: 0 2px 12px rgba(184, 137, 154, 0.15);
+            margin-top: 24px;
         }
         
         .submit-btn:hover {
-            background: #ff1493;
+            background: #9A6D7E;
             transform: translateY(-1px);
-            box-shadow: 0 10px 20px rgba(255, 105, 180, 0.3);
+            box-shadow: 0 4px 16px rgba(184, 137, 154, 0.25);
         }
         
         .submit-btn:active {
@@ -160,28 +165,30 @@
         }
         
         .error-message {
-            background: #fed7e2;
-            color: #c53030;
-            padding: 12px;
+            background: #FEF2F2;
+            color: #991B1B;
+            border: 1px solid #FEE2E2;
+            padding: 12px 16px;
             border-radius: 8px;
             margin-bottom: 20px;
-            font-size: 14px;
+            font-size: 0.9rem;
             display: none;
         }
         
         .success-message {
-            background: #ffe0ec;
-            color: #831843;
-            padding: 12px;
+            background: #F0F7FF;
+            color: #1E40AF;
+            border: 1px solid #DBEAFE;
+            padding: 12px 16px;
             border-radius: 8px;
             margin-bottom: 20px;
-            font-size: 14px;
+            font-size: 0.9rem;
             display: none;
         }
         
         .divider {
             text-align: center;
-            margin: 30px 0 20px;
+            margin: 28px 0 20px;
             position: relative;
         }
         
@@ -192,35 +199,36 @@
             left: 0;
             right: 0;
             height: 1px;
-            background: #ffd0dd;
+            background: #E8E8E8;
         }
         
         .divider span {
             background: white;
-            padding: 0 15px;
-            color: #a0aec0;
-            font-size: 14px;
+            padding: 0 16px;
+            color: #9B9B9B;
+            font-size: 0.9rem;
             position: relative;
         }
         
         .login-link {
             text-align: center;
-            color: #718096;
-            font-size: 14px;
+            color: #6B6B6B;
+            font-size: 0.95rem;
         }
         
         .login-link a {
-            color: #ff69b4;
+            color: #B8899A;
             text-decoration: none;
-            font-weight: 600;
+            font-weight: 500;
+            transition: opacity 0.2s ease;
         }
         
         .login-link a:hover {
-            text-decoration: underline;
+            opacity: 0.8;
         }
         
         @media (max-width: 480px) {
-            .container {
+            .form-card {
                 padding: 30px 20px;
             }
             
@@ -237,64 +245,69 @@
 </head>
 <body>
     <div class="container">
+        <!-- Logo -->
         <div class="logo-section">
-            <div class="logo">🍋</div>
-            <h1>Create Your Account</h1>
-            <p class="subtitle">Start discovering grants in minutes</p>
+            <img src="/static/logo-no-bg.png?v=3" alt="Pink Lemonade" />
         </div>
-        
-        <div class="error-message" id="errorMessage"></div>
-        <div class="success-message" id="successMessage"></div>
-        
-        <form id="registrationForm">
-            <div class="form-row">
+
+        <!-- Registration Card -->
+        <div class="form-card">
+            <h1>Create your account</h1>
+            <p class="subtitle">Join thousands finding their perfect grants</p>
+            
+            <div class="error-message" id="errorMessage"></div>
+            <div class="success-message" id="successMessage"></div>
+            
+            <form id="registrationForm">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="firstName">First Name</label>
+                        <input type="text" id="firstName" name="first_name" placeholder="Jane" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="lastName">Last Name</label>
+                        <input type="text" id="lastName" name="last_name" placeholder="Doe" required>
+                    </div>
+                </div>
+                
                 <div class="form-group">
-                    <label for="firstName">First Name</label>
-                    <input type="text" id="firstName" name="first_name" placeholder="John" required>
+                    <label for="email">Email</label>
+                    <input type="email" id="email" name="email" placeholder="you@organization.org" required>
                 </div>
+                
                 <div class="form-group">
-                    <label for="lastName">Last Name</label>
-                    <input type="text" id="lastName" name="last_name" placeholder="Doe" required>
+                    <label for="orgName">Organization Name</label>
+                    <input type="text" id="orgName" name="org_name" placeholder="Your nonprofit name" required>
                 </div>
-            </div>
-            
-            <div class="form-group">
-                <label for="email">Email Address</label>
-                <input type="email" id="email" name="email" placeholder="john@nonprofit.org" required>
-            </div>
-            
-            <div class="form-group">
-                <label for="orgName">Organization Name</label>
-                <input type="text" id="orgName" name="org_name" placeholder="Community Foundation" required>
-            </div>
-            
-            <div class="form-group">
-                <label for="jobTitle">Job Title (Optional)</label>
-                <input type="text" id="jobTitle" name="job_title" placeholder="Grant Manager">
-            </div>
-            
-            <div class="form-group">
-                <label for="password">Password</label>
-                <input type="password" id="password" name="password" placeholder="Create a strong password" required>
-                <div class="password-requirements">
-                    <ul>
-                        <li id="req-length">At least 8 characters long</li>
-                        <li id="req-upper">One uppercase letter</li>
-                        <li id="req-lower">One lowercase letter</li>
-                        <li id="req-number">One number</li>
-                    </ul>
+                
+                <div class="form-group">
+                    <label for="jobTitle">Job Title (Optional)</label>
+                    <input type="text" id="jobTitle" name="job_title" placeholder="Grant Manager">
                 </div>
+                
+                <div class="form-group">
+                    <label for="password">Password</label>
+                    <input type="password" id="password" name="password" placeholder="At least 8 characters" required>
+                    <div class="password-requirements">
+                        <ul>
+                            <li id="req-length">At least 8 characters</li>
+                            <li id="req-upper">One uppercase letter</li>
+                            <li id="req-lower">One lowercase letter</li>
+                            <li id="req-number">One number</li>
+                        </ul>
+                    </div>
+                </div>
+                
+                <button type="submit" class="submit-btn">Create Account</button>
+            </form>
+            
+            <div class="divider">
+                <span>or</span>
             </div>
             
-            <button type="submit" class="submit-btn">Create Account</button>
-        </form>
-        
-        <div class="divider">
-            <span>or</span>
-        </div>
-        
-        <div class="login-link">
-            Already have an account? <a href="/login">Sign in</a>
+            <div class="login-link">
+                Already have an account? <a href="/login">Sign in</a>
+            </div>
         </div>
     </div>
     
@@ -308,11 +321,11 @@
             successDiv.style.display = 'none';
             
             const formData = {
-                first_name: document.getElementById('firstName').value,
-                last_name: document.getElementById('lastName').value,
-                email: document.getElementById('email').value,
-                org_name: document.getElementById('orgName').value,
-                job_title: document.getElementById('jobTitle').value,
+                first_name: document.getElementById('firstName').value.trim(),
+                last_name: document.getElementById('lastName').value.trim(),
+                email: document.getElementById('email').value.trim(),
+                org_name: document.getElementById('orgName').value.trim(),
+                job_title: document.getElementById('jobTitle').value.trim(),
                 password: document.getElementById('password').value
             };
             
@@ -331,7 +344,7 @@
                     successDiv.textContent = 'Registration successful! Starting your onboarding journey...';
                     successDiv.style.display = 'block';
                     
-                    // Store user info and redirect to onboarding
+                    // Redirect to onboarding after success
                     setTimeout(() => {
                         window.location.href = '/onboarding/step1';
                     }, 1500);
@@ -349,42 +362,34 @@
         document.getElementById('password').addEventListener('input', function(e) {
             const password = e.target.value;
             
-            // Check each requirement and update visual feedback
             const reqLength = document.getElementById('req-length');
             const reqUpper = document.getElementById('req-upper');
             const reqLower = document.getElementById('req-lower');
             const reqNumber = document.getElementById('req-number');
             
+            // Check each requirement
             if (password.length >= 8) {
                 reqLength.classList.add('valid');
-                reqLength.style.color = '#ff69b4';
             } else {
                 reqLength.classList.remove('valid');
-                reqLength.style.color = '#718096';
             }
             
             if (/[A-Z]/.test(password)) {
                 reqUpper.classList.add('valid');
-                reqUpper.style.color = '#ff69b4';
             } else {
                 reqUpper.classList.remove('valid');
-                reqUpper.style.color = '#718096';
             }
             
             if (/[a-z]/.test(password)) {
                 reqLower.classList.add('valid');
-                reqLower.style.color = '#ff69b4';
             } else {
                 reqLower.classList.remove('valid');
-                reqLower.style.color = '#718096';
             }
             
             if (/[0-9]/.test(password)) {
                 reqNumber.classList.add('valid');
-                reqNumber.style.color = '#ff69b4';
             } else {
                 reqNumber.classList.remove('valid');
-                reqNumber.style.color = '#718096';
             }
         });
     </script>
