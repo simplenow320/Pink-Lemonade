@@ -1,270 +1,402 @@
 {% extends "base.html" %}
-
-{% block title %}Organization Profile - Capacity & History{% endblock %}
-
+{% block title %}Organization Setup - Organizational Capacity{% endblock %}
 {% block content %}
-<div class="min-h-screen bg-gradient-to-br from-pink-50 to-white">
-    <div class="max-w-4xl mx-auto px-4 py-8">
-        <!-- Progress Bar -->
-        <div class="mb-8">
-            <div class="flex items-center justify-between mb-4">
-                <h2 class="text-lg font-semibold text-gray-700">Final Step!</h2>
-                <span class="text-sm text-gray-600">Step 3 of 3 • ~2 minutes</span>
-            </div>
-            <div class="relative">
-                <div class="overflow-hidden h-3 mb-4 text-xs flex rounded-full bg-gray-200">
-                    <div style="width:100%" class="shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center bg-pink-500 transition-all duration-500"></div>
-                </div>
-                <div class="flex justify-between text-xs text-gray-600">
-                    <span class="text-green-600">✓ Basic Info</span>
-                    <span class="text-green-600">✓ Mission & Programs</span>
-                    <span class="font-semibold text-pink-600">Capacity & History</span>
-                </div>
-            </div>
-        </div>
+<style>
+.onboarding-container {
+  max-width: 800px;
+  margin: 60px auto;
+  padding: 40px;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+}
 
-        <!-- Almost There Message -->
-        <div class="bg-gradient-to-r from-pink-100 to-pink-50 border-l-4 border-pink-500 p-4 mb-6">
-            <div class="flex">
-                <div class="flex-shrink-0">
-                    <svg class="h-5 w-5 text-pink-500" viewBox="0 0 20 20" fill="currentColor">
-                        <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/>
-                    </svg>
-                </div>
-                <div class="ml-3">
-                    <p class="text-sm text-pink-700 font-semibold">
-                        You're almost done! This final step helps match you with grants that fit your organization's capacity.
-                    </p>
-                </div>
-            </div>
-        </div>
+.progress-bar {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 40px;
+  position: relative;
+}
 
-        <!-- Form Card -->
-        <div class="bg-white rounded-2xl shadow-xl p-8">
-            <div class="mb-6">
-                <h1 class="text-2xl font-bold text-gray-900 mb-2">Capacity & Grant History</h1>
-                <p class="text-gray-600">Help us understand your organization's size and experience</p>
-            </div>
+.progress-bar::before {
+  content: '';
+  position: absolute;
+  top: 20px;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: #E0E0E0;
+  z-index: 0;
+}
 
-            <form id="step3Form" method="POST" action="{{ url_for('onboarding.save_step3') }}">
-                <div class="space-y-6">
-                    <!-- Annual Budget -->
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">
-                            Annual Operating Budget <span class="text-red-500">*</span>
-                        </label>
-                        <select name="annual_budget" 
-                                id="annual_budget"
-                                class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-pink-500"
-                                required
-                                onchange="updateGrantSuggestions()">
-                            <option value="">Select your budget range...</option>
-                            <option value="under_50k" {{ 'selected' if org and org.annual_budget == 'under_50k' else '' }}>Under $50,000</option>
-                            <option value="50k_100k" {{ 'selected' if org and org.annual_budget == '50k_100k' else '' }}>$50,000 - $100,000</option>
-                            <option value="100k_250k" {{ 'selected' if org and org.annual_budget == '100k_250k' else '' }}>$100,000 - $250,000</option>
-                            <option value="250k_500k" {{ 'selected' if org and org.annual_budget == '250k_500k' else '' }}>$250,000 - $500,000</option>
-                            <option value="500k_1m" {{ 'selected' if org and org.annual_budget == '500k_1m' else '' }}>$500,000 - $1 Million</option>
-                            <option value="1m_5m" {{ 'selected' if org and org.annual_budget == '1m_5m' else '' }}>$1 Million - $5 Million</option>
-                            <option value="over_5m" {{ 'selected' if org and org.annual_budget == 'over_5m' else '' }}>Over $5 Million</option>
-                        </select>
-                        <p class="mt-1 text-sm text-gray-500">Helps us find grants sized appropriately for your organization</p>
-                    </div>
+.progress-step {
+  position: relative;
+  z-index: 1;
+  text-align: center;
+  flex: 1;
+}
 
-                    <!-- Staff Size -->
-                    <div class="grid md:grid-cols-2 gap-4">
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">
-                                Full-Time Staff <span class="text-red-500">*</span>
-                            </label>
-                            <input type="number" 
-                                   name="staff_count" 
-                                   min="0"
-                                   class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-pink-500"
-                                   placeholder="e.g., 5"
-                                   required
-                                   value="{{ org.staff_count if org else '' }}">
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">
-                                Board Members <span class="text-gray-400">(Optional)</span>
-                            </label>
-                            <input type="number" 
-                                   name="board_members" 
-                                   min="0"
-                                   class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-pink-500"
-                                   placeholder="e.g., 12"
-                                   value="{{ org.board_members if org else '' }}">
-                        </div>
-                    </div>
+.step-circle {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: white;
+  border: 2px solid #E0E0E0;
+  margin: 0 auto 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  color: #999;
+}
 
-                    <!-- Grant Experience -->
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">
-                            Grant Experience Level <span class="text-red-500">*</span>
-                        </label>
-                        <select name="grant_experience" 
-                                id="grant_experience"
-                                class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-pink-500"
-                                required
-                                onchange="showExperienceTips()">
-                            <option value="">Select your experience level...</option>
-                            <option value="new" {{ 'selected' if org and org.grant_experience == 'new' else '' }}>New to Grants (0-1 grants)</option>
-                            <option value="emerging" {{ 'selected' if org and org.grant_experience == 'emerging' else '' }}>Emerging (2-5 grants)</option>
-                            <option value="experienced" {{ 'selected' if org and org.grant_experience == 'experienced' else '' }}>Experienced (6-20 grants)</option>
-                            <option value="advanced" {{ 'selected' if org and org.grant_experience == 'advanced' else '' }}>Advanced (20+ grants)</option>
-                        </select>
-                    </div>
+.step-circle.active {
+  background: #B8899A;
+  border-color: #B8899A;
+  color: white;
+}
 
-                    <!-- Experience Tips -->
-                    <div id="experienceTips" class="hidden bg-blue-50 rounded-lg p-4">
-                        <p class="text-sm text-blue-800" id="tipContent"></p>
-                    </div>
+.step-circle.completed {
+  background: #4CAF50;
+  border-color: #4CAF50;
+  color: white;
+}
 
-                    <!-- Previous Grants -->
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">
-                            Recent Grant Success <span class="text-gray-400">(Optional but valuable)</span>
-                        </label>
-                        <textarea name="previous_grants" 
-                                  rows="3"
-                                  class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-pink-500"
-                                  placeholder="List 1-3 recent grants you've received (funder name and amount)">{{ org.previous_grants if org else '' }}</textarea>
-                        <p class="mt-1 text-sm text-gray-500">Helps identify similar funders who might support you</p>
-                    </div>
-                </div>
+.step-label {
+  font-size: 12px;
+  color: #666;
+}
 
-                <!-- Grant Suggestions Preview -->
-                <div id="grantSuggestions" class="hidden mt-8 p-6 bg-gradient-to-r from-green-50 to-green-100 rounded-lg">
-                    <h3 class="text-lg font-semibold text-gray-800 mb-3">
-                        <span class="text-green-600">💰</span> Perfect Grant Size for You
-                    </h3>
-                    <p class="text-gray-700 mb-3">Based on your budget, we'll prioritize grants in these ranges:</p>
-                    <div id="suggestedRanges" class="space-y-2">
-                        <!-- Dynamically populated -->
-                    </div>
-                    <p class="text-sm text-gray-600 mt-3">Ready to see your personalized matches!</p>
-                </div>
+.onboarding-header {
+  margin-bottom: 32px;
+}
 
-                <!-- Action Buttons -->
-                <div class="flex justify-between items-center mt-8 pt-6 border-t">
-                    <a href="{{ url_for('onboarding.step2') }}" 
-                       class="text-gray-600 hover:text-gray-800 font-medium">
-                        ← Back
-                    </a>
-                    <div class="flex gap-4">
-                        <button type="button" 
-                                onclick="saveAndSkip()"
-                                class="px-6 py-3 bg-gray-200 text-gray-700 font-medium rounded-lg hover:bg-gray-300 transition-all">
-                            Skip for Now
-                        </button>
-                        <button type="submit" 
-                                class="px-8 py-4 bg-gradient-to-r from-pink-500 to-pink-600 text-white font-semibold rounded-lg hover:from-pink-600 hover:to-pink-700 transition-all transform hover:scale-105 shadow-lg">
-                            Complete Setup & Find Grants 🎉
-                        </button>
-                    </div>
-                </div>
-            </form>
-        </div>
+.onboarding-header h2 {
+  font-size: 28px;
+  font-weight: 300;
+  color: #2A2A2A;
+  margin: 0 0 8px 0;
+}
 
-        <!-- Final Encouragement -->
-        <div class="mt-6 text-center">
-            <p class="text-gray-600">
-                <span class="text-2xl">🎯</span> 
-                <span class="font-semibold">You're one click away from discovering perfect grant matches!</span>
-            </p>
-        </div>
+.onboarding-header p {
+  color: #666;
+  font-size: 14px;
+}
+
+.form-section {
+  margin-bottom: 32px;
+}
+
+.form-section h3 {
+  font-size: 18px;
+  color: #2A2A2A;
+  margin-bottom: 16px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #F0F0F0;
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+  margin-bottom: 20px;
+}
+
+.form-group {
+  margin-bottom: 20px;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 8px;
+  color: #2A2A2A;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.form-group label .required {
+  color: #FF4444;
+}
+
+.form-group input,
+.form-group select,
+.form-group textarea {
+  width: 100%;
+  padding: 10px 14px;
+  border: 1px solid #E0E0E0;
+  border-radius: 8px;
+  font-size: 14px;
+  transition: all 0.2s ease;
+}
+
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus {
+  outline: none;
+  border-color: #B8899A;
+  box-shadow: 0 0 0 3px rgba(184, 137, 154, 0.1);
+}
+
+.form-group textarea {
+  resize: vertical;
+  min-height: 100px;
+}
+
+.form-group small {
+  display: block;
+  margin-top: 6px;
+  color: #666;
+  font-size: 12px;
+}
+
+.form-actions {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 40px;
+  padding-top: 24px;
+  border-top: 1px solid #F0F0F0;
+}
+
+.btn-secondary {
+  padding: 12px 24px;
+  background: #F5F5F5;
+  color: #2A2A2A;
+  border: 1px solid #E0E0E0;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.btn-secondary:hover {
+  background: #E8E8E8;
+}
+
+.btn-primary {
+  padding: 12px 32px;
+  background: linear-gradient(135deg, #B8899A 0%, #A67989 100%);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(184, 137, 154, 0.3);
+}
+
+.btn-primary:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.error-message {
+  background: #FEE;
+  color: #C33;
+  padding: 12px;
+  border-radius: 6px;
+  margin-bottom: 20px;
+  font-size: 14px;
+  display: none;
+}
+
+.success-message {
+  background: #E8F5E9;
+  color: #2E7D32;
+  padding: 12px;
+  border-radius: 6px;
+  margin-bottom: 20px;
+  font-size: 14px;
+  display: none;
+}
+</style>
+
+<div class="onboarding-container">
+  <!-- Progress Bar -->
+  <div class="progress-bar">
+    <div class="progress-step">
+      <div class="step-circle completed">✓</div>
+      <div class="step-label">Basic Info</div>
     </div>
+    <div class="progress-step">
+      <div class="step-circle completed">✓</div>
+      <div class="step-label">Programs</div>
+    </div>
+    <div class="progress-step">
+      <div class="step-circle active">3</div>
+      <div class="step-label">Capacity</div>
+    </div>
+    <div class="progress-step">
+      <div class="step-circle">4</div>
+      <div class="step-label">Grant History</div>
+    </div>
+    <div class="progress-step">
+      <div class="step-circle">5</div>
+      <div class="step-label">AI Learning</div>
+    </div>
+  </div>
+
+  <div class="onboarding-header">
+    <h2>Organizational Capacity</h2>
+    <p>Help us understand your organization's size and capacity</p>
+  </div>
+
+  <div id="errorMessage" class="error-message"></div>
+  <div id="successMessage" class="success-message"></div>
+
+  <form id="onboardingForm">
+    <!-- Budget & Size -->
+    <div class="form-section">
+      <h3>Organization Size</h3>
+      
+      <div class="form-row">
+        <div class="form-group">
+          <label for="annualBudgetRange">Annual Budget Range <span class="required">*</span></label>
+          <select id="annualBudgetRange" name="annual_budget_range" required>
+            <option value="">Select budget range...</option>
+            <option value="Under $50K">Under $50,000</option>
+            <option value="$50K-$100K">$50,000 - $100,000</option>
+            <option value="$100K-$250K">$100,000 - $250,000</option>
+            <option value="$250K-$500K">$250,000 - $500,000</option>
+            <option value="$500K-$1M">$500,000 - $1 Million</option>
+            <option value="$1M-$5M">$1 Million - $5 Million</option>
+            <option value="Over $5M">Over $5 Million</option>
+          </select>
+          <small>Helps match you with appropriately-sized grants</small>
+        </div>
+        
+        <div class="form-group">
+          <label for="staffSize">Staff Size <span class="required">*</span></label>
+          <select id="staffSize" name="staff_size" required>
+            <option value="">Select staff size...</option>
+            <option value="1-2">1-2 employees</option>
+            <option value="3-5">3-5 employees</option>
+            <option value="6-10">6-10 employees</option>
+            <option value="11-25">11-25 employees</option>
+            <option value="26-50">26-50 employees</option>
+            <option value="51-100">51-100 employees</option>
+            <option value="Over 100">Over 100 employees</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label for="volunteerCount">Number of Volunteers</label>
+          <select id="volunteerCount" name="volunteer_count">
+            <option value="">Select range...</option>
+            <option value="None">No volunteers</option>
+            <option value="1-10">1-10 volunteers</option>
+            <option value="11-25">11-25 volunteers</option>
+            <option value="26-50">26-50 volunteers</option>
+            <option value="51-100">51-100 volunteers</option>
+            <option value="Over 100">Over 100 volunteers</option>
+          </select>
+        </div>
+        
+        <div class="form-group">
+          <label for="boardSize">Board Size</label>
+          <input type="number" id="boardSize" name="board_size" min="0" max="100" placeholder="e.g., 7">
+          <small>Number of board members</small>
+        </div>
+      </div>
+    </div>
+
+    <!-- Impact Metrics -->
+    <div class="form-section">
+      <h3>Impact & Reach</h3>
+      
+      <div class="form-group">
+        <label for="peopleServedAnnually">People Served Annually</label>
+        <select id="peopleServedAnnually" name="people_served_annually">
+          <option value="">Select range...</option>
+          <option value="Under 100">Under 100</option>
+          <option value="100-500">100-500</option>
+          <option value="500-1000">500-1,000</option>
+          <option value="1000-5000">1,000-5,000</option>
+          <option value="5000-10000">5,000-10,000</option>
+          <option value="Over 10000">Over 10,000</option>
+        </select>
+        <small>Approximate number of people your programs reach each year</small>
+      </div>
+      
+      <div class="form-group">
+        <label for="keyAchievements">Key Achievements</label>
+        <textarea id="keyAchievements" name="key_achievements" placeholder="Describe 2-3 major accomplishments or milestones your organization has achieved"></textarea>
+        <small>Helps demonstrate your track record to funders</small>
+      </div>
+    </div>
+
+    <div class="form-actions">
+      <button type="button" class="btn-secondary" onclick="window.location.href='/onboarding/step2'">Back</button>
+      <button type="submit" class="btn-primary" id="submitBtn">Save & Continue</button>
+    </div>
+  </form>
 </div>
 
 <script>
-// Show grant size suggestions based on budget
-function updateGrantSuggestions() {
-    const budget = document.getElementById('annual_budget').value;
-    
-    if (budget) {
-        document.getElementById('grantSuggestions').classList.remove('hidden');
-        
-        let ranges = '';
-        switch(budget) {
-            case 'under_50k':
-                ranges = `
-                    <div class="bg-white p-3 rounded border-l-4 border-green-500">
-                        <strong>Small Grants:</strong> $5,000 - $25,000 (Perfect for your size)
-                    </div>
-                    <div class="bg-white p-3 rounded border-l-4 border-green-400">
-                        <strong>Seed Funding:</strong> $1,000 - $10,000 (Great for new programs)
-                    </div>`;
-                break;
-            case '50k_100k':
-                ranges = `
-                    <div class="bg-white p-3 rounded border-l-4 border-green-500">
-                        <strong>Operating Support:</strong> $10,000 - $50,000 (25-50% of budget)
-                    </div>
-                    <div class="bg-white p-3 rounded border-l-4 border-green-400">
-                        <strong>Program Grants:</strong> $5,000 - $25,000 (Specific initiatives)
-                    </div>`;
-                break;
-            case '100k_250k':
-                ranges = `
-                    <div class="bg-white p-3 rounded border-l-4 border-green-500">
-                        <strong>Major Grants:</strong> $25,000 - $100,000 (Significant impact)
-                    </div>
-                    <div class="bg-white p-3 rounded border-l-4 border-green-400">
-                        <strong>Capacity Building:</strong> $10,000 - $50,000 (Growth support)
-                    </div>`;
-                break;
-            default:
-                ranges = `
-                    <div class="bg-white p-3 rounded border-l-4 border-green-500">
-                        <strong>Optimal Range:</strong> 10-40% of your annual budget
-                    </div>
-                    <div class="bg-white p-3 rounded border-l-4 border-green-400">
-                        <strong>Multi-Year Support:</strong> Available for established organizations
-                    </div>`;
-        }
-        
-        document.getElementById('suggestedRanges').innerHTML = ranges;
+document.getElementById('onboardingForm').addEventListener('submit', async function(e) {
+  e.preventDefault();
+  
+  const errorMsg = document.getElementById('errorMessage');
+  const successMsg = document.getElementById('successMessage');
+  const submitBtn = document.getElementById('submitBtn');
+  
+  errorMsg.style.display = 'none';
+  successMsg.style.display = 'none';
+  
+  // Collect form data
+  const formData = new FormData(e.target);
+  const data = {step: 3};
+  
+  for (let [key, value] of formData.entries()) {
+    // Convert board_size to integer if provided
+    if (key === 'board_size' && value) {
+      data[key] = parseInt(value);
+    } else {
+      data[key] = value;
     }
-}
-
-// Show tips based on experience level
-function showExperienceTips() {
-    const experience = document.getElementById('grant_experience').value;
-    const tipsDiv = document.getElementById('experienceTips');
-    const tipContent = document.getElementById('tipContent');
-    
-    if (experience) {
-        tipsDiv.classList.remove('hidden');
-        
-        switch(experience) {
-            case 'new':
-                tipContent.textContent = '🌟 Perfect! We\'ll prioritize smaller, beginner-friendly grants with simple applications and helpful program officers.';
-                break;
-            case 'emerging':
-                tipContent.textContent = '📈 Great progress! We\'ll find grants that help you scale up, including capacity-building opportunities.';
-                break;
-            case 'experienced':
-                tipContent.textContent = '💪 Excellent! You\'re ready for competitive grants. We\'ll match you with major funders and federal opportunities.';
-                break;
-            case 'advanced':
-                tipContent.textContent = '🏆 Outstanding! We\'ll focus on large, multi-year grants and help you diversify your funding portfolio.';
-                break;
-        }
-    }
-}
-
-// Save and skip
-function saveAndSkip() {
-    const form = document.getElementById('step3Form');
-    const formData = new FormData(form);
-    formData.append('skip', 'true');
-    
-    fetch('{{ url_for("onboarding.save_step3") }}', {
-        method: 'POST',
-        body: formData
-    }).then(() => {
-        window.location.href = '{{ url_for("dashboard.index") }}';
+  }
+  
+  submitBtn.disabled = true;
+  submitBtn.textContent = 'Saving...';
+  
+  try {
+    const response = await fetch('/api/organization/onboarding', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(data)
     });
-}
+    
+    const result = await response.json();
+    
+    if (response.ok) {
+      successMsg.textContent = 'Information saved! Redirecting to next step...';
+      successMsg.style.display = 'block';
+      
+      // Redirect to step 4
+      setTimeout(() => {
+        window.location.href = '/onboarding/step4';
+      }, 1500);
+    } else {
+      errorMsg.textContent = result.error || 'Failed to save information. Please try again.';
+      errorMsg.style.display = 'block';
+      submitBtn.disabled = false;
+      submitBtn.textContent = 'Save & Continue';
+    }
+  } catch (error) {
+    errorMsg.textContent = 'Network error. Please check your connection and try again.';
+    errorMsg.style.display = 'block';
+    submitBtn.disabled = false;
+    submitBtn.textContent = 'Save & Continue';
+  }
+});
 </script>
 {% endblock %}
