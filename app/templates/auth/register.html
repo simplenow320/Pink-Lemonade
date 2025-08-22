@@ -2,135 +2,131 @@
 
 {% block title %}Sign Up - Pink Lemonade{% endblock %}
 
-{% block content %}
+{% block body_content %}
 <div class="min-h-screen bg-white flex items-center justify-center px-4 py-12">
-    <div class="max-w-md w-full">
+    <div class="w-full max-w-md">
         <!-- Logo/Header -->
-        <div class="text-center mb-8">
-            <h1 class="text-5xl font-serif font-bold text-gray-900 mb-3">Pink Lemonade</h1>
-            <p class="text-lg text-gray-700">Start Finding Perfect Grant Matches</p>
+        <div class="text-center mb-6">
+            <h1 class="text-4xl font-serif font-bold text-gray-900 mb-2">Pink Lemonade</h1>
+            <p class="text-gray-700">Start Finding Perfect Grant Matches</p>
         </div>
 
-        <!-- Register Card -->
-        <div class="bg-white p-8">
-            <h2 class="text-3xl font-bold text-gray-900 mb-3">Create Your Account</h2>
-            <p class="text-gray-700 mb-8">Join 500+ nonprofits finding their perfect grants</p>
+        <!-- Register Form -->
+        <div class="bg-white">
+            <h2 class="text-2xl font-bold text-gray-900 mb-2">Create Your Account</h2>
+            <p class="text-gray-700 mb-6">Join 500+ nonprofits finding their perfect grants</p>
             
             <!-- Flash Messages -->
             {% with messages = get_flashed_messages(with_categories=true) %}
                 {% if messages %}
                     {% for category, message in messages %}
-                        <div class="mb-4 p-3 rounded-lg {% if category == 'error' %}bg-red-50 text-red-700 border border-red-200{% else %}bg-blue-50 text-blue-700 border border-blue-200{% endif %}">
+                        <div class="mb-4 p-3 rounded-md {% if category == 'error' %}bg-red-50 text-red-700 border border-red-200{% else %}bg-blue-50 text-blue-700 border border-blue-200{% endif %}">
                             {{ message }}
                         </div>
                     {% endfor %}
                 {% endif %}
             {% endwith %}
             
-            <form method="POST" action="{{ url_for('auth.register') }}">
-                <div class="space-y-5">
-                    <!-- Name Fields Row -->
-                    <div style="display: flex; gap: 1rem;">
-                        <!-- First Name -->
-                        <div style="flex: 1;">
-                            <label for="first_name" class="block text-sm text-gray-800 mb-1.5">
-                                First Name <span class="text-red-500">*</span>
-                            </label>
-                            <input type="text" 
-                                   id="first_name"
-                                   name="first_name" 
-                                   class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900"
-                                   placeholder="Jane"
-                                   value="{{ first_name if first_name else '' }}"
-                                   required>
-                        </div>
-                        
-                        <!-- Last Name -->
-                        <div style="flex: 1;">
-                            <label for="last_name" class="block text-sm text-gray-800 mb-1.5">
-                                Last Name
-                            </label>
-                            <input type="text" 
-                                   id="last_name"
-                                   name="last_name" 
-                                   class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900"
-                                   placeholder="Doe"
-                                   value="{{ last_name if last_name else '' }}">
-                        </div>
-                    </div>
-                    
-                    <!-- Email -->
+            <form method="POST" action="{{ url_for('auth.register') }}" class="space-y-4">
+                <!-- Name Fields in Grid -->
+                <div class="grid grid-cols-2 gap-3">
                     <div>
-                        <label for="email" class="block text-sm text-gray-800 mb-1.5">
-                            Email Address <span class="text-red-500">*</span>
-                        </label>
-                        <input type="email" 
-                               id="email"
-                               name="email" 
-                               class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900"
-                               placeholder="you@organization.org"
-                               value="{{ email if email else '' }}"
-                               required>
-                    </div>
-                    
-                    <!-- Organization (Optional) -->
-                    <div>
-                        <label for="org_name" class="block text-sm text-gray-800 mb-1.5">
-                            Organization Name (Optional)
+                        <label for="first_name" class="block text-sm text-gray-800 mb-1">
+                            First Name <span class="text-red-500">*</span>
                         </label>
                         <input type="text" 
-                               id="org_name"
-                               name="org_name" 
-                               class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900"
-                               placeholder="Your nonprofit name"
-                               value="{{ org_name if org_name else '' }}">
-                    </div>
-                    
-                    <!-- Password -->
-                    <div>
-                        <label for="password" class="block text-sm text-gray-800 mb-1.5">
-                            Password <span class="text-red-500">*</span>
-                        </label>
-                        <input type="password" 
-                               id="password"
-                               name="password" 
-                               class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900"
-                               placeholder="At least 8 characters"
-                               required
-                               minlength="8">
-                        <p class="mt-1.5 text-sm text-gray-600">Must be at least 8 characters</p>
-                    </div>
-                    
-                    <!-- Confirm Password -->
-                    <div>
-                        <label for="confirm_password" class="block text-sm text-gray-800 mb-1.5">
-                            Confirm Password <span class="text-red-500">*</span>
-                        </label>
-                        <input type="password" 
-                               id="confirm_password"
-                               name="confirm_password" 
-                               class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900"
-                               placeholder="Re-enter your password"
+                               id="first_name"
+                               name="first_name" 
+                               class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                               placeholder="Jane"
+                               value="{{ first_name if first_name else '' }}"
                                required>
                     </div>
                     
-                    <!-- Terms -->
-                    <div class="flex items-start">
-                        <input type="checkbox" 
-                               id="terms"
-                               name="terms" 
-                               class="mt-0.5 h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-                               required>
-                        <label for="terms" class="ml-2 text-sm text-gray-700">
-                            I agree to the <a href="#" class="text-blue-600 hover:text-blue-700 underline">Terms of Service</a> 
-                            and <a href="#" class="text-blue-600 hover:text-blue-700 underline">Privacy Policy</a>
+                    <div>
+                        <label for="last_name" class="block text-sm text-gray-800 mb-1">
+                            Last Name
                         </label>
+                        <input type="text" 
+                               id="last_name"
+                               name="last_name" 
+                               class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                               placeholder="Doe"
+                               value="{{ last_name if last_name else '' }}">
                     </div>
+                </div>
+                
+                <!-- Email -->
+                <div>
+                    <label for="email" class="block text-sm text-gray-800 mb-1">
+                        Email Address <span class="text-red-500">*</span>
+                    </label>
+                    <input type="email" 
+                           id="email"
+                           name="email" 
+                           class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                           placeholder="you@organization.org"
+                           value="{{ email if email else '' }}"
+                           required>
+                </div>
+                
+                <!-- Organization (Optional) -->
+                <div>
+                    <label for="org_name" class="block text-sm text-gray-800 mb-1">
+                        Organization Name (Optional)
+                    </label>
+                    <input type="text" 
+                           id="org_name"
+                           name="org_name" 
+                           class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                           placeholder="Your nonprofit name"
+                           value="{{ org_name if org_name else '' }}">
+                </div>
+                
+                <!-- Password -->
+                <div>
+                    <label for="password" class="block text-sm text-gray-800 mb-1">
+                        Password <span class="text-red-500">*</span>
+                    </label>
+                    <input type="password" 
+                           id="password"
+                           name="password" 
+                           class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                           placeholder="At least 8 characters"
+                           required
+                           minlength="8">
+                    <p class="mt-1 text-xs text-gray-600">Must be at least 8 characters</p>
+                </div>
+                
+                <!-- Confirm Password -->
+                <div>
+                    <label for="confirm_password" class="block text-sm text-gray-800 mb-1">
+                        Confirm Password <span class="text-red-500">*</span>
+                    </label>
+                    <input type="password" 
+                           id="confirm_password"
+                           name="confirm_password" 
+                           class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                           placeholder="Re-enter your password"
+                           required>
+                </div>
+                
+                <!-- Terms -->
+                <div class="flex items-start">
+                    <input type="checkbox" 
+                           id="terms"
+                           name="terms" 
+                           class="mt-0.5 h-4 w-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500"
+                           required>
+                    <label for="terms" class="ml-2 text-sm text-gray-700">
+                        I agree to the <a href="#" class="text-blue-600 hover:text-blue-700 underline">Terms of Service</a> 
+                        and <a href="#" class="text-blue-600 hover:text-blue-700 underline">Privacy Policy</a>
+                    </label>
                 </div>
                 
                 <!-- Submit Button -->
                 <button type="submit" 
-                        class="w-full mt-6 px-6 py-2.5 bg-blue-600 text-white font-medium rounded-md hover:bg-blue-700 transition-colors">
+                        class="w-full px-4 py-2.5 bg-blue-600 text-white font-medium rounded-md hover:bg-blue-700 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
                     Create Account
                 </button>
             </form>
@@ -147,23 +143,31 @@
         </div>
         
         <!-- Value Proposition -->
-        <div class="mt-10">
+        <div class="mt-8">
             <h3 class="font-bold text-lg text-gray-900 mb-3">What You Get Free:</h3>
             <div class="space-y-2">
                 <div class="flex items-center">
-                    <span class="text-black mr-2">✓</span>
+                    <svg class="w-5 h-5 text-black mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                    </svg>
                     <span class="text-gray-800">AI Grant Matching</span>
                 </div>
                 <div class="flex items-center">
-                    <span class="text-black mr-2">✓</span>
+                    <svg class="w-5 h-5 text-black mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                    </svg>
                     <span class="text-gray-800">28.9M+ Grants</span>
                 </div>
                 <div class="flex items-center">
-                    <span class="text-black mr-2">✓</span>
+                    <svg class="w-5 h-5 text-black mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                    </svg>
                     <span class="text-gray-800">Smart Tools</span>
                 </div>
                 <div class="flex items-center">
-                    <span class="text-black mr-2">✓</span>
+                    <svg class="w-5 h-5 text-black mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                    </svg>
                     <span class="text-gray-800">Application Tracking</span>
                 </div>
             </div>
