@@ -47,7 +47,6 @@ def update_onboarding():
             org.faith_based = data.get('faith_based', False)
             org.minority_led = data.get('minority_led', False)
             org.woman_led = data.get('woman_led', False)
-            org.lgbtq_led = data.get('lgbtq_led', False)
             org.veteran_led = data.get('veteran_led', False)
             
             # Parse social media
@@ -167,7 +166,7 @@ def update_profile():
             'staff_size', 'volunteer_count', 'board_size', 'people_served_annually',
             'key_achievements', 'previous_funders', 'typical_grant_size',
             'grant_success_rate', 'preferred_grant_types', 'grant_writing_capacity',
-            'faith_based', 'minority_led', 'woman_led', 'lgbtq_led', 'veteran_led',
+            'faith_based', 'minority_led', 'woman_led', 'veteran_led',
             'keywords', 'unique_capabilities', 'partnership_interests',
             'funding_priorities', 'exclusions'
         ]
