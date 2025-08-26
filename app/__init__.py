@@ -12,16 +12,11 @@ def create_app():
     CORS(flask_app, supports_credentials=True)
     db.init_app(flask_app)
     
-    # Create tables within app context
-    with flask_app.app_context():
-        # Import models so they are registered
-        import app.models
-        import app.models_extended
-        import app.models_templates
-
-        
-        # Create all tables
-        db.create_all()
+    # Import models so they are registered (but don't create tables here)
+    # Database initialization will be handled by init_database.py for production safety
+    import app.models
+    import app.models_extended
+    import app.models_templates
     
     # Register blueprints
     from app.pages import pages as pages_bp
