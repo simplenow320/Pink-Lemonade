@@ -1,199 +1,390 @@
 """
-Candid API Client with Key Rotation and Caching
+Candid API Client with News, Grants, and Essentials endpoints
 """
+import requests
 import os
-import json
-import logging
-import urllib.request
-import urllib.parse
-import urllib.error
-from datetime import datetime, timedelta
-from typing import Optional, Dict, Any, List, Tuple
+import statistics
+from typing import Dict, List, Optional, Any
+from datetime import datetime
+from app.services.http_helpers import RotatingKeyPool, SimpleCache
 
-logger = logging.getLogger(__name__)
 
-class RotatingKeyPool:
-    """Rotating key pool for API keys"""
-    def __init__(self, env_var: str):
-        keys_csv = os.environ.get(env_var, '')
-        self.keys = [k.strip() for k in keys_csv.split(',') if k.strip()]
-        self.current_index = 0
-        
-    def get_next_key(self) -> Optional[str]:
-        """Get next key in rotation"""
-        if not self.keys:
-            return None
-        key = self.keys[self.current_index]
-        old_index = self.current_index
-        self.current_index = (self.current_index + 1) % len(self.keys)
-        logger.info(f"Using API key at index {old_index} of {len(self.keys)} total keys")
-        return key
-    
-    def has_keys(self) -> bool:
-        """Check if pool has keys"""
-        return len(self.keys) > 0
-
-class CandidClient:
-    """Candid API Client with caching and key rotation"""
+class NewsClient:
+    """Candid News API Client"""
     
     def __init__(self):
-        self.grants_pool = RotatingKeyPool('CANDID_GRANTS_KEYS')
-        self.news_pool = RotatingKeyPool('CANDID_NEWS_KEYS')
-        self.cache = {}  # Simple cache: (url, sorted_params) -> (expires_at, data)
-        
-    def _cache_key(self, url: str, params: Dict) -> Tuple:
-        """Create cache key from URL and sorted params"""
-        sorted_params = tuple(sorted(params.items())) if params else ()
-        return (url, sorted_params)
+        self.base_url = "https://api.candid.org/news/v1"
+        self.key_pool = RotatingKeyPool('CANDID_NEWS_KEYS')
+        self.cache = SimpleCache()
     
-    def _get_from_cache(self, url: str, params: Dict) -> Optional[Dict]:
-        """Get data from cache if not expired"""
-        key = self._cache_key(url, params)
-        if key in self.cache:
-            expires_at, data = self.cache[key]
-            if datetime.now() < expires_at:
-                logger.info(f"Cache HIT for {url}")
-                return data
-            else:
-                del self.cache[key]
-        logger.info(f"Cache MISS for {url}")
-        return None
-    
-    def _set_cache(self, url: str, params: Dict, data: Dict, ttl_seconds: int = 300):
-        """Set cache with TTL"""
-        key = self._cache_key(url, params)
-        expires_at = datetime.now() + timedelta(seconds=ttl_seconds)
-        self.cache[key] = (expires_at, data)
-    
-    def get_json(self, url: str, params: Dict, service: str = "news") -> Dict:
-        """Make GET request with key rotation and caching"""
-        # Check cache first
-        cached = self._get_from_cache(url, params)
-        if cached is not None:
-            return cached
+    def _make_request(self, url: str, params: Dict) -> Optional[Dict]:
+        """Make request with key rotation on 401/429"""
+        attempts = 0
+        max_attempts = 2
         
-        # Select appropriate key pool
-        pool = self.news_pool if service == "news" else self.grants_pool
-        if not pool.has_keys():
-            return {"error": f"No API keys configured for {service}"}
-        
-        # Build full URL with params
-        if params:
-            query_string = urllib.parse.urlencode(params)
-            full_url = f"{url}?{query_string}"
-        else:
-            full_url = url
-        
-        # Try up to 2 keys with rotation on 401/429
-        last_error = None
-        attempts = min(2, len(pool.keys))
-        
-        for _ in range(attempts):
-            api_key = pool.get_next_key()
-            if not api_key:
-                break
+        while attempts < max_attempts:
+            try:
+                api_key = self.key_pool.next()
+                headers = {
+                    'Accept': 'application/json',
+                    'Subscription-Key': api_key
+                }
                 
+                response = requests.get(url, params=params, headers=headers, timeout=30)
+                
+                if response.status_code == 200:
+                    return response.json()
+                elif response.status_code in [401, 429]:
+                    # Try next key if available
+                    if self.key_pool.on_unauthorized_or_rate_limit() and attempts < max_attempts - 1:
+                        attempts += 1
+                        continue
+                    else:
+                        return {"error": f"API authentication/rate limit error: {response.status_code}"}
+                else:
+                    return {"error": f"HTTP {response.status_code}: {response.text}"}
+                    
+            except requests.RequestException as e:
+                return {"error": f"Request failed: {str(e)}"}
+        
+        return {"error": "Max retry attempts exceeded"}
+    
+    def search(self, query: str, start_date: Optional[str] = None, end_date: Optional[str] = None, 
+               pcs_subject_codes: Optional[List[str]] = None, pcs_population_codes: Optional[List[str]] = None,
+               region: Optional[str] = None, page: int = 1, size: int = 25) -> List[Dict]:
+        """Search Candid news with filters"""
+        
+        # Check cache first
+        params = {
+            'query': query,
+            'page': page,
+            'size': size
+        }
+        
+        if start_date:
+            params['start_date'] = start_date
+        if end_date:
+            params['end_date'] = end_date  
+        if pcs_subject_codes:
+            params['pcs_subject_codes'] = ','.join(pcs_subject_codes)
+        if pcs_population_codes:
+            params['pcs_population_codes'] = ','.join(pcs_population_codes)
+        if region:
+            params['region'] = region
+            
+        # Try cache first
+        cached_result = self.cache.get('GET', f"{self.base_url}/search", params)
+        if cached_result is not None:
+            return cached_result
+        
+        # Make API request
+        url = f"{self.base_url}/search"
+        response_data = self._make_request(url, params)
+        
+        if not response_data or 'error' in response_data:
+            return []
+        
+        # Parse and format results
+        results = []
+        articles = response_data.get('data', []) if 'data' in response_data else response_data.get('results', [])
+        
+        for article in articles:
+            formatted = {
+                'source': 'candid_news',
+                'data_id': article.get('id', ''),
+                'title': article.get('title', ''),
+                'link': article.get('url', article.get('link', '')),
+                'publication_date': article.get('publication_date', article.get('published_date', '')),
+                'rfp_mentioned': article.get('rfp_mentioned', False),
+                'grant_mentioned': article.get('grant_mentioned', False),
+                'staff_change_mentioned': article.get('staff_change_mentioned', False),
+                'site_name': article.get('site_name', article.get('source_name', '')),
+                'content': article.get('content', article.get('summary', '')),
+                'locations_mentioned': article.get('locations_mentioned', []),
+                'organizations_mentioned': article.get('organizations_mentioned', [])
+            }
+            results.append(formatted)
+        
+        # Cache results
+        self.cache.set('GET', url, results, 600, params)
+        return results
+
+
+class GrantsClient:
+    """Candid Grants API Client"""
+    
+    def __init__(self):
+        self.base_url = "https://api.candid.org/grants/v1"
+        self.key_pool = RotatingKeyPool('CANDID_GRANTS_KEYS')
+        self.cache = SimpleCache()
+    
+    def _make_request(self, url: str, params: Dict) -> Optional[Dict]:
+        """Make request with key rotation on 401/429"""
+        attempts = 0
+        max_attempts = 2
+        
+        while attempts < max_attempts:
+            try:
+                api_key = self.key_pool.next()
+                headers = {
+                    'Accept': 'application/json',
+                    'Subscription-Key': api_key
+                }
+                
+                response = requests.get(url, params=params, headers=headers, timeout=30)
+                
+                if response.status_code == 200:
+                    return response.json()
+                elif response.status_code in [401, 429]:
+                    # Try next key if available
+                    if self.key_pool.on_unauthorized_or_rate_limit() and attempts < max_attempts - 1:
+                        attempts += 1
+                        continue
+                    else:
+                        return {"error": f"API authentication/rate limit error: {response.status_code}"}
+                else:
+                    return {"error": f"HTTP {response.status_code}: {response.text}"}
+                    
+            except requests.RequestException as e:
+                return {"error": f"Request failed: {str(e)}"}
+        
+        return {"error": "Max retry attempts exceeded"}
+    
+    def transactions(self, query: str, page: int = 1, size: int = 25) -> List[Dict]:
+        """Search grant transactions"""
+        params = {
+            'query': query,
+            'page': page,
+            'size': size
+        }
+        
+        # Try cache first
+        url = f"{self.base_url}/transactions"
+        cached_result = self.cache.get('GET', url, params)
+        if cached_result is not None:
+            return cached_result
+        
+        # Make API request
+        response_data = self._make_request(url, params)
+        
+        if not response_data or 'error' in response_data:
+            return []
+        
+        # Return transactions data
+        transactions = response_data.get('data', []) if 'data' in response_data else response_data.get('results', [])
+        
+        # Cache results
+        self.cache.set('GET', url, transactions, 600, params)
+        return transactions
+    
+    def snapshot_for(self, topic: str, geo: str) -> Dict:
+        """Get grant snapshot for topic and geography"""
+        query = f"{topic} {geo}".strip()
+        transactions = self.transactions(query, size=100)  # Get more data for analysis
+        
+        if not transactions:
+            return {
+                'award_count': 0,
+                'median_award': None,
+                'recent_funders': [],
+                'query_used': query
+            }
+        
+        # Extract numeric amounts
+        amounts = []
+        funders = set()
+        
+        for transaction in transactions:
+            # Try different possible field names for amount
+            amount = transaction.get('amount')
+            if amount is None:
+                amount = transaction.get('award_amount')
+            if amount is None:
+                amount = transaction.get('grant_amount')
+            
+            if amount and isinstance(amount, (int, float)):
+                amounts.append(amount)
+            elif amount and isinstance(amount, str):
+                # Try to parse string amounts
+                try:
+                    # Remove currency symbols and commas
+                    clean_amount = amount.replace('$', '').replace(',', '').strip()
+                    amounts.append(float(clean_amount))
+                except (ValueError, AttributeError):
+                    pass
+            
+            # Collect funder names
+            funder = transaction.get('funder_name')
+            if not funder:
+                funder = transaction.get('organization_name')
+            if funder:
+                funders.add(funder)
+        
+        # Calculate median
+        median_award = None
+        if amounts:
+            median_award = statistics.median(amounts)
+        
+        return {
+            'award_count': len(transactions),
+            'median_award': median_award,
+            'recent_funders': list(funders)[:5],  # Limit to 5
+            'query_used': query
+        }
+
+
+class EssentialsClient:
+    """Candid Essentials API Client"""
+    
+    def __init__(self):
+        self.base_url = "https://api.candid.org/essentials/v1"
+        try:
+            # Use single key, not rotating pool
+            self.api_key = os.environ.get('CANDID_ESSENTIALS_KEY')
+            if not self.api_key:
+                self.api_key = None
+        except Exception:
+            self.api_key = None
+        self.cache = SimpleCache()
+    
+    def _make_request(self, url: str, params: Dict) -> Optional[Dict]:
+        """Make request to Essentials API"""
+        if not self.api_key:
+            return None
+        
+        try:
             headers = {
                 'Accept': 'application/json',
-                'Subscription-Key': api_key
+                'Subscription-Key': self.api_key
             }
             
-            req = urllib.request.Request(full_url, headers=headers)
+            response = requests.get(url, params=params, headers=headers, timeout=30)
             
-            try:
-                with urllib.request.urlopen(req, timeout=30) as response:
-                    logger.info(f"Candid API {service} endpoint hit: {url}, status: {response.status}")
-                    if response.status == 200:
-                        data = json.loads(response.read().decode('utf-8'))
-                        self._set_cache(url, params, data)
-                        return data
-            except urllib.error.HTTPError as e:
-                logger.info(f"Candid API {service} endpoint hit: {url}, status: {e.code}")
-                if e.code in [401, 429]:
-                    logger.warning(f"Key rotation triggered, status: {e.code}")
-                    # Rotate key and retry
-                    last_error = e
-                    continue
-                else:
-                    return {"error": f"HTTP {e.code}: {e.reason}"}
-            except Exception as e:
-                return {"error": str(e)}
-        
-        # All retries failed
-        if last_error:
-            return {"error": f"All keys failed: HTTP {last_error.code}"}
-        return {"error": "Request failed"}
+            if response.status_code == 200:
+                return response.json()
+            else:
+                # Don't crash on errors, just return None
+                return None
+                
+        except requests.RequestException:
+            # Don't crash on network errors
+            return None
     
-    def get_grants_summary(self, **filters) -> Dict:
-        """Get grants summary data"""
-        url = "https://api.candid.org/grants/v1/summary"
+    def search_org(self, name_or_ein: str) -> Optional[Dict]:
+        """Search for organization by name or EIN"""
+        if not self.api_key:
+            return None
+        
         params = {}
         
-        # Add common filters if provided
-        if 'subject' in filters:
-            params['subject'] = filters['subject']
-        if 'state' in filters:
-            params['state'] = filters['state']
-        if 'year' in filters:
-            params['year'] = filters['year']
-            
-        return self.get_json(url, params, service="grants")
-    
-    def search_transactions(self, **filters) -> Dict:
-        """Search grant transactions - max 25 results"""
-        url = "https://api.candid.org/grants/v1/transactions"
-        params = {}
+        # Check if input looks like an EIN (9 digits, possibly with dashes)
+        ein_digits = ''.join(c for c in name_or_ein if c.isdigit())
+        if len(ein_digits) == 9:
+            params['ein'] = name_or_ein
+        else:
+            params['query'] = name_or_ein
         
-        # Use query parameter for text search (searches funder name, recipient name, etc.)
-        if 'query' in filters:
-            params['query'] = filters['query']
-        if 'subject' in filters:
-            params['subject'] = filters['subject']
-        if 'state' in filters:
-            params['state'] = filters['state']
-        if 'year' in filters:
-            params['year'] = filters['year']
-            
-        return self.get_json(url, params, service="grants")
-    
-    def search_funders(self, **filters) -> Dict:
-        """Search funders"""
-        url = "https://api.candid.org/grants/v1/funders"
-        params = {}
+        params['page'] = 1
+        params['page_size'] = 1
         
-        if 'query' in filters:
-            params['query'] = filters['query']
-        if 'subject' in filters:
-            params['subject'] = filters['subject']
-        if 'state' in filters:
-            params['state'] = filters['state']
-        if 'year' in filters:
-            params['year'] = filters['year']
-            
-        return self.get_json(url, params, service="grants")
-    
-    def search_recipients(self, **filters) -> Dict:
-        """Search recipients - max 25 results"""
-        url = "https://api.candid.org/grants/v1/recipients"
-        params = {}
+        # Try cache first
+        url = f"{self.base_url}/organizations/search"
+        cached_result = self.cache.get('GET', url, params)
+        if cached_result is not None:
+            return cached_result
         
-        if 'query' in filters:
-            params['query'] = filters['query']
-        if 'subject' in filters:
-            params['subject'] = filters['subject']
-        if 'state' in filters:
-            params['state'] = filters['state']
-        if 'year' in filters:
-            params['year'] = filters['year']
-            
-        return self.get_json(url, params, service="grants")
+        # Make API request
+        response_data = self._make_request(url, params)
+        
+        if not response_data:
+            return None
+        
+        # Get first result
+        results = response_data.get('data', [])
+        if not results:
+            return None
+        
+        first_result = results[0]
+        
+        # Cache result
+        self.cache.set('GET', url, first_result, 600, params)
+        return first_result
+    
+    def extract_tokens(self, record: Dict) -> Dict:
+        """Extract PCS codes and locations from organization record"""
+        if not record:
+            return {
+                'pcs_subject_codes': [],
+                'pcs_population_codes': [],
+                'locations': []
+            }
+        
+        # Extract PCS subject codes
+        pcs_subjects = record.get('pcs_subject_codes', [])
+        if not isinstance(pcs_subjects, list):
+            pcs_subjects = []
+        
+        # Extract PCS population codes  
+        pcs_populations = record.get('pcs_population_codes', [])
+        if not isinstance(pcs_populations, list):
+            pcs_populations = []
+        
+        # Extract locations from various fields
+        locations = []
+        
+        # Add city, state, country
+        city = record.get('city')
+        state = record.get('state')
+        country = record.get('country')
+        
+        if city:
+            locations.append(city)
+        if state:
+            locations.append(state)
+        if country:
+            locations.append(country)
+        
+        # Look for other location fields
+        address = record.get('address')
+        if address and isinstance(address, str):
+            locations.append(address)
+        
+        return {
+            'pcs_subject_codes': pcs_subjects,
+            'pcs_population_codes': pcs_populations,
+            'locations': list(set(locations))  # Remove duplicates
+        }
 
-# Singleton instance
-_client = None
 
-def get_candid_client() -> CandidClient:
-    """Get singleton Candid client instance"""
-    global _client
-    if _client is None:
-        _client = CandidClient()
-    return _client
+# Legacy compatibility - create singleton instances
+_news_client = None
+_grants_client = None  
+_essentials_client = None
+
+def get_candid_client():
+    """Legacy compatibility function - returns grants client"""
+    global _grants_client
+    if _grants_client is None:
+        _grants_client = GrantsClient()
+    return _grants_client
+
+def get_news_client():
+    """Get singleton news client"""
+    global _news_client
+    if _news_client is None:
+        _news_client = NewsClient()
+    return _news_client
+
+def get_grants_client():
+    """Get singleton grants client"""
+    global _grants_client
+    if _grants_client is None:
+        _grants_client = GrantsClient()
+    return _grants_client
+
+def get_essentials_client():
+    """Get singleton essentials client"""
+    global _essentials_client
+    if _essentials_client is None:
+        _essentials_client = EssentialsClient()
+    return _essentials_client

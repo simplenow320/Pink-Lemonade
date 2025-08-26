@@ -1,169 +1,346 @@
 """
-Test Candid Client with monkeypatched requests
+Unit tests for Candid API clients
 """
 import unittest
-from unittest.mock import patch, MagicMock
-import urllib.error
-import json
-import os
-from datetime import datetime, timedelta
+from unittest.mock import patch, Mock, MagicMock
+import requests
+from app.services.candid_client import NewsClient, GrantsClient, EssentialsClient
 
-# Set test environment variables
-os.environ['CANDID_GRANTS_KEYS'] = 'test_key1,test_key2'
-os.environ['CANDID_NEWS_KEYS'] = 'news_key1,news_key2'
 
-from app.services.candid_client import CandidClient, RotatingKeyPool
-
-class TestCandidClient(unittest.TestCase):
+class TestNewsClient(unittest.TestCase):
+    """Test NewsClient functionality"""
     
-    def setUp(self):
-        """Set up test client"""
-        self.client = CandidClient()
+    @patch('app.services.candid_client.RotatingKeyPool')
+    @patch('requests.get')
+    def test_search_success(self, mock_get, mock_pool):
+        """Test successful news search"""
+        # Setup mock pool
+        mock_pool_instance = Mock()
+        mock_pool_instance.next.return_value = 'test-key'
+        mock_pool.return_value = mock_pool_instance
         
-    def test_rotating_key_pool(self):
-        """Test key rotation"""
-        pool = RotatingKeyPool('CANDID_GRANTS_KEYS')
+        # Setup mock response
+        mock_response = Mock()
+        mock_response.status_code = 200
+        mock_response.json.return_value = {
+            'data': [
+                {
+                    'id': '123',
+                    'title': 'Test Grant News',
+                    'url': 'http://example.com/news',
+                    'publication_date': '2024-01-01',
+                    'rfp_mentioned': True,
+                    'grant_mentioned': True,
+                    'content': 'Test content'
+                }
+            ]
+        }
+        mock_get.return_value = mock_response
         
-        # Test rotation
-        self.assertEqual(pool.get_next_key(), 'test_key1')
-        self.assertEqual(pool.get_next_key(), 'test_key2')
-        self.assertEqual(pool.get_next_key(), 'test_key1')  # Back to start
+        client = NewsClient()
+        results = client.search('test query')
         
-    @patch('urllib.request.urlopen')
-    def test_correct_headers(self, mock_urlopen):
-        """Test that correct headers are set"""
-        mock_response = MagicMock()
-        mock_response.status = 200
-        mock_response.read.return_value = json.dumps({"articles": []}).encode('utf-8')
-        mock_urlopen.return_value.__enter__.return_value = mock_response
+        # Verify request was made with correct headers
+        mock_get.assert_called_once()
+        args, kwargs = mock_get.call_args
+        self.assertEqual(kwargs['headers']['Accept'], 'application/json')
+        self.assertEqual(kwargs['headers']['Subscription-Key'], 'test-key')
         
-        # Make request
-        self.client.search_news("test")
+        # Verify results formatting
+        self.assertEqual(len(results), 1)
+        self.assertEqual(results[0]['source'], 'candid_news')
+        self.assertEqual(results[0]['title'], 'Test Grant News')
+        self.assertEqual(results[0]['rfp_mentioned'], True)
+    
+    @patch('app.services.candid_client.RotatingKeyPool')
+    @patch('requests.get')
+    def test_search_with_filters(self, mock_get, mock_pool):
+        """Test news search with filters"""
+        # Setup mocks
+        mock_pool_instance = Mock()
+        mock_pool_instance.next.return_value = 'test-key'
+        mock_pool.return_value = mock_pool_instance
         
-        # Check headers in request
-        call_args = mock_urlopen.call_args
-        request = call_args[0][0]
+        mock_response = Mock()
+        mock_response.status_code = 200
+        mock_response.json.return_value = {'data': []}
+        mock_get.return_value = mock_response
         
-        self.assertEqual(request.headers['Accept'], 'application/json')
-        self.assertIn('news_key', request.headers['Subscription-key'])
+        client = NewsClient()
+        client.search('test', start_date='2024-01-01', pcs_subject_codes=['A01'])
         
-    @patch('urllib.request.urlopen')
-    def test_key_rotation_on_401(self, mock_urlopen):
-        """Test key rotation on 401 error"""
-        # First call: 401 error
-        # Second call: success
-        error = urllib.error.HTTPError('url', 401, 'Unauthorized', {}, None)
+        # Verify params were passed correctly
+        args, kwargs = mock_get.call_args
+        self.assertIn('start_date', kwargs['params'])
+        self.assertIn('pcs_subject_codes', kwargs['params'])
+        self.assertEqual(kwargs['params']['pcs_subject_codes'], 'A01')
+    
+    @patch('app.services.candid_client.RotatingKeyPool')
+    @patch('requests.get')
+    def test_authentication_error_retry(self, mock_get, mock_pool):
+        """Test retry on 401 authentication error"""
+        # Setup mock pool
+        mock_pool_instance = Mock()
+        mock_pool_instance.next.side_effect = ['key1', 'key2']
+        mock_pool_instance.on_unauthorized_or_rate_limit.return_value = True
+        mock_pool.return_value = mock_pool_instance
         
-        mock_response = MagicMock()
-        mock_response.status = 200
-        mock_response.read.return_value = json.dumps({"data": "success"}).encode('utf-8')
+        # First call returns 401, second succeeds
+        mock_response_401 = Mock()
+        mock_response_401.status_code = 401
         
-        mock_urlopen.side_effect = [error, MagicMock(__enter__=lambda s: mock_response, __exit__=lambda *args: None)]
+        mock_response_200 = Mock()
+        mock_response_200.status_code = 200
+        mock_response_200.json.return_value = {'data': []}
         
-        result = self.client.get_json("http://test.com", {}, service="news")
+        mock_get.side_effect = [mock_response_401, mock_response_200]
         
-        # Should have tried twice
-        self.assertEqual(mock_urlopen.call_count, 2)
+        client = NewsClient()
+        results = client.search('test')
         
-        # Check different keys were used
-        first_key = mock_urlopen.call_args_list[0][0][0].headers['Subscription-key']
-        second_key = mock_urlopen.call_args_list[1][0][0].headers['Subscription-key']
-        self.assertNotEqual(first_key, second_key)
+        # Should have made 2 requests (retry on 401)
+        self.assertEqual(mock_get.call_count, 2)
+        self.assertEqual(results, [])
+    
+    @patch('app.services.candid_client.RotatingKeyPool')
+    @patch('requests.get')
+    def test_rate_limit_error_retry(self, mock_get, mock_pool):
+        """Test retry on 429 rate limit error"""
+        # Setup mock pool
+        mock_pool_instance = Mock()
+        mock_pool_instance.next.side_effect = ['key1', 'key2']
+        mock_pool_instance.on_unauthorized_or_rate_limit.return_value = True
+        mock_pool.return_value = mock_pool_instance
         
-    @patch('urllib.request.urlopen')
-    def test_key_rotation_on_429(self, mock_urlopen):
-        """Test key rotation on 429 rate limit"""
-        # First call: 429 error
-        # Second call: success
-        error = urllib.error.HTTPError('url', 429, 'Too Many Requests', {}, None)
+        # First call returns 429, second succeeds
+        mock_response_429 = Mock()
+        mock_response_429.status_code = 429
         
-        mock_response = MagicMock()
-        mock_response.status = 200
-        mock_response.read.return_value = json.dumps({"data": "success"}).encode('utf-8')
+        mock_response_200 = Mock()
+        mock_response_200.status_code = 200
+        mock_response_200.json.return_value = {'data': []}
         
-        mock_urlopen.side_effect = [error, MagicMock(__enter__=lambda s: mock_response, __exit__=lambda *args: None)]
+        mock_get.side_effect = [mock_response_429, mock_response_200]
         
-        result = self.client.get_json("http://test.com", {}, service="grants")
+        client = NewsClient()
+        results = client.search('test')
         
-        # Should have tried twice
-        self.assertEqual(mock_urlopen.call_count, 2)
+        # Should have made 2 requests (retry on 429)
+        self.assertEqual(mock_get.call_count, 2)
+
+
+class TestGrantsClient(unittest.TestCase):
+    """Test GrantsClient functionality"""
+    
+    @patch('app.services.candid_client.RotatingKeyPool')
+    @patch('requests.get')
+    def test_transactions_success(self, mock_get, mock_pool):
+        """Test successful transactions search"""
+        # Setup mocks
+        mock_pool_instance = Mock()
+        mock_pool_instance.next.return_value = 'test-grants-key'
+        mock_pool.return_value = mock_pool_instance
         
-    @patch('urllib.request.urlopen')
-    def test_cache_hit(self, mock_urlopen):
-        """Test cache hit on second identical call"""
-        mock_response = MagicMock()
-        mock_response.status = 200
-        mock_response.read.return_value = json.dumps({"data": "test"}).encode('utf-8')
-        mock_urlopen.return_value.__enter__.return_value = mock_response
+        mock_response = Mock()
+        mock_response.status_code = 200
+        mock_response.json.return_value = {
+            'data': [
+                {
+                    'id': '456',
+                    'funder_name': 'Test Foundation',
+                    'amount': 50000,
+                    'recipient_name': 'Test Nonprofit'
+                }
+            ]
+        }
+        mock_get.return_value = mock_response
         
-        # First call - should hit API
-        result1 = self.client.search_news("test", page=1)
-        self.assertEqual(mock_urlopen.call_count, 1)
+        client = GrantsClient()
+        results = client.transactions('education grants')
         
-        # Second identical call - should hit cache
-        result2 = self.client.search_news("test", page=1)
-        self.assertEqual(mock_urlopen.call_count, 1)  # Still 1, not 2
+        # Verify request was made correctly
+        mock_get.assert_called_once()
+        args, kwargs = mock_get.call_args
+        self.assertEqual(kwargs['headers']['Subscription-Key'], 'test-grants-key')
         
-        # Results should be identical
-        self.assertEqual(result1, result2)
+        # Verify results
+        self.assertEqual(len(results), 1)
+        self.assertEqual(results[0]['funder_name'], 'Test Foundation')
+    
+    @patch('app.services.candid_client.RotatingKeyPool')
+    @patch('requests.get')
+    def test_snapshot_for_with_amounts(self, mock_get, mock_pool):
+        """Test snapshot calculation with grant amounts"""
+        # Setup mocks
+        mock_pool_instance = Mock()
+        mock_pool_instance.next.return_value = 'test-key'
+        mock_pool.return_value = mock_pool_instance
         
-    @patch('urllib.request.urlopen')
-    def test_search_news_params(self, mock_urlopen):
-        """Test search_news with all parameters"""
-        mock_response = MagicMock()
-        mock_response.status = 200
-        mock_response.read.return_value = json.dumps({"articles": []}).encode('utf-8')
-        mock_urlopen.return_value.__enter__.return_value = mock_response
+        mock_response = Mock()
+        mock_response.status_code = 200
+        mock_response.json.return_value = {
+            'data': [
+                {'funder_name': 'Foundation A', 'amount': 10000},
+                {'funder_name': 'Foundation B', 'amount': 20000}, 
+                {'funder_name': 'Foundation C', 'amount': 30000},
+                {'funder_name': 'Foundation A', 'award_amount': 15000}  # Different field name
+            ]
+        }
+        mock_get.return_value = mock_response
         
-        self.client.search_news("nonprofit", start_date="2024-01-01", region="US", page=2, size=50)
+        client = GrantsClient()
+        snapshot = client.snapshot_for('education', 'california')
         
-        # Check URL params
-        call_args = mock_urlopen.call_args
-        request = call_args[0][0]
-        url = request.full_url
+        # Verify snapshot calculation
+        self.assertEqual(snapshot['award_count'], 4)
+        self.assertEqual(snapshot['median_award'], 17500)  # Median of [10000, 15000, 20000, 30000]
+        self.assertEqual(len(snapshot['recent_funders']), 3)  # Unique funders
+        self.assertIn('Foundation A', snapshot['recent_funders'])
+    
+    @patch('app.services.candid_client.RotatingKeyPool')
+    @patch('requests.get')
+    def test_snapshot_for_no_amounts(self, mock_get, mock_pool):
+        """Test snapshot with no valid amounts"""
+        # Setup mocks
+        mock_pool_instance = Mock()
+        mock_pool_instance.next.return_value = 'test-key'
+        mock_pool.return_value = mock_pool_instance
         
-        self.assertIn("query=nonprofit", url)
-        self.assertIn("start_date=2024-01-01", url)
-        self.assertIn("region=US", url)
-        self.assertIn("page=2", url)
-        self.assertIn("page_size=50", url)
+        mock_response = Mock()
+        mock_response.status_code = 200
+        mock_response.json.return_value = {
+            'data': [
+                {'funder_name': 'Foundation A'},  # No amount
+                {'funder_name': 'Foundation B', 'amount': 'undisclosed'}  # Invalid amount
+            ]
+        }
+        mock_get.return_value = mock_response
         
-    @patch('urllib.request.urlopen')
-    def test_search_transactions_params(self, mock_urlopen):
-        """Test search_transactions parameters"""
-        mock_response = MagicMock()
-        mock_response.status = 200
-        mock_response.read.return_value = json.dumps({"transactions": []}).encode('utf-8')
-        mock_urlopen.return_value.__enter__.return_value = mock_response
+        client = GrantsClient()
+        snapshot = client.snapshot_for('arts', 'texas')
         
-        self.client.search_transactions("education AND chicago", page=3, size=100)
+        # Verify snapshot with no amounts
+        self.assertEqual(snapshot['award_count'], 2)
+        self.assertIsNone(snapshot['median_award'])
+        self.assertEqual(len(snapshot['recent_funders']), 2)
+
+
+class TestEssentialsClient(unittest.TestCase):
+    """Test EssentialsClient functionality"""
+    
+    @patch('os.environ.get')
+    @patch('requests.get')
+    def test_search_org_by_name(self, mock_get, mock_env):
+        """Test organization search by name"""
+        # Setup environment mock
+        mock_env.return_value = 'test-essentials-key'
         
-        # Check URL params
-        call_args = mock_urlopen.call_args
-        request = call_args[0][0]
-        url = request.full_url
+        # Setup response mock
+        mock_response = Mock()
+        mock_response.status_code = 200
+        mock_response.json.return_value = {
+            'data': [
+                {
+                    'id': '789',
+                    'name': 'Test Organization',
+                    'ein': '12-3456789',
+                    'city': 'San Francisco',
+                    'state': 'CA',
+                    'pcs_subject_codes': ['A01', 'B02']
+                }
+            ]
+        }
+        mock_get.return_value = mock_response
         
-        self.assertIn("query=education+AND+chicago", url)
-        self.assertIn("page=3", url)
-        self.assertIn("page_size=100", url)
+        client = EssentialsClient()
+        result = client.search_org('Test Organization')
         
-    def test_cache_expiry(self):
-        """Test that cache expires after TTL"""
-        # Set cache with short TTL
-        self.client._set_cache("test_url", {"param": "value"}, {"data": "test"}, ttl_seconds=1)
+        # Verify request
+        mock_get.assert_called_once()
+        args, kwargs = mock_get.call_args
+        self.assertEqual(kwargs['headers']['Subscription-Key'], 'test-essentials-key')
+        self.assertEqual(kwargs['params']['query'], 'Test Organization')
         
-        # Should be in cache
-        cached = self.client._get_from_cache("test_url", {"param": "value"})
-        self.assertIsNotNone(cached)
+        # Verify result
+        self.assertEqual(result['name'], 'Test Organization')
+        self.assertEqual(result['ein'], '12-3456789')
+    
+    @patch('os.environ.get')
+    @patch('requests.get')
+    def test_search_org_by_ein(self, mock_get, mock_env):
+        """Test organization search by EIN"""
+        mock_env.return_value = 'test-key'
         
-        # Manually expire by setting past time
-        key = self.client._cache_key("test_url", {"param": "value"})
-        expires_at = datetime.now() - timedelta(seconds=1)
-        self.client.cache[key] = (expires_at, {"data": "test"})
+        mock_response = Mock()
+        mock_response.status_code = 200
+        mock_response.json.return_value = {'data': [{'ein': '12-3456789'}]}
+        mock_get.return_value = mock_response
         
-        # Should not be in cache
-        cached = self.client._get_from_cache("test_url", {"param": "value"})
-        self.assertIsNone(cached)
+        client = EssentialsClient()
+        client.search_org('12-3456789')
+        
+        # Should use EIN parameter for 9-digit input
+        args, kwargs = mock_get.call_args
+        self.assertEqual(kwargs['params']['ein'], '12-3456789')
+        self.assertNotIn('query', kwargs['params'])
+    
+    @patch('os.environ.get')
+    def test_no_api_key(self, mock_env):
+        """Test client behavior with no API key"""
+        mock_env.return_value = None
+        
+        client = EssentialsClient()
+        result = client.search_org('test')
+        
+        # Should return None when no key available
+        self.assertIsNone(result)
+    
+    @patch('os.environ.get')
+    @patch('requests.get')
+    def test_api_error_handling(self, mock_get, mock_env):
+        """Test graceful error handling"""
+        mock_env.return_value = 'test-key'
+        
+        # Simulate API error
+        mock_response = Mock()
+        mock_response.status_code = 500
+        mock_get.return_value = mock_response
+        
+        client = EssentialsClient()
+        result = client.search_org('test')
+        
+        # Should return None on errors, not crash
+        self.assertIsNone(result)
+    
+    def test_extract_tokens(self):
+        """Test token extraction from organization record"""
+        client = EssentialsClient()
+        
+        record = {
+            'pcs_subject_codes': ['A01', 'B02'],
+            'pcs_population_codes': ['P01'], 
+            'city': 'San Francisco',
+            'state': 'California',
+            'country': 'United States'
+        }
+        
+        tokens = client.extract_tokens(record)
+        
+        self.assertEqual(tokens['pcs_subject_codes'], ['A01', 'B02'])
+        self.assertEqual(tokens['pcs_population_codes'], ['P01'])
+        self.assertIn('San Francisco', tokens['locations'])
+        self.assertIn('California', tokens['locations'])
+        self.assertIn('United States', tokens['locations'])
+    
+    def test_extract_tokens_empty_record(self):
+        """Test token extraction from empty record"""
+        client = EssentialsClient()
+        tokens = client.extract_tokens(None)
+        
+        self.assertEqual(tokens['pcs_subject_codes'], [])
+        self.assertEqual(tokens['pcs_population_codes'], [])
+        self.assertEqual(tokens['locations'], [])
+
 
 if __name__ == '__main__':
     unittest.main()
