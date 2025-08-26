@@ -4,6 +4,8 @@ import os
 
 app = create_app()
 
+# Database initialization handled automatically in create_app()
+
 # Register enhanced grant data blueprints
 try:
     from app.api import enhanced_grant_data

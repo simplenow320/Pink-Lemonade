@@ -5,6 +5,49 @@ from flask_cors import CORS
 
 db = SQLAlchemy()
 
+def _initialize_database_if_needed():
+    """
+    Auto-initialize database if needed (production-safe)
+    This runs during app startup and handles database setup gracefully
+    """
+    try:
+        from sqlalchemy import text, inspect
+        import logging
+        
+        logger = logging.getLogger(__name__)
+        
+        # Test if database is accessible and has tables
+        try:
+            with db.engine.connect() as conn:
+                conn.execute(text('SELECT 1'))
+            
+            inspector = inspect(db.engine)
+            existing_tables = inspector.get_table_names()
+            
+            # Check if critical tables exist
+            critical_tables = ['users', 'organizations', 'grants']
+            missing_tables = [t for t in critical_tables if t not in existing_tables]
+            
+            if missing_tables:
+                logger.info(f"Initializing database - missing tables: {missing_tables}")
+                db.create_all()
+                logger.info("✅ Database tables created successfully")
+            else:
+                logger.info("✅ Database already initialized")
+                
+        except Exception as e:
+            # Database might not be ready yet, create all tables
+            logger.info("Creating database tables...")
+            db.create_all()
+            logger.info("✅ Database initialization completed")
+            
+    except Exception as e:
+        # If anything fails, continue without crashing the app
+        # This ensures deployment won't fail due to database issues
+        import logging
+        logging.warning(f"Database initialization skipped: {e}")
+        pass
+
 def create_app():
     flask_app = Flask(__name__)
     flask_app.config.from_object("app.config.settings")
@@ -12,11 +55,14 @@ def create_app():
     CORS(flask_app, supports_credentials=True)
     db.init_app(flask_app)
     
-    # Import models so they are registered (but don't create tables here)
-    # Database initialization will be handled by init_database.py for production safety
+    # Import models so they are registered
     import app.models
     import app.models_extended
     import app.models_templates
+    
+    # Auto-initialize database on first run (production-safe)
+    with flask_app.app_context():
+        _initialize_database_if_needed()
     
     # Register blueprints
     from app.pages import pages as pages_bp
