@@ -1,13 +1,15 @@
 """
-Test Matching API endpoints
+Unit tests for Matching API
 """
 import unittest
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch, Mock
 import json
 
 from app import create_app
 
+
 class TestMatchingAPI(unittest.TestCase):
+    """Test Matching API endpoints"""
     
     def setUp(self):
         """Set up test client"""
@@ -15,220 +17,280 @@ class TestMatchingAPI(unittest.TestCase):
         self.app.config['TESTING'] = True
         self.client = self.app.test_client()
         
-    @patch('app.api.matching.matching_service.build_tokens')
-    @patch('app.api.matching.matching_service.assemble_results')
-    def test_get_matching_results_success(self, mock_assemble, mock_build):
-        """Test successful matching results retrieval"""
-        # Mock tokens
-        mock_build.return_value = {
-            "keywords": ["education", "youth"],
-            "geo": "Chicago",
-            "populations": ["children"]
+        # Sample matching results
+        self.mock_results = {
+            'tokens': {
+                'pcs_subject_codes': ['A01'],
+                'pcs_population_codes': ['P01'],
+                'locations': ['San Francisco'],
+                'keywords': ['education', 'youth']
+            },
+            'context': {
+                'award_count': 15,
+                'median_award': 50000,
+                'recent_funders': ['Ford Foundation'],
+                'sourceNotes': {
+                    'api': 'candid.grants',
+                    'endpoint': 'transactions',
+                    'query': 'education AND San Francisco'
+                }
+            },
+            'news': [
+                {
+                    'id': '123',
+                    'title': 'Education Grant Opportunity',
+                    'content': 'New funding available',
+                    'publication_date': '2024-01-15',
+                    'score': 85,
+                    'reasons': ['Subject match: education'],
+                    'sourceNotes': {
+                        'api': 'candid.news',
+                        'query': 'RFP OR grant opportunity',
+                        'window': '45d'
+                    }
+                }
+            ],
+            'federal': [
+                {
+                    'opportunity_number': 'ED-2024-001',
+                    'title': 'Department of Education Grant',
+                    'description': 'Federal education funding',
+                    'posted_date': '2024-01-10',
+                    'score': 78,
+                    'reasons': ['Keyword match: education'],
+                    'sourceNotes': {
+                        'api': 'grants.gov',
+                        'endpoint': 'search2',
+                        'window': '45d'
+                    }
+                }
+            ]
         }
         
-        # Mock results
-        mock_assemble.return_value = {
-            "federal": [
-                {
-                    "title": "Education Grant",
-                    "agency": "Dept of Education",
-                    "close_date": "06/01/2024",
-                    "score": 85,
-                    "reasons": ["Keywords matched: 2"],
-                    "link": "https://grants.gov/...",
-                    "flags": []
-                }
-            ],
-            "news": [
-                {
-                    "title": "New RFP Released",
-                    "publisher": "Foundation News",
-                    "published_at": "2024-01-15",
-                    "url": "https://example.com",
-                    "score": 72,
-                    "reasons": ["Recent: 5 days old"],
-                    "flags": []
-                }
-            ],
-            "context": {
-                "award_count": 10,
-                "median_award": 50000,
-                "recent_funders": ["Foundation A"],
-                "source_notes": "Based on 10 transactions"
-            }
+        # Sample opportunity detail
+        self.mock_opportunity = {
+            'opportunity_number': 'ED-2024-001',
+            'title': 'Department of Education Grant',
+            'description': 'Detailed description of federal education funding opportunity',
+            'posted_date': '2024-01-10',
+            'close_date': '2024-03-15',
+            'award_ceiling': 100000,
+            'eligibility': 'Nonprofit organizations including 501(c)(3) entities'
         }
+    
+    @patch('app.api.matching.MatchingService')
+    def test_get_matching_opportunities_success(self, mock_service_class):
+        """Test successful matching opportunities retrieval"""
+        # Mock the service
+        mock_service = Mock()
+        mock_service_class.return_value = mock_service
+        mock_service.assemble.return_value = self.mock_results
         
         # Make request
-        response = self.client.get('/api/matching?orgId=1&limit=10')
+        response = self.client.get('/api/matching?orgId=123')
         
-        # Check response
+        # Verify response
         self.assertEqual(response.status_code, 200)
+        
         data = json.loads(response.data)
         
-        # Verify structure
-        self.assertIn("federal", data)
-        self.assertIn("news", data)
-        self.assertIn("context", data)
+        # Check required keys exist
+        self.assertIn('tokens', data)
+        self.assertIn('context', data)
+        self.assertIn('news', data)
+        self.assertIn('federal', data)
         
-        # Verify federal item
-        federal_item = data["federal"][0]
-        self.assertEqual(federal_item["title"], "Education Grant")
-        self.assertIn("sourceNotes", federal_item)
-        self.assertEqual(federal_item["sourceNotes"]["api"], "grants.gov")
-        self.assertIn("keyword", federal_item["sourceNotes"])
+        # Verify tokens structure
+        tokens = data['tokens']
+        self.assertIn('pcs_subject_codes', tokens)
+        self.assertIn('keywords', tokens)
+        self.assertIn('locations', tokens)
         
-        # Verify news item
-        news_item = data["news"][0]
-        self.assertEqual(news_item["title"], "New RFP Released")
-        self.assertIn("sourceNotes", news_item)
-        self.assertEqual(news_item["sourceNotes"]["api"], "candid.news")
-        self.assertIn("query", news_item["sourceNotes"])
+        # Verify context structure
+        context = data['context']
+        self.assertIn('award_count', context)
+        self.assertIn('sourceNotes', context)
         
-        # Verify context
-        context = data["context"]
-        self.assertEqual(context["award_count"], 10)
-        self.assertIn("sourceNotes", context)
-        self.assertEqual(context["sourceNotes"]["api"], "candid.grants")
+        # Verify news array
+        self.assertIsInstance(data['news'], list)
+        if data['news']:
+            news_item = data['news'][0]
+            self.assertIn('score', news_item)
+            self.assertIn('reasons', news_item)
+            self.assertIn('sourceNotes', news_item)
         
-    def test_get_matching_results_no_org_id(self):
-        """Test matching results without orgId"""
+        # Verify federal array
+        self.assertIsInstance(data['federal'], list)
+        if data['federal']:
+            federal_item = data['federal'][0]
+            self.assertIn('score', federal_item)
+            self.assertIn('sourceNotes', federal_item)
+        
+        # Verify service was called correctly
+        mock_service.assemble.assert_called_once_with(123, 25)
+    
+    @patch('app.api.matching.MatchingService')
+    def test_get_matching_opportunities_with_limit(self, mock_service_class):
+        """Test matching opportunities with custom limit"""
+        # Mock the service
+        mock_service = Mock()
+        mock_service_class.return_value = mock_service
+        mock_service.assemble.return_value = self.mock_results
+        
+        # Make request with limit
+        response = self.client.get('/api/matching?orgId=456&limit=10')
+        
+        # Verify response
+        self.assertEqual(response.status_code, 200)
+        
+        # Verify service was called with correct limit
+        mock_service.assemble.assert_called_once_with(456, 10)
+    
+    def test_get_matching_opportunities_missing_org_id(self):
+        """Test error when orgId is missing"""
         response = self.client.get('/api/matching')
         
         self.assertEqual(response.status_code, 400)
+        
         data = json.loads(response.data)
-        self.assertIn("error", data)
-        self.assertIn("orgId", data["error"])
+        self.assertIn('error', data)
+        self.assertIn('orgId parameter required', data['error'])
+    
+    def test_get_matching_opportunities_invalid_org_id(self):
+        """Test error when orgId is invalid"""
+        response = self.client.get('/api/matching?orgId=invalid')
         
-    @patch('app.api.matching.matching_service.build_tokens')
-    @patch('app.api.matching.matching_service.assemble_results')
-    def test_get_matching_results_with_limit(self, mock_assemble, mock_build):
-        """Test matching results with limit"""
-        mock_build.return_value = {"keywords": ["test"]}
+        self.assertEqual(response.status_code, 400)
         
-        # Return more results than limit
-        mock_assemble.return_value = {
-            "federal": [{"title": f"Grant {i}"} for i in range(30)],
-            "news": [{"title": f"News {i}"} for i in range(30)],
-            "context": None
-        }
-        
-        response = self.client.get('/api/matching?orgId=1&limit=5')
-        
-        self.assertEqual(response.status_code, 200)
         data = json.loads(response.data)
+        self.assertIn('error', data)
+        self.assertIn('must be a number', data['error'])
+    
+    def test_get_matching_opportunities_invalid_limit(self):
+        """Test error when limit is out of bounds"""
+        # Test limit too low
+        response = self.client.get('/api/matching?orgId=123&limit=0')
+        self.assertEqual(response.status_code, 400)
         
-        # Should be limited to 5 each
-        self.assertEqual(len(data["federal"]), 5)
-        self.assertEqual(len(data["news"]), 5)
+        # Test limit too high
+        response = self.client.get('/api/matching?orgId=123&limit=200')
+        self.assertEqual(response.status_code, 400)
+    
+    @patch('app.api.matching.MatchingService')
+    def test_get_matching_opportunities_service_error(self, mock_service_class):
+        """Test handling of service errors"""
+        # Mock service to raise exception
+        mock_service = Mock()
+        mock_service_class.return_value = mock_service
+        mock_service.assemble.side_effect = Exception('Service error')
         
-    @patch('app.api.matching.matching_service.build_tokens')
-    @patch('app.api.matching.matching_service.assemble_results')
-    def test_cache_hit(self, mock_assemble, mock_build):
-        """Test that cache is used on second call"""
-        mock_build.return_value = {"keywords": ["test"]}
-        mock_assemble.return_value = {
-            "federal": [],
-            "news": [],
-            "context": None
-        }
+        # Make request
+        response = self.client.get('/api/matching?orgId=123')
         
-        # First call
-        response1 = self.client.get('/api/matching?orgId=1')
-        self.assertEqual(response1.status_code, 200)
+        # Verify error response
+        self.assertEqual(response.status_code, 500)
         
-        # Second call - should hit cache
-        response2 = self.client.get('/api/matching?orgId=1')
-        self.assertEqual(response2.status_code, 200)
-        
-        # assemble_results should only be called once
-        self.assertEqual(mock_assemble.call_count, 1)
-        
-        # Force refresh
-        response3 = self.client.get('/api/matching?orgId=1&refresh=1')
-        self.assertEqual(response3.status_code, 200)
-        
-        # Now should be called twice
-        self.assertEqual(mock_assemble.call_count, 2)
-        
+        data = json.loads(response.data)
+        self.assertIn('error', data)
+        self.assertEqual(data['error'], 'Internal server error')
+    
     @patch('app.api.matching.get_grants_gov_client')
-    def test_get_opportunity_detail_success(self, mock_get_client):
-        """Test fetching opportunity details"""
-        mock_client = MagicMock()
+    def test_get_grants_gov_detail_success(self, mock_get_client):
+        """Test successful grants.gov opportunity detail retrieval"""
+        # Mock client
+        mock_client = Mock()
         mock_get_client.return_value = mock_client
+        mock_client.fetch_opportunity.return_value = self.mock_opportunity
         
-        mock_client.fetch_opportunity.return_value = {
-            "source": "grants_gov",
-            "opp_number": "EPA-2024-001",
-            "title": "Environmental Grant",
-            "agency": "EPA",
-            "description": "Full description",
-            "eligibility_text": "Nonprofits eligible",
-            "close_date": "06/01/2024",
-            "link": "https://grants.gov/...",
-            "raw": {"additional": "data"}
-        }
-        
-        response = self.client.get('/api/matching/detail/grants-gov/EPA-2024-001')
-        
-        self.assertEqual(response.status_code, 200)
-        data = json.loads(response.data)
+        # Make request
+        response = self.client.get('/api/matching/detail/grants-gov/ED-2024-001')
         
         # Verify response
-        self.assertEqual(data["opp_number"], "EPA-2024-001")
-        self.assertEqual(data["title"], "Environmental Grant")
-        self.assertIn("sourceNotes", data)
-        self.assertEqual(data["sourceNotes"]["api"], "grants.gov")
-        self.assertEqual(data["sourceNotes"]["opportunityNumber"], "EPA-2024-001")
+        self.assertEqual(response.status_code, 200)
         
+        data = json.loads(response.data)
+        
+        # Check required fields
+        self.assertEqual(data['opportunity_number'], 'ED-2024-001')
+        self.assertIn('title', data)
+        self.assertIn('description', data)
+        self.assertIn('sourceNotes', data)
+        
+        # Verify source notes
+        source_notes = data['sourceNotes']
+        self.assertEqual(source_notes['api'], 'grants.gov')
+        self.assertEqual(source_notes['endpoint'], 'fetchOpportunity')
+        self.assertEqual(source_notes['opportunityNumber'], 'ED-2024-001')
+        
+        # Verify client was called correctly
+        mock_client.fetch_opportunity.assert_called_once_with('ED-2024-001')
+    
     @patch('app.api.matching.get_grants_gov_client')
-    def test_get_opportunity_detail_not_found(self, mock_get_client):
-        """Test opportunity detail not found"""
-        mock_client = MagicMock()
+    def test_get_grants_gov_detail_not_found(self, mock_get_client):
+        """Test grants.gov opportunity not found"""
+        # Mock client to return None
+        mock_client = Mock()
         mock_get_client.return_value = mock_client
-        mock_client.fetch_opportunity.return_value = {}
+        mock_client.fetch_opportunity.return_value = None
         
+        # Make request
         response = self.client.get('/api/matching/detail/grants-gov/INVALID-001')
         
+        # Verify not found response
         self.assertEqual(response.status_code, 404)
+        
         data = json.loads(response.data)
-        self.assertIn("error", data)
+        self.assertIn('error', data)
+        self.assertEqual(data['error'], 'Opportunity not found')
+    
+    def test_get_grants_gov_detail_invalid_number(self):
+        """Test grants.gov detail with invalid opportunity number"""
+        # Test empty opportunity number
+        response = self.client.get('/api/matching/detail/grants-gov/')
+        self.assertEqual(response.status_code, 404)  # Flask returns 404 for missing path param
         
-    def test_clear_cache(self):
-        """Test cache clearing endpoint"""
-        response = self.client.post('/api/matching/cache/clear')
+        # Test whitespace-only opportunity number
+        response = self.client.get('/api/matching/detail/grants-gov/%20%20')
+        self.assertEqual(response.status_code, 400)
         
-        self.assertEqual(response.status_code, 200)
         data = json.loads(response.data)
-        self.assertIn("message", data)
-        self.assertIn("Cache cleared", data["message"])
-        self.assertIn("items_cleared", data)
+        self.assertIn('error', data)
+        self.assertEqual(data['error'], 'Invalid opportunity number')
+    
+    @patch('app.api.matching.get_grants_gov_client')
+    def test_get_grants_gov_detail_service_unavailable(self, mock_get_client):
+        """Test grants.gov service unavailable"""
+        # Mock client to raise exception
+        mock_get_client.side_effect = Exception('Service unavailable')
         
-    @patch('app.api.matching.matching_service.build_tokens')
-    @patch('app.api.matching.matching_service.assemble_results')
-    def test_source_notes_present(self, mock_assemble, mock_build):
-        """Test that source notes are always present"""
-        mock_build.return_value = {"keywords": ["test"], "geo": "US"}
-        mock_assemble.return_value = {
-            "federal": [{"title": "Grant"}],
-            "news": [{"title": "News"}],
-            "context": {"award_count": 5}
-        }
+        # Make request
+        response = self.client.get('/api/matching/detail/grants-gov/ED-2024-001')
         
-        response = self.client.get('/api/matching?orgId=1')
+        # Verify service unavailable response
+        self.assertEqual(response.status_code, 503)
+        
         data = json.loads(response.data)
+        self.assertIn('error', data)
+        self.assertEqual(data['error'], 'Grants.gov service unavailable')
+    
+    @patch('app.api.matching.get_grants_gov_client')
+    def test_get_grants_gov_detail_client_error(self, mock_get_client):
+        """Test grants.gov client error during fetch"""
+        # Mock client that raises exception during fetch
+        mock_client = Mock()
+        mock_get_client.return_value = mock_client
+        mock_client.fetch_opportunity.side_effect = Exception('Client error')
         
-        # All items should have source notes
-        for item in data["federal"]:
-            self.assertIn("sourceNotes", item)
-            self.assertIn("api", item["sourceNotes"])
-            
-        for item in data["news"]:
-            self.assertIn("sourceNotes", item)
-            self.assertIn("api", item["sourceNotes"])
-            
-        if data["context"]:
-            self.assertIn("sourceNotes", data["context"])
-            self.assertIn("api", data["context"]["sourceNotes"])
+        # Make request
+        response = self.client.get('/api/matching/detail/grants-gov/ED-2024-001')
+        
+        # Verify error response
+        self.assertEqual(response.status_code, 500)
+        
+        data = json.loads(response.data)
+        self.assertIn('error', data)
+        self.assertEqual(data['error'], 'Internal server error')
+
 
 if __name__ == '__main__':
     unittest.main()

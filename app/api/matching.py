@@ -7,7 +7,7 @@ import hashlib
 import json
 from datetime import datetime, timedelta
 
-from app.services import matching_service
+from app.services.matching_service import MatchingService
 from app.services.grants_gov_client import get_grants_gov_client
 
 # Create blueprint
@@ -48,77 +48,50 @@ def get_matching_results():
     """
     try:
         # Get parameters
-        org_id = request.args.get('orgId', type=int)
+        org_id_str = request.args.get('orgId')
         limit = request.args.get('limit', 25, type=int)
         refresh = request.args.get('refresh') == '1'
         
-        if not org_id:
+        if not org_id_str:
             return jsonify({"error": "orgId parameter required"}), 400
         
-        # Build tokens
-        tokens = matching_service.build_tokens(org_id)
+        try:
+            org_id = int(org_id_str)
+        except ValueError:
+            return jsonify({"error": "Invalid orgId: must be a number"}), 400
         
-        # Generate cache key
-        keywords_str = json.dumps(sorted(tokens.get("keywords", [])))
-        keywords_hash = hashlib.md5(keywords_str.encode()).hexdigest()[:8]
-        cache_key = _get_cache_key(org_id, keywords_hash)
+        # Validate limit bounds
+        if limit < 1 or limit > 100:
+            return jsonify({"error": "Invalid limit: must be between 1 and 100"}), 400
+        
+        # Use the new MatchingService
+        service = MatchingService()
+        
+        # Generate cache key based on org_id and limit
+        cache_key = f"matching:{org_id}:{limit}"
         
         # Check cache (unless refresh requested)
         if not refresh:
             cached = _get_from_cache(cache_key)
             if cached:
-                # Apply limit to cached results
-                result = {
-                    "federal": cached["federal"][:limit],
-                    "news": cached["news"][:limit],
-                    "context": cached["context"]
-                }
-                result["cached"] = True
-                return jsonify(result)
+                cached["cached"] = True
+                return jsonify(cached)
         
-        # Get fresh results
-        results = matching_service.assemble_results(tokens)
+        # Get fresh results using new service
+        results = service.assemble(org_id, limit)
         
-        # Cache the full results
+        # Cache the results
         _set_cache(cache_key, results)
         
-        # Add source notes to federal items
-        for item in results["federal"]:
-            item["sourceNotes"] = {
-                "api": "grants.gov",
-                "endpoint": "search2",
-                "keyword": " ".join(tokens.get("keywords", [])[:3])
-            }
-        
-        # Add source notes to news items
-        base_query = 'RFP OR "grant opportunity" OR "call for proposals"'
-        for item in results["news"]:
-            item["sourceNotes"] = {
-                "api": "candid.news",
-                "query": f"{base_query} AND {' OR '.join(tokens.get('keywords', [])[:3])}"
-            }
-        
-        # Add source notes to context
-        if results["context"]:
-            topic = tokens.get("keywords", [""])[0] if tokens.get("keywords") else ""
-            geo = tokens.get("geo", "")
-            results["context"]["sourceNotes"] = {
-                "api": "candid.grants",
-                "endpoint": "transactions",
-                "query": f"{topic} AND {geo}" if topic and geo else topic or geo
-            }
-        
-        # Apply limit
-        response = {
-            "federal": results["federal"][:limit],
-            "news": results["news"][:limit],
-            "context": results["context"]
-        }
+        response = results
         
         return jsonify(response)
         
     except Exception as e:
-        return jsonify({"error": str(e)}), 500
+        return jsonify({
+            "error": "Internal server error", 
+            "message": str(e)
+        }), 500
 
 @matching_bp.route('/api/matching/detail/grants-gov/<opp_number>', methods=['GET'])
 def get_opportunity_detail(opp_number: str):
@@ -129,25 +102,41 @@ def get_opportunity_detail(opp_number: str):
         opp_number: Opportunity number
     """
     try:
-        client = get_grants_gov_client()
+        # Validate opportunity number
+        if not opp_number or not opp_number.strip():
+            return jsonify({
+                'error': 'Invalid opportunity number'
+            }), 400
+        
+        # Get Grants.gov client
+        try:
+            client = get_grants_gov_client()
+        except Exception:
+            return jsonify({
+                'error': 'Grants.gov service unavailable'
+            }), 503
         
         # Fetch detailed opportunity
-        detail = client.fetch_opportunity(opp_number)
+        detail = client.fetch_opportunity(opp_number.strip())
         
         if not detail:
             return jsonify({"error": "Opportunity not found"}), 404
         
         # Add source notes
-        detail["sourceNotes"] = {
+        response_data = detail.copy()
+        response_data["sourceNotes"] = {
             "api": "grants.gov",
             "endpoint": "fetchOpportunity",
             "opportunityNumber": opp_number
         }
         
-        return jsonify(detail)
+        return jsonify(response_data)
         
     except Exception as e:
-        return jsonify({"error": str(e)}), 500
+        return jsonify({
+            "error": "Internal server error",
+            "message": str(e)
+        }), 500
 
 # Cache management endpoint (for admins)
 @matching_bp.route('/api/matching/cache/clear', methods=['POST'])
