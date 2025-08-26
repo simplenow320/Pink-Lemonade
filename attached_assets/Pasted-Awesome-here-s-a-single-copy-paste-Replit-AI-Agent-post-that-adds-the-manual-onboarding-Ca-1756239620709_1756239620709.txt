@@ -1,0 +1,176 @@
+Awesome — here’s a **single copy-paste Replit AI Agent post** that adds the **manual onboarding + Candid lookup** flow exactly the way you want, with strict guardrails so the agent won’t break your branding or layout.
+
+---
+
+## POST — Onboarding: Manual entry + Candid lookup + PCS pickers (safe, no UI restyle)
+
+```text
+You are updating the EXISTING Pink Lemonade codebase. Follow these guardrails:
+
+GUARDRAILS
+- Do NOT change styles, colors, typography, spacing, or component structure.
+- Do NOT rename files/folders or rewrite the router.
+- Only add minimal code needed to wire the form, API calls, and storage.
+- No secrets in logs; never hardcode keys.
+- If a required hook/ID is missing, STOP and report exactly what is needed.
+
+GOAL
+Add a two-path onboarding flow:
+  A) Full MANUAL entry for org details (always allowed; preferred).
+  B) Optional CANDID LOOKUP (Essentials API) to prefill fields the user can accept/reject.
+Also add PCS Subject/Population pickers using Candid TAXONOMY API.
+Ensure matching tokens prefer manual values over imported ones.
+
+SECRETS (already set by user; just read them)
+- CANDID_ESSENTIALS_KEY
+- CANDID_NEWS_KEYS (unused here)
+- CANDID_GRANTS_KEYS (unused here)
+
+FILES TO ADD/UPDATE (keep existing structure)
+- app/services/candid_client.py   (add Essentials + Taxonomy lightweight clients)
+- app/services/org_tokens.py      (update to prefer manual values)
+- app/api/onboarding.py           (new API endpoints)
+- frontend: use existing Onboarding page/component; add minimal handlers ONLY
+- tests/: unit tests for clients, endpoints, and token logic
+
+STEP 1 — Essentials + Taxonomy clients
+Create/extend app/services/candid_client.py:
+
+  class EssentialsClient:
+    base = "https://api.candid.org/essentials/v1"
+    header: {"Subscription-Key": os.getenv("CANDID_ESSENTIALS_KEY"), "Accept":"application/json"}
+    def search_org(self, q:str): GET /organizations/search?query=<q>&page=1&page_size=1
+    def by_ein(self, ein:str):   GET /organizations/search?ein=<ein>&page=1&page_size=1
+    Return the first record or None.
+    def extract_tokens(record)-> {pcs_subject_codes:[], pcs_population_codes:[], locations:[]}
+      Pull PCS subject/population arrays if present; locations from city/state/country.
+
+  class TaxonomyClient:
+    base = "https://api.candid.org/taxonomy/v1"
+    header: same as above (Essentials key also works here)
+    def search_subjects(self, text:str, limit=10): GET /pcs/subjects/search?query=<text>&limit=<limit>
+    def search_populations(self, text:str, limit=10): GET /pcs/populations/search?query=<text>&limit=<limit>
+    Return array of {code, term, path} (don’t invent fields).
+
+Include: timeouts, 20s; raise for_status; return None/[] on 4xx/5xx with a clean message. No secret values in logs.
+
+STEP 2 — API endpoints (server)
+Create app/api/onboarding.py (Blueprint) with:
+
+  POST /api/onboarding/manual/save
+    Body: {
+      org_id, org_name, ein?, website?, contact_name?, contact_email?,
+      mission, programs,
+      service_locations: [strings],
+      populations_served: [strings],              # free-text tags (optional)
+      keywords: [strings],
+      budget_range?: string,
+      pcs_subject_codes: [PCS_CODE],              # selected via Taxonomy picker
+      pcs_population_codes: [PCS_CODE]
+    }
+    Validate required: org_name, mission, programs.
+    Persist or upsert to orgs table (create columns if missing):
+      pcs_subject_codes json, pcs_population_codes json,
+      service_locations json, keywords json, budget_range text.
+    Return 200 with {saved:true, org_id}.
+
+  GET /api/onboarding/essentials/search?query=<nameOrEin>
+    Use EssentialsClient.search_org (or by_ein if looks like EIN).
+    Return {record, tokens: extract_tokens(record)} OR 404 if none.
+
+  POST /api/onboarding/essentials/apply
+    Body: {org_id, record, apply: {fieldName: boolean}}
+    Only copy fields where apply[fieldName] == true. Never overwrite others.
+    Allowed import fields:
+      org_name, ein, website, mission, programs (if present in record),
+      pcs_subject_codes, pcs_population_codes, service_locations
+    Save and return {saved:true, appliedFields:[...]}.
+
+Wire the blueprint into the app factory. Do not touch unrelated routes.
+
+STEP 3 — Frontend wiring (NO restyle)
+In the existing Onboarding page/component:
+- Add two obvious buttons at the top (use existing button styles/classes):
+    [ Enter details manually ]  [ Look up with Candid ]
+  By default open the manual form section.
+
+Manual form fields (use existing input styles):
+  org_name (required)
+  ein (optional)
+  website (optional)
+  contact_name/contact_email (optional)
+  mission (required, textarea)
+  programs (required, textarea)
+  service_locations (multiselect tags or comma-separated turned into array)
+  populations_served (optional tags)
+  keywords (optional tags)
+  budget_range (optional select)
+  pcs_subject_codes (multiselect, backed by Taxonomy search)
+  pcs_population_codes (multiselect, backed by Taxonomy search)
+
+  Implement minimal fetch helpers:
+   - /api/onboarding/manual/save  (POST)
+   - /api/onboarding/essentials/search?query=...
+   - /api/onboarding/essentials/apply (POST)
+
+Candid lookup panel:
+  - Input: name or EIN; click “Search Candid”.
+  - Show first Essentials record (name, EIN, city/state/country, any PCS codes).
+  - Show a review table with checkboxes (Import?) per field:
+      org_name, ein, website, mission, programs,
+      pcs_subject_codes, pcs_population_codes, service_locations
+  - Button “Apply selected” posts to /api/onboarding/essentials/apply.
+  - Confirm toast: “Imported 5 fields. You can still edit anything.”
+
+Taxonomy pickers (subjects + populations):
+  - Add an async search box that calls TaxonomyClient endpoints as the user types (min 2 chars).
+  - Show term + code; upon select, push code into the multiselect list.
+  - Store codes on save.
+
+STEP 4 — Token precedence for matching
+Update app/services/org_tokens.py:
+
+  get_org_tokens(org_id):
+    1) Read org row. Prefer MANUAL values if present:
+       pcs_subject_codes, pcs_population_codes, service_locations, keywords
+    2) If any are missing AND org has ein or name, attempt Essentials lookup once (cache 1 hour).
+       Merge only missing fields; do not override manual.
+    3) Return {
+         "pcs_subject_codes":[...], "pcs_population_codes":[...],
+         "locations":[...], "keywords":[...]
+       }
+    Never invent values; allow empty lists.
+
+STEP 5 — Tests
+Add tests:
+  - tests/test_essentials_and_taxonomy.py:
+      • verifies headers and parsing
+      • handles 4xx/5xx gracefully (returns None/[])
+  - tests/test_onboarding_api.py:
+      • manual/save persists required fields and arrays
+      • essentials/search returns record/tokens
+      • essentials/apply only applies fields marked true and never overwrites manual ones
+  - tests/test_org_tokens.py:
+      • manual values take precedence
+      • falls back to Essentials only for missing fields
+
+STEP 6 — Self-check + acceptance
+- Run all tests; report pass/fail count only.
+- Manual QA:
+   1) Open Onboarding; enter manual data; save. Expect success.
+   2) Use Candid lookup by name and by EIN; review and apply only selected fields; save.
+   3) Open any page that calls /api/matching to verify tokens now include the chosen PCS codes and locations.
+- Confirm NOTHING about the visual style changed (colors: matte pink, white, grey, black).
+- If a UI hook is missing (container id or handler), STOP and report the exact selector/event you need instead of inventing markup.
+```
+
+---
+
+### What this delivers
+
+* Clean **manual onboarding** plus an optional **Candid lookup** you can approve field by field.
+* **PCS pickers** powered by Candid’s free Taxonomy API.
+* **Token builder** that always prefers the user’s entries and only fills gaps from Essentials.
+* No branding changes. No layout churn. Tests included.
+
+If you want, I can also give you a follow-up post that runs a tiny smoke test and prints a sample of the stored tokens for a test org so you can visually confirm PCS codes and locations before you hit the Matching endpoint.
