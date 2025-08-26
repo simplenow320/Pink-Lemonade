@@ -1,0 +1,59 @@
+Create app/services/matching_service.py
+
+Imports
+- NewsClient, GrantsClient from candid_client
+- get_org_tokens from org_tokens
+- existing Grants.gov client if present. If not present, skip federal feed and return an empty list.
+
+Rules
+- Use tokens from get_org_tokens. If no PCS codes found, fall back to keywords and location only.
+- Use a clear filter that separates opportunity items from general news.
+
+Implement
+build_query_terms(tokens) -> dict with:
+  - news_query string: 'RFP OR "grant opportunity" OR "call for proposals" OR "accepting applications"' plus top 2 subject keywords
+  - date window: last 45 days
+  - region: from tokens if available
+  - transactions_query: f'{primary_subject or first keyword} AND {primary_location or ""}'. Trim double spaces.
+
+class MatchingService:
+  def __init__(self):
+     self.news = NewsClient()
+     self.grants = GrantsClient()
+     try import grants_gov_client if available
+
+  def news_feed(self, tokens):
+     res = self.news.search(query=..., start_date=..., pcs_subject_codes=tokens["pcs_subject_codes"], pcs_population_codes=tokens["pcs_population_codes"], region=primary_location)
+     Keep items where rfp_mentioned is true.
+     If rfp_mentioned is false but grant_mentioned is true, require content to contain any of: apply, application, accepting, deadline.
+
+  def federal_feed(self, tokens):
+     If grants_gov_client exists, call search_opportunities with keywords from tokens and a posted window of last 45 days. Else return [].
+
+  def context_snapshot(self, tokens):
+     q = transactions_query
+     return self.grants.snapshot_for(topic, geo)  # award_count, median_award, recent_funders
+
+  def score_item(self, item, tokens, snapshot):
+     Compute score 0 to 100
+       subject match 40
+       geography match 20
+       eligibility if present 15
+       amount alignment vs median 15 if amounts present
+       recency 10 by publication_date or close_date
+     Return {score, reasons[], flags[]}. Reasons must map to real fields.
+
+  def assemble(self, org_id, limit=25):
+     tokens = get_org_tokens(org_id)
+     snap = self.context_snapshot(tokens)
+     news = [item with score and reasons]
+     federal = [item with score and reasons]
+     Sort each by score desc then date asc
+     Return {
+       "tokens": tokens,
+       "context": {**snap, "sourceNotes":{"api":"candid.grants","endpoint":"transactions","query":snap.get("query_used")}},
+       "news":   [{...,"sourceNotes":{"api":"candid.news","query":news_query,"window":"45d"}}][:limit],
+       "federal":[{...,"sourceNotes":{"api":"grants.gov","endpoint":"search2","window":"45d"}}][:limit]
+     }
+
+Add tests in tests/test_matching_service.py. Stub the clients and verify scoring and filters.
