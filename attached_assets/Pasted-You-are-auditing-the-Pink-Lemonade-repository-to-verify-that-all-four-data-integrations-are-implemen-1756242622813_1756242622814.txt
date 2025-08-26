@@ -1,0 +1,136 @@
+You are auditing the Pink Lemonade repository to verify that all four data integrations are implemented and working:
+
+1) Candid Essentials API
+2) Candid News API
+3) Candid Grants API transactions
+4) Grants.gov REST APIs search2 and fetchOpportunity
+
+Follow these guardrails:
+- Do not change styles, colors, layout, navigation, or component structure.
+- Do not rename files or folders.
+- Do not log or print secret values.
+- If a required function, route, or file is missing, create the smallest safe implementation and clearly list what you added.
+- If changing anything outside tests and health checks is required, stop and report.
+
+Objectives:
+A) Static code check to confirm clients and routes exist.
+B) Runtime health checks that return simple JSON status for each integration.
+C) Unit tests that mock HTTP and verify headers, URLs, and shapes.
+D) A safe smoke script that runs live calls without exposing secrets.
+
+Step 1 — Static code scan
+- Locate these files or equivalent modules. If names differ, adapt but keep structure.
+  - app/services/candid_client.py with classes:
+    EssentialsClient (by_ein, search_org, extract_tokens)
+    NewsClient (search)
+    GrantsClient (transactions, snapshot_for)
+  - app/services/grants_gov_client.py with:
+    search_opportunities(payload)
+    fetch_opportunity(opportunity_number)
+  - app/services/org_tokens.py with get_org_tokens(org_id)
+  - app/api/matching.py with GET /api/matching and GET /api/matching/detail/grants-gov/<oppNumber>
+  - app/api/onboarding.py with:
+    POST /api/onboarding/manual/save
+    GET  /api/onboarding/essentials/search
+    POST /api/onboarding/essentials/apply
+- If any module is missing, stop and list the gaps without adding UI code.
+
+Step 2 — Environment checks
+- Confirm these env vars exist and are non empty. Do not print their values.
+  CANDID_ESSENTIALS_KEY
+  CANDID_NEWS_KEYS    comma separated keys
+  CANDID_GRANTS_KEYS  comma separated keys
+- Confirm OPENAI key exists if the code requires it for unrelated features. Do not print values.
+
+Step 3 — Add integration health endpoints
+Create a new blueprint app/api/health.py and mount it. Add:
+
+GET /api/health/integrations
+Return JSON:
+{
+  "candid": {
+    "essentials_client": true|false,
+    "news_client": true|false,
+    "grants_client": true|false,
+    "secrets_present": true|false
+  },
+  "grants_gov": {
+    "client_present": true|false
+  },
+  "routes": {
+    "matching": true|false,
+    "matching_detail": true|false,
+    "onboarding_manual": true|false,
+    "onboarding_essentials_search": true|false,
+    "onboarding_essentials_apply": true|false
+  }
+}
+
+GET /api/health/ping
+- Makes one short internal call per integration with safe timeouts and no secrets in logs.
+- For Candid clients:
+  - Essentials: perform a search with a harmless generic query like “United Way” page_size=1. Use header Subscription-Key but do not log it. On 200 return {"ok":true,"service":"essentials"} else {"ok":false,"status":code}.
+  - News: search query “RFP” start_date set to 30 days ago, page_size=1.
+  - Grants transactions: query “education AND Michigan” page_size=1.
+- For Grants.gov:
+  - POST search2 with a tiny payload {"keyword":"education","limit":1}. Expect 200 and a JSON body with opportunities array.
+- Return JSON:
+{
+  "candid": {
+    "essentials":{"ok":true|false,"status":code},
+    "news":{"ok":true|false,"status":code},
+    "grants":{"ok":true|false,"status":code}
+  },
+  "grants_gov":{"ok":true|false,"status":code}
+}
+Place all external calls behind try/except. Timeout 20s. Never print secrets.
+
+Step 4 — Unit tests for integrations
+Add tests with mocked HTTP so they do not hit real services:
+
+tests/test_integrations_clients.py
+- EssentialsClient: correct base URL, headers include Subscription-Key, parses first record or None, handles 4xx.
+- NewsClient: correct endpoint and params, rfp_mentioned present when provided, handles 429 by rotating key once if rotation exists in code.
+- GrantsClient: transactions call uses correct endpoint, snapshot_for computes median correctly and returns None if no amounts.
+- Grants.gov client: search_opportunities posts to /v1/api/search2 and returns a list, fetch_opportunity posts to /v1/api/fetchOpportunity.
+
+tests/test_integrations_routes.py
+- /api/health/integrations returns required keys and booleans.
+- Mock internal clients to return success and confirm /api/health/ping shape.
+
+Step 5 — Smoke script for live verification
+Create scripts/smoke_integrations.sh with four calls. Do not echo secrets.
+1) curl -s http://localhost:5000/api/health/integrations | jq
+2) curl -s http://localhost:5000/api/health/ping | jq
+3) curl -s "http://localhost:5000/api/matching?orgId=1" | jq '.context, (.news|length), (.federal|length)'  || true
+4) If there is a known opportunity number from Grants.gov search in step 2, call:
+   curl -s "http://localhost:5000/api/matching/detail/grants-gov/OPP_NUMBER" | jq 'keys' || true
+
+Document expected results in docs/INTEGRATIONS_CHECKLIST.md:
+- integrations shows all true for client presence and routes present
+- ping returns ok true for all that are reachable with current keys
+- matching returns JSON with tokens, context, and at least one non empty list after the first cache warm
+
+Step 6 — Run
+- Run unit tests and report pass and fail counts only.
+- Run the smoke script. Show the presence of keys and lengths only, not secret strings.
+
+Step 7 — If any check fails
+- Print a short remediation list:
+  - Missing client file
+  - Missing route
+  - Env var absent
+  - HTTP error with status code
+- For each item, propose the smallest fix in code terms without touching UI. Do not apply the fix unless I ask in a follow up.
+
+Deliverables
+- app/api/health.py
+- tests/test_integrations_clients.py
+- tests/test_integrations_routes.py
+- scripts/smoke_integrations.sh
+- docs/INTEGRATIONS_CHECKLIST.md
+
+Final note
+- Do not alter any frontend styles or components.
+- Do not print or log any secret values.
+- Keep diffs minimal and list every file you created or modified.
