@@ -11,6 +11,8 @@ const Grants = () => {
   const [toast, setToast] = useState(null);
   const [runningNow, setRunningNow] = useState(false);
   const [showProfilePrompt, setShowProfilePrompt] = useState(false);
+  const [selectedGrant, setSelectedGrant] = useState(null);
+  const [showModal, setShowModal] = useState(false);
   
   // Get organization ID (hardcoded for now, should come from context/auth)
   const orgId = 1; // TODO: Get from user context
@@ -80,6 +82,23 @@ const Grants = () => {
       });
     } finally {
       setRunningNow(false);
+    }
+  };
+
+  // Handle federal item click for details
+  const handleFederalClick = async (grant) => {
+    if (grant.opportunity_number) {
+      try {
+        const response = await api.get(`/matching/detail/grants-gov/${grant.opportunity_number}`);
+        setSelectedGrant(response.data);
+        setShowModal(true);
+      } catch (error) {
+        console.error('Error fetching grant details:', error);
+        setToast({
+          message: 'Failed to load grant details',
+          type: 'error'
+        });
+      }
     }
   };
 
@@ -276,55 +295,12 @@ const Grants = () => {
         <div className="bg-white shadow rounded-lg">
           {opportunities.length > 0 ? (
             <div className="divide-y divide-gray-200">
-              {opportunities.map((grant) => (
-                <div key={grant.id} className="p-4 hover:bg-gray-50">
-                  <div className="flex justify-between items-start">
-                    <div className="flex-1">
-                      <h3 className="font-semibold text-gray-900">{grant.title}</h3>
-                      <p className="text-sm text-gray-600 mt-1">{grant.funder}</p>
-                      {grant.deadline && (
-                        <p className="text-sm text-gray-500 mt-1">
-                          Deadline: {new Date(grant.deadline).toLocaleDateString()}
-                        </p>
-                      )}
-                      {grant.amount_min && (
-                        <p className="text-sm text-gray-500">
-                          Amount: ${grant.amount_min.toLocaleString()}
-                          {grant.amount_max && ` - $${grant.amount_max.toLocaleString()}`}
-                        </p>
-                      )}
-                    </div>
-                    {grant.match_score && (
-                      <div className="ml-4">
-                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                          grant.match_score >= 4 ? 'bg-green-100 text-green-800' :
-                          grant.match_score >= 3 ? 'bg-yellow-100 text-yellow-800' :
-                          'bg-gray-100 text-gray-800'
-                        }`}>
-                          Score: {grant.match_score}/5
-                        </span>
-                      </div>
-                    )}
-                  </div>
-                  <div className="flex gap-3 mt-2">
-                    <Link 
-                      to={`/grant/${grant.id}`}
-                      className="text-sm text-pink-600 hover:text-pink-700"
-                    >
-                      Analyze Grant →
-                    </Link>
-                    {grant.link && (
-                      <a 
-                        href={grant.link} 
-                        target="_blank" 
-                        rel="noopener noreferrer"
-                        className="text-sm text-gray-600 hover:text-gray-700"
-                      >
-                        Official Page ↗
-                      </a>
-                    )}
-                  </div>
-                </div>
+              {opportunities.map((grant, index) => (
+                <GrantCard 
+                  key={grant.id || index} 
+                  grant={grant} 
+                  onFederalClick={handleFederalClick}
+                />
               ))}
             </div>
           ) : (
@@ -338,6 +314,45 @@ const Grants = () => {
         </div>
       )}
 
+      {/* Grant Detail Modal */}
+      {showModal && selectedGrant && (
+        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+          <div className="relative top-20 mx-auto p-5 border w-11/12 max-w-4xl shadow-lg rounded-md bg-white">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-lg font-medium text-gray-900">Grant Details</h3>
+              <button
+                onClick={() => setShowModal(false)}
+                className="text-gray-400 hover:text-gray-600"
+              >
+                <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+            <div className="max-h-96 overflow-y-auto">
+              <h4 className="font-semibold text-gray-900 mb-2">{selectedGrant.title}</h4>
+              <p className="text-gray-600 mb-4">{selectedGrant.description}</p>
+              {selectedGrant.eligibility && (
+                <div className="mb-4">
+                  <h5 className="font-medium text-gray-900 mb-1">Eligibility</h5>
+                  <p className="text-sm text-gray-600">{selectedGrant.eligibility}</p>
+                </div>
+              )}
+              {selectedGrant.sourceNotes && (
+                <div className="mt-4 p-3 bg-gray-50 rounded">
+                  <h6 className="text-xs font-medium text-gray-700 mb-1">Source</h6>
+                  <p className="text-xs text-gray-600">
+                    API: {selectedGrant.sourceNotes.api} | 
+                    Endpoint: {selectedGrant.sourceNotes.endpoint} | 
+                    ID: {selectedGrant.sourceNotes.opportunityNumber}
+                  </p>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Toast notification */}
       {toast && (
         <Toast
@@ -346,6 +361,102 @@ const Grants = () => {
           onClose={() => setToast(null)}
         />
       )}
+    </div>
+  );
+};
+
+// Grant Card Component with Sources toggle
+const GrantCard = ({ grant, onFederalClick }) => {
+  const [showSources, setShowSources] = useState(false);
+  
+  const handleCardClick = () => {
+    // If it's a federal grant, show details
+    if (grant.opportunity_number) {
+      onFederalClick(grant);
+    }
+  };
+
+  return (
+    <div className="p-4 hover:bg-gray-50">
+      <div className="flex justify-between items-start">
+        <div 
+          className="flex-1 cursor-pointer" 
+          onClick={handleCardClick}
+        >
+          <h3 className="font-semibold text-gray-900">{grant.title}</h3>
+          <p className="text-sm text-gray-600 mt-1">
+            {grant.funder || grant.agency || grant.source || 'Source'}
+          </p>
+          {grant.deadline && (
+            <p className="text-sm text-gray-500 mt-1">
+              Deadline: {new Date(grant.deadline).toLocaleDateString()}
+            </p>
+          )}
+          {grant.posted_date && (
+            <p className="text-sm text-gray-500 mt-1">
+              Posted: {new Date(grant.posted_date).toLocaleDateString()}
+            </p>
+          )}
+          {(grant.amount_min || grant.award_ceiling) && (
+            <p className="text-sm text-gray-500">
+              Amount: ${(grant.amount_min || grant.award_ceiling || 0).toLocaleString()}
+              {grant.amount_max && ` - $${grant.amount_max.toLocaleString()}`}
+            </p>
+          )}
+        </div>
+        <div className="ml-4 flex flex-col items-end space-y-2">
+          {(grant.score || grant.match_score) && (
+            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+              (grant.score || grant.match_score) >= 80 ? 'bg-green-100 text-green-800' :
+              (grant.score || grant.match_score) >= 60 ? 'bg-yellow-100 text-yellow-800' :
+              'bg-gray-100 text-gray-800'
+            }`}>
+              Score: {grant.score || grant.match_score}{grant.score ? '%' : '/5'}
+            </span>
+          )}
+          {grant.sourceNotes && (
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                setShowSources(!showSources);
+              }}
+              className="text-xs text-blue-600 hover:text-blue-700"
+            >
+              Sources {showSources ? '▲' : '▼'}
+            </button>
+          )}
+        </div>
+      </div>
+      
+      {/* Sources section */}
+      {showSources && grant.sourceNotes && (
+        <div className="mt-3 p-3 bg-gray-50 rounded text-xs text-gray-600">
+          <strong>Source:</strong> {grant.sourceNotes.api}<br/>
+          {grant.sourceNotes.endpoint && <><strong>Endpoint:</strong> {grant.sourceNotes.endpoint}<br/></>}
+          {grant.sourceNotes.query && <><strong>Query:</strong> {grant.sourceNotes.query}<br/></>}
+          {grant.sourceNotes.opportunityNumber && <><strong>ID:</strong> {grant.sourceNotes.opportunityNumber}<br/></>}
+          {grant.sourceNotes.window && <><strong>Window:</strong> {grant.sourceNotes.window}</>}
+        </div>
+      )}
+      
+      <div className="flex gap-3 mt-2">
+        <Link 
+          to={`/grant/${grant.id}`}
+          className="text-sm text-pink-600 hover:text-pink-700"
+        >
+          Analyze Grant →
+        </Link>
+        {grant.link && (
+          <a 
+            href={grant.link} 
+            target="_blank" 
+            rel="noopener noreferrer"
+            className="text-sm text-gray-600 hover:text-gray-700"
+          >
+            Official Page ↗
+          </a>
+        )}
+      </div>
     </div>
   );
 };

@@ -188,12 +188,17 @@ def create_case_support():
         funding_context = None
         source_notes = []
         try:
-            from app.services.matching_service import build_tokens, context_snapshot
-            tokens = build_tokens(org.id)
-            context = context_snapshot(tokens)
+            from app.services.matching_service import MatchingService
+            service = MatchingService()
+            results = service.assemble(org.id, 5)  # Get small sample for context
+            context = results.get('context', {})
             if context and context.get('median_award'):
                 funding_context = f"In the last year, funders awarded a median of ${context['median_award']:,.0f} in your area, drawn from Candid Grants transactions."
-                source_notes.append(f"Candid Grants API: {context.get('source_notes', '')}")
+                if context.get('recent_funders'):
+                    recent_funders_text = ', '.join(context['recent_funders'][:3])
+                    funding_context += f" Recent active funders include: {recent_funders_text}."
+                if context.get('sourceNotes'):
+                    source_notes.append(f"Candid Grants API: {context['sourceNotes'].get('query', '')}")
         except Exception as e:
             logger.debug(f"Could not get funding context: {e}")
         

@@ -17,7 +17,7 @@ const Dashboard = () => {
   const [topMatchingGrants, setTopMatchingGrants] = useState([]);
   const [analyticsContext, setAnalyticsContext] = useState(null);
 
-  // Fetch analytics context
+  // Fetch analytics context and matching data
   useEffect(() => {
     const fetchContext = async () => {
       try {
@@ -32,7 +32,42 @@ const Dashboard = () => {
         console.log('Analytics context not available');
       }
     };
+    
+    const fetchMatchingData = async () => {
+      try {
+        const response = await fetch('/api/matching?orgId=1&limit=10', {
+          credentials: 'include'
+        });
+        if (response.ok) {
+          const data = await response.json();
+          
+          // Use news[] for Open Calls - filter for upcoming deadlines
+          const today = new Date();
+          const thirtyDaysFromNow = new Date();
+          thirtyDaysFromNow.setDate(today.getDate() + 30);
+          
+          const newsWithDeadlines = (data.news || [])
+            .filter(item => item.publication_date && new Date(item.publication_date) >= today)
+            .sort((a, b) => new Date(a.publication_date) - new Date(b.publication_date))
+            .slice(0, 5);
+          
+          setUpcomingGrants(newsWithDeadlines);
+          
+          // Use federal[] for High Matching - sort by score
+          const highMatchingFederal = (data.federal || [])
+            .filter(item => item.score >= 70)
+            .sort((a, b) => b.score - a.score)
+            .slice(0, 5);
+            
+          setTopMatchingGrants(highMatchingFederal);
+        }
+      } catch (error) {
+        console.log('Matching data not available, using fallback');
+      }
+    };
+    
     fetchContext();
+    fetchMatchingData();
   }, []);
 
   useEffect(() => {
@@ -271,90 +306,92 @@ const Dashboard = () => {
 
       {/* Grant Lists Section */}
       <div className="space-y-8">
-        {/* Upcoming Deadlines */}
+        {/* Open Calls */}
         <div className="bg-white shadow-sm rounded-xl overflow-hidden">
           <div className="px-6 py-4 border-b border-gray-200">
-            <h2 className="text-lg font-medium text-gray-900">Upcoming Deadlines</h2>
+            <h2 className="text-lg font-medium text-gray-900">Open Calls</h2>
           </div>
           {upcomingGrants.length > 0 ? (
             <div className="divide-y divide-gray-200">
-              {upcomingGrants.map((grant) => (
-                <Link key={grant.id} to={`/grants/${grant.id}`} className="block px-6 py-4 hover:bg-gray-50 transition-colors cursor-pointer">
+              {upcomingGrants.map((grant, index) => (
+                <div key={grant.id || index} className="px-6 py-4 hover:bg-gray-50 transition-colors cursor-pointer">
                   <div className="flex items-center">
                     <div className="min-w-0 flex-1">
-                      <h3 className="text-sm font-medium text-gray-900 hover:text-orange-600">
+                      <h3 className="text-sm font-medium text-gray-900">
                         {grant.title}
                       </h3>
                       <div className="mt-1 flex items-center text-sm text-gray-500">
-                        <span className="truncate">{grant.funder}</span>
+                        <span className="truncate">{grant.source || 'News Source'}</span>
                         <span className="mx-1">•</span>
                         <span className="font-medium text-pink-600">
-                          Due: {formatDate(grant.due_date)}
+                          Published: {grant.publication_date ? new Date(grant.publication_date).toLocaleDateString() : 'Recent'}
                         </span>
                       </div>
                     </div>
-                    <div className="ml-6 flex-shrink-0">
-                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusBadgeClass(grant.status)}`}>
-                        {grant.status}
-                      </span>
+                    <div className="ml-6 flex-shrink-0 flex items-center space-x-2">
+                      {grant.score && (
+                        <span className={`font-medium ${grant.score >= 80 ? 'text-green-600' : grant.score >= 60 ? 'text-yellow-600' : 'text-gray-600'}`}>
+                          {grant.score}% Match
+                        </span>
+                      )}
                     </div>
                   </div>
-                </Link>
+                </div>
               ))}
             </div>
           ) : (
             <div className="px-6 py-10 text-center text-gray-500">
-              <p className="text-sm">No upcoming deadlines</p>
+              <p className="text-sm">No open calls found</p>
             </div>
           )}
           <div className="px-6 py-3 bg-gray-50 text-right">
             <Link to="/grants" className="text-sm font-medium text-orange-600 hover:text-orange-500">
-              View all grants →
+              View all opportunities →
             </Link>
           </div>
         </div>
 
-        {/* High Matching Grants */}
+        {/* High Matching Federal */}
         <div className="bg-white shadow-sm rounded-xl overflow-hidden">
           <div className="px-6 py-4 border-b border-gray-200">
-            <h2 className="text-lg font-medium text-gray-900">High Matching Grants</h2>
+            <h2 className="text-lg font-medium text-gray-900">High Matching Federal</h2>
           </div>
           {topMatchingGrants.length > 0 ? (
             <div className="divide-y divide-gray-200">
-              {topMatchingGrants.map((grant) => (
-                <Link key={grant.id} to={`/grants/${grant.id}`} className="block px-6 py-4 hover:bg-gray-50 transition-colors cursor-pointer">
+              {topMatchingGrants.map((grant, index) => (
+                <div key={grant.opportunity_number || index} className="px-6 py-4 hover:bg-gray-50 transition-colors cursor-pointer">
                   <div className="flex items-center">
                     <div className="min-w-0 flex-1">
-                      <h3 className="text-sm font-medium text-gray-900 hover:text-orange-600">
+                      <h3 className="text-sm font-medium text-gray-900">
                         {grant.title}
                       </h3>
                       <div className="mt-1 flex items-center text-sm text-gray-500">
-                        <span className="truncate">{grant.funder}</span>
-                        {grant.amount && (
+                        <span className="truncate">{grant.agency || 'Federal Agency'}</span>
+                        {grant.opportunity_number && (
                           <>
                             <span className="mx-1">•</span>
-                            <span>{formatCurrency(grant.amount)}</span>
+                            <span>{grant.opportunity_number}</span>
                           </>
                         )}
                       </div>
                     </div>
                     <div className="ml-6 flex-shrink-0">
-                      <span className={`font-medium ${getMatchScoreClass(grant.match_score)}`}>
-                        {grant.match_score}% Match
+                      <span className={`font-medium ${getMatchScoreClass(grant.score)}`}>
+                        {grant.score}% Match
                       </span>
                     </div>
                   </div>
-                </Link>
+                </div>
               ))}
             </div>
           ) : (
             <div className="px-6 py-10 text-center text-gray-500">
-              <p className="text-sm">No high matching grants found</p>
+              <p className="text-sm">No high matching federal opportunities found</p>
             </div>
           )}
           <div className="px-6 py-3 bg-gray-50 text-right">
             <Link to="/grants" className="text-sm font-medium text-orange-600 hover:text-orange-500">
-              View all grants →
+              View all opportunities →
             </Link>
           </div>
         </div>
