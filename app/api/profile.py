@@ -180,6 +180,77 @@ def get_onboarding_status():
         return jsonify({'error': 'Failed to fetch onboarding status'}), 500
 
 
+@bp.route('/lookup-ein', methods=['POST'])
+def lookup_ein():
+    """Look up organization by EIN using Candid Essentials API"""
+    try:
+        data = request.get_json()
+        ein = data.get('ein', '').strip()
+        
+        if not ein:
+            return jsonify({'error': 'EIN is required'}), 400
+        
+        # Import Essentials client
+        try:
+            from app.services.candid_client import get_essentials_client
+            essentials = get_essentials_client()
+            
+            if not essentials:
+                return jsonify({
+                    'error': 'EIN lookup service not configured',
+                    'message': 'Essentials API is not available'
+                }), 503
+            
+            # Search organization by EIN
+            org_data = essentials.search_org(ein)
+            
+            if not org_data:
+                return jsonify({
+                    'error': 'Organization not found',
+                    'message': 'No organization found for the provided EIN'
+                }), 404
+            
+            # Extract tokens for matching
+            tokens = essentials.extract_tokens(org_data)
+            
+            # Return organization data for profile population
+            profile_data = {
+                'organization_name': org_data.get('organization_name', ''),
+                'ein': org_data.get('ein', ein),
+                'city': org_data.get('city', ''),
+                'state': org_data.get('state', ''),
+                'mission': org_data.get('mission_statement', ''),
+                'website': org_data.get('website', ''),
+                'pcs_subject_codes': tokens.get('pcs_subject_codes', []),
+                'pcs_population_codes': tokens.get('pcs_population_codes', []),
+                'locations': tokens.get('locations', []),
+                'keywords': tokens.get('keywords', []),
+                'annual_revenue': org_data.get('annual_revenue'),
+                'total_assets': org_data.get('total_assets'),
+                'ntee_code': org_data.get('ntee_code', ''),
+                'classification': org_data.get('classification', '')
+            }
+            
+            return jsonify({
+                'success': True,
+                'message': 'Organization found successfully',
+                'data': profile_data
+            }), 200
+            
+        except ImportError:
+            return jsonify({
+                'error': 'EIN lookup service not available',
+                'message': 'Essentials service is not configured'
+            }), 503
+            
+    except Exception as e:
+        logger.error(f"Error in EIN lookup: {type(e).__name__}")
+        return jsonify({
+            'error': 'EIN lookup failed',
+            'message': 'Unable to complete organization lookup'
+        }), 500
+
+
 @bp.route('/onboarding/complete', methods=['POST'])
 @login_required
 def complete_onboarding():
