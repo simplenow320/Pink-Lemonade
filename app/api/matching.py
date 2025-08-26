@@ -64,8 +64,14 @@ def get_matching_results():
         if limit < 1 or limit > 100:
             return jsonify({"error": "Invalid limit: must be between 1 and 100"}), 400
         
-        # Use the new MatchingService
-        service = MatchingService()
+        # Check if required services are configured
+        try:
+            service = MatchingService()
+        except Exception as e:
+            return jsonify({
+                "error": "Service not configured",
+                "message": "Matching services are not properly configured"
+            }), 503
         
         # Generate cache key based on org_id and limit
         cache_key = f"matching:{org_id}:{limit}"

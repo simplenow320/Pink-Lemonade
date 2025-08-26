@@ -105,9 +105,19 @@ class MatchingService:
                 region=query_terms['region']
             )
             
+            # Handle both dict and list responses
+            articles_list = []
+            if isinstance(results, list):
+                articles_list = results
+            elif isinstance(results, dict):
+                articles_list = results.get('articles', results.get('data', results.get('results', [])))
+            
             # Filter to opportunity items only
             opportunities = []
-            for item in results.get('articles', []):
+            for item in articles_list:
+                if not isinstance(item, dict):
+                    continue
+                    
                 content_lower = (item.get('content', '') + ' ' + item.get('title', '')).lower()
                 
                 # Primary filter: RFP mentioned
@@ -118,11 +128,20 @@ class MatchingService:
                     action_words = ['apply', 'application', 'accepting', 'deadline']
                     if any(word in content_lower for word in action_words):
                         opportunities.append(item)
+                # Filter out staff changes unless they mention opportunities
+                elif item.get('staff_change_mentioned', False):
+                    # Only include if opportunity keywords present
+                    opp_keywords = ['rfp', 'apply', 'application', 'accepting', 'deadline', 'grant opportunity']
+                    if not any(keyword in content_lower for keyword in opp_keywords):
+                        continue  # Skip staff changes without opportunities
+                    opportunities.append(item)
             
             return opportunities
             
         except Exception as e:
-            print(f"Error in news_feed: {e}")
+            # Don't log full exception details to avoid secrets leakage
+            import logging
+            logging.warning(f"News feed error: {type(e).__name__}")
             return []
     
     def federal_feed(self, tokens: Dict) -> List[Dict]:
@@ -173,7 +192,8 @@ class MatchingService:
             return recent_opportunities
             
         except Exception as e:
-            print(f"Error in federal_feed: {e}")
+            import logging
+            logging.warning(f"Federal feed error: {type(e).__name__}")
             return []
     
     def context_snapshot(self, tokens: Dict) -> Dict:
@@ -203,7 +223,8 @@ class MatchingService:
             return snapshot
             
         except Exception as e:
-            print(f"Error in context_snapshot: {e}")
+            import logging
+            logging.warning(f"Context snapshot error: {type(e).__name__}")
             return {'query_used': '', 'award_count': 0, 'median_award': None, 'recent_funders': []}
     
     def score_item(self, item: Dict, tokens: Dict, snapshot: Dict) -> Dict:
