@@ -1,314 +1,481 @@
 """
 Matching Service for Grant and News Feed Scoring
+Integrates Candid News, Grants, and Federal opportunities with intelligent scoring
 """
 from datetime import datetime, timedelta
 from typing import Dict, List, Optional, Any
-import hashlib
-from functools import lru_cache
+import re
 
-from app.services.candid_client import get_candid_client
-from app.services.grants_gov_client import get_grants_gov_client
-from app.services.candid_insights import transactions_snapshot
+from app.services.candid_client import NewsClient, GrantsClient
+from app.services.org_tokens import get_org_tokens
 
+# Optional import - skip federal feed if not available
+try:
+    from app.services.grants_gov_client import get_grants_gov_client
+    FEDERAL_AVAILABLE = True
+except ImportError:
+    FEDERAL_AVAILABLE = False
+
+
+def build_query_terms(tokens: Dict) -> Dict:
+    """
+    Build query terms from organization tokens
+    
+    Args:
+        tokens: Output from get_org_tokens() with pcs codes, locations, keywords
+        
+    Returns:
+        Dict with news_query, date window, region, transactions_query
+    """
+    # Base news query for opportunity detection
+    news_query = 'RFP OR "grant opportunity" OR "call for proposals" OR "accepting applications"'
+    
+    # Add top 2 subject keywords if available
+    keywords = tokens.get('keywords', [])
+    if keywords:
+        top_keywords = keywords[:2]
+        keyword_terms = ' OR '.join([f'"{kw}"' for kw in top_keywords])
+        news_query += f' OR ({keyword_terms})'
+    
+    # Date window: last 45 days
+    end_date = datetime.now()
+    start_date = end_date - timedelta(days=45)
+    
+    # Primary location from tokens
+    locations = tokens.get('locations', [])
+    primary_location = locations[0] if locations else ""
+    
+    # Build transactions query
+    primary_subject = ""
+    if tokens.get('pcs_subject_codes'):
+        # Use PCS codes if available - but for text search, use keywords
+        primary_subject = keywords[0] if keywords else ""
+    elif keywords:
+        primary_subject = keywords[0]
+    
+    # Construct transactions query and clean double spaces
+    transactions_query = f'{primary_subject} AND {primary_location}'.strip()
+    transactions_query = re.sub(r'\s+', ' ', transactions_query).strip(' AND')
+    
+    return {
+        'news_query': news_query,
+        'start_date': start_date.strftime('%Y-%m-%d'),
+        'end_date': end_date.strftime('%Y-%m-%d'),
+        'region': primary_location,
+        'transactions_query': transactions_query,
+        'keywords': keywords[:3]  # Top 3 for federal search
+    }
+
+
+class MatchingService:
+    """
+    Main service for matching organizations to grant opportunities
+    """
+    
+    def __init__(self):
+        self.news = NewsClient()
+        self.grants = GrantsClient()
+        self.federal_client = None
+        
+        if FEDERAL_AVAILABLE:
+            try:
+                self.federal_client = get_grants_gov_client()
+            except Exception:
+                self.federal_client = None
+    
+    def news_feed(self, tokens: Dict) -> List[Dict]:
+        """
+        Get filtered news feed from Candid News API
+        
+        Args:
+            tokens: Organization tokens with PCS codes and keywords
+            
+        Returns:
+            List of opportunity-focused news items
+        """
+        try:
+            query_terms = build_query_terms(tokens)
+            
+            # Search Candid News API
+            results = self.news.search(
+                query=query_terms['news_query'],
+                start_date=query_terms['start_date'],
+                pcs_subject_codes=tokens.get('pcs_subject_codes', []),
+                pcs_population_codes=tokens.get('pcs_population_codes', []),
+                region=query_terms['region']
+            )
+            
+            # Filter to opportunity items only
+            opportunities = []
+            for item in results.get('articles', []):
+                content_lower = (item.get('content', '') + ' ' + item.get('title', '')).lower()
+                
+                # Primary filter: RFP mentioned
+                if item.get('rfp_mentioned', False):
+                    opportunities.append(item)
+                # Secondary filter: grant mentioned + action words
+                elif item.get('grant_mentioned', False):
+                    action_words = ['apply', 'application', 'accepting', 'deadline']
+                    if any(word in content_lower for word in action_words):
+                        opportunities.append(item)
+            
+            return opportunities
+            
+        except Exception as e:
+            print(f"Error in news_feed: {e}")
+            return []
+    
+    def federal_feed(self, tokens: Dict) -> List[Dict]:
+        """
+        Get federal opportunities from Grants.gov if available
+        
+        Args:
+            tokens: Organization tokens
+            
+        Returns:
+            List of federal grant opportunities or empty list if unavailable
+        """
+        if not self.federal_client:
+            return []
+        
+        try:
+            query_terms = build_query_terms(tokens)
+            
+            # Use first keyword for federal search
+            search_keyword = query_terms['keywords'][0] if query_terms['keywords'] else 'grant'
+            
+            # Search with 45-day window
+            payload = {
+                'keywords': [search_keyword],
+                'oppStatuses': ['posted'],  # Active opportunities
+                'sortBy': 'openDate|desc'
+            }
+            
+            opportunities = self.federal_client.search_opportunities(payload)
+            
+            # Filter to recent opportunities (45 days)
+            cutoff_date = datetime.now() - timedelta(days=45)
+            recent_opportunities = []
+            
+            for opp in opportunities:
+                posted_date_str = opp.get('posted_date', '')
+                if posted_date_str:
+                    try:
+                        posted_date = datetime.strptime(posted_date_str, '%Y-%m-%d')
+                        if posted_date >= cutoff_date:
+                            recent_opportunities.append(opp)
+                    except (ValueError, TypeError):
+                        # Include if date parsing fails (don't lose opportunities)
+                        recent_opportunities.append(opp)
+                else:
+                    recent_opportunities.append(opp)
+            
+            return recent_opportunities
+            
+        except Exception as e:
+            print(f"Error in federal_feed: {e}")
+            return []
+    
+    def context_snapshot(self, tokens: Dict) -> Dict:
+        """
+        Get funding context snapshot from Candid Grants API
+        
+        Args:
+            tokens: Organization tokens
+            
+        Returns:
+            Dict with award_count, median_award, recent_funders, query_used
+        """
+        try:
+            query_terms = build_query_terms(tokens)
+            query = query_terms['transactions_query']
+            location = query_terms['region']
+            
+            # Get transactions snapshot
+            snapshot = self.grants.snapshot_for(query, location)
+            
+            # Add query used for transparency
+            if isinstance(snapshot, dict):
+                snapshot['query_used'] = query
+            else:
+                snapshot = {'query_used': query, 'award_count': 0, 'median_award': None, 'recent_funders': []}
+            
+            return snapshot
+            
+        except Exception as e:
+            print(f"Error in context_snapshot: {e}")
+            return {'query_used': '', 'award_count': 0, 'median_award': None, 'recent_funders': []}
+    
+    def score_item(self, item: Dict, tokens: Dict, snapshot: Dict) -> Dict:
+        """
+        Score an opportunity item from 0-100 with detailed reasoning
+        
+        Args:
+            item: Grant/news opportunity item
+            tokens: Organization tokens  
+            snapshot: Funding context from grants data
+            
+        Returns:
+            Dict with score, reasons[], flags[]
+        """
+        score = 0
+        reasons = []
+        flags = []
+        
+        # Subject match (40 points max)
+        subject_score = 0
+        item_text = (item.get('title', '') + ' ' + item.get('description', '') + ' ' + 
+                    item.get('content', '')).lower()
+        
+        # Check PCS subject codes first
+        pcs_subjects = tokens.get('pcs_subject_codes', [])
+        if pcs_subjects:
+            for pcs_code in pcs_subjects:
+                if pcs_code.lower() in item_text:
+                    subject_score = 40
+                    reasons.append(f"Strong subject match: {pcs_code}")
+                    break
+        
+        # Fall back to keyword matching
+        if subject_score == 0:
+            keywords = tokens.get('keywords', [])
+            matched_keywords = [kw for kw in keywords if kw.lower() in item_text]
+            if matched_keywords:
+                subject_score = min(len(matched_keywords) * 15, 40)  # Max 40
+                reasons.append(f"Keyword matches: {', '.join(matched_keywords[:3])}")
+        
+        score += subject_score
+        
+        # Geography match (20 points max)
+        geo_score = 0
+        locations = tokens.get('locations', [])
+        for location in locations:
+            if location.lower() in item_text:
+                geo_score = 20
+                reasons.append(f"Geographic match: {location}")
+                break
+        
+        if geo_score == 0 and locations:
+            # Partial geographic match
+            for location in locations:
+                # Check for state abbreviations or partial matches
+                if len(location) == 2 and location.upper() in item_text.upper():
+                    geo_score = 10
+                    reasons.append(f"State match: {location}")
+                    break
+        
+        score += geo_score
+        
+        # Eligibility match (15 points max)
+        eligibility_score = 0
+        eligibility_text = item.get('eligibility', '').lower()
+        if eligibility_text:
+            nonprofit_terms = ['nonprofit', '501(c)(3)', 'charitable', 'tax-exempt']
+            if any(term in eligibility_text for term in nonprofit_terms):
+                eligibility_score = 15
+                reasons.append("Nonprofit eligibility confirmed")
+            elif 'organization' in eligibility_text:
+                eligibility_score = 8
+                reasons.append("General organization eligibility")
+        
+        score += eligibility_score
+        
+        # Amount alignment (15 points max)
+        amount_score = 0
+        item_amount = None
+        
+        # Extract amount from various fields
+        for field in ['award_ceiling', 'amount', 'award_floor']:
+            if item.get(field):
+                try:
+                    item_amount = float(str(item[field]).replace(',', '').replace('$', ''))
+                    break
+                except (ValueError, TypeError):
+                    continue
+        
+        if item_amount and snapshot.get('median_award'):
+            try:
+                median_award = float(snapshot['median_award'])
+                ratio = item_amount / median_award
+                if 0.5 <= ratio <= 2.0:  # Within reasonable range
+                    amount_score = 15
+                    reasons.append(f"Amount aligns with median: ${int(item_amount):,} vs ${int(median_award):,}")
+                elif ratio < 0.5:
+                    amount_score = 8
+                    reasons.append("Below median award amount")
+                else:
+                    amount_score = 5
+                    flags.append("Above typical award range")
+            except (ValueError, TypeError):
+                pass
+        
+        score += amount_score
+        
+        # Recency (10 points max)
+        recency_score = 0
+        current_date = datetime.now()
+        
+        # Check various date fields
+        for date_field in ['publication_date', 'posted_date', 'close_date']:
+            date_str = item.get(date_field)
+            if date_str:
+                try:
+                    item_date = datetime.strptime(date_str[:10], '%Y-%m-%d')  # Handle ISO format
+                    days_old = (current_date - item_date).days
+                    
+                    if days_old <= 7:
+                        recency_score = 10
+                        reasons.append("Very recent (within 7 days)")
+                    elif days_old <= 30:
+                        recency_score = 7
+                        reasons.append("Recent (within 30 days)")
+                    elif days_old <= 45:
+                        recency_score = 4
+                        reasons.append("Moderately recent")
+                    break
+                except (ValueError, TypeError):
+                    continue
+        
+        score += recency_score
+        
+        # Add flags for important notices
+        if item.get('close_date'):
+            try:
+                close_date = datetime.strptime(item['close_date'][:10], '%Y-%m-%d')
+                days_to_close = (close_date - current_date).days
+                if days_to_close <= 7:
+                    flags.append("Deadline within 7 days")
+                elif days_to_close <= 14:
+                    flags.append("Deadline within 2 weeks")
+            except (ValueError, TypeError):
+                pass
+        
+        return {
+            'score': min(score, 100),  # Cap at 100
+            'reasons': reasons,
+            'flags': flags
+        }
+    
+    def assemble(self, org_id: int, limit: int = 25) -> Dict:
+        """
+        Assemble complete matching results for organization
+        
+        Args:
+            org_id: Organization ID
+            limit: Max items per feed
+            
+        Returns:
+            Complete matching results with scores and context
+        """
+        try:
+            # Get organization tokens
+            tokens = get_org_tokens(org_id)
+            
+            # Get funding context
+            snapshot = self.context_snapshot(tokens)
+            
+            # Get news opportunities
+            news_items = self.news_feed(tokens)
+            scored_news = []
+            for item in news_items:
+                scoring = self.score_item(item, tokens, snapshot)
+                item_with_score = item.copy()
+                item_with_score.update(scoring)
+                item_with_score['sourceNotes'] = {
+                    "api": "candid.news",
+                    "query": build_query_terms(tokens)['news_query'],
+                    "window": "45d"
+                }
+                scored_news.append(item_with_score)
+            
+            # Sort by score desc, then date asc
+            scored_news.sort(key=lambda x: (-x['score'], x.get('publication_date', '9999-12-31')))
+            
+            # Get federal opportunities
+            federal_items = self.federal_feed(tokens)
+            scored_federal = []
+            for item in federal_items:
+                scoring = self.score_item(item, tokens, snapshot)
+                item_with_score = item.copy()
+                item_with_score.update(scoring)
+                item_with_score['sourceNotes'] = {
+                    "api": "grants.gov",
+                    "endpoint": "search2", 
+                    "window": "45d"
+                }
+                scored_federal.append(item_with_score)
+            
+            # Sort federal items
+            scored_federal.sort(key=lambda x: (-x['score'], x.get('posted_date', '9999-12-31')))
+            
+            return {
+                "tokens": tokens,
+                "context": {
+                    **snapshot,
+                    "sourceNotes": {
+                        "api": "candid.grants",
+                        "endpoint": "transactions", 
+                        "query": snapshot.get("query_used", "")
+                    }
+                },
+                "news": scored_news[:limit],
+                "federal": scored_federal[:limit]
+            }
+            
+        except Exception as e:
+            print(f"Error in assemble: {e}")
+            return {
+                "tokens": {},
+                "context": {"error": str(e)},
+                "news": [],
+                "federal": []
+            }
+
+
+# Legacy compatibility functions for existing API endpoints
 def build_tokens(org_id: int) -> Dict:
     """
-    Build search tokens from organization profile
+    Legacy compatibility for build_tokens function.
     
-    Returns dict with keywords, geo, populations
-    Falls back to safe defaults if org not found
+    Args:
+        org_id: Organization ID
+        
+    Returns:
+        Dict with keywords, geo, populations (old format)
     """
     try:
-        from app import db
-        from app.models import Organization
+        tokens = get_org_tokens(org_id)
         
-        org = db.session.query(Organization).filter_by(id=org_id).first()
-        
-        if org:
-            # Extract keywords from various fields
-            keywords = []
-            
-            # Add focus areas
-            if org.primary_focus_areas:
-                keywords.extend(org.primary_focus_areas if isinstance(org.primary_focus_areas, list) else [])
-            
-            # Add keywords from mission
-            if org.keywords:
-                keywords.extend([kw.strip() for kw in org.keywords.split(',') if kw.strip()])
-                
-            # Extract geo from location or state  
-            geo = ""
-            if org.primary_state:
-                geo = org.primary_state
-            elif org.primary_city:
-                geo = org.primary_city
-                
-            # Extract populations served  
-            populations = []
-            if org.target_demographics:
-                populations = org.target_demographics if isinstance(org.target_demographics, list) else []
-                
-            return {
-                "keywords": keywords or ["nonprofit", "community"],
-                "geo": geo or "United States",
-                "populations": populations or []
-            }
-        else:
-            print(f"Warning: Organization {org_id} not found, using defaults")
-            
-    except Exception as e:
-        print(f"Error building tokens: {e}")
-    
-    # Safe defaults
-    return {
-        "keywords": ["nonprofit", "community"],
-        "geo": "United States",
-        "populations": []
-    }
-
-def news_feed(tokens: Dict) -> List[Dict]:
-    """
-    Get news feed from Candid API
-    
-    Searches for RFPs and grant opportunities matching keywords
-    Filters to last 30-60 days
-    """
-    try:
-        client = get_candid_client()
-        
-        # Build query
-        base_query = 'RFP OR "grant opportunity" OR "call for proposals"'
-        if tokens.get("keywords"):
-            keyword_str = " OR ".join(tokens["keywords"][:3])  # Limit keywords
-            query = f'({base_query}) AND ({keyword_str})'
-        else:
-            query = base_query
-            
-        # Set date range (last 60 days)
-        start_date = (datetime.now() - timedelta(days=60)).strftime("%Y-%m-%d")
-        
-        # Search news
-        result = client.search_news(
-            query=query,
-            start_date=start_date,
-            region=tokens.get("geo", ""),
-            page=1,
-            size=50
-        )
-        
-        # Extract and normalize articles
-        news_items = []
-        if "articles" in result:
-            for article in result["articles"]:
-                item = {
-                    "source": "candid_news",
-                    "title": article.get("title", ""),
-                    "url": article.get("url", ""),
-                    "publisher": article.get("publisher", ""),
-                    "published_at": article.get("published_date", article.get("date", "")),
-                }
-                if article.get("summary"):
-                    item["summary"] = article["summary"]
-                news_items.append(item)
-                
-        return news_items
-        
-    except Exception as e:
-        print(f"Error fetching news feed: {e}")
-        return []
-
-def federal_feed(tokens: Dict) -> List[Dict]:
-    """
-    Get federal opportunities from Grants.gov
-    
-    Searches for recent posted/forecasted opportunities
-    """
-    try:
-        client = get_grants_gov_client()
-        
-        # Build search payload
-        payload = {
-            "keyword": " ".join(tokens.get("keywords", ["nonprofit"])[:3]),
-            "oppStatuses": ["posted", "forecasted"],
+        # Convert new format to legacy format
+        return {
+            "keywords": tokens.get('keywords', ['nonprofit', 'community']),
+            "geo": tokens.get('locations', ['United States'])[0] if tokens.get('locations') else 'United States',
+            "populations": tokens.get('pcs_population_codes', [])
         }
-        
-        # Add date range (last 45 days)
-        posted_from = (datetime.now() - timedelta(days=45)).strftime("%m/%d/%Y")
-        posted_to = datetime.now().strftime("%m/%d/%Y")
-        payload["postedFrom"] = posted_from
-        payload["postedTo"] = posted_to
-        
-        # Search opportunities
-        opportunities = client.search_opportunities(payload)
-        
-        # Sort by closing date
-        for opp in opportunities:
-            # Parse close date for sorting
-            close_date_str = opp.get("close_date", "")
-            try:
-                if close_date_str:
-                    opp["_close_date"] = datetime.strptime(close_date_str, "%m/%d/%Y")
-                else:
-                    opp["_close_date"] = datetime.max
-            except:
-                opp["_close_date"] = datetime.max
-                
-        opportunities.sort(key=lambda x: x.get("_close_date", datetime.max))
-        
-        # Remove sorting field
-        for opp in opportunities:
-            opp.pop("_close_date", None)
-            
-        return opportunities
-        
-    except Exception as e:
-        print(f"Error fetching federal feed: {e}")
-        return []
+    except Exception:
+        return {
+            "keywords": ["nonprofit", "community"],
+            "geo": "United States", 
+            "populations": []
+        }
 
-def context_snapshot(tokens: Dict) -> Optional[Dict]:
+
+def assemble_results(org_id: int, limit: int = 25) -> Dict:
     """
-    Get funding context snapshot from Candid
+    Legacy compatibility for assemble_results function.
     
-    Returns award statistics for the primary topic and geography
+    Args:
+        org_id: Organization ID
+        limit: Result limit
+        
+    Returns:
+        Results in legacy format
     """
     try:
-        # Use first keyword as primary topic
-        topic = tokens.get("keywords", [""])[0] if tokens.get("keywords") else ""
-        geo = tokens.get("geo", "")
-        
-        if not topic and not geo:
-            return None
-            
-        snapshot = transactions_snapshot(topic, geo)
-        return snapshot
-        
+        service = MatchingService()
+        return service.assemble(org_id, limit)
     except Exception as e:
-        print(f"Error getting context snapshot: {e}")
-        return None
-
-def score_item(item: Dict, tokens: Dict, snapshot: Optional[Dict]) -> Dict:
-    """
-    Score an item (grant or news) based on tokens and context
-    
-    Returns score (0-100), reasons, and flags
-    """
-    score = 0
-    reasons = []
-    flags = []
-    
-    # 1. Subject/keyword overlap (0-40 points)
-    keywords = [kw.lower() for kw in tokens.get("keywords", [])]
-    title = item.get("title", "").lower()
-    summary = item.get("summary", "").lower() if item.get("summary") else ""
-    content = f"{title} {summary}"
-    
-    keyword_matches = sum(1 for kw in keywords if kw in content)
-    if keyword_matches:
-        keyword_score = min(40, keyword_matches * 15)
-        score += keyword_score
-        reasons.append(f"Keywords matched: {keyword_matches}")
-    
-    # 2. Geography match (0-20 points)
-    geo = tokens.get("geo", "").lower()
-    if geo and geo != "united states":
-        item_geo = f"{item.get('agency', '')} {item.get('eligibility_text', '')} {item.get('publisher', '')}".lower()
-        if geo in item_geo:
-            score += 20
-            reasons.append(f"Geography match: {geo}")
-    
-    # 3. Eligibility for nonprofits (0-15 points)
-    eligibility = item.get("eligibility_text", "").lower()
-    if any(term in eligibility for term in ["nonprofit", "501(c)(3)", "501c3", "non-profit"]):
-        score += 15
-        reasons.append("Nonprofit eligible")
-    
-    # 4. Award amount alignment (0-15 points)
-    if snapshot and snapshot.get("median_award"):
-        median = snapshot["median_award"]
-        floor = item.get("award_floor")
-        ceiling = item.get("award_ceiling")
-        
-        if floor and ceiling:
-            # Check if median is in range
-            if floor <= median <= ceiling:
-                score += 15
-                reasons.append(f"Award range aligns with median ${median:,.0f}")
-        elif floor or ceiling:
-            # Partial match
-            score += 7
-            reasons.append("Partial award information")
-    
-    # 5. Recency (0-10 points)
-    now = datetime.now()
-    
-    # For news items
-    if item.get("published_at"):
-        try:
-            pub_date = datetime.strptime(item["published_at"], "%Y-%m-%d")
-            days_old = (now - pub_date).days
-            if days_old <= 30:
-                score += 10
-                reasons.append(f"Recent: {days_old} days old")
-        except:
-            pass
-    
-    # For federal opportunities
-    if item.get("close_date"):
-        try:
-            close_date = datetime.strptime(item["close_date"], "%m/%d/%Y")
-            days_until = (close_date - now).days
-            if 0 < days_until <= 60:
-                score += 10
-                reasons.append(f"Closing soon: {days_until} days")
-        except:
-            pass
-    
-    # Add flags for missing data
-    if not item.get("title"):
-        flags.append("Missing title")
-    if item.get("source") == "grants_gov" and not item.get("agency"):
-        flags.append("Missing agency")
-    if not keywords:
-        flags.append("No org keywords")
-        
-    return {
-        "score": min(100, score),
-        "reasons": reasons,
-        "flags": flags
-    }
-
-def assemble_results(tokens: Dict) -> Dict:
-    """
-    Assemble all results with scoring
-    
-    Returns federal opportunities, news items, and context snapshot
-    """
-    # Get feeds
-    federal = federal_feed(tokens)
-    news = news_feed(tokens)
-    snap = context_snapshot(tokens)
-    
-    # Score federal opportunities
-    for item in federal:
-        scoring = score_item(item, tokens, snap)
-        item["score"] = scoring["score"]
-        item["reasons"] = scoring["reasons"]
-        item["flags"] = scoring["flags"]
-    
-    # Sort federal by score desc, then by date
-    federal.sort(key=lambda x: (-x["score"], x.get("close_date", "")))
-    
-    # Score news items
-    for item in news:
-        scoring = score_item(item, tokens, snap)
-        item["score"] = scoring["score"]
-        item["reasons"] = scoring["reasons"]
-        item["flags"] = scoring["flags"]
-    
-    # Sort news by score desc, then by date desc
-    news.sort(key=lambda x: (-x["score"], x.get("published_at", "")), reverse=False)
-    
-    return {
-        "federal": federal,
-        "news": news,
-        "context": snap
-    }
+        return {
+            "error": str(e),
+            "opportunities": []
+        }
