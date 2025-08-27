@@ -7,7 +7,7 @@ from typing import Dict, List, Optional
 from datetime import datetime
 from app.services.ai_service import AIService
 from app.services.reacto_prompts import ReactoPrompts
-from app.models import Grant, Organization, Narrative, Analytics, db
+from app.models import Grant, Organization, Narrative, Analytics, ImpactIntake, db
 import logging
 import json
 
@@ -48,8 +48,8 @@ class SmartToolsService:
                 if grant:
                     grant_context = grant.to_dict()
             
-            # Generate REACTO prompt for pitch
-            prompt = self._create_pitch_prompt(org_context, grant_context, pitch_type)
+            # Generate enhanced REACTO prompt for pitch
+            prompt = self._create_enhanced_pitch_prompt(org_context, grant_context, pitch_type)
             
             # Get AI response
             response = self.ai_service.generate_json_response(prompt)
@@ -72,11 +72,18 @@ class SmartToolsService:
                     'pitch_type': pitch_type,
                     'pitch_text': response.get('pitch_text', ''),
                     'hook': response.get('hook', ''),
+                    'problem_statement': response.get('problem_statement', ''),
+                    'solution_overview': response.get('solution_overview', ''),
+                    'impact_evidence': response.get('impact_evidence', ''),
                     'key_points': response.get('key_points', []),
                     'call_to_action': response.get('call_to_action', ''),
+                    'funding_request': response.get('funding_request', ''),
+                    'credibility_markers': response.get('credibility_markers', []),
                     'word_count': response.get('word_count', 0),
                     'speaking_time': response.get('speaking_time', '60 seconds'),
-                    'tips': response.get('delivery_tips', [])
+                    'delivery_tips': response.get('delivery_tips', []),
+                    'funder_connection': response.get('funder_connection', ''),
+                    'follow_up_strategy': response.get('follow_up_strategy', '')
                 }
             
             return {'success': False, 'error': 'Failed to generate pitch'}
@@ -100,8 +107,8 @@ class SmartToolsService:
             
             org_context = self._build_org_context(org)
             
-            # Generate REACTO prompt for case
-            prompt = self._create_case_prompt(org_context, campaign_details)
+            # Generate enhanced REACTO prompt for case
+            prompt = self._create_enhanced_case_prompt(org_context, campaign_details)
             
             # Get AI response
             response = self.ai_service.generate_json_response(prompt)
@@ -140,7 +147,10 @@ class SmartToolsService:
                     'emotional_hooks': response.get('emotional_hooks', []),
                     'data_points': response.get('data_points', []),
                     'donor_personas': response.get('donor_personas', []),
-                    'total_word_count': response.get('total_word_count', 0)
+                    'credibility_markers': response.get('credibility_markers', []),
+                    'funding_levels': response.get('funding_levels', []),
+                    'total_word_count': response.get('total_word_count', 0),
+                    'executive_summary_standalone': response.get('executive_summary_standalone', '')
                 }
             
             return {'success': False, 'error': 'Failed to generate case for support'}
@@ -333,49 +343,116 @@ class SmartToolsService:
     # ============= QUICK TOOLS =============
     
     def generate_thank_you_letter(self, org_id: int, donor_info: Dict) -> Dict:
-        """Generate personalized thank you letter"""
+        """Generate personalized thank you letter using comprehensive platform data"""
         try:
             org = Organization.query.get(org_id)
             if not org:
                 return {'success': False, 'error': 'Organization not found'}
             
+            # Get comprehensive organization context
+            org_context = self._build_comprehensive_org_context(org)
+            
+            # Get recent impact stories for personalization
+            recent_intakes = ImpactIntake.query.join(Grant).filter(Grant.org_id == org.id).limit(3).all()
+            impact_stories = []
+            for intake in recent_intakes:
+                stories = intake.payload.get('stories', [])
+                if stories:
+                    impact_stories.append(stories[0][:100] + '...' if len(stories[0]) > 100 else stories[0])
+            
+            performance = org_context.get('grant_performance', {})
+            impact_data = org_context.get('impact_metrics', {})
+            
             prompt = f"""
             # R - ROLE
-            You are a nonprofit communications expert specializing in donor stewardship.
+            You are an elite donor stewardship specialist with 15+ years of experience in nonprofit communications. You craft thank you letters that increase donor retention by 40% through authentic storytelling and specific impact demonstration. You understand that donors give again when they feel valued and see concrete evidence of their gift's impact.
             
             # E - EXAMPLE
-            A heartfelt thank you that makes the donor feel like a hero, not just a checkbook.
+            Exceptional thank you letters follow the GRATITUDE framework:
+            G - Genuine opening that mentions specific gift details
+            R - Recognition of donor's values and motivations  
+            A - Authentic impact story showing gift in action
+            T - Transformation evidence with concrete outcomes
+            I - Invitation to deeper engagement and partnership
+            T - Timeline for follow-up and continued connection
+            U - Uplifting close that reinforces donor's heroic role
+            D - Details for next steps and ongoing communication
+            E - Emotional connection that lasting relationship
+            
+            Example opening: "Dear Sarah, When I opened your gift of $25,000 yesterday morning, I immediately thought of Marcus, the 16-year-old who told me last week that your previous support helped him believe in his future for the first time. Your continued faith in our Youth Mentorship Program isn't just funding—it's literally writing new stories of hope."
             
             # A - APPLICATION
-            Generate a personalized thank you letter that:
-            1. Opens with specific gratitude
-            2. Shows immediate impact of their gift
-            3. Shares a brief success story
-            4. Looks forward to continued partnership
-            5. Closes with personal touch
+            Create a comprehensive, personalized thank you letter that:
+            
+            1. **Personal Opening** (First paragraph): Reference specific gift amount, timing, and purpose
+            2. **Impact Connection** (Second paragraph): Connect their gift to current success story using platform data
+            3. **Organizational Progress** (Third paragraph): Share recent wins and performance metrics from platform
+            4. **Future Vision** (Fourth paragraph): Paint picture of continued impact and growth
+            5. **Partnership Invitation** (Fifth paragraph): Invite deeper engagement beyond financial support
+            6. **Gratitude Close** (Final paragraph): Reinforce their importance and upcoming communication
+            
+            Use these platform-specific details:
+            - Your organization's {performance.get('success_rate', 0)}% grant success rate
+            - Recent wins: {', '.join(performance.get('recent_wins', []))} 
+            - {impact_data.get('participant_stories', 0)} participant stories collected
+            - Active impact measurement showing organizational accountability
             
             # C - CONTEXT
-            Organization: {org.name}
-            Mission: {org.mission}
-            Donor: {donor_info.get('name', 'Valued Supporter')}
+            Organization Profile:
+            Name: {org_context['name']}
+            Mission: {org_context['mission']}
+            Location: {org_context['geography']}
+            Focus Areas: {org_context['focus_areas']}
+            Unique Capabilities: {org_context['unique_capabilities']}
+            
+            Donor Information:
+            Name: {donor_info.get('name', 'Valued Supporter')}
             Gift Amount: ${donor_info.get('amount', 0):,.0f}
             Gift Purpose: {donor_info.get('purpose', 'general support')}
+            Recurring Gift: {donor_info.get('is_recurring', False)}
+            
+            Platform Performance Context:
+            Grant Success Rate: {performance.get('success_rate', 0)}%
+            Total Funding Pursued: ${performance.get('total_funding_pursued', 0):,.0f}
+            Recent Grant Wins: {', '.join(performance.get('recent_wins', []))}
+            Participant Stories Collected: {impact_data.get('participant_stories', 0)}
+            Data Collection Active: {impact_data.get('data_collection_active', False)}
+            
+            Recent Impact Examples:
+            {chr(10).join([f"- {story}" for story in impact_stories[:2]]) if impact_stories else "- Platform tracking organizational impact"}
             
             # T - TONE
-            Warm, genuine, personal. Not corporate or generic.
+            Warm yet professional, grateful yet forward-looking, personal yet credible. Write as a leader sharing exciting progress with a trusted partner. Avoid generic nonprofit language - use specific, vivid details that make the donor feel like an insider. Balance emotional connection with professional accountability.
             
             # O - OUTPUT
-            Return JSON:
+            Return comprehensive JSON with:
             {{
-                "letter_text": "complete letter",
-                "subject_line": "email subject",
-                "key_impact_points": ["point1", "point2"],
-                "follow_up_date": "suggested date"
+                "letter_text": "complete personalized thank you letter (400-600 words)",
+                "subject_line": "compelling email subject that references specific impact",
+                "key_impact_points": ["3-4 specific ways their gift creates change"],
+                "organizational_updates": ["2-3 recent organizational wins from platform data"],
+                "future_engagement_opportunities": ["2-3 ways donor can get involved beyond giving"],
+                "follow_up_date": "specific date for next communication (30-45 days)",
+                "follow_up_purpose": "reason for follow-up communication",
+                "donor_segment_insights": "notes about this donor type for future communications",
+                "attachment_suggestions": ["recommended materials to include with letter"]
             }}
             """
             
             response = self.ai_service.generate_json_response(prompt)
-            return {'success': True, **response} if response else {'success': False}
+            if response:
+                # Save thank you content
+                narrative = Narrative()
+                narrative.org_id = org_id
+                narrative.section = 'thank_you_letter'
+                narrative.content = response.get('letter_text', '')
+                narrative.ai_generated = True
+                narrative.created_at = datetime.utcnow()
+                db.session.add(narrative)
+                db.session.commit()
+                
+                return {'success': True, **response}
+            return {'success': False, 'error': 'Failed to generate thank you letter'}
             
         except Exception as e:
             logger.error(f"Error generating thank you: {e}")
@@ -383,54 +460,123 @@ class SmartToolsService:
     
     def generate_social_media_post(self, org_id: int, platform: str, 
                                   topic: str) -> Dict:
-        """Generate platform-optimized social media content"""
+        """Generate platform-optimized social media content using comprehensive platform data"""
         try:
             org = Organization.query.get(org_id)
             if not org:
                 return {'success': False, 'error': 'Organization not found'}
             
-            char_limits = {
-                'twitter': 280,
-                'facebook': 500,
-                'instagram': 2200,
-                'linkedin': 3000
+            # Get comprehensive organization context
+            org_context = self._build_comprehensive_org_context(org)
+            
+            # Get recent impact stories for content inspiration
+            recent_intakes = ImpactIntake.query.join(Grant).filter(Grant.org_id == org.id).limit(2).all()
+            recent_stories = []
+            for intake in recent_intakes:
+                stories = intake.payload.get('stories', [])
+                if stories:
+                    recent_stories.append(stories[0][:150] + '...' if len(stories[0]) > 150 else stories[0])
+            
+            # Platform specifications
+            platform_specs = {
+                'twitter': {'char_limit': 280, 'hashtag_count': '2-3', 'tone': 'concise and punchy'},
+                'facebook': {'char_limit': 500, 'hashtag_count': '3-5', 'tone': 'conversational and community-focused'},
+                'instagram': {'char_limit': 2200, 'hashtag_count': '8-15', 'tone': 'visual storytelling with inspiration'},
+                'linkedin': {'char_limit': 3000, 'hashtag_count': '3-5', 'tone': 'professional yet personal'}
             }
+            
+            spec = platform_specs.get(platform, platform_specs['facebook'])
+            performance = org_context.get('grant_performance', {})
+            impact_data = org_context.get('impact_metrics', {})
             
             prompt = f"""
             # R - ROLE
-            You are a nonprofit social media strategist.
+            You are an award-winning nonprofit social media strategist with 12+ years of experience growing online communities and driving engagement for impact organizations. You specialize in creating authentic content that balances mission storytelling with platform optimization. Your posts consistently achieve 3x higher engagement than industry average through strategic use of platform data and authentic storytelling.
             
             # E - EXAMPLE
-            Engaging posts that inspire action and build community.
+            High-performing social posts follow the ENGAGE framework:
+            E - Eye-catching hook that stops the scroll
+            N - Narrative that connects emotionally  
+            G - Genuine impact story or organizational update
+            A - Action-oriented call to participate or support
+            G - Geography or community connection for relevance
+            E - Encouragement that inspires hope and possibility
+            
+            Example {platform} post: "🌟 BREAKTHROUGH MOMENT: Last week, Marcus told his mentor, 'For the first time, I believe college is possible for me.' This is why we do what we do at [Org Name]. With a 75% grant success rate, we're not just dreaming about change—we're creating it daily in {org_context['geography']}. 💪 What breakthrough moment will you help create? Link in bio to join our impact. #YouthMentorship #CommunityImpact #BelieveInChange"
             
             # A - APPLICATION
-            Create {platform} post about {topic} that:
-            1. Grabs attention immediately
-            2. Tells a micro-story or shares impact
-            3. Includes clear call-to-action
-            4. Uses platform best practices
-            5. Stays under {char_limits.get(platform, 500)} characters
+            Create an optimized {platform} post about {topic} that:
+            
+            Platform-Specific Requirements for {platform}:
+            1. **Hook** (First 1-2 lines): Create scroll-stopping opening using platform data or impact story
+            2. **Story Core** (Middle content): Connect topic to organizational mission and recent success
+            3. **Credibility** (Supporting details): Weave in performance metrics naturally
+            4. **Community Connection** (Geographic/local relevance): Reference {org_context['geography']} when relevant
+            5. **Call to Action** (Clear next step): Specific action aligned with platform behavior
+            6. **Optimization** (Platform features): Use {spec['hashtag_count']} relevant hashtags, appropriate length
+            
+            Content Requirements:
+            - Stay within {spec['char_limit']} characters total
+            - Include performance data naturally (don't just list stats)
+            - Reference recent impact when relevant to topic
+            - Use platform-appropriate tone: {spec['tone']}
+            - Include geographic relevance for local engagement
             
             # C - CONTEXT
-            Organization: {org.name}
-            Mission: {org.mission}
-            Topic: {topic}
+            Organization Profile:
+            Name: {org_context['name']}
+            Mission: {org_context['mission']}
+            Location: {org_context['geography']}
+            Focus Areas: {org_context['focus_areas']}
+            Unique Capabilities: {org_context['unique_capabilities']}
+            
+            Platform Performance Data:
+            Grant Success Rate: {performance.get('success_rate', 0)}%
+            Total Grants Submitted: {performance.get('total_grants_submitted', 0)}
+            Recent Grant Wins: {', '.join(performance.get('recent_wins', []))}
+            Participant Stories Collected: {impact_data.get('participant_stories', 0)}
+            
+            Recent Impact Examples:
+            {chr(10).join([f"- {story}" for story in recent_stories[:2]]) if recent_stories else "- Active impact measurement and data collection"}
+            
+            Post Topic: {topic}
+            Target Platform: {platform}
+            Character Limit: {spec['char_limit']}
             
             # T - TONE
-            Authentic, hopeful, action-oriented.
+            Platform-optimized tone for {platform}: {spec['tone']}
+            
+            Overall voice: Authentic yet inspiring, confident yet humble, professional yet personable. Avoid charity language - speak as a leader creating change. Use active voice, specific details, and community-focused language. Balance organizational pride with mission urgency.
             
             # O - OUTPUT
-            Return JSON:
+            Return comprehensive JSON with:
             {{
-                "post_text": "complete post",
-                "hashtags": ["tag1", "tag2"],
-                "best_time_to_post": "time suggestion",
-                "engagement_tips": ["tip1", "tip2"]
+                "post_text": "complete optimized post (within character limit)",
+                "character_count": actual_character_count_number,
+                "hashtags": ["platform-optimized hashtags ({spec['hashtag_count']})"],
+                "best_time_to_post": "platform-specific optimal posting time",
+                "engagement_tips": ["3-4 platform-specific engagement strategies"],
+                "platform_features": ["recommended platform features to use (stories, polls, etc.)"],
+                "content_series_suggestions": ["ideas for follow-up posts on this topic"],
+                "audience_targeting": "recommended audience segments for this content",
+                "cross_platform_adaptations": "how to adapt this content for other platforms"
             }}
             """
             
             response = self.ai_service.generate_json_response(prompt)
-            return {'success': True, 'platform': platform, **response} if response else {'success': False}
+            if response:
+                # Save social media content
+                narrative = Narrative()
+                narrative.org_id = org_id
+                narrative.section = f'social_media_{platform}'
+                narrative.content = response.get('post_text', '')
+                narrative.ai_generated = True
+                narrative.created_at = datetime.utcnow()
+                db.session.add(narrative)
+                db.session.commit()
+                
+                return {'success': True, 'platform': platform, 'topic': topic, **response}
+            return {'success': False, 'error': 'Failed to generate social media post'}
             
         except Exception as e:
             logger.error(f"Error generating social post: {e}")
@@ -438,8 +584,24 @@ class SmartToolsService:
     
     # ============= HELPER METHODS =============
     
-    def _build_org_context(self, org: Organization) -> Dict:
-        """Build comprehensive organization context"""
+    def _build_comprehensive_org_context(self, org: Organization) -> Dict:
+        """Build comprehensive organization context with platform data"""
+        # Get analytics data
+        analytics = Analytics.query.filter_by(org_id=org.id).order_by(Analytics.report_date.desc()).limit(12).all()
+        
+        # Get grant performance
+        grants = Grant.query.filter_by(org_id=org.id).all()
+        total_grants = len(grants)
+        won_grants = len([g for g in grants if g.status == 'awarded'])
+        
+        # Calculate totals
+        total_funding = sum(g.amount_max or 0 for g in grants if g.amount_max)
+        success_rate = (won_grants / total_grants * 100) if total_grants > 0 else 0
+        
+        # Get recent impact data
+        recent_intakes = ImpactIntake.query.join(Grant).filter(Grant.org_id == org.id).limit(10).all()
+        story_count = len(recent_intakes)
+        
         return {
             'name': org.name,
             'mission': org.mission,
@@ -451,118 +613,251 @@ class SmartToolsService:
             'staff_size': org.staff_size,
             'unique_capabilities': org.unique_capabilities,
             'past_successes': getattr(org, 'past_successes', []),
-            'current_programs': getattr(org, 'current_programs', [])
+            'current_programs': getattr(org, 'current_programs', []),
+            # Platform performance data
+            'grant_performance': {
+                'total_grants_submitted': total_grants,
+                'grants_won': won_grants,
+                'success_rate': round(success_rate, 1),
+                'total_funding_pursued': total_funding,
+                'recent_wins': [g.title for g in grants if g.status == 'awarded'][-3:]
+            },
+            'impact_metrics': {
+                'participant_stories': story_count,
+                'recent_analytics_reports': len(analytics),
+                'data_collection_active': story_count > 0
+            }
         }
     
-    def _create_pitch_prompt(self, org_context: Dict, grant_context: Optional[Dict], 
-                           pitch_type: str) -> str:
-        """Create REACTO prompt for pitch generation"""
+    def _build_org_context(self, org: Organization) -> Dict:
+        """Legacy method - redirects to comprehensive version"""
+        return self._build_comprehensive_org_context(org)
+    
+    def _create_enhanced_pitch_prompt(self, org_context: Dict, grant_context: Optional[Dict], 
+                                    pitch_type: str) -> str:
+        """Create comprehensive REACTO prompt for robust pitch generation"""
         time_limits = {
             'elevator': '60 seconds',
             'executive': '2 minutes',
             'detailed': '5 minutes'
         }
         
+        word_targets = {
+            'elevator': '80-120 words',
+            'executive': '150-200 words',  
+            'detailed': '300-400 words'
+        }
+        
+        # Build comprehensive context
         grant_info = ""
         if grant_context:
             grant_info = f"""
-            Grant Opportunity: {grant_context.get('title', 'Grant')}
-            Funder: {grant_context.get('funder', 'Funder')}
-            Focus: {grant_context.get('focus_area', 'General')}
-            Amount: ${grant_context.get('amount_max', 50000):,.0f}
+            Target Grant: {grant_context.get('title', 'Grant Opportunity')}
+            Funder: {grant_context.get('funder', 'Foundation')}
+            Focus Area: {grant_context.get('focus_area', 'Community Impact')}
+            Funding Range: ${grant_context.get('amount_max', 50000):,.0f}
+            Deadline: {grant_context.get('deadline', 'Upcoming')}
             """
+        
+        # Extract performance data
+        performance = org_context.get('grant_performance', {})
+        impact_data = org_context.get('impact_metrics', {})
         
         return f"""
         # R - ROLE
-        You are a master grant pitch coach with 20 years of experience helping nonprofits win funding.
+        You are an elite nonprofit pitch strategist with 25+ years of experience helping organizations secure $500M+ in funding. You specialize in data-driven storytelling that converts funders into partners. Your pitches have a 85% success rate because you craft compelling narratives backed by evidence.
         
         # E - EXAMPLE
-        The best pitches tell a story: Problem → Solution → Impact → Ask.
-        Example opening: "Every night, 500 children in our city go to bed hungry. We're changing that."
+        Exceptional pitches follow the IMPACT formula:
+        I - Immediate hook with shocking statistic or compelling story
+        M - Mission-driven solution that addresses root causes
+        P - Proven track record with specific outcomes and metrics
+        A - Ambitious but achievable request with clear ROI
+        C - Connection to funder's values and strategic priorities
+        T - Transformative vision for lasting change
+        
+        Example opening: "In our city, 1 in 4 children doesn't know where their next meal will come from. But here's what hope looks like: Maria, who started in our program hungry and struggling, just graduated valedictorian and is headed to medical school on a full scholarship."
         
         # A - APPLICATION
-        Create a {pitch_type} pitch ({time_limits[pitch_type]}) that:
-        1. Opens with compelling hook (first 10 seconds crucial)
-        2. Clearly states the problem and its urgency
-        3. Presents your unique solution
-        4. Demonstrates proven or projected impact
-        5. Makes specific, actionable ask
-        6. Closes with memorable call-to-action
+        Create a compelling {pitch_type} pitch ({time_limits[pitch_type]}, {word_targets[pitch_type]}) that:
+        
+        For {pitch_type} pitch specifically:
+        1. **Hook** (First 15 seconds): Start with urgent problem or inspiring story
+        2. **Credibility** (Next 30% of time): Establish your track record using platform data
+        3. **Solution** (Middle 30%): Present your unique approach and methodology
+        4. **Impact Evidence** (Next 25%): Share concrete outcomes and projections
+        5. **The Ask** (Final 15%): Make specific, compelling funding request
+        6. **Vision Close** (Last 10 seconds): Paint picture of transformed future
+        
+        Include specific details from platform data:
+        - Reference your {performance.get('success_rate', 0)}% grant success rate
+        - Mention your {performance.get('total_grants_submitted', 0)} grant applications submitted
+        - Highlight {impact_data.get('participant_stories', 0)} participant stories collected
+        - Use geography ({org_context['geography']}) for local relevance
         
         # C - CONTEXT
-        Organization: {org_context['name']}
+        Organization Profile:
+        Name: {org_context['name']}
         Mission: {org_context['mission']}
+        Location: {org_context['geography']}
         Focus Areas: {org_context['focus_areas']}
-        Unique Strengths: {org_context['unique_capabilities']}
+        Annual Budget: {org_context['budget']}
+        Staff Size: {org_context['staff_size']}
+        Unique Capabilities: {org_context['unique_capabilities']}
+        
+        Platform Performance Data:
+        Grant Success Rate: {performance.get('success_rate', 0)}%
+        Total Grants Submitted: {performance.get('total_grants_submitted', 0)}
+        Grants Won: {performance.get('grants_won', 0)}
+        Total Funding Pursued: ${performance.get('total_funding_pursued', 0):,.0f}
+        Recent Wins: {', '.join(performance.get('recent_wins', []))}
+        
+        Impact Collection:
+        Participant Stories: {impact_data.get('participant_stories', 0)}
+        Active Data Collection: {impact_data.get('data_collection_active', False)}
+        Recent Reports: {impact_data.get('recent_analytics_reports', 0)}
+        
         {grant_info}
         
         # T - TONE
-        Confident, passionate, data-informed but human-centered. 
-        Balance emotional appeal with credibility.
+        {pitch_type.title()} pitch tone requirements:
+        - **Elevator**: Urgent, confident, memorable - every word counts
+        - **Executive**: Professional, data-driven, visionary - inspire confidence
+        - **Detailed**: Comprehensive, passionate, collaborative - build partnership
+        
+        Balance emotional storytelling with hard evidence. Use active voice, concrete numbers, and vivid imagery. Sound like a leader who gets results, not someone asking for charity.
         
         # O - OUTPUT
-        Return JSON with:
+        Return comprehensive JSON with:
         {{
-            "pitch_text": "complete pitch script",
-            "hook": "opening attention grabber",
-            "key_points": ["point1", "point2", "point3"],
-            "call_to_action": "specific ask",
-            "word_count": number,
-            "speaking_time": "estimated time",
-            "delivery_tips": ["tip1", "tip2"]
+            "pitch_text": "complete {pitch_type} pitch script with natural flow and timing markers",
+            "hook": "powerful opening line that grabs immediate attention",
+            "problem_statement": "urgent problem your organization solves",
+            "solution_overview": "your unique approach and methodology", 
+            "impact_evidence": "specific outcomes and success metrics",
+            "key_points": ["3-5 essential points for {pitch_type} format"],
+            "call_to_action": "specific funding request with clear next steps",
+            "funding_request": "exact dollar amount and usage breakdown",
+            "credibility_markers": ["platform performance data points to emphasize"],
+            "word_count": actual_word_count_number,
+            "speaking_time": "estimated delivery time with pacing",
+            "delivery_tips": ["3-4 specific presentation techniques for {pitch_type} format"],
+            "funder_connection": "how this aligns with typical funder priorities",
+            "follow_up_strategy": "recommended next steps after pitch"
         }}
         """
     
-    def _create_case_prompt(self, org_context: Dict, campaign_details: Dict) -> str:
-        """Create REACTO prompt for case for support"""
+    def _create_enhanced_case_prompt(self, org_context: Dict, campaign_details: Dict) -> str:
+        """Create comprehensive REACTO prompt for case for support using platform data"""
+        
+        # Extract performance and impact data
+        performance = org_context.get('grant_performance', {})
+        impact_data = org_context.get('impact_metrics', {})
+        
+        # Get recent impact examples if available
+        recent_wins = performance.get('recent_wins', [])
+        wins_context = f"Recent funding wins include: {', '.join(recent_wins[:3])}" if recent_wins else "Building track record of successful funding"
+        
         return f"""
         # R - ROLE
-        You are a fundraising consultant specializing in major gift campaigns and case development.
+        You are an elite fundraising strategist with 20+ years of experience developing case documents that have raised $2B+ for nonprofits. You specialize in creating compelling cases that blend emotional storytelling with rigorous evidence. Your case documents achieve 45% higher response rates because you understand donor psychology and craft narratives that make giving feel both urgent and inspiring.
         
         # E - EXAMPLE
-        Successful cases combine compelling narrative with concrete evidence.
-        Example: "We don't just feed people; we restore dignity and rebuild lives."
+        Outstanding cases follow the TRANSFORM framework:
+        T - Truth-telling opening that acknowledges the problem's complexity
+        R - Research-backed evidence showing why traditional approaches fall short
+        A - Ambitious yet achievable vision for systemic change
+        N - Narrative arc showing how individual gifts create collective impact
+        S - Specific outcomes with measurable timelines and benchmarks
+        F - Funding strategy that connects gift levels to concrete results
+        O - Organizational credibility demonstrated through platform performance
+        R - Return on investment projections with accountability measures
+        M - Movement invitation that positions donors as change agents
+        
+        Example opening: "Every night in {org_context['geography']}, families face impossible choices. But what if we told you that for the first time in decades, we have a proven pathway to break this cycle? With our {performance.get('success_rate', 0)}% funding success rate and {impact_data.get('participant_stories', 0)} documented transformation stories, we're not asking you to hope for change—we're inviting you to invest in a movement that's already succeeding."
         
         # A - APPLICATION
-        Develop comprehensive case for support with:
-        1. Executive Summary - One-page overview
-        2. Problem Statement - Why this matters now
-        3. Our Solution - How we uniquely address this
-        4. Impact Evidence - Proof we can deliver
-        5. Why Now - Urgency and opportunity
-        6. Why Us - Our unique position to succeed
-        7. Investment Needed - Specific funding goals
-        8. Donor Benefits - What supporters receive
-        9. Call to Action - Clear next steps
+        Develop a comprehensive case for support that combines platform performance data with compelling narrative:
+        
+        **Section-by-Section Requirements:**
+        
+        1. **Executive Summary** (300-400 words): Lead with most compelling statistic from platform data, summarize organizational track record, present funding goal with ROI projection
+        
+        2. **Problem Statement** (400-500 words): Frame local problem within larger context, use geographic relevance, reference organizational expertise gained through grant work
+        
+        3. **Our Solution** (500-600 words): Detail unique approach, reference successful grant implementations, highlight what makes organization different
+        
+        4. **Impact Evidence** (400-500 words): Use platform performance metrics, incorporate participant stories, demonstrate measurement capabilities
+        
+        5. **Why Now** (300-400 words): Connect to current opportunities, reference recent grant wins as momentum indicators
+        
+        6. **Why Us** (400-500 words): Leverage organizational track record, highlight grant success rate, demonstrate stewardship through data collection
+        
+        7. **Investment Needed** (400-500 words): Break down funding goals, connect to specific outcomes, show scalability
+        
+        8. **Donor Benefits** (300-400 words): Position as partnership opportunity, highlight exclusive access and recognition
+        
+        9. **Call to Action** (200-300 words): Create urgency with specific timeline, provide multiple engagement levels
+        
+        **Platform Data Integration Requirements:**
+        - Weave in {performance.get('success_rate', 0)}% grant success rate as credibility marker
+        - Reference {performance.get('total_grants_submitted', 0)} total applications as experience indicator
+        - Highlight {impact_data.get('participant_stories', 0)} stories collected as accountability measure
+        - Use recent wins to demonstrate momentum and funder confidence
+        - Position data collection capabilities as transparency and impact measurement
         
         # C - CONTEXT
-        Organization: {org_context['name']}
+        Organization Profile:
+        Name: {org_context['name']}
         Mission: {org_context['mission']}
-        Campaign Goal: ${campaign_details.get('goal', 100000):,.0f}
-        Campaign Purpose: {campaign_details.get('purpose', 'expansion')}
-        Timeline: {campaign_details.get('timeline', '12 months')}
-        Target Donors: {campaign_details.get('target_donors', 'major donors')}
+        Geographic Focus: {org_context['geography']}
+        Primary Focus Areas: {org_context['focus_areas']}
+        Annual Operating Budget: {org_context['budget']}
+        Staff Size: {org_context['staff_size']}
+        Unique Organizational Capabilities: {org_context['unique_capabilities']}
+        
+        Platform Performance Evidence:
+        Grant Success Rate: {performance.get('success_rate', 0)}%
+        Total Grant Applications: {performance.get('total_grants_submitted', 0)}
+        Successful Grant Awards: {performance.get('grants_won', 0)}
+        Total Funding Pursued: ${performance.get('total_funding_pursued', 0):,.0f}
+        {wins_context}
+        
+        Impact Measurement Capabilities:
+        Participant Stories Documented: {impact_data.get('participant_stories', 0)}
+        Active Data Collection System: {impact_data.get('data_collection_active', False)}
+        Analytics Reports Generated: {impact_data.get('recent_analytics_reports', 0)}
+        
+        Campaign Details:
+        Fundraising Goal: ${campaign_details.get('goal', 100000):,.0f}
+        Campaign Purpose: {campaign_details.get('purpose', 'organizational expansion')}
+        Campaign Timeline: {campaign_details.get('timeline', '12-18 months')}
+        Target Donor Segments: {campaign_details.get('target_donors', 'major donors and foundations')}
+        Expected Donor Count: {campaign_details.get('expected_donors', '50-100 donors')}
         
         # T - TONE
-        Inspiring yet practical, urgent yet sustainable, professional yet personal.
+        Authoritative yet accessible, urgent yet sustainable, data-driven yet deeply human. Write as a leader presenting a compelling investment opportunity, not asking for charity. Balance organizational confidence with mission humility. Use concrete language, active voice, and vivid imagery. Demonstrate both emotional intelligence and analytical rigor.
         
         # O - OUTPUT
-        Return JSON with all sections plus:
+        Return comprehensive JSON with:
         {{
-            "executive_summary": "text",
-            "problem_statement": "text",
-            "our_solution": "text",
-            "impact_evidence": "text",
-            "why_now": "text",
-            "why_us": "text",
-            "investment_needed": "text",
-            "donor_benefits": "text",
-            "call_to_action": "text",
-            "key_messages": ["msg1", "msg2"],
-            "emotional_hooks": ["hook1", "hook2"],
-            "data_points": ["data1", "data2"],
-            "donor_personas": ["persona1", "persona2"],
-            "total_word_count": number
+            "executive_summary": "compelling 300-400 word overview that hooks readers immediately",
+            "problem_statement": "urgent 400-500 word problem framing with local relevance",
+            "our_solution": "detailed 500-600 word solution description highlighting uniqueness",
+            "impact_evidence": "convincing 400-500 word evidence section using platform data",
+            "why_now": "timely 300-400 word urgency section referencing momentum",
+            "why_us": "credible 400-500 word organizational case using grant track record",
+            "investment_needed": "specific 400-500 word funding breakdown with ROI",
+            "donor_benefits": "appealing 300-400 word partnership value proposition",
+            "call_to_action": "compelling 200-300 word action section with timeline",
+            "key_messages": ["5-7 core messages that reinforce case throughout"],
+            "emotional_hooks": ["3-5 powerful emotional connection points"],
+            "data_points": ["8-10 compelling statistics that support the case"],
+            "donor_personas": ["3-4 ideal donor profiles with motivations"],
+            "credibility_markers": ["platform performance highlights to emphasize"],
+            "funding_levels": ["suggested giving levels with specific impact"],
+            "total_word_count": actual_total_word_count_number,
+            "executive_summary_standalone": "can this executive summary work as independent piece?"
         }}
         """
     
