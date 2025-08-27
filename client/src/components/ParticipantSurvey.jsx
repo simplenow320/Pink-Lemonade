@@ -9,8 +9,16 @@ const ParticipantSurvey = () => {
     // Participant Info
     name: '',
     age: '',
+    zip: '',
+    ethnicity: '',
     location: '',
     program: '',
+    
+    // Stories (4 text answers)
+    story_1: '',
+    story_2: '',
+    story_3: '',
+    story_4: '',
     
     // Impact Questions
     impact_q1: '',
@@ -58,8 +66,8 @@ const ParticipantSurvey = () => {
   const nextStep = () => {
     if (step === 1) {
       // Validate participant info
-      if (!formData.name || !formData.age || !formData.location || !formData.program) {
-        alert('Please fill in all participant information');
+      if (!formData.name || !formData.age || !formData.zip || !formData.program) {
+        alert('Please fill in all required participant information');
         return;
       }
     }
@@ -108,13 +116,13 @@ const ParticipantSurvey = () => {
           {/* Progress Bar */}
           <div className="px-6 py-4 border-b">
             <div className="flex justify-between items-center mb-2">
-              <span className="text-sm text-gray-500">Step {step} of 3</span>
-              <span className="text-sm text-gray-500">{Math.round((step / 3) * 100)}% Complete</span>
+              <span className="text-sm text-gray-500">Step {step} of 4</span>
+              <span className="text-sm text-gray-500">{Math.round((step / 4) * 100)}% Complete</span>
             </div>
             <div className="w-full bg-gray-200 rounded-full h-2">
               <div 
                 className="bg-pink-500 h-2 rounded-full transition-all duration-300"
-                style={{ width: `${(step / 3) * 100}%` }}
+                style={{ width: `${(step / 4) * 100}%` }}
               />
             </div>
           </div>
@@ -153,7 +161,35 @@ const ParticipantSurvey = () => {
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Your Location *
+                    ZIP Code *
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.zip}
+                    onChange={(e) => handleChange('zip', e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-pink-500 focus:border-pink-500"
+                    placeholder="Enter your ZIP code"
+                    maxLength="10"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Ethnicity (Optional)
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.ethnicity}
+                    onChange={(e) => handleChange('ethnicity', e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-pink-500 focus:border-pink-500"
+                    placeholder="e.g., Hispanic/Latino, Asian, African American"
+                    maxLength="80"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Your Location (Optional)
                   </label>
                   <input
                     type="text"
@@ -263,6 +299,71 @@ const ParticipantSurvey = () => {
 
             {step === 3 && (
               <div className="space-y-4">
+                <h2 className="text-xl font-semibold text-gray-900 mb-4">Your Stories</h2>
+                <p className="text-sm text-gray-600 mb-4">
+                  Please share your experiences with our program. Your stories help us understand our impact and improve our services.
+                </p>
+                
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Story 1: How did you first hear about our program?
+                  </label>
+                  <textarea
+                    value={formData.story_1}
+                    onChange={(e) => handleChange('story_1', e.target.value)}
+                    rows={3}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-pink-500 focus:border-pink-500"
+                    placeholder="Tell us how you discovered our program..."
+                    maxLength="2000"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Story 2: Describe a specific moment when the program helped you
+                  </label>
+                  <textarea
+                    value={formData.story_2}
+                    onChange={(e) => handleChange('story_2', e.target.value)}
+                    rows={3}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-pink-500 focus:border-pink-500"
+                    placeholder="Share a specific experience or moment..."
+                    maxLength="2000"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Story 3: What challenges did you overcome with our support?
+                  </label>
+                  <textarea
+                    value={formData.story_3}
+                    onChange={(e) => handleChange('story_3', e.target.value)}
+                    rows={3}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-pink-500 focus:border-pink-500"
+                    placeholder="Describe any obstacles you faced and how we helped..."
+                    maxLength="2000"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Story 4: What are your hopes for the future?
+                  </label>
+                  <textarea
+                    value={formData.story_4}
+                    onChange={(e) => handleChange('story_4', e.target.value)}
+                    rows={3}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-pink-500 focus:border-pink-500"
+                    placeholder="Share your goals and aspirations..."
+                    maxLength="2000"
+                  />
+                </div>
+              </div>
+            )}
+
+            {step === 4 && (
+              <div className="space-y-4">
                 <h2 className="text-xl font-semibold text-gray-900 mb-4">Program Improvement</h2>
                 
                 <div>
@@ -308,7 +409,7 @@ const ParticipantSurvey = () => {
               Previous
             </button>
             
-            {step < 3 ? (
+            {step < 4 ? (
               <button
                 onClick={nextStep}
                 className="px-4 py-2 bg-pink-500 text-white rounded-md hover:bg-pink-600"

@@ -120,22 +120,37 @@ class Phase5ImpactReporting:
             return {'success': False, 'error': str(e)}
     
     def submit_participant_survey(self, survey_data: Dict) -> Dict:
-        """Process participant survey submission"""
+        """Process participant survey submission and save to impact_intake table"""
         try:
-            # Validate required fields
-            required_fields = ['name', 'age', 'location', 'program']
-            for field in required_fields:
-                if field not in survey_data:
-                    return {'success': False, 'error': f'Missing required field: {field}'}
+            from app.models import ImpactIntake, db
+            from app.utils.impact_intake_validator import validate_and_merge_intake_payload
             
-            # Structure survey response
-            response = {
-                'participant_info': {
-                    'name': survey_data['name'],
-                    'age': survey_data['age'],
-                    'location': survey_data['location'],
-                    'program': survey_data['program']
-                },
+            # Get grant_id (default to first available if not provided)
+            grant_id = survey_data.get('grant_id')
+            if not grant_id:
+                from app.models import Grant
+                first_grant = Grant.query.first()
+                if first_grant:
+                    grant_id = first_grant.id
+                else:
+                    return {'success': False, 'error': 'No grants available for submission'}
+            
+            # Build payload with new fields
+            intake_payload = {
+                # New demographic fields
+                'age': survey_data.get('age'),
+                'zip': survey_data.get('zip', ''),
+                'ethnicity': survey_data.get('ethnicity', ''),
+                
+                # Stories array (up to 4 text answers)
+                'stories': [],
+                
+                # Existing participant info
+                'name': survey_data.get('name', ''),
+                'location': survey_data.get('location', ''),
+                'program': survey_data.get('program', ''),
+                
+                # Impact responses
                 'impact_responses': {
                     'helped': survey_data.get('impact_q1', ''),
                     'changes': survey_data.get('impact_q2', ''),
@@ -143,19 +158,37 @@ class Phase5ImpactReporting:
                     'recommend': survey_data.get('impact_q4', ''),
                     'valuable': survey_data.get('impact_q5', '')
                 },
+                
+                # Improvement responses
                 'improvement_responses': {
                     'better_serve': survey_data.get('improve_q1', ''),
                     'reach_others': survey_data.get('improve_q2', '')
-                },
-                'submitted_at': datetime.now().isoformat()
+                }
             }
             
-            # Store response (would use database in production)
-            survey_id = survey_data.get('survey_id', 'default')
+            # Collect stories from story_1 through story_4
+            for i in range(1, 5):
+                story_key = f'story_{i}'
+                if story_key in survey_data and survey_data[story_key]:
+                    intake_payload['stories'].append(survey_data[story_key])
+            
+            # Validate and merge payload
+            validated_payload = validate_and_merge_intake_payload(intake_payload, {})
+            
+            # Create impact intake record
+            intake = ImpactIntake()
+            intake.grant_id = grant_id
+            intake.submitted_by = survey_data.get('name', 'Anonymous')
+            intake.role = survey_data.get('role', 'participant')
+            intake.payload = validated_payload
+            intake.created_at = datetime.now()
+            
+            db.session.add(intake)
+            db.session.commit()
             
             return {
                 'success': True,
-                'response': response,
+                'intake_id': intake.id,
                 'message': 'Thank you for your feedback!',
                 'confirmation_code': f"IMPACT-{datetime.now().strftime('%Y%m%d%H%M%S')}"
             }
