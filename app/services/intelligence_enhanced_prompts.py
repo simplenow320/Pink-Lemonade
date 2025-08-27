@@ -1,55 +1,54 @@
 """
-Intelligence-Enhanced Prompt Methods
-Creates industry-leading prompts with real-time competitive intelligence
+Intelligence-Enhanced Prompts for Smart Tools
+Integrates competitive intelligence with REACTO framework
 """
 
-from typing import Dict, List, Optional
+from typing import Dict, Optional
 
 def create_intelligence_enhanced_pitch_prompt(org_context: Dict, grant_context: Optional[Dict], 
                                             pitch_type: str, funder_intelligence: Dict, 
                                             competitive_landscape: Dict, optimal_messaging: Dict) -> str:
     """Create industry-leading pitch prompt with real-time competitive intelligence"""
     
-    time_limits = {
-        'elevator': '60 seconds',
-        'executive': '2 minutes',
-        'detailed': '5 minutes'
+    # Dynamically adjust content based on pitch type
+    pitch_specs = {
+        'elevator': {'words': 150, 'focus': 'hook and impact', 'time': '30 seconds'},
+        'executive': {'words': 500, 'focus': 'strategy and outcomes', 'time': '2 minutes'}, 
+        'detailed': {'words': 1500, 'focus': 'comprehensive case', 'time': '5 minutes'}
     }
+    spec = pitch_specs[pitch_type]
     
-    word_targets = {
-        'elevator': '80-120 words',
-        'executive': '150-200 words',  
-        'detailed': '300-400 words'
-    }
-    
-    # Build comprehensive context
-    grant_info = ""
-    if grant_context:
-        grant_info = f"""
-        Target Grant: {grant_context.get('title', 'Grant Opportunity')}
-        Funder: {grant_context.get('funder', 'Foundation')}
-        Focus Area: {grant_context.get('focus_area', 'Community Impact')}
-        Funding Range: ${grant_context.get('amount_max', 50000):,.0f}
-        Deadline: {grant_context.get('deadline', 'Upcoming')}
-        """
-    
-    # Extract competitive intelligence insights
+    # Build funder intelligence insights
     funder_insights = ""
-    if funder_intelligence:
-        giving_patterns = funder_intelligence.get('giving_patterns', {})
-        recent_grants = funder_intelligence.get('recent_grants', [])[:3]
-        success_factors = funder_intelligence.get('success_factors', [])
-        optimal_range = funder_intelligence.get('optimal_ask_range', {})
+    if funder_intelligence and funder_intelligence.get('recent_grants'):
+        recent_grants = funder_intelligence['recent_grants'][:3]
+        avg_amount = funder_intelligence.get('average_grant_size', 50000)
+        focus_areas = funder_intelligence.get('focus_areas', [])
+        decision_factors = funder_intelligence.get('decision_factors', [])
         
         funder_insights = f"""
         
-        🎯 REAL-TIME FUNDER INTELLIGENCE:
-        Recent Activity: {giving_patterns.get('total_grants', 0)} grants awarded, median ${giving_patterns.get('median_award', 0):,.0f}
-        Optimal Ask Range: ${optimal_range.get('recommended_min', 0):,.0f} - ${optimal_range.get('recommended_max', 0):,.0f}
-        Success Factors: {', '.join(success_factors[:3])}
-        Recent Grants Example: {recent_grants[0].get('purpose', 'Similar programming') if recent_grants else 'Focus on measurable impact'}
-        Success Rate Indicator: {optimal_range.get('success_rate_indicator', 15):.0f}% probability for similar organizations
+        🎯 FUNDER INTELLIGENCE (Real-time from Candid API):
+        Recent Grants: {', '.join([f"${g.get('amount', 0):,.0f} to {g.get('recipient', 'Unknown')}" for g in recent_grants])}
+        Average Grant Size: ${avg_amount:,.0f}
+        Priority Areas: {', '.join(focus_areas[:5])}
+        Key Decision Factors: {', '.join(decision_factors[:3])}
         """
+    
+    # Build grant-specific context
+    grant_details = ""
+    if grant_context:
+        grant_details = f"""
+        Grant Opportunity:
+        Title: {grant_context.get('title', 'Untitled')}
+        Funder: {grant_context.get('funder', 'Unknown')}
+        Amount: ${grant_context.get('amount_max', 0):,.0f}
+        Focus: {grant_context.get('focus_area', 'General')}
+        Deadline: {grant_context.get('deadline', 'Open')}
+        Requirements: {grant_context.get('requirements', 'Standard')}
+        """
+    else:
+        grant_details = "General pitch (no specific grant targeted)"
     
     # Market intelligence insights
     market_insights = ""
@@ -69,105 +68,84 @@ def create_intelligence_enhanced_pitch_prompt(org_context: Dict, grant_context: 
         Key Differentiators Needed: {', '.join([comp.get('competitive_advantage', '') for comp in competitors[:2]])}
         """
     
-    # Optimal messaging insights
-    messaging_insights = ""
+    # Optimal messaging strategy
+    messaging_guidance = ""
     if optimal_messaging:
-        key_themes = optimal_messaging.get('key_themes', [])
-        success_keywords = optimal_messaging.get('success_keywords', [])
-        positioning = optimal_messaging.get('positioning_strategy', {})
+        power_words = optimal_messaging.get('power_words', [])
+        avoid_words = optimal_messaging.get('avoid_words', [])
+        winning_themes = optimal_messaging.get('winning_themes', [])
         
-        messaging_insights = f"""
+        messaging_guidance = f"""
         
-        💡 OPTIMAL MESSAGING STRATEGY:
-        Trending Keywords: {', '.join(success_keywords[:5])}
-        Key Themes to Emphasize: {', '.join(key_themes[:3])}
-        Primary Positioning Angle: {positioning.get('primary_angle', 'Innovation leadership')}
-        Language Optimization: Use terms like "{', '.join(success_keywords[:3])}" that appear in 78% of successful grants
+        💬 OPTIMAL MESSAGING STRATEGY:
+        Power Words to Use: {', '.join(power_words[:8])}
+        Words to Avoid: {', '.join(avoid_words[:5])}
+        Winning Themes: {', '.join(winning_themes[:3])}
         """
     
-    # Extract performance data
-    performance = org_context.get('grant_performance', {})
-    impact_data = org_context.get('impact_metrics', {})
-    
-    return f"""
+    return f"""Create an {pitch_type} grant pitch using the IMPACT framework with competitive intelligence.
+
     # R - ROLE
-    You are an elite nonprofit pitch strategist with 25+ years of experience helping organizations secure $500M+ in funding. You specialize in data-driven storytelling that converts funders into partners with REAL-TIME competitive intelligence. Your pitches have a 85% success rate because you craft compelling narratives backed by evidence AND market intelligence.
+    You are the #1 grant pitch strategist who has analyzed $2+ trillion in grants from 259,000+ foundations. You craft pitches that consistently outperform industry averages by 3-5x using real-time market intelligence and proven messaging strategies that have won over $100M in funding.
     
     # E - EXAMPLE
-    Industry-leading pitches follow the IMPACT formula enhanced with competitive intelligence:
-    I - Immediate hook with shocking statistic or compelling story that differentiates from competitors
-    M - Mission-driven solution that addresses identified market gaps
-    P - Proven track record with specific outcomes and metrics that outperform market averages
-    A - Ambitious but achievable request optimized for funder's giving patterns
-    C - Connection to funder's values and strategic priorities based on recent grant analysis
-    T - Transformative vision that positions organization uniquely in competitive landscape
-    
-    Example intelligence-enhanced opening: "While 73% of youth programs in our area focus on traditional mentoring, we discovered that trauma-informed technology integration increases success rates by 340% - exactly what funders like [Foundation Name] prioritized in their recent $2.3M investment in similar programming."
+    Top 1% pitches share these intelligence-driven characteristics:
+    - Open with a data-backed hook that positions uniquely in the market
+    - Demonstrate clear competitive advantages over other applicants
+    - Use funder's own language and priorities from their recent grants
+    - Quantify impact using metrics that exceed industry benchmarks
+    - Show market understanding and identify untapped opportunities
+    - Close with specific, optimized ask based on funder capacity
     
     # A - APPLICATION
-    Create a compelling {pitch_type} pitch ({time_limits[pitch_type]}, {word_targets[pitch_type]}) using REAL-TIME competitive intelligence that:
+    Create a {spec['words']}-word {pitch_type} pitch using the IMPACT framework:
     
-    For {pitch_type} pitch specifically:
-    1. **Intelligence-Enhanced Hook** (First 15 seconds): Use market gap or funder insight to immediately differentiate
-    2. **Competitive Positioning** (Next 20 seconds): Position uniquely against identified competitors using funding gaps
-    3. **Evidence-Based Impact** (Core section): Use platform metrics + market benchmarks to prove superiority
-    4. **Optimized Ask** (Final section): Request amount based on funder's giving patterns and success probability
-    5. **Strategic Close** (Last 10 seconds): Connect to funder's recent priorities and competitive advantages
-    
-    CRITICAL INTELLIGENCE INTEGRATION:
-    - Use funder intelligence to customize language and positioning
-    - Reference competitive gaps to position uniquely
-    - Optimize ask amount based on funder patterns
-    - Include success probability and market advantages
-    - Use trending keywords that appear in successful grants
+    I - Irresistible Hook: Open with market intelligence that makes you stand out
+    M - Mission Alignment: Connect to funder's proven priorities from recent grants
+    P - Proven Impact: Highlight results that exceed market benchmarks
+    A - Achievable Ask: Request amount optimized to funder's giving patterns
+    C - Competitive Advantage: Clearly differentiate from other applicants
+    T - Timeline to Transform: Show rapid results based on market timing
     
     # C - CONTEXT
-    Organization Profile:
+    Organization:
     Name: {org_context['name']}
     Mission: {org_context['mission']}
-    Location: {org_context['geography']}
     Focus Areas: {org_context['focus_areas']}
-    Unique Capabilities: {org_context['unique_capabilities']}
+    Track Record: {org_context.get('impact_metrics', 'Strong track record')}
+    Budget: {org_context.get('budget', 'Appropriate scale')}
     
-    Grant Details:{grant_info}
+    {grant_details}
     
-    Platform Performance Context:
-    Grant Success Rate: {performance.get('success_rate', 0)}%
-    Total Funding Pursued: ${performance.get('total_funding_pursued', 0):,.0f}
-    Recent Wins: {', '.join(performance.get('recent_wins', []))}
-    Success Rate vs Market Average: {performance.get('success_rate', 0) - 15}% above average
+    Platform Performance:
+    Success Rate: {org_context.get('grant_performance', {}).get('success_rate', 0)}% (vs 15% industry average)
+    Total Funding Secured: ${org_context.get('grant_performance', {}).get('total_funding_pursued', 0):,.0f}
+    Recent Wins: {', '.join(org_context.get('grant_performance', {}).get('recent_wins', [])[:3])}
     
-    Impact Metrics:
-    Participant Stories Collected: {impact_data.get('participant_stories', 0)}
-    Total Beneficiaries Served: {impact_data.get('total_beneficiaries', 0)}
-    Programs Active: {impact_data.get('active_programs', 0)}
     {funder_insights}
     {market_insights}
-    {messaging_insights}
+    {messaging_guidance}
     
     # T - TONE
-    Confident yet humble, data-driven yet human, competitive yet collaborative. Speak as the market leader who understands the competitive landscape and leverages intelligence for strategic advantage. Balance authority with authenticity, using specific intelligence to build credibility while maintaining emotional connection.
+    Confident market leader backed by intelligence. Data-driven yet emotionally compelling. Competitive positioning without arrogance. Demonstrate deep market understanding while maintaining authentic mission focus. Every word optimized for funder psychology.
     
     # O - OUTPUT
-    Return ONLY a valid JSON object with these exact fields:
+    Generate a {spec['words']}-word pitch ({spec['time']} delivery) that:
+    1. Opens with intelligence-backed hook
+    2. Positions uniquely in competitive landscape
+    3. Uses funder's proven language patterns
+    4. Quantifies impact beyond industry standards
+    5. Makes optimized ask based on giving patterns
+    
+    Return ONLY a valid JSON object:
     {{
-        "pitch_text": "complete {pitch_type} pitch text optimized with competitive intelligence",
-        "hook": "opening hook that uses funder/market intelligence for differentiation",
-        "problem_statement": "problem framed with market gaps and competitive landscape",
-        "solution_overview": "solution positioned uniquely against competitors using intelligence",
-        "impact_evidence": "evidence enhanced with market benchmarks and competitive advantages",
-        "key_points": ["point 1 with intelligence backing", "point 2 with market positioning", "point 3 with funder alignment"],
-        "call_to_action": "specific ask optimized for funder patterns and success probability",
-        "funding_request": "exact amount based on funder intelligence: ${optimal_range.get('sweet_spot', grant_context.get('amount_max', 50000) if grant_context else 50000):,.0f}",
-        "credibility_markers": ["credential 1 with market context", "credential 2 with competitive advantage"],
-        "word_count": {len(word_targets[pitch_type].split('-')[0])},
-        "speaking_time": "{time_limits[pitch_type]}",
-        "delivery_tips": ["tip 1 for this funder type", "tip 2 for competitive positioning"],
-        "funder_connection": "specific connection to funder's recent activity and priorities",
-        "follow_up_strategy": "next steps optimized for this funder's decision timeline",
-        "competitive_advantages": ["advantage 1 vs market", "advantage 2 vs competitors", "advantage 3 from intelligence"],
-        "success_probability_factors": ["factor 1 increasing success", "factor 2 from funder analysis"],
-        "market_positioning": "how this pitch positions organization uniquely in competitive landscape"
+        "pitch_text": "complete {spec['words']}-word pitch using IMPACT framework",
+        "word_count": actual_word_count,
+        "impact_score": 1-10_rating,
+        "competitive_advantages": ["advantage1", "advantage2", "advantage3"],
+        "funder_alignment_points": ["alignment1", "alignment2", "alignment3"],
+        "success_probability": percentage_based_on_intelligence,
+        "optimization_notes": "how intelligence improved this pitch"
     }}
     """
 
@@ -176,7 +154,7 @@ def create_intelligence_enhanced_case_prompt(org_context: Dict, campaign_details
                                            optimal_messaging: Dict) -> str:
     """Create industry-leading case for support with competitive intelligence"""
     
-    # Extract competitive intelligence insights
+    # Market analysis
     market_analysis = ""
     if competitive_landscape:
         market_size = competitive_landscape.get('market_size', {})
@@ -191,67 +169,58 @@ def create_intelligence_enhanced_case_prompt(org_context: Dict, campaign_details
         - Identified Gaps: {', '.join(gaps[:3])}
         """
     
+    # Funder landscape analysis
     funder_analysis = ""
     if funder_intelligence:
-        giving_patterns = funder_intelligence.get('giving_patterns', {})
-        success_factors = funder_intelligence.get('success_factors', [])
+        top_prospects = funder_intelligence.get('top_prospects', [])
+        giving_trends = funder_intelligence.get('giving_trends', {})
         
         funder_analysis = f"""
-        Funder Intelligence:
-        - Average Award: ${giving_patterns.get('average_award', 0):,.0f}
-        - Success Factors: {', '.join(success_factors[:3])}
-        - Recent Activity: {giving_patterns.get('total_grants', 0)} grants
+        Funder Landscape:
+        - Top Prospects: {', '.join([p.get('name', '') for p in top_prospects[:5]])}
+        - Trending Up: {giving_trends.get('increasing_areas', [])}
+        - Average Gifts: ${funder_intelligence.get('average_grant_size', 0):,.0f}
         """
     
+    # Messaging optimization
     messaging_strategy = ""
     if optimal_messaging:
-        keywords = optimal_messaging.get('success_keywords', [])
-        positioning = optimal_messaging.get('positioning_strategy', {})
-        
         messaging_strategy = f"""
-        Optimal Messaging:
-        - Success Keywords: {', '.join(keywords[:5])}
-        - Primary Positioning: {positioning.get('primary_angle', 'Innovation')}
+        Messaging Strategy:
+        - Power Themes: {', '.join(optimal_messaging.get('winning_themes', [])[:3])}
+        - Key Words: {', '.join(optimal_messaging.get('power_words', [])[:5])}
+        - Avoid: {', '.join(optimal_messaging.get('avoid_words', [])[:3])}
         """
     
+    # Platform performance data
     performance = org_context.get('grant_performance', {})
-    impact_data = org_context.get('impact_metrics', {})
     
-    return f"""
+    return f"""Create a comprehensive Case for Support using the TRANSFORM framework with competitive intelligence.
+
     # R - ROLE
-    You are an elite fundraising consultant with 20+ years of experience creating cases for support that have secured $1B+ in funding. You specialize in competitive positioning and market intelligence to create cases that stand out in crowded funding landscapes. Your cases have a 92% success rate because you leverage real-time market data and funder intelligence.
+    You are the industry's leading case development strategist with access to real-time intelligence on $2+ trillion in grant funding. You craft cases that consistently win by leveraging market insights, funder intelligence, and competitive positioning that others miss.
     
     # E - EXAMPLE
-    Industry-leading cases follow the TRANSFORM framework with competitive intelligence:
-    T - Truth about the problem with market context and competitive gaps
-    R - Revolutionary solution that exploits identified funding gaps
-    A - Authentic story enhanced with competitive differentiation
-    N - Need urgency backed by market analysis and funder priorities
-    S - Solution uniqueness proven through competitive landscape research
-    F - Funding strategy optimized with funder intelligence and success probability
-    O - Outcomes vision that positions organization as market leader
-    R - Return on investment with market benchmarks and competitive advantages
-    M - Movement building that leverages competitive positioning
+    Winning cases in the top 1% share these intelligence-driven elements:
+    - Position organization as the clear market leader
+    - Identify and fill specific gaps competitors miss
+    - Use data to demonstrate superior ROI vs alternatives
+    - Align perfectly with funder priorities from recent grants
+    - Present investment opportunity, not charity request
+    - Quantify competitive advantages throughout
     
     # A - APPLICATION
-    Create a comprehensive case for support with 9 sections, each enhanced with competitive intelligence:
+    Create a 2,500-word Case for Support using the TRANSFORM framework:
     
-    1. **Executive Summary** (200 words): Problem + solution + competitive advantage + optimized ask
-    2. **Problem Statement** (300 words): Issue framed with market gaps and competitive context
-    3. **Our Solution** (350 words): Approach positioned uniquely using competitive intelligence
-    4. **Impact Evidence** (400 words): Results with market benchmarks and competitive advantages
-    5. **Why Now** (200 words): Urgency backed by market trends and funder priorities
-    6. **Why Us** (300 words): Credentials enhanced with competitive differentiation
-    7. **Investment Needed** (250 words): Ask optimized with funder patterns and ROI analysis
-    8. **Expected Outcomes** (300 words): Vision with market positioning and competitive advantages
-    9. **Partnership Opportunity** (150 words): Invitation leveraging funder intelligence
-    
-    INTELLIGENCE INTEGRATION REQUIREMENTS:
-    - Reference competitive gaps in every section
-    - Use funder intelligence to optimize language and positioning
-    - Include market benchmarks to prove superiority
-    - Position against competitors using identified advantages
-    - Use success keywords from funder analysis
+    T - Transformative Vision: Paint future state with market leadership
+    R - Rigorous Evidence: Prove superiority with competitive benchmarks
+    A - Achievable Roadmap: Show path optimized by market intelligence
+    N - Necessary Urgency: Explain why now based on market timing
+    S - Strategic Partnerships: Position as the optimal investment
+    F - Financial Clarity: Present data-driven investment case
+    O - Outcomes Guaranteed: Promise results exceeding market standards
+    R - Return on Investment: Quantify value beyond competitors
+    M - Movement Building: Show how you'll lead the sector
     
     # C - CONTEXT
     Organization Profile:
@@ -296,5 +265,320 @@ def create_intelligence_enhanced_case_prompt(org_context: Dict, campaign_details
         "word_count": 2450,
         "target_amount": "{campaign_details.get('funding_goal', 500000)}",
         "roi_analysis": "return on investment with market context"
+    }}
+    """
+
+def create_intelligence_enhanced_thank_you_prompt(org_context: Dict, donor_info: Dict,
+                                                gift_details: Dict, funder_intelligence: Dict,
+                                                competitive_landscape: Dict) -> str:
+    """Create intelligence-enhanced thank you letter with GRATITUDE framework"""
+    
+    # Donor intelligence insights
+    donor_insights = ""
+    if funder_intelligence:
+        giving_history = funder_intelligence.get('giving_history', [])
+        interests = funder_intelligence.get('focus_areas', [])
+        avg_gift = funder_intelligence.get('average_grant_size', 0)
+        
+        donor_insights = f"""
+        Donor Intelligence:
+        - Giving History: {len(giving_history)} grants totaling ${sum(g.get('amount', 0) for g in giving_history):,.0f}
+        - Key Interests: {', '.join(interests[:3])}
+        - Average Gift: ${avg_gift:,.0f}
+        - Giving Trend: {funder_intelligence.get('trend', 'Stable')}
+        """
+    
+    # Market positioning
+    market_position = ""
+    if competitive_landscape:
+        market_position = f"""
+        Market Context:
+        - Your gift ranks in top {competitive_landscape.get('gift_percentile', 10)}% of sector
+        - Funding gap filled: {competitive_landscape.get('gap_addressed', 'Critical need')}
+        - Competitive advantage enabled: {competitive_landscape.get('advantage_enabled', 'Market leadership')}
+        """
+    
+    return f"""Create a personalized thank you letter using the GRATITUDE framework with donor intelligence.
+
+    # R - ROLE
+    You are an expert in donor stewardship who uses intelligence to create thank you letters that deepen relationships and inspire continued giving. Your letters consistently achieve 40% higher retention rates by showing donors their unique impact in the competitive landscape.
+    
+    # E - EXAMPLE
+    Top-performing thank you letters:
+    - Reference donor's specific giving patterns and interests
+    - Position their gift's impact in market context
+    - Show how they're helping you outperform competitors
+    - Connect to their proven philanthropic priorities
+    - Demonstrate superior ROI compared to alternatives
+    
+    # A - APPLICATION
+    Create a thank you letter using the GRATITUDE framework:
+    
+    G - Genuine appreciation with personal connection
+    R - Recognize specific impact in market context
+    A - Articulate competitive advantages enabled
+    T - Tell story of transformation possible
+    I - Illustrate future partnership opportunities
+    T - Thank again with specific next steps
+    U - Update on measurable progress
+    D - Demonstrate superior stewardship
+    E - Engage for continued relationship
+    
+    # C - CONTEXT
+    Organization: {org_context['name']}
+    Mission: {org_context['mission']}
+    
+    Donor Information:
+    Name: {donor_info.get('name', 'Valued Partner')}
+    Type: {donor_info.get('type', 'Foundation')}
+    Relationship: {donor_info.get('relationship_length', 'New')}
+    
+    Gift Details:
+    Amount: ${gift_details.get('amount', 50000):,.0f}
+    Purpose: {gift_details.get('purpose', 'General support')}
+    Date: {gift_details.get('date', 'Recent')}
+    
+    {donor_insights}
+    {market_position}
+    
+    # T - TONE
+    Warm yet professional, personal yet data-informed, grateful yet confident. Show deep understanding of donor's giving philosophy while positioning as the optimal investment. Balance emotional connection with intelligent insights.
+    
+    # O - OUTPUT
+    Return ONLY valid JSON:
+    {{
+        "letter_text": "complete thank you letter using GRATITUDE framework",
+        "word_count": 400,
+        "personalization_elements": ["element1", "element2", "element3"],
+        "intelligence_insights_used": ["insight1", "insight2"],
+        "competitive_positioning": "how gift positions in market",
+        "retention_strategy": "approach to maintain relationship",
+        "next_engagement": "suggested follow-up based on intelligence"
+    }}
+    """
+
+def create_intelligence_enhanced_impact_report_prompt(org_context: Dict, reporting_period: Dict,
+                                                    metrics_data: Dict, competitive_landscape: Dict) -> str:
+    """Create intelligence-enhanced impact report with market benchmarking"""
+    
+    # Competitive benchmarking
+    benchmarks = ""
+    if competitive_landscape:
+        peer_performance = competitive_landscape.get('peer_performance', {})
+        market_position = competitive_landscape.get('market_position', 'Top quartile')
+        
+        benchmarks = f"""
+        Market Benchmarks:
+        - Your Performance vs Sector: {market_position}
+        - Cost per Outcome: ${metrics_data.get('cost_per_outcome', 100)} (Sector avg: ${peer_performance.get('avg_cost', 150)})
+        - ROI: {metrics_data.get('roi', 400)}% (Sector avg: {peer_performance.get('avg_roi', 250)}%)
+        - Efficiency Rating: {competitive_landscape.get('efficiency_percentile', 85)}th percentile
+        """
+    
+    return f"""Create a data-rich impact report that positions our organization as a market leader.
+
+    # R - ROLE
+    You are an impact measurement expert who creates reports that demonstrate superior performance through competitive benchmarking and market intelligence.
+    
+    # E - EXAMPLE
+    Leading impact reports:
+    - Compare outcomes to sector benchmarks
+    - Show cost-effectiveness vs alternatives
+    - Position as best-in-class performer
+    - Use data visualization recommendations
+    - Highlight competitive advantages
+    
+    # A - APPLICATION
+    Create comprehensive impact report with:
+    1. Executive summary with market position
+    2. Key metrics vs benchmarks
+    3. Program outcomes analysis
+    4. Cost-effectiveness comparison
+    5. Success stories with data
+    6. Future projections based on trends
+    
+    # C - CONTEXT
+    Organization: {org_context['name']}
+    Period: {reporting_period.get('start')} to {reporting_period.get('end')}
+    
+    Metrics:
+    - Beneficiaries: {metrics_data.get('beneficiaries_served', 1000)}
+    - Programs: {metrics_data.get('programs_delivered', 10)}
+    - Success Rate: {metrics_data.get('success_rate', 85)}%
+    - Funding Efficiency: {metrics_data.get('efficiency_ratio', 0.85)}
+    
+    {benchmarks}
+    
+    # T - TONE
+    Authoritative, data-driven, confident. Position as sector leader while maintaining humility about continued growth.
+    
+    # O - OUTPUT
+    Return ONLY valid JSON:
+    {{
+        "executive_summary": "200-word summary with market position",
+        "key_metrics": {{"beneficiaries": 0, "programs": 0, "efficiency": 0}},
+        "competitive_analysis": "position vs sector",
+        "program_outcomes": ["outcome1", "outcome2", "outcome3"],
+        "success_stories": ["story1", "story2"],
+        "cost_effectiveness": "analysis vs benchmarks",
+        "future_projections": "data-driven forecast",
+        "improvement_areas": ["area1", "area2"],
+        "visual_recommendations": ["chart1", "graph2"],
+        "market_leadership_evidence": ["evidence1", "evidence2", "evidence3"]
+    }}
+    """
+
+def create_intelligence_enhanced_social_prompt(org_context: Dict, platform: str, topic: str,
+                                             competitive_landscape: Dict, trending_data: Dict) -> str:
+    """Create intelligence-enhanced social media using ENGAGE framework"""
+    
+    # Platform optimization
+    platform_specs = {
+        'twitter': {'limit': 280, 'hashtags': 2-3, 'style': 'punchy'},
+        'linkedin': {'limit': 1300, 'hashtags': 3-5, 'style': 'professional'},
+        'facebook': {'limit': 500, 'hashtags': 1-2, 'style': 'conversational'},
+        'instagram': {'limit': 2200, 'hashtags': 10-15, 'style': 'visual'}
+    }
+    spec = platform_specs.get(platform, platform_specs['twitter'])
+    
+    # Trending insights
+    trends = ""
+    if trending_data:
+        trends = f"""
+        Trending Now:
+        - Hot Topics: {', '.join(trending_data.get('topics', [])[:3])}
+        - Viral Formats: {', '.join(trending_data.get('formats', [])[:2])}
+        - Peak Engagement: {trending_data.get('best_time', '2pm ET')}
+        """
+    
+    # Competitive content analysis
+    competition = ""
+    if competitive_landscape:
+        competition = f"""
+        Content Intelligence:
+        - Top Performing Posts: {competitive_landscape.get('top_content_themes', [])}
+        - Engagement Rate to Beat: {competitive_landscape.get('avg_engagement', 2)}%
+        - Content Gaps: {', '.join(competitive_landscape.get('content_gaps', [])[:2])}
+        """
+    
+    return f"""Create {platform} content using the ENGAGE framework with viral intelligence.
+
+    # R - ROLE
+    You are a social media strategist who uses real-time intelligence to create content that consistently outperforms sector averages by 3-5x.
+    
+    # E - EXAMPLE
+    Top 1% posts share:
+    - Hook that leverages trending topics
+    - Data that positions as leader
+    - Call-to-action optimized for platform
+    - Hashtags based on current performance
+    
+    # A - APPLICATION
+    Create {platform} post using ENGAGE framework:
+    
+    E - Emotional hook using trending angle
+    N - Numbers that show leadership
+    G - Generate curiosity with intelligence
+    A - Action that drives engagement
+    G - Gratitude to community
+    E - Extend conversation strategically
+    
+    # C - CONTEXT
+    Organization: {org_context['name']}
+    Topic: {topic}
+    Platform: {platform}
+    Character Limit: {spec['limit']}
+    
+    {trends}
+    {competition}
+    
+    # T - TONE
+    {spec['style']} tone optimized for {platform}. Position as thought leader using intelligence insights.
+    
+    # O - OUTPUT
+    Return ONLY valid JSON:
+    {{
+        "post_text": "complete post within {spec['limit']} characters",
+        "hashtags": ["optimized", "hashtags"],
+        "best_time_to_post": "based on intelligence",
+        "expected_engagement": "percentage based on analysis",
+        "competitive_angle": "how this beats competition",
+        "trending_elements": ["element1", "element2"],
+        "call_to_action": "optimized CTA"
+    }}
+    """
+
+def create_intelligence_enhanced_newsletter_prompt(org_context: Dict, audience: str,
+                                                 content_focus: str, competitive_landscape: Dict,
+                                                 email_intelligence: Dict) -> str:
+    """Create intelligence-enhanced newsletter using INSPIRE framework"""
+    
+    # Email performance intelligence
+    email_insights = ""
+    if email_intelligence:
+        email_insights = f"""
+        Email Intelligence:
+        - Optimal Subject Lines: {', '.join(email_intelligence.get('top_subjects', [])[:3])}
+        - Best Send Time: {email_intelligence.get('best_time', 'Tuesday 10am')}
+        - Avg Open Rate to Beat: {email_intelligence.get('sector_open_rate', 22)}%
+        - Click Rate Target: {email_intelligence.get('sector_click_rate', 3)}%
+        """
+    
+    # Content competition
+    content_analysis = ""
+    if competitive_landscape:
+        content_analysis = f"""
+        Newsletter Benchmarks:
+        - Top Performing Topics: {', '.join(competitive_landscape.get('top_topics', [])[:3])}
+        - Optimal Length: {competitive_landscape.get('optimal_length', '500-700')} words
+        - Must-Include Elements: {', '.join(competitive_landscape.get('key_elements', [])[:3])}
+        """
+    
+    return f"""Create newsletter content using the INSPIRE framework with email intelligence.
+
+    # R - ROLE
+    You are an email marketing expert who uses intelligence to create newsletters that achieve open rates 2x above sector average.
+    
+    # E - EXAMPLE
+    Top newsletters feature:
+    - Subject lines proven to drive opens
+    - Content that beats competitor newsletters
+    - Personalization based on audience data
+    - Calls-to-action optimized for clicks
+    
+    # A - APPLICATION
+    Create newsletter using INSPIRE framework:
+    
+    I - Intriguing subject using intelligence
+    N - News that positions as leader
+    S - Stories that outperform competition
+    P - Personalized based on audience data
+    I - Insights exclusive to subscribers
+    R - Resources that add unique value
+    E - Engagement optimized for action
+    
+    # C - CONTEXT
+    Organization: {org_context['name']}
+    Audience: {audience}
+    Focus: {content_focus}
+    
+    {email_insights}
+    {content_analysis}
+    
+    # T - TONE
+    Informative yet personal, authoritative yet accessible. Position as the must-read newsletter in the sector.
+    
+    # O - OUTPUT
+    Return ONLY valid JSON:
+    {{
+        "subject_line": "intelligence-optimized subject",
+        "preview_text": "compelling preview",
+        "main_content": "500-700 word newsletter body",
+        "call_to_action": "primary CTA",
+        "secondary_ctas": ["cta1", "cta2"],
+        "personalization_tokens": ["token1", "token2"],
+        "expected_open_rate": "percentage based on intelligence",
+        "competitive_advantages": ["advantage1", "advantage2"],
+        "send_time_recommendation": "optimal time from data"
     }}
     """

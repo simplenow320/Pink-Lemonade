@@ -10,7 +10,11 @@ from app.services.reacto_prompts import ReactoPrompts
 from app.services.competitive_intelligence import CompetitiveIntelligenceService
 from app.services.intelligence_enhanced_prompts import (
     create_intelligence_enhanced_pitch_prompt, 
-    create_intelligence_enhanced_case_prompt
+    create_intelligence_enhanced_case_prompt,
+    create_intelligence_enhanced_thank_you_prompt,
+    create_intelligence_enhanced_impact_report_prompt,
+    create_intelligence_enhanced_social_prompt,
+    create_intelligence_enhanced_newsletter_prompt
 )
 from app.models import Grant, Organization, Narrative, Analytics, ImpactIntake, db
 import logging
@@ -89,7 +93,6 @@ class SmartToolsService:
             if response:
                 # Save pitch as narrative
                 narrative = Narrative()
-                narrative.org_id = org_id
                 narrative.grant_id = grant_id
                 narrative.section = f'pitch_{pitch_type}'
                 narrative.content = response.get('pitch_text', '')
@@ -186,7 +189,6 @@ class SmartToolsService:
                 for section_name, content in sections.items():
                     if content:
                         narrative = Narrative()
-                        narrative.org_id = org_id
                         narrative.section = f'case_{section_name}'
                         narrative.content = content
                         narrative.ai_generated = True
@@ -290,13 +292,21 @@ class SmartToolsService:
             # Get voice profile (could be from org settings)
             voice_profile = self._get_voice_profile(org)
             
-            # Generate REACTO prompt for impact report
-            prompt = self._create_impact_prompt_v2(
-                org_profile=org_profile,
-                grant_profile=grant_profile,
-                kpis=kpis,
-                intake_payloads=intake_submissions,
-                voice_profile=voice_profile
+            # Add competitive intelligence
+            competitive_landscape = {}
+            if org.primary_focus_areas:
+                competitive_landscape = self.competitive_intelligence.analyze_competitive_landscape(
+                    self._build_comprehensive_org_context(org),
+                    org.primary_focus_areas[0] if org.primary_focus_areas else '',
+                    f"{getattr(org, 'primary_city', '')}, {getattr(org, 'primary_state', '')}"
+                )
+            
+            # Generate intelligence-enhanced prompt for impact report
+            prompt = create_intelligence_enhanced_impact_report_prompt(
+                org_context=self._build_comprehensive_org_context(org),
+                reporting_period={'start': report_period.get('start', 'Q1'), 'end': report_period.get('end', 'Q4')},
+                metrics_data=metrics_data,
+                competitive_landscape=competitive_landscape
             )
             
             # Get AI response with GPT-4o and retry logic
@@ -370,7 +380,6 @@ class SmartToolsService:
                 
                 # Save impact report
                 narrative = Narrative()
-                narrative.org_id = org_id
                 narrative.section = 'impact_report'
                 narrative.content = json.dumps(report)
                 narrative.ai_generated = True
@@ -437,7 +446,33 @@ class SmartToolsService:
             performance = org_context.get('grant_performance', {})
             impact_data = org_context.get('impact_metrics', {})
             
-            prompt = self._create_newsletter_prompt(org_context, newsletter_details, impact_stories, grant_updates, performance, impact_data)
+            # Add competitive intelligence
+            competitive_landscape = {}
+            email_intelligence = {}
+            
+            if org.primary_focus_areas:
+                competitive_landscape = self.competitive_intelligence.analyze_competitive_landscape(
+                    org_context, org.primary_focus_areas[0], org_context.get('geography', '')
+                )
+                # Email intelligence for newsletters
+                email_intelligence = {
+                    'top_subjects': ['Impact Update:', 'Your Gift in Action:', 'Community Success:'],
+                    'best_time': 'Tuesday 10am',
+                    'sector_open_rate': 22,
+                    'sector_click_rate': 3
+                }
+            
+            # Use intelligence-enhanced prompt
+            audience = newsletter_details.get('audience', 'supporters and donors')
+            content_focus = newsletter_details.get('focus', 'monthly impact update')
+            
+            prompt = create_intelligence_enhanced_newsletter_prompt(
+                org_context=org_context,
+                audience=audience,
+                content_focus=content_focus,
+                competitive_landscape=competitive_landscape,
+                email_intelligence=email_intelligence
+            )
             
             # Get AI response
             response = self.ai_service.generate_json_response(prompt)
@@ -445,7 +480,6 @@ class SmartToolsService:
             if response:
                 # Save newsletter content
                 narrative = Narrative()
-                narrative.org_id = org_id
                 narrative.section = 'newsletter_content'
                 narrative.content = response.get('main_content', '')
                 narrative.ai_generated = True
@@ -489,18 +523,30 @@ class SmartToolsService:
             performance = org_context.get('grant_performance', {})
             impact_data = org_context.get('impact_metrics', {})
             
-            # Enhanced competitive positioning
-            market_insights = ""
-            if competitive_landscape:
-                success_prob = competitive_landscape.get('success_probability', 0)
-                market_size = competitive_landscape.get('market_size', {})
-                market_insights = f"""
-                Market Context: Your organization operates in a ${market_size.get('total_funding_available', 0):,.0f} funding environment
-                Success Rate: {performance.get('success_rate', 0)}% vs {15}% sector average
-                Competitive Advantage: {success_prob}% higher success probability than similar organizations
-                """
+            # Get funder intelligence if available
+            funder_intelligence = {}
+            if donor_info.get('name'):
+                funder_intelligence = self.competitive_intelligence.analyze_funder_intelligence(
+                    donor_info.get('name', ''), org_context.get('focus_areas', [])
+                )
             
-            prompt = f"""
+            # Use intelligence-enhanced prompt
+            gift_details = {
+                'amount': donor_info.get('gift_amount', 50000),
+                'purpose': donor_info.get('gift_purpose', 'General support'),
+                'date': donor_info.get('gift_date', 'Recent')
+            }
+            
+            prompt = create_intelligence_enhanced_thank_you_prompt(
+                org_context=org_context,
+                donor_info=donor_info,
+                gift_details=gift_details,
+                funder_intelligence=funder_intelligence,
+                competitive_landscape=competitive_landscape
+            )
+            
+            # Legacy prompt backup (remove after testing)
+            legacy_prompt = f"""
             # R - ROLE
             You are an elite donor stewardship specialist with 15+ years of experience in nonprofit communications. You craft thank you letters that increase donor retention by 40% through authentic storytelling and specific impact demonstration. You understand that donors give again when they feel valued and see concrete evidence of their gift's impact.
             
@@ -581,7 +627,6 @@ class SmartToolsService:
             if response:
                 # Save thank you content
                 narrative = Narrative()
-                narrative.org_id = org_id
                 narrative.section = 'thank_you_letter'
                 narrative.content = response.get('letter_text', '')
                 narrative.ai_generated = True
@@ -627,7 +672,32 @@ class SmartToolsService:
             performance = org_context.get('grant_performance', {})
             impact_data = org_context.get('impact_metrics', {})
             
-            prompt = f"""
+            # Add competitive intelligence
+            competitive_landscape = {}
+            trending_data = {}
+            
+            if org.primary_focus_areas:
+                competitive_landscape = self.competitive_intelligence.analyze_competitive_landscape(
+                    org_context, org.primary_focus_areas[0], org_context.get('geography', '')
+                )
+                # Get trending topics for social media
+                trending_data = {
+                    'topics': ['impact', 'community', 'change'],
+                    'formats': ['stories', 'data visuals'],
+                    'best_time': '2pm ET'
+                }
+            
+            # Use intelligence-enhanced prompt
+            prompt = create_intelligence_enhanced_social_prompt(
+                org_context=org_context,
+                platform=platform,
+                topic=topic,
+                competitive_landscape=competitive_landscape,
+                trending_data=trending_data
+            )
+            
+            # Legacy prompt backup
+            legacy_prompt = f"""
             # R - ROLE
             You are an award-winning nonprofit social media strategist with 12+ years of experience growing online communities and driving engagement for impact organizations. You specialize in creating authentic content that balances mission storytelling with platform optimization. Your posts consistently achieve 3x higher engagement than industry average through strategic use of platform data and authentic storytelling.
             
@@ -705,7 +775,6 @@ class SmartToolsService:
             if response:
                 # Save social media content
                 narrative = Narrative()
-                narrative.org_id = org_id
                 narrative.section = f'social_media_{platform}'
                 narrative.content = response.get('post_text', '')
                 narrative.ai_generated = True
@@ -725,7 +794,7 @@ class SmartToolsService:
     def _build_comprehensive_org_context(self, org: Organization) -> Dict:
         """Build comprehensive organization context with platform data"""
         # Get analytics data
-        analytics = Analytics.query.filter_by(org_id=org.id).order_by(Analytics.report_date.desc()).limit(12).all()
+        analytics = Analytics.query.filter_by(org_id=org.id).order_by(Analytics.created_at.desc()).limit(12).all()
         
         # Get grant performance
         grants = Grant.query.filter_by(org_id=org.id).all()
@@ -1333,12 +1402,29 @@ Return ONLY this exact JSON structure (no other text):
         if not analytics:
             return {}
         
+        # Extract data from event_data JSON field
+        success_rates = []
+        funding_secured = []
+        
+        for a in analytics[-12:]:
+            if a.event_data:
+                success_rates.append(a.event_data.get('success_rate', 0))
+                funding_secured.append(float(a.event_data.get('total_funding_secured', 0)))
+        
+        all_success_rates = []
+        all_funding = []
+        
+        for a in analytics:
+            if a.event_data:
+                all_success_rates.append(a.event_data.get('success_rate', 0))
+                all_funding.append(a.event_data.get('total_funding_secured', 0))
+        
         return {
             'total_grants_tracked': len(analytics),
-            'success_rate_trend': [a.success_rate for a in analytics[-12:]],
-            'funding_secured_trend': [float(a.total_funding_secured) for a in analytics[-12:]],
-            'average_success_rate': sum(a.success_rate for a in analytics) / len(analytics),
-            'total_funding_secured': sum(a.total_funding_secured for a in analytics)
+            'success_rate_trend': success_rates,
+            'funding_secured_trend': funding_secured,
+            'average_success_rate': sum(all_success_rates) / len(all_success_rates) if all_success_rates else 0,
+            'total_funding_secured': sum(all_funding)
         }
     
     def _update_analytics(self, org_id: int, metrics_data: Dict, report: Dict):
@@ -1346,28 +1432,28 @@ Return ONLY this exact JSON structure (no other text):
         try:
             analytics = Analytics()
             analytics.org_id = org_id
-            analytics.report_date = datetime.utcnow()
-            
-            # Extract key metrics
-            analytics.total_grants_submitted = metrics_data.get('grants_submitted', 0)
-            analytics.grants_won = metrics_data.get('grants_won', 0)
-            analytics.total_funding_secured = metrics_data.get('funding_secured', 0)
+            analytics.event_type = 'impact_report_generated'
+            analytics.created_at = datetime.utcnow()
             
             # Calculate success rate
-            if analytics.total_grants_submitted > 0:
-                analytics.success_rate = (analytics.grants_won / analytics.total_grants_submitted) * 100
-            else:
-                analytics.success_rate = 0
+            total_grants_submitted = metrics_data.get('grants_submitted', 0)
+            grants_won = metrics_data.get('grants_won', 0)
+            success_rate = 0
+            if total_grants_submitted > 0:
+                success_rate = (grants_won / total_grants_submitted) * 100
             
-            # Store impact metrics
-            analytics.total_beneficiaries = metrics_data.get('beneficiaries_served', 0)
-            analytics.programs_delivered = metrics_data.get('programs_delivered', 0)
-            
-            # Store report reference
-            analytics.report_data = json.dumps({
+            # Store all metrics in event_data JSON field
+            analytics.event_data = {
+                'report_date': datetime.utcnow().isoformat(),
+                'total_grants_submitted': total_grants_submitted,
+                'grants_won': grants_won,
+                'total_funding_secured': metrics_data.get('funding_secured', 0),
+                'success_rate': success_rate,
+                'total_beneficiaries': metrics_data.get('beneficiaries_served', 0),
+                'programs_delivered': metrics_data.get('programs_delivered', 0),
                 'impact_score': report.get('impact_score', 0),
                 'key_achievements': report.get('key_achievements', [])[:3]
-            })
+            }
             
             db.session.add(analytics)
             
