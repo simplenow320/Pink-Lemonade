@@ -205,8 +205,12 @@ class SmartToolsService:
                 
                 db.session.add(narrative)
                 
-                # Update analytics
-                self._update_analytics(org_id, metrics_data, report)
+                # Update analytics with proper event_type
+                analytics_entry = Analytics()
+                analytics_entry.event_type = 'impact_report_generated'
+                analytics_entry.org_id = org_id
+                analytics_entry.created_at = datetime.utcnow()
+                db.session.add(analytics_entry)
                 
                 db.session.commit()
                 
