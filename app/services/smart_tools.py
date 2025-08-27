@@ -152,10 +152,10 @@ class SmartToolsService:
     # ============= IMPACT REPORTING TOOL =============
     
     def generate_impact_report(self, org_id: int, report_period: Dict, 
-                              metrics_data: Dict) -> Dict:
+                              metrics_data: Dict, grant_id: Optional[int] = None) -> Dict:
         """
-        Generate data-driven impact report with storytelling
-        Includes: metrics visualization, success stories, outcomes
+        Generate data-driven impact report with storytelling using verified data
+        Includes: metrics dashboard, success stories, charts, financial summary
         """
         try:
             # Get organization
@@ -163,36 +163,68 @@ class SmartToolsService:
             if not org:
                 return {'success': False, 'error': 'Organization not found'}
             
-            org_context = self._build_org_context(org)
+            # Get grant if specified
+            grant = None
+            if grant_id:
+                grant = Grant.query.get(grant_id)
             
-            # Get historical analytics
-            analytics = Analytics.query.filter_by(org_id=org_id).all()
-            historical_data = self._compile_analytics(analytics)
+            # Get impact intake submissions
+            from app.models import ImpactIntake
+            intake_submissions = []
+            if grant_id:
+                intakes = ImpactIntake.query.filter_by(grant_id=grant_id).order_by(ImpactIntake.created_at.desc()).limit(10).all()
+                intake_submissions = [intake.payload for intake in intakes]
+            
+            # Build comprehensive context
+            org_profile = {
+                'name': org.name,
+                'mission': org.mission,
+                'location': f"{getattr(org, 'primary_city', 'City')}, {getattr(org, 'primary_state', 'State')}"
+            }
+            
+            grant_profile = {}
+            if grant:
+                grant_profile = {
+                    'title': grant.title,
+                    'amount': grant.amount_max or 0,
+                    'period': report_period
+                }
+            
+            # Build KPIs from metrics_data
+            kpis = self._extract_kpis(metrics_data)
+            
+            # Get voice profile (could be from org settings)
+            voice_profile = self._get_voice_profile(org)
             
             # Generate REACTO prompt for impact report
-            prompt = self._create_impact_prompt(
-                org_context, 
-                report_period, 
-                metrics_data,
-                historical_data
+            prompt = self._create_impact_prompt_v2(
+                org_profile=org_profile,
+                grant_profile=grant_profile,
+                kpis=kpis,
+                intake_payloads=intake_submissions,
+                voice_profile=voice_profile
             )
             
             # Get AI response
             response = self.ai_service.generate_json_response(prompt)
             
             if response:
-                # Save report sections
+                # Extract report with exact schema
                 report = {
-                    'executive_summary': response.get('executive_summary', ''),
-                    'key_achievements': response.get('key_achievements', []),
-                    'metrics_analysis': response.get('metrics_analysis', {}),
+                    'executive_summary': response.get('executive_summary', 'MISSING: Executive summary not generated'),
+                    'impact_score': response.get('impact_score', 0),
+                    'metrics_dashboard': response.get('metrics_dashboard', {}),
                     'success_stories': response.get('success_stories', []),
-                    'challenges_overcome': response.get('challenges_overcome', []),
-                    'lessons_learned': response.get('lessons_learned', []),
-                    'future_outlook': response.get('future_outlook', ''),
-                    'donor_recognition': response.get('donor_recognition', ''),
-                    'financial_summary': response.get('financial_summary', {}),
-                    'visualizations': response.get('recommended_charts', [])
+                    'financial_summary': response.get('financial_summary', {
+                        'total_grant': grant.amount_max if grant else 0,
+                        'spent_to_date': 0,
+                        'remaining': grant.amount_max if grant else 0,
+                        'category_breakdown': []
+                    }),
+                    'future_outlook': response.get('future_outlook', 'MISSING: Future outlook not generated'),
+                    'donor_recognition': response.get('donor_recognition', []),
+                    'charts': response.get('charts', self._get_default_charts()),
+                    'source_notes': response.get('source_notes', [])
                 }
                 
                 # Save impact report
@@ -465,45 +497,131 @@ class SmartToolsService:
         }}
         """
     
+    def _create_impact_prompt_v2(self, org_profile: Dict, grant_profile: Dict,
+                                kpis: Dict, intake_payloads: List[Dict], 
+                                voice_profile: Dict) -> str:
+        """Create REACTO prompt for impact reporting using verified data only"""
+        return f"""
+SYSTEM:
+You are GrantFlow Pro's Impact Report Writer. 
+You only write with verified data from the organization profile, grant profile, KPIs, and intake submissions. 
+You must write in the organization's authentic voice using the Org Voice Profile. 
+You must never invent facts, dates, names, partners, or amounts. 
+If something is missing, list it in "source_notes".
+
+CONTEXT:
+Organization: {org_profile.get('name')}, {org_profile.get('mission')}, {org_profile.get('location')}
+Grant: {grant_profile.get('title', 'N/A')}, amount {grant_profile.get('amount', 0)}, reporting period {grant_profile.get('period', {})}
+KPIs & Metrics: {json.dumps(kpis, indent=2)}
+Intake Submissions: {json.dumps(intake_payloads[:5], indent=2) if intake_payloads else '[]'}
+Voice Profile: {json.dumps(voice_profile, indent=2)}
+
+TASK (use REACTO framework):
+R = Role: You are the organization's grant writer producing a donor-ready Impact Report.
+E = Example: Model after professional foundation reports with executive summary, data, stories, and charts.
+A = Application: Turn metrics + intake responses into clear, compelling donor-focused content.
+C = Context: This is for funders and donors who expect both data and human stories.
+T = Tone: {voice_profile.get('tone', 'Warm, semi-professional, human, encouraging')}; avoid jargon.
+O = Output: Valid JSON strictly matching the schema below.
+
+OUTPUT SCHEMA REQUIRED:
+{{
+  "executive_summary": "string, 120+ words",
+  "impact_score": "0-100 number",
+  "metrics_dashboard": {{
+    "total_served": number,
+    "goals_met": number,
+    "success_rate": number,
+    "key_outcomes": ["outcome1", "outcome2"]
+  }},
+  "success_stories": [
+    {{"title":"string","narrative":"string","quote":"string","attribution":"string"}}
+  ],
+  "financial_summary": {{
+    "total_grant": {grant_profile.get('amount', 0)},
+    "spent_to_date": number,
+    "remaining": number,
+    "category_breakdown":[{{"category":"string","amount":number}}]
+  }},
+  "future_outlook": "string, 80+ words",
+  "donor_recognition": ["string","string"],
+  "charts":[
+    {{"id":"funding_trend","type":"line","title":"Funding Over Time","data_spec":{{}}}},
+    {{"id":"beneficiaries","type":"bar","title":"Beneficiaries Reached","data_spec":{{}}}},
+    {{"id":"outcomes","type":"stacked_bar","title":"KPIs vs Targets","data_spec":{{}}}},
+    {{"id":"cost_per_outcome","type":"number","title":"Cost per Impact","data_spec":{{}}}}
+  ],
+  "source_notes": ["string","string"]
+}}
+
+VALIDATION:
+- Use only facts from org, grant, KPIs, or intake.
+- If data missing, add to source_notes and leave placeholder 0 or "MISSING".
+- Always calculate impact_score with weighted formula.
+- Always output parseable JSON only (no text before/after).
+        """
+    
     def _create_impact_prompt(self, org_context: Dict, report_period: Dict, 
                              metrics_data: Dict, historical_data: Dict) -> str:
-        """Create REACTO prompt for impact reporting"""
-        return f"""
-        # R - ROLE
-        You are an impact measurement expert and data storyteller for nonprofits.
-        
-        # E - EXAMPLE
-        Great impact reports blend numbers with narratives.
-        Example: "This year, 1,247 students graduated - but behind each number is a story of transformation."
-        
-        # A - APPLICATION
-        Generate impact report that:
-        1. Leads with most impressive achievements
-        2. Visualizes data meaningfully
-        3. Tells representative success stories
-        4. Acknowledges challenges honestly
-        5. Demonstrates learning and adaptation
-        6. Shows financial stewardship
-        7. Recognizes supporters appropriately
-        8. Projects future with confidence
-        
-        # C - CONTEXT
-        Organization: {org_context['name']}
-        Report Period: {report_period.get('start')} to {report_period.get('end')}
-        
-        Key Metrics:
-        {json.dumps(metrics_data, indent=2)}
-        
-        Historical Trends:
-        {json.dumps(historical_data, indent=2) if historical_data else 'First report'}
-        
-        # T - TONE
-        Celebratory yet honest, data-driven yet human, grateful yet forward-looking.
-        
-        # O - OUTPUT
-        Return comprehensive JSON with all sections, metrics analysis, and recommendations.
-        Include specific data visualizations to create.
-        """
+        """Legacy REACTO prompt for backward compatibility"""
+        return self._create_impact_prompt_v2(
+            org_profile=org_context,
+            grant_profile={'period': report_period},
+            kpis=metrics_data,
+            intake_payloads=[],
+            voice_profile={'tone': 'Celebratory yet honest, data-driven yet human'}
+        )
+    
+    def _extract_kpis(self, metrics_data: Dict) -> Dict:
+        """Extract KPIs from metrics data for reporting"""
+        return {
+            'grants_submitted': metrics_data.get('grants_submitted', 0),
+            'grants_won': metrics_data.get('grants_won', 0),
+            'funding_secured': metrics_data.get('funding_secured', 0),
+            'beneficiaries_served': metrics_data.get('beneficiaries_served', 0),
+            'programs_delivered': metrics_data.get('programs_delivered', 0),
+            'volunteer_hours': metrics_data.get('volunteer_hours', 0),
+            'success_rate': round((metrics_data.get('grants_won', 0) / max(metrics_data.get('grants_submitted', 1), 1)) * 100, 1)
+        }
+    
+    def _get_voice_profile(self, org: Organization) -> Dict:
+        """Get organization's voice profile for consistent writing"""
+        # Could be stored in org settings or derived from mission
+        return {
+            'tone': 'warm and professional',
+            'common_phrases': [],
+            'faith_language': 'N' if 'faith' not in (org.mission or '').lower() else 'Y',
+            'cta_style': 'encouraging and action-oriented'
+        }
+    
+    def _get_default_charts(self) -> List[Dict]:
+        """Get default chart specifications for impact reports"""
+        return [
+            {
+                'id': 'funding_trend',
+                'type': 'line',
+                'title': 'Funding Over Time',
+                'data_spec': {'x_axis': 'months', 'y_axis': 'funding_amount'}
+            },
+            {
+                'id': 'beneficiaries',
+                'type': 'bar',
+                'title': 'Beneficiaries Reached',
+                'data_spec': {'x_axis': 'program', 'y_axis': 'beneficiary_count'}
+            },
+            {
+                'id': 'outcomes',
+                'type': 'stacked_bar',
+                'title': 'KPIs vs Targets',
+                'data_spec': {'categories': ['achieved', 'in_progress', 'planned']}
+            },
+            {
+                'id': 'cost_per_outcome',
+                'type': 'number',
+                'title': 'Cost per Impact',
+                'data_spec': {'formula': 'total_spent / beneficiaries_served'}
+            }
+        ]
     
     def _compile_analytics(self, analytics: List[Analytics]) -> Dict:
         """Compile historical analytics data"""

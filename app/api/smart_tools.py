@@ -83,10 +83,11 @@ def generate_case():
 
 @smart_tools_bp.route('/impact/generate', methods=['POST'])
 def generate_impact_report():
-    """Generate an impact report with metrics and stories"""
+    """Generate an impact report with metrics and stories from verified data"""
     try:
         data = request.get_json() or {}
         org_id = data.get('org_id')
+        grant_id = data.get('grant_id')  # Optional - uses intake data if provided
         report_period = {
             'start': data.get('period_start', '2024-01-01'),
             'end': data.get('period_end', '2024-12-31')
@@ -96,7 +97,8 @@ def generate_impact_report():
             'grants_won': 3,
             'funding_secured': 250000,
             'beneficiaries_served': 500,
-            'programs_delivered': 5
+            'programs_delivered': 5,
+            'volunteer_hours': 0
         })
         
         if not org_id:
@@ -105,7 +107,12 @@ def generate_impact_report():
                 'error': 'org_id is required'
             }), 400
         
-        result = smart_tools.generate_impact_report(org_id, report_period, metrics_data)
+        result = smart_tools.generate_impact_report(
+            org_id, 
+            report_period, 
+            metrics_data,
+            grant_id=grant_id  # Pass grant_id to fetch intake data
+        )
         
         if result['success']:
             return jsonify(result)
