@@ -340,6 +340,64 @@ class SmartToolsService:
             logger.error(f"Error generating impact report: {e}")
             return {'success': False, 'error': str(e)}
     
+    # ============= NEWSLETTER TOOL =============
+    
+    def generate_newsletter_content(self, org_id: int, newsletter_details: Dict) -> Dict:
+        """Generate comprehensive newsletter content using platform data and storytelling best practices"""
+        try:
+            org = Organization.query.get(org_id)
+            if not org:
+                return {'success': False, 'error': 'Organization not found'}
+            
+            # Get comprehensive organization context
+            org_context = self._build_comprehensive_org_context(org)
+            
+            # Get recent impact stories for newsletter content
+            recent_intakes = ImpactIntake.query.join(Grant).filter(Grant.org_id == org.id).limit(5).all()
+            impact_stories = []
+            for intake in recent_intakes:
+                stories = intake.payload.get('stories', [])
+                if stories:
+                    impact_stories.extend(stories[:2])  # Get up to 2 stories per intake
+            
+            # Get recent grants for updates section
+            recent_grants = Grant.query.filter_by(org_id=org.id).order_by(Grant.created_at.desc()).limit(5).all()
+            grant_updates = []
+            for grant in recent_grants:
+                if grant.status in ['awarded', 'submitted', 'pending']:
+                    grant_updates.append({
+                        'title': grant.title,
+                        'status': grant.status,
+                        'amount': grant.amount_max,
+                        'funder': grant.funder
+                    })
+            
+            performance = org_context.get('grant_performance', {})
+            impact_data = org_context.get('impact_metrics', {})
+            
+            prompt = self._create_newsletter_prompt(org_context, newsletter_details, impact_stories, grant_updates, performance, impact_data)
+            
+            # Get AI response
+            response = self.ai_service.generate_json_response(prompt)
+            
+            if response:
+                # Save newsletter content
+                narrative = Narrative()
+                narrative.org_id = org_id
+                narrative.section = 'newsletter_content'
+                narrative.content = response.get('main_content', '')
+                narrative.ai_generated = True
+                narrative.created_at = datetime.utcnow()
+                db.session.add(narrative)
+                db.session.commit()
+                
+                return {'success': True, **response}
+            return {'success': False, 'error': 'Failed to generate newsletter content'}
+            
+        except Exception as e:
+            logger.error(f"Error generating newsletter: {e}")
+            return {'success': False, 'error': str(e)}
+    
     # ============= QUICK TOOLS =============
     
     def generate_thank_you_letter(self, org_id: int, donor_info: Dict) -> Dict:
@@ -858,6 +916,157 @@ class SmartToolsService:
             "funding_levels": ["suggested giving levels with specific impact"],
             "total_word_count": actual_total_word_count_number,
             "executive_summary_standalone": "can this executive summary work as independent piece?"
+        }}
+        """
+    
+    def _create_newsletter_prompt(self, org_context: Dict, newsletter_details: Dict, 
+                                impact_stories: List[str], grant_updates: List[Dict],
+                                performance: Dict, impact_data: Dict) -> str:
+        """Create comprehensive REACTO prompt for human-sounding newsletter content"""
+        
+        # Extract newsletter parameters
+        theme = newsletter_details.get('theme', 'Monthly Impact Update')
+        month_year = newsletter_details.get('month_year', datetime.now().strftime('%B %Y'))
+        focus_area = newsletter_details.get('focus_area', 'general')
+        target_audience = newsletter_details.get('target_audience', 'donors and supporters')
+        
+        # Prepare impact story context
+        story_context = ""
+        if impact_stories:
+            story_context = f"Recent participant stories available: {chr(10).join([f'- {story[:150]}...' for story in impact_stories[:3]])}"
+        else:
+            story_context = "Focus on organizational milestones and community impact"
+        
+        # Prepare grant updates context
+        updates_context = ""
+        if grant_updates:
+            recent_awards = [g for g in grant_updates if g['status'] == 'awarded']
+            pending_apps = [g for g in grant_updates if g['status'] in ['submitted', 'pending']]
+            if recent_awards:
+                funding_list = [f"{g['funder']} (${g['amount']:,.0f})" for g in recent_awards[:2] if g.get('amount')]
+                updates_context += f"Recent funding wins: {', '.join(funding_list)}\n"
+            if pending_apps:
+                updates_context += f"Applications pending: {len(pending_apps)} grant applications totaling ${sum(g.get('amount', 0) for g in pending_apps):,.0f}"
+        
+        return f"""
+        # R - ROLE
+        You are an elite nonprofit communications specialist with 18+ years of experience crafting newsletters that achieve 45% open rates and 12% click-through rates. You specialize in human-centered storytelling that builds authentic connections between organizations and supporters. Your writing is indistinguishable from human communication because you understand that people connect with genuine emotion, specific details, and conversational authenticity. You write newsletters that supporters forward to friends because the content feels personal and inspiring.
+        
+        # E - EXAMPLE
+        Exceptional newsletters follow the INSPIRE framework:
+        I - Immediate connection through mission-driven subject line and opening
+        N - Narrative storytelling with specific human details and sensory language
+        S - Specific achievements and updates that demonstrate tangible progress  
+        P - Personal appreciation that makes supporters feel valued and essential
+        I - Invitation to deeper engagement through clear, compelling calls-to-action
+        R - Reinforcement of mission impact and future vision that motivates continued support
+        E - Emotional resonance through authentic voice and conversational tone
+        
+        Example opening that sounds completely human: "I was sitting in our community center yesterday afternoon when Maria walked through the door with the biggest smile I've seen in months. 'I got the job!' she practically shouted, and suddenly the whole room was celebrating with her. It's moments like these that remind me why we do this work together—and why your support makes all the difference."
+        
+        # A - APPLICATION
+        Create a comprehensive newsletter for {theme} - {month_year} that follows proven newsletter standards:
+        
+        **Human Writing Requirements** (Critical for AI detection avoidance):
+        1. **Conversational Flow**: Write as if speaking directly to a friend who cares about the mission
+        2. **Specific Details**: Use exact names, numbers, locations, and timeframes from platform data
+        3. **Sensory Language**: Include what you saw, heard, felt - make readers experience the moment
+        4. **Natural Transitions**: Connect sections with conversational bridges, not formal headers
+        5. **Varied Sentence Structure**: Mix short punchy sentences with longer descriptive ones
+        6. **Personal Voice**: Include "I," "we," "you" - make it feel like personal communication
+        7. **Authentic Emotion**: Let genuine excitement, gratitude, and hope come through naturally
+        
+        **Newsletter Structure Requirements:**
+        
+        1. **Compelling Subject Line**: Mission-driven, specific, personal (not "Monthly Newsletter")
+           - Reference specific impact numbers from platform data
+           - Create curiosity while staying authentic to organization voice
+        
+        2. **Mission Connection Opening** (150-200 words):
+           - Start with vivid scene or story that embodies mission
+           - Naturally weave in organizational context and recent progress
+           - Reference performance data organically (don't just list statistics)
+        
+        3. **Feature Story** (300-400 words):
+           - Center on human impact using available participant stories
+           - Include problem → action → positive result structure
+           - Use specific details that make story feel real and immediate
+           - Connect individual story to broader organizational impact
+        
+        4. **Quick Updates and Wins** (200-250 words):
+           - Highlight recent accomplishments using platform performance data
+           - Include grant success metrics naturally in context
+           - Share milestone celebrations and organizational growth
+           - Use bullet points or short paragraphs for easy scanning
+        
+        5. **Supporter Appreciation** (100-150 words):
+           - Thank specific types of supporters (volunteers, donors, partners)
+           - Reference community building and collective impact
+           - Make appreciation feel personal and genuine, not generic
+        
+        6. **Clear Call-to-Action** (75-100 words):
+           - Give readers specific action aligned with organizational priorities
+           - Make CTA feel like natural invitation, not sales pitch
+           - Include multiple engagement levels (small to large commitments)
+        
+        7. **Forward-Looking Close** (75-100 words):
+           - Share upcoming initiatives or goals
+           - Reinforce mission vision and supporter importance
+           - End with warmth and gratitude that feels authentic
+        
+        # C - CONTEXT
+        Organization Profile:
+        Name: {org_context['name']}
+        Mission: {org_context['mission']}
+        Geographic Focus: {org_context['geography']}
+        Primary Focus Areas: {org_context['focus_areas']}
+        Unique Organizational Strengths: {org_context['unique_capabilities']}
+        
+        Platform Performance Data:
+        Grant Success Rate: {performance.get('success_rate', 0)}%
+        Total Grant Applications: {performance.get('total_grants_submitted', 0)}
+        Recent Grant Wins: {', '.join(performance.get('recent_wins', []))}
+        Participant Stories Collected: {impact_data.get('participant_stories', 0)}
+        Active Data Collection: {impact_data.get('data_collection_active', False)}
+        
+        Newsletter Parameters:
+        Theme: {theme}
+        Month/Year: {month_year}
+        Focus Area: {focus_area}
+        Target Audience: {target_audience}
+        
+        Available Content Sources:
+        {story_context}
+        
+        Recent Organizational Updates:
+        {updates_context if updates_context else "Focus on program growth and community engagement"}
+        
+        # T - TONE
+        Conversational yet inspiring, personal yet professional, grateful yet forward-looking. Write as a passionate leader sharing exciting updates with trusted friends and partners. Use natural, flowing language that feels like genuine human communication. Avoid corporate jargon, generic nonprofit language, or overly formal structure. Balance emotional storytelling with concrete evidence of impact. Sound like someone who genuinely believes in the mission and is excited to share progress with people who care.
+        
+        **Voice Characteristics for Human Detection:**
+        - Enthusiasm that feels genuine, not forced
+        - Gratitude that's specific, not generic
+        - Confidence that's humble, not boastful
+        - Urgency that's hopeful, not desperate
+        - Professionalism that's warm, not corporate
+        
+        # O - OUTPUT
+        Return comprehensive JSON with:
+        {{
+            "subject_line": "compelling, mission-driven subject line that creates curiosity",
+            "opening_hook": "engaging first paragraph that draws readers in immediately",
+            "main_content": "complete newsletter content (1000-1200 words) with natural flow",
+            "feature_story": "standalone human-centered story section",
+            "updates_section": "organizational wins and milestones with platform data",
+            "appreciation_section": "genuine supporter thank you with specific recognition",
+            "call_to_action": "clear, compelling invitation for reader engagement",
+            "closing_section": "warm conclusion that reinforces mission and gratitude",
+            "suggested_images": ["3-4 authentic image descriptions that would enhance content"],
+            "social_media_teasers": ["2-3 social posts to promote newsletter"],
+            "human_authenticity_score": "assessment of how natural and human the content sounds",
+            "engagement_predictions": ["expected reader actions based on content"],
+            "follow_up_opportunities": ["ways to continue engagement after newsletter"]
         }}
         """
     

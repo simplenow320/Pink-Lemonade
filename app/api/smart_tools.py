@@ -187,6 +187,36 @@ def generate_social_post():
         logger.error(f"Error generating social post: {e}")
         return jsonify({'success': False, 'error': str(e)}), 500
 
+@smart_tools_bp.route('/newsletter/generate', methods=['POST'])
+def generate_newsletter():
+    """Generate comprehensive newsletter content with human-like writing"""
+    try:
+        data = request.get_json() or {}
+        org_id = data.get('org_id')
+        newsletter_details = {
+            'theme': data.get('theme', 'Monthly Impact Update'),
+            'month_year': data.get('month_year'),
+            'focus_area': data.get('focus_area', 'general'),
+            'target_audience': data.get('target_audience', 'donors and supporters')
+        }
+        
+        if not org_id:
+            return jsonify({
+                'success': False,
+                'error': 'org_id is required'
+            }), 400
+        
+        result = smart_tools.generate_newsletter_content(org_id, newsletter_details)
+        
+        if result['success']:
+            return jsonify(result)
+        else:
+            return jsonify(result), 500
+            
+    except Exception as e:
+        logger.error(f"Error generating newsletter: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
 # ============= TOOL INFORMATION ENDPOINTS =============
 
 @smart_tools_bp.route('/tools', methods=['GET'])
@@ -238,6 +268,15 @@ def get_available_tools():
                 'icon': '📱',
                 'categories': ['marketing', 'communication'],
                 'time_to_generate': '5-10 seconds'
+            },
+            {
+                'id': 'newsletter',
+                'name': 'Newsletter Content Creator',
+                'description': 'Human-sounding newsletter content with storytelling',
+                'endpoint': '/api/smart-tools/newsletter/generate',
+                'icon': '📧',
+                'categories': ['communication', 'stewardship'],
+                'time_to_generate': '15-25 seconds'
             }
         ]
         
@@ -268,6 +307,8 @@ def get_tool_usage_stats(org_id):
             'cases': len([n for n in narratives if 'case' in n.section]),
             'reports': len([n for n in narratives if 'impact' in n.section]),
             'thank_yous': len([n for n in narratives if 'thank' in n.section]),
+            'newsletters': len([n for n in narratives if 'newsletter' in n.section]),
+            'social_posts': len([n for n in narratives if 'social_media' in n.section]),
             'total_generated': len(narratives)
         }
         
