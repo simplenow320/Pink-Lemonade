@@ -171,9 +171,31 @@ class SmartToolsService:
             # Get impact intake submissions
             from app.models import ImpactIntake
             intake_submissions = []
+            extracted_stories = []
             if grant_id:
                 intakes = ImpactIntake.query.filter_by(grant_id=grant_id).order_by(ImpactIntake.created_at.desc()).limit(10).all()
                 intake_submissions = [intake.payload for intake in intakes]
+                
+                # Extract stories from intake submissions (max 3 stories total)
+                story_count = 0
+                for intake in intakes:
+                    if story_count >= 3:
+                        break
+                    
+                    payload = intake.payload
+                    submitted_by = intake.submitted_by or "Anonymous"
+                    
+                    # Check for stories in the payload
+                    if 'stories' in payload and payload['stories']:
+                        for story in payload['stories']:
+                            if story_count >= 3:
+                                break
+                            if story and len(story) > 20:  # Only include meaningful stories
+                                extracted_stories.append({
+                                    'narrative': story,
+                                    'attribution': submitted_by
+                                })
+                                story_count += 1
             
             # Build comprehensive context
             org_profile = {
@@ -210,11 +232,35 @@ class SmartToolsService:
             
             if response:
                 # Extract report with exact schema
+                ai_stories = response.get('success_stories', [])
+                
+                # Use extracted stories from intake submissions if available
+                final_stories = []
+                if extracted_stories:
+                    # Format extracted stories properly
+                    for i, story_data in enumerate(extracted_stories[:3]):
+                        final_stories.append({
+                            'title': f"Participant Story {i+1}",
+                            'narrative': story_data['narrative'],
+                            'quote': '',  # Quote can be extracted from the narrative if needed
+                            'attribution': story_data['attribution']
+                        })
+                else:
+                    # Use AI-generated stories if no real stories exist
+                    final_stories = ai_stories
+                
+                # Build source notes based on data availability
+                source_notes = response.get('source_notes', [])
+                if not extracted_stories:
+                    source_notes.append("No participant stories available from intake submissions - using narrative examples")
+                else:
+                    source_notes.append(f"Using {len(extracted_stories)} real participant stories from intake submissions")
+                
                 report = {
                     'executive_summary': response.get('executive_summary', 'MISSING: Executive summary not generated'),
                     'impact_score': response.get('impact_score', 0),
                     'metrics_dashboard': response.get('metrics_dashboard', {}),
-                    'success_stories': response.get('success_stories', []),
+                    'success_stories': final_stories,
                     'financial_summary': response.get('financial_summary', {
                         'total_grant': grant.amount_max if grant else 0,
                         'spent_to_date': 0,
@@ -224,7 +270,7 @@ class SmartToolsService:
                     'future_outlook': response.get('future_outlook', 'MISSING: Future outlook not generated'),
                     'donor_recognition': response.get('donor_recognition', []),
                     'charts': response.get('charts', self._get_default_charts()),
-                    'source_notes': response.get('source_notes', [])
+                    'source_notes': source_notes
                 }
                 
                 # Save impact report
