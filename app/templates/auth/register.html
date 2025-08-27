@@ -241,9 +241,38 @@
                 margin-bottom: 20px;
             }
         }
+        
+        .back-link {
+            position: absolute;
+            top: 24px;
+            left: 24px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: #6B6B6B;
+            text-decoration: none;
+            font-size: 0.95rem;
+            transition: opacity 0.2s ease;
+        }
+        
+        .back-link:hover {
+            opacity: 0.7;
+        }
+        
+        .back-link svg {
+            width: 20px;
+            height: 20px;
+        }
     </style>
 </head>
 <body>
+    <a href="/" class="back-link">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18" />
+        </svg>
+        Back to Home
+    </a>
+    
     <div class="container">
         <!-- Logo -->
         <div class="logo-section">
