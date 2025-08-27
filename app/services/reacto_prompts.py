@@ -49,7 +49,7 @@ Organization Profile:
 Grant Opportunity:
 - Title: {grant_data.get('title', 'Untitled Grant')}
 - Funder: {grant_data.get('funder', 'Unknown Funder')}
-- Amount Range: ${grant_data.get('amount_min', 0):,.0f} - ${grant_data.get('amount_max', 0):,.0f}
+- Amount Range: ${grant_data.get('amount_min', 0) or 0:,.0f} - ${grant_data.get('amount_max', 0) or 0:,.0f}
 - Geographic Requirements: {grant_data.get('geography', 'Not specified')}
 - Eligibility: {grant_data.get('eligibility', 'Not specified')}
 - Deadline: {grant_data.get('deadline', 'No deadline')}
@@ -128,7 +128,7 @@ Organization Information:
 Grant Requirements:
 - Funder: {grant_data.get('funder', 'Funder')}
 - Grant Purpose: {grant_data.get('description', 'Grant purpose not specified')[:300]}
-- Amount Requested: ${grant_data.get('amount_max', 50000):,.0f}
+- Amount Requested: ${grant_data.get('amount_max', 50000) or 50000:,.0f}
 
 Section-Specific Focus:
 {ReactoPrompts._get_section_focus(section)}
