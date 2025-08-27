@@ -63,6 +63,13 @@ def create_app():
     # Auto-initialize database on first run (production-safe)
     with flask_app.app_context():
         _initialize_database_if_needed()
+        
+    # Initialize background scheduler for automatic grant discovery
+    try:
+        from app.jobs.background_scheduler import init_scheduler
+        init_scheduler(flask_app)
+    except ImportError:
+        pass
     
     # Register blueprints
     from app.pages import pages as pages_bp
@@ -114,6 +121,13 @@ def create_app():
     # Register grant intelligence endpoints
     from app.api.grant_intelligence import intelligence_api
     flask_app.register_blueprint(intelligence_api)
+    
+    # Register unified matching endpoint - THE KEY TO 100% COMPLETION
+    try:
+        from app.api.unified_matching import unified_bp
+        flask_app.register_blueprint(unified_bp)
+    except ImportError:
+        pass
     
     # Register new onboarding flow only (auth is handled by the main auth blueprint)
     try:

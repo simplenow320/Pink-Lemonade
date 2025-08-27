@@ -11,7 +11,7 @@ from app.services.org_tokens import get_org_tokens
 
 # Optional import - skip federal feed if not available
 try:
-    from app.services.grants_gov_client import get_grants_gov_client
+    from app.services.grants_gov_client import GrantsGovClient
     FEDERAL_AVAILABLE = True
 except ImportError:
     FEDERAL_AVAILABLE = False
@@ -79,7 +79,7 @@ class MatchingService:
         
         if FEDERAL_AVAILABLE:
             try:
-                self.federal_client = get_grants_gov_client()
+                self.federal_client = GrantsGovClient()
             except Exception:
                 self.federal_client = None
     
