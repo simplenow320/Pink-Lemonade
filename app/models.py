@@ -260,6 +260,12 @@ class Organization(db.Model):
     funding_priorities = db.Column(db.Text)  # Current funding needs
     exclusions = db.Column(db.JSON)  # Things they DON'T do/want
     
+    # Candid Essentials PCS Codes and Locations
+    pcs_subject_codes = db.Column(db.JSON)  # Candid PCS subject taxonomy codes
+    pcs_population_codes = db.Column(db.JSON)  # Candid PCS population codes
+    service_locations = db.Column(db.JSON)  # List of service locations from Candid
+    programs = db.Column(db.Text)  # Programs description from Candid
+    
     # PHASE 0: Custom Fields Support
     custom_fields = db.Column(db.JSON)  # Store all "Other" inputs from dropdowns
     
