@@ -7,6 +7,11 @@ from typing import Dict, List, Optional
 from datetime import datetime
 from app.services.ai_service import AIService
 from app.services.reacto_prompts import ReactoPrompts
+from app.services.competitive_intelligence import CompetitiveIntelligenceService
+from app.services.intelligence_enhanced_prompts import (
+    create_intelligence_enhanced_pitch_prompt, 
+    create_intelligence_enhanced_case_prompt
+)
 from app.models import Grant, Organization, Narrative, Analytics, ImpactIntake, db
 import logging
 import json
@@ -24,13 +29,14 @@ class SmartToolsService:
     def __init__(self):
         self.ai_service = AIService()
         self.reacto_prompts = ReactoPrompts()
+        self.competitive_intelligence = CompetitiveIntelligenceService()
     
     # ============= GRANT PITCH TOOL =============
     
     def generate_grant_pitch(self, org_id: int, grant_id: Optional[int] = None, 
                             pitch_type: str = 'elevator') -> Dict:
         """
-        Generate a compelling grant pitch
+        Generate a compelling grant pitch with real-time competitive intelligence
         Types: elevator (60s), executive (2min), detailed (5min)
         """
         try:
@@ -43,13 +49,39 @@ class SmartToolsService:
             
             # Get grant context if specified
             grant_context = None
+            funder_name = None
             if grant_id:
                 grant = Grant.query.get(grant_id)
                 if grant:
                     grant_context = grant.to_dict()
+                    funder_name = grant.funder
             
-            # Generate enhanced REACTO prompt for pitch
-            prompt = self._create_enhanced_pitch_prompt(org_context, grant_context, pitch_type)
+            # Get competitive intelligence for enhanced pitch
+            funder_intelligence = {}
+            competitive_landscape = {}
+            optimal_messaging = {}
+            
+            if funder_name:
+                # Real-time funder research
+                funder_intelligence = self.competitive_intelligence.analyze_funder_intelligence(
+                    funder_name, org_context.get('focus_areas', [])
+                )
+                
+                # Market analysis
+                competitive_landscape = self.competitive_intelligence.analyze_competitive_landscape(
+                    org_context, grant_context.get('focus_area', ''), org_context.get('geography', '')
+                )
+                
+                # Optimal messaging based on intelligence
+                optimal_messaging = self.competitive_intelligence.get_optimal_messaging(
+                    funder_intelligence, competitive_landscape, org_context.get('focus_areas', [])
+                )
+            
+            # Generate enhanced REACTO prompt with intelligence
+            prompt = create_intelligence_enhanced_pitch_prompt(
+                org_context, grant_context, pitch_type, funder_intelligence, 
+                competitive_landscape, optimal_messaging
+            )
             
             # Get AI response
             response = self.ai_service.generate_json_response(prompt)
@@ -83,7 +115,14 @@ class SmartToolsService:
                     'speaking_time': response.get('speaking_time', '60 seconds'),
                     'delivery_tips': response.get('delivery_tips', []),
                     'funder_connection': response.get('funder_connection', ''),
-                    'follow_up_strategy': response.get('follow_up_strategy', '')
+                    'follow_up_strategy': response.get('follow_up_strategy', ''),
+                    'competitive_intelligence': {
+                        'funder_insights': funder_intelligence,
+                        'market_analysis': competitive_landscape,
+                        'success_probability': competitive_landscape.get('success_probability', 0),
+                        'optimal_messaging': optimal_messaging,
+                        'competitive_advantages': response.get('competitive_advantages', [])
+                    }
                 }
             
             return {'success': False, 'error': 'Failed to generate pitch'}
@@ -96,7 +135,7 @@ class SmartToolsService:
     
     def generate_case_for_support(self, org_id: int, campaign_details: Dict) -> Dict:
         """
-        Generate comprehensive case for support document
+        Generate comprehensive case for support document with competitive intelligence
         Includes: problem statement, solution, impact, urgency, credibility
         """
         try:
@@ -107,8 +146,24 @@ class SmartToolsService:
             
             org_context = self._build_org_context(org)
             
-            # Generate enhanced REACTO prompt for case
-            prompt = self._create_enhanced_case_prompt(org_context, campaign_details)
+            # Get competitive intelligence for enhanced case
+            campaign_focus = campaign_details.get('focus_area', 'community development')
+            location = org_context.get('geography', '')
+            
+            # Analyze competitive landscape for this campaign
+            competitive_landscape = self.competitive_intelligence.analyze_competitive_landscape(
+                org_context, campaign_focus, location
+            )
+            
+            # Get optimal messaging for this market
+            optimal_messaging = self.competitive_intelligence.get_optimal_messaging(
+                {}, competitive_landscape, org_context.get('focus_areas', [])
+            )
+            
+            # Generate intelligence-enhanced REACTO prompt
+            prompt = create_intelligence_enhanced_case_prompt(
+                org_context, campaign_details, {}, competitive_landscape, optimal_messaging
+            )
             
             # Get AI response
             response = self.ai_service.generate_json_response(prompt)
@@ -143,6 +198,13 @@ class SmartToolsService:
                 return {
                     'success': True,
                     'sections': sections,
+                    'competitive_intelligence': {
+                        'market_analysis': competitive_landscape,
+                        'success_probability': competitive_landscape.get('success_probability', 0),
+                        'optimal_messaging': optimal_messaging,
+                        'competitive_advantages': response.get('competitive_advantages', []),
+                        'market_positioning': response.get('market_positioning', '')
+                    },
                     'key_messages': response.get('key_messages', []),
                     'emotional_hooks': response.get('emotional_hooks', []),
                     'data_points': response.get('data_points', []),
@@ -401,7 +463,7 @@ class SmartToolsService:
     # ============= QUICK TOOLS =============
     
     def generate_thank_you_letter(self, org_id: int, donor_info: Dict) -> Dict:
-        """Generate personalized thank you letter using comprehensive platform data"""
+        """Generate personalized thank you letter with competitive intelligence insights"""
         try:
             org = Organization.query.get(org_id)
             if not org:
@@ -409,6 +471,12 @@ class SmartToolsService:
             
             # Get comprehensive organization context
             org_context = self._build_comprehensive_org_context(org)
+            
+            # Get competitive landscape for positioning organization uniquely
+            competitive_landscape = self.competitive_intelligence.analyze_competitive_landscape(
+                org_context, org_context.get('focus_areas', ['community development'])[0], 
+                org_context.get('geography', '')
+            )
             
             # Get recent impact stories for personalization
             recent_intakes = ImpactIntake.query.join(Grant).filter(Grant.org_id == org.id).limit(3).all()
@@ -420,6 +488,17 @@ class SmartToolsService:
             
             performance = org_context.get('grant_performance', {})
             impact_data = org_context.get('impact_metrics', {})
+            
+            # Enhanced competitive positioning
+            market_insights = ""
+            if competitive_landscape:
+                success_prob = competitive_landscape.get('success_probability', 0)
+                market_size = competitive_landscape.get('market_size', {})
+                market_insights = f"""
+                Market Context: Your organization operates in a ${market_size.get('total_funding_available', 0):,.0f} funding environment
+                Success Rate: {performance.get('success_rate', 0)}% vs {15}% sector average
+                Competitive Advantage: {success_prob}% higher success probability than similar organizations
+                """
             
             prompt = f"""
             # R - ROLE
@@ -454,6 +533,7 @@ class SmartToolsService:
             - Recent wins: {', '.join(performance.get('recent_wins', []))} 
             - {impact_data.get('participant_stories', 0)} participant stories collected
             - Active impact measurement showing organizational accountability
+            {market_insights}
             
             # C - CONTEXT
             Organization Profile:
