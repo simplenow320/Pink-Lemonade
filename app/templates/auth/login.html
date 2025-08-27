@@ -1,148 +1,326 @@
-{% extends "base.html" %}
-
-{% block title %}Login - Pink Lemonade{% endblock %}
-
-{% block body_content %}
-<div class="min-h-screen bg-white flex items-center justify-center px-4 py-12">
-    <div class="w-full max-w-md">
-        <!-- Logo/Header -->
-        <div class="text-center mb-6">
-            <h1 class="text-4xl font-serif font-bold text-gray-900 mb-2">Pink Lemonade</h1>
-            <p class="text-gray-700">AI-Powered Grant Discovery Platform</p>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sign In · Pink Lemonade</title>
+    <link rel="icon" href="/static/logo.png" type="image/png">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: #FAFAFA;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        
+        .container {
+            width: 100%;
+            max-width: 440px;
+        }
+        
+        .logo-section {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+        
+        .logo-section img {
+            height: 120px;
+            width: auto;
+            margin-bottom: 24px;
+        }
+        
+        .form-card {
+            background: white;
+            border: 1px solid #E8E8E8;
+            border-radius: 16px;
+            padding: 40px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.02);
+        }
+        
+        h1 {
+            font-size: 2rem;
+            font-weight: 500;
+            color: #2A2A2A;
+            margin-bottom: 8px;
+            text-align: center;
+            letter-spacing: -0.01em;
+        }
+        
+        .subtitle {
+            color: #6B6B6B;
+            text-align: center;
+            margin-bottom: 32px;
+            font-size: 1rem;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #2A2A2A;
+            font-size: 0.95rem;
+            font-weight: 500;
+        }
+        
+        .form-group input {
+            width: 100%;
+            padding: 12px 16px;
+            border: 1px solid #E0E0E0;
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: all 0.2s ease;
+        }
+        
+        .form-group input:focus {
+            outline: none;
+            border-color: #B8899A;
+            box-shadow: 0 0 0 3px rgba(184, 137, 154, 0.1);
+        }
+        
+        .form-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+        }
+        
+        .remember-me {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .remember-me input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            border: 1px solid #E0E0E0;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        
+        .remember-me label {
+            color: #6B6B6B;
+            font-size: 0.9rem;
+            cursor: pointer;
+        }
+        
+        .forgot-link {
+            color: #B8899A;
+            text-decoration: none;
+            font-size: 0.9rem;
+            transition: opacity 0.2s ease;
+        }
+        
+        .forgot-link:hover {
+            opacity: 0.8;
+        }
+        
+        .submit-btn {
+            width: 100%;
+            padding: 14px;
+            background: #B8899A;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .submit-btn:hover {
+            background: #A67A8B;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(184, 137, 154, 0.25);
+        }
+        
+        .divider {
+            text-align: center;
+            margin: 24px 0;
+            position: relative;
+        }
+        
+        .divider::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: #E8E8E8;
+            z-index: 0;
+        }
+        
+        .divider span {
+            background: white;
+            padding: 0 16px;
+            color: #9B9B9B;
+            font-size: 0.9rem;
+            position: relative;
+            z-index: 1;
+        }
+        
+        .signup-link {
+            text-align: center;
+            margin-top: 20px;
+            color: #6B6B6B;
+            font-size: 0.95rem;
+        }
+        
+        .signup-link a {
+            color: #B8899A;
+            text-decoration: none;
+            font-weight: 500;
+            transition: opacity 0.2s ease;
+        }
+        
+        .signup-link a:hover {
+            opacity: 0.8;
+        }
+        
+        .message {
+            padding: 12px 16px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-size: 0.95rem;
+        }
+        
+        .message.error {
+            background: #FEE;
+            color: #C44;
+            border: 1px solid #FCC;
+        }
+        
+        .message.success {
+            background: #EFE;
+            color: #484;
+            border: 1px solid #CFC;
+        }
+        
+        .message.info {
+            background: #E8F4FF;
+            color: #369;
+            border: 1px solid #BDE;
+        }
+        
+        #errorMessage {
+            display: none;
+        }
+        
+        #successMessage {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="logo-section">
+            <img src="/static/logo-no-bg.png?v=3" alt="Pink Lemonade" />
         </div>
-
-        <!-- Login Form -->
-        <div class="bg-white">
-            <h2 class="text-2xl font-bold text-gray-900 mb-6">Welcome Back</h2>
+        
+        <div class="form-card">
+            <h1>Welcome Back</h1>
+            <p class="subtitle">Sign in to continue to your dashboard</p>
             
-            <!-- Flash Messages -->
-            {% with messages = get_flashed_messages(with_categories=true) %}
-                {% if messages %}
-                    {% for category, message in messages %}
-                        <div class="mb-4 p-3 rounded-md {% if category == 'error' %}bg-red-50 text-red-700 border border-red-200{% else %}bg-blue-50 text-blue-700 border border-blue-200{% endif %}">
-                            {{ message }}
-                        </div>
-                    {% endfor %}
-                {% endif %}
-            {% endwith %}
+            <div id="errorMessage" class="message error"></div>
+            <div id="successMessage" class="message success"></div>
             
-            <form id="loginForm" class="space-y-4">
-                <!-- Email -->
-                <div>
-                    <label for="email" class="block text-sm text-gray-800 mb-1">
-                        Email Address
-                    </label>
-                    <input type="email" 
-                           id="email"
-                           name="email" 
-                           class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                           placeholder="you@organization.org"
-                           required
-                           autofocus>
+            <form id="loginForm">
+                <div class="form-group">
+                    <label for="email">Email Address</label>
+                    <input type="email" id="email" name="email" placeholder="you@organization.org" required autofocus>
                 </div>
                 
-                <!-- Password -->
-                <div>
-                    <label for="password" class="block text-sm text-gray-800 mb-1">
-                        Password
-                    </label>
-                    <input type="password" 
-                           id="password"
-                           name="password" 
-                           class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                           placeholder="Enter your password"
-                           required>
+                <div class="form-group">
+                    <label for="password">Password</label>
+                    <input type="password" id="password" name="password" placeholder="Enter your password" required>
                 </div>
                 
-                <!-- Remember Me & Forgot Password -->
-                <div class="flex items-center justify-between">
-                    <label class="flex items-center">
-                        <input type="checkbox" name="remember" class="h-4 w-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500">
-                        <span class="ml-2 text-sm text-gray-700">Remember me</span>
-                    </label>
-                    <a href="#" class="text-sm text-blue-600 hover:text-blue-700 underline">
-                        Forgot password?
-                    </a>
+                <div class="form-row">
+                    <div class="remember-me">
+                        <input type="checkbox" id="remember" name="remember">
+                        <label for="remember">Remember me</label>
+                    </div>
+                    <a href="/forgot-password" class="forgot-link">Forgot password?</a>
                 </div>
                 
-                <!-- Submit Button -->
-                <button type="submit" 
-                        class="w-full px-4 py-2.5 bg-blue-600 text-white font-medium rounded-md hover:bg-blue-700 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
-                    Sign In
-                </button>
+                <button type="submit" class="submit-btn">Sign In</button>
             </form>
             
-            <!-- Register Link -->
-            <div class="mt-6 text-center">
-                <p class="text-gray-700">
-                    Don't have an account? 
-                    <a href="/register" class="text-blue-600 hover:text-blue-700 underline">
-                        Sign up free
-                    </a>
-                </p>
+            <div class="divider">
+                <span>or</span>
+            </div>
+            
+            <div class="signup-link">
+                Don't have an account? <a href="/register">Sign up free</a>
             </div>
         </div>
-        
-        <!-- Benefits Reminder -->
-        <div class="mt-8 text-center text-gray-700">
-            <p class="text-sm">Access to 28.9 million grants • AI-powered matching • Smart application tools</p>
-        </div>
     </div>
-</div>
-
-<script>
-    document.getElementById('loginForm').addEventListener('submit', async function(e) {
-        e.preventDefault();
-        
-        const email = document.getElementById('email').value.trim();
-        const password = document.getElementById('password').value;
-        const remember = document.querySelector('input[name="remember"]').checked;
-        
-        try {
-            const response = await fetch('/api/auth/login', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ 
-                    email: email, 
-                    password: password,
-                    remember: remember
-                })
-            });
+    
+    <script>
+        document.getElementById('loginForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
             
-            const data = await response.json();
+            const errorDiv = document.getElementById('errorMessage');
+            const successDiv = document.getElementById('successMessage');
+            errorDiv.style.display = 'none';
+            successDiv.style.display = 'none';
             
-            if (response.ok) {
-                // Redirect to the URL provided by the backend
-                window.location.href = data.redirect || '/dashboard';
-            } else {
-                // Show error message
-                const errorMsg = data.error || 'Invalid email or password. Please try again.';
-                const flashDiv = document.createElement('div');
-                flashDiv.className = 'mb-4 p-3 rounded-md bg-red-50 text-red-700 border border-red-200';
-                flashDiv.textContent = errorMsg;
+            const email = document.getElementById('email').value.trim();
+            const password = document.getElementById('password').value;
+            const remember = document.getElementById('remember').checked;
+            
+            try {
+                const response = await fetch('/api/auth/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ 
+                        email: email, 
+                        password: password,
+                        remember: remember
+                    })
+                });
                 
-                // Remove any existing error messages
-                const existingErrors = document.querySelectorAll('.bg-red-50');
-                existingErrors.forEach(err => err.remove());
+                const data = await response.json();
                 
-                // Add new error message before the form
-                document.getElementById('loginForm').parentNode.insertBefore(flashDiv, document.getElementById('loginForm'));
+                if (response.ok) {
+                    successDiv.textContent = 'Login successful! Redirecting...';
+                    successDiv.style.display = 'block';
+                    
+                    // Redirect to the URL provided by the backend
+                    setTimeout(() => {
+                        window.location.href = data.redirect || '/dashboard';
+                    }, 500);
+                } else {
+                    errorDiv.textContent = data.error || 'Invalid email or password. Please try again.';
+                    errorDiv.style.display = 'block';
+                }
+            } catch (error) {
+                errorDiv.textContent = 'Network error. Please check your connection and try again.';
+                errorDiv.style.display = 'block';
             }
-        } catch (error) {
-            // Show network error
-            const flashDiv = document.createElement('div');
-            flashDiv.className = 'mb-4 p-3 rounded-md bg-red-50 text-red-700 border border-red-200';
-            flashDiv.textContent = 'Network error. Please check your connection and try again.';
-            
-            // Remove any existing error messages
-            const existingErrors = document.querySelectorAll('.bg-red-50');
-            existingErrors.forEach(err => err.remove());
-            
-            // Add new error message before the form
-            document.getElementById('loginForm').parentNode.insertBefore(flashDiv, document.getElementById('loginForm'));
+        });
+        
+        // Check for verification success from email link
+        const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.get('verified') === 'true') {
+            document.getElementById('successMessage').textContent = 'Email verified successfully! You can now log in.';
+            document.getElementById('successMessage').style.display = 'block';
         }
-    });
-</script>
-{% endblock %}
+    </script>
+</body>
+</html>
