@@ -138,4 +138,10 @@ def grant_pitch():
     """Grant Pitch tool page"""
     return render_template('grant_pitch_form.html', active='smart-tools')
 
+@bp.route('/r/<token>')
+def public_intake(token):
+    """Public intake form with token access"""
+    # Pass the token to the React app via template
+    return render_template('public_intake.html', token=token, active=None)
+
 # Add other page routes as needed

@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Program Impact Survey</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body>
+    <div id="root"></div>
+    
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    
+    <script type="text/babel">
+        const { useState } = React;
+        
+        const PublicIntakeForm = () => {
+            const [submitted, setSubmitted] = useState(false);
+            const [confirmationCode, setConfirmationCode] = useState('');
+            const [loading, setLoading] = useState(false);
+            
+            const [formData, setFormData] = useState({
+                // Participant Info
+                name: '',
+                age: '',
+                zip: '',
+                ethnicity: '',
+                program: '',
+                
+                // Stories
+                story_1: '',
+                story_2: '',
+                story_3: '',
+                story_4: '',
+                
+                // Impact Questions
+                impact_q1: '',
+                impact_q2: '',
+                impact_q3: 5,
+                impact_q4: '',
+                impact_q5: '',
+                
+                // Improvement Questions
+                improve_q1: '',
+                improve_q2: ''
+            });
+
+            const handleChange = (field, value) => {
+                setFormData(prev => ({
+                    ...prev,
+                    [field]: value
+                }));
+            };
+
+            const handleSubmit = async (e) => {
+                e.preventDefault();
+                
+                // Validate required fields
+                if (!formData.name || !formData.age || !formData.zip || !formData.program) {
+                    alert('Please fill in all required fields (Name, Age, ZIP Code, Program)');
+                    return;
+                }
+                
+                setLoading(true);
+                
+                try {
+                    const response = await fetch('/api/phase5/survey/submit', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            ...formData,
+                            survey_token: '{{ token }}',
+                            role: 'participant'
+                        })
+                    });
+                    
+                    const data = await response.json();
+                    if (data.success) {
+                        setConfirmationCode(data.confirmation_code);
+                        setSubmitted(true);
+                    } else {
+                        alert(data.error || 'Failed to submit survey');
+                    }
+                } catch (error) {
+                    console.error('Error submitting survey:', error);
+                    alert('Error submitting survey. Please try again.');
+                } finally {
+                    setLoading(false);
+                }
+            };
+
+            if (submitted) {
+                return (
+                    <div className="min-h-screen bg-gradient-to-br from-pink-50 to-white flex items-center justify-center p-4">
+                        <div className="max-w-md w-full bg-white rounded-lg shadow-lg p-8 text-center">
+                            <div className="mb-6">
+                                <svg className="w-20 h-20 mx-auto text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                </svg>
+                            </div>
+                            <h2 className="text-2xl font-bold text-gray-900 mb-4">Thank You!</h2>
+                            <p className="text-gray-600 mb-6">
+                                Your feedback has been successfully submitted and will help us improve our programs.
+                            </p>
+                            <div className="bg-pink-50 rounded-lg p-4 mb-6">
+                                <p className="text-sm text-gray-500 mb-2">Confirmation Code</p>
+                                <p className="text-lg font-mono font-bold text-pink-600">{confirmationCode}</p>
+                            </div>
+                            <p className="text-sm text-gray-500">
+                                Please save this confirmation code for your records.
+                            </p>
+                        </div>
+                    </div>
+                );
+            }
+
+            return (
+                <div className="min-h-screen bg-gradient-to-br from-pink-50 to-white py-8 px-4">
+                    <div className="max-w-3xl mx-auto">
+                        <div className="bg-white rounded-lg shadow-lg">
+                            {/* Header */}
+                            <div className="bg-pink-500 text-white p-6 rounded-t-lg">
+                                <h1 className="text-2xl font-bold">Program Impact Survey</h1>
+                                <p className="mt-2">Your feedback helps us improve our programs</p>
+                            </div>
+
+                            {/* Form */}
+                            <form onSubmit={handleSubmit} className="p-6 space-y-6">
+                                {/* Demographics Section */}
+                                <div className="space-y-4">
+                                    <h2 className="text-xl font-semibold text-gray-900">About You</h2>
+                                    
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <div>
+                                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                                                Your Name *
+                                            </label>
+                                            <input
+                                                type="text"
+                                                value={formData.name}
+                                                onChange={(e) => handleChange('name', e.target.value)}
+                                                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-pink-500 focus:border-pink-500"
+                                                placeholder="Enter your full name"
+                                                required
+                                            />
+                                        </div>
+                                        
+                                        <div>
+                                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                                                Age *
+                                            </label>
+                                            <input
+                                                type="number"
+                                                value={formData.age}
+                                                onChange={(e) => handleChange('age', e.target.value)}
+                                                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-pink-500 focus:border-pink-500"
+                                                placeholder="Your age"
+                                                min="1"
+                                                max="120"
+                                                required
+                                            />
+                                        </div>
+                                        
+                                        <div>
+                                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                                                ZIP Code *
+                                            </label>
+                                            <input
+                                                type="text"
+                                                value={formData.zip}
+                                                onChange={(e) => handleChange('zip', e.target.value)}
+                                                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-pink-500 focus:border-pink-500"
+                                                placeholder="Enter your ZIP code"
+                                                maxLength="10"
+                                                required
+                                            />
+                                        </div>
+                                        
+                                        <div>
+                                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                                                Ethnicity (Optional)
+                                            </label>
+                                            <input
+                                                type="text"
+                                                value={formData.ethnicity}
+                                                onChange={(e) => handleChange('ethnicity', e.target.value)}
+                                                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-pink-500 focus:border-pink-500"
+                                                placeholder="e.g., Hispanic/Latino, Asian"
+                                                maxLength="80"
+                                            />
+                                        </div>
+                                    </div>
+                                    
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                                            Program Enrolled *
+                                        </label>
+                                        <input
+                                            type="text"
+                                            value={formData.program}
+                                            onChange={(e) => handleChange('program', e.target.value)}
+                                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-pink-500 focus:border-pink-500"
+                                            placeholder="Name of the program you participated in"
+                                            required
+                                        />
+                                    </div>
+                                </div>
+
+                                {/* Stories Section */}
+                                <div className="space-y-4">
+                                    <h2 className="text-xl font-semibold text-gray-900">Your Stories</h2>
+                                    <p className="text-sm text-gray-600">
+                                        Please share your experiences with our program. Your stories help us understand our impact.
+                                    </p>
+                                    
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                                            Story 1: How did you first hear about our program?
+                                        </label>
+                                        <textarea
+                                            value={formData.story_1}
+                                            onChange={(e) => handleChange('story_1', e.target.value)}
+                                            rows={3}
+                                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-pink-500 focus:border-pink-500"
+                                            placeholder="Tell us how you discovered our program..."
+                                            maxLength="2000"
+                                        />
+                                    </div>
+                                    
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                                            Story 2: Describe a specific moment when the program helped you
+                                        </label>
+                                        <textarea
+                                            value={formData.story_2}
+                                            onChange={(e) => handleChange('story_2', e.target.value)}
+                                            rows={3}
+                                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-pink-500 focus:border-pink-500"
+                                            placeholder="Share a specific experience or moment..."
+                                            maxLength="2000"
+                                        />
+                                    </div>
+                                    
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                                            Story 3: What challenges did you overcome with our support?
+                                        </label>
+                                        <textarea
+                                            value={formData.story_3}
+                                            onChange={(e) => handleChange('story_3', e.target.value)}
+                                            rows={3}
+                                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-pink-500 focus:border-pink-500"
+                                            placeholder="Describe any obstacles you faced and how we helped..."
+                                            maxLength="2000"
+                                        />
+                                    </div>
+                                    
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                                            Story 4: What are your hopes for the future?
+                                        </label>
+                                        <textarea
+                                            value={formData.story_4}
+                                            onChange={(e) => handleChange('story_4', e.target.value)}
+                                            rows={3}
+                                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-pink-500 focus:border-pink-500"
+                                            placeholder="Share your goals and aspirations..."
+                                            maxLength="2000"
+                                        />
+                                    </div>
+                                </div>
+
+                                {/* Submit Button */}
+                                <div className="pt-4">
+                                    <button
+                                        type="submit"
+                                        disabled={loading}
+                                        className="w-full px-6 py-3 bg-pink-500 text-white font-medium rounded-md hover:bg-pink-600 disabled:bg-gray-400 disabled:cursor-not-allowed"
+                                    >
+                                        {loading ? 'Submitting...' : 'Submit Survey'}
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        ReactDOM.render(<PublicIntakeForm />, document.getElementById('root'));
+    </script>
+</body>
+</html>

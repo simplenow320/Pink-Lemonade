@@ -121,6 +121,11 @@ def writing():
 
 
 
+@pages.get("/r/<token>")
+def public_intake(token):
+    """Public intake form with token access"""
+    return render_template("public_intake.html", token=token, active=None)
+
 @pages.get("/live-data")
 def live_data():
     """Live Data Integration Page"""
