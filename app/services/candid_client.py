@@ -32,8 +32,9 @@ class NewsClient:
             if response.status_code == 200:
                 return response.json()
             elif response.status_code == 404:
-                # 404 might mean no results found, not an error
-                return {"results": [], "count": 0}
+                # 404 means no results found for the search parameters - not an error
+                # As per Candid docs: broaden search parameters if this occurs
+                return {"results": [], "count": 0, "message": "No results found - consider broadening search parameters"}
             elif response.status_code in [401, 429]:
                 return {"error": f"API authentication/rate limit error: {response.status_code}"}
             else:
@@ -129,8 +130,9 @@ class GrantsClient:
             if response.status_code == 200:
                 return response.json()
             elif response.status_code == 404:
-                # 404 might mean no results found, not an error
-                return {"results": [], "count": 0}
+                # 404 means no results found for the search parameters - not an error
+                # As per Candid docs: broaden search parameters if this occurs
+                return {"results": [], "count": 0, "message": "No results found - consider broadening search parameters"}
             elif response.status_code == 400:
                 # 400 means bad request - try different format
                 return {"error": f"Bad request: {response.text}"}
@@ -335,8 +337,9 @@ class EssentialsClient:
             if response.status_code == 200:
                 return response.json()
             elif response.status_code == 404:
-                # 404 might mean no results found, not an error
-                return {"results": [], "count": 0}
+                # 404 means no results found for the search parameters - not an error
+                # As per Candid docs: broaden search parameters if this occurs
+                return {"results": [], "count": 0, "message": "No results found - consider broadening search parameters"}
             elif response.status_code in [401, 429]:
                 return {"error": f"API authentication/rate limit error: {response.status_code}"}
             else:
