@@ -1,0 +1,90 @@
+You are updating the EXISTING Pink Lemonade repo. This task ONLY touches backend models/migrations and related tests. 
+Do NOT change any UI, styles, routes, or navigation. 
+Do NOT rename folders. 
+If a required hook is missing, STOP and report exactly what you need.
+
+GOAL
+Extend the impact intake storage so each submission can include participant demographics and story answers:
+- age (int)
+- zip (string, 5–10 chars)
+- ethnicity (string)
+- stories (array of 4 free-text answers)
+
+These fields must be stored INSIDE the existing impact_intake.payload JSON column. 
+We do NOT add top-level columns for them. 
+We keep backward compatibility with existing payloads.
+
+ASSUMPTIONS
+- PostgreSQL is used.
+- impact_intake table exists with columns: id PK, grant_id FK, payload JSON/JSONB, created_at, submitted_by, role.
+- If impact_intake does not exist, create it as described below.
+
+TASKS
+
+1) MIGRATION
+- Create a new DB migration (use the project’s migration tool; if Alembic, generate revision).
+- Ensure table "impact_intake" exists with columns (create if missing):
+    id               PK
+    grant_id         FK -> grants.id (on delete cascade)
+    submitted_by     VARCHAR(120) NULL
+    role             VARCHAR(32)  NULL  -- allowed: staff, board, participant, other
+    payload          JSONB NOT NULL  -- all dynamic fields stored here
+    created_at       TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+- Add a CHECK or lightweight server-side validation (where supported) that, when present, payload keys conform to:
+    payload.age              integer >= 0
+    payload.zip              text length 5..10
+    payload.ethnicity        text length 1..80
+    payload.stories          array length 0..4, each item string length <= 2000
+- If SQL CHECKs are complex in your stack, enforce at the model/service level (see step 3).
+- Add helpful indexes:
+    CREATE INDEX IF NOT EXISTS idx_impact_intake_grant_id ON impact_intake (grant_id);
+    CREATE INDEX IF NOT EXISTS idx_impact_intake_created_at ON impact_intake (created_at);
+    CREATE INDEX IF NOT EXISTS idx_impact_intake_payload_zip ON impact_intake ((payload->>'zip'));
+    CREATE INDEX IF NOT EXISTS idx_impact_intake_payload_ethnicity ON impact_intake ((payload->>'ethnicity'));
+  (If your tooling cannot create expression indexes, skip the last two and report.)
+
+- Provide DOWN migration that drops created indexes and, if created in UP, drops the table.
+
+2) MODEL / SCHEMA LAYER (SQLAlchemy or equivalent)
+- In the ImpactIntake model (or equivalent), keep "payload" as a dict/JSONB field. 
+- Add a server-side validator (in model or service layer) that, BEFORE insert/update, normalizes and validates:
+    - age: optional; if provided, coerce to int; must be >= 0 and <= 120; else reject with 422.
+    - zip: optional; strip non-alphanumerics except dash; length 5..10; else 422.
+    - ethnicity: optional; trim; length 1..80; else 422.
+    - stories: optional; list; truncate to first 4 items; each item trimmed; max length 2000 chars; else 422.
+- Never remove other keys already used in payload (backwards compatible).
+- Store the validated/normalized values back into payload under the same keys.
+
+3) SERVICE UTIL (input sanitizer)
+- Create/extend a small util function: validate_and_merge_intake_payload(existing_payload: dict, incoming: dict) -> dict
+  Behavior:
+    - Start with existing_payload or {}.
+    - Merge only the supported keys: age, zip, ethnicity, stories.
+    - Run the validations above. On error, raise a clear ValueError with field name.
+    - Return the merged dict.
+
+4) NO UI CHANGES
+- Do not add or alter any frontend code in this post. This post only sets DB/model so the API can accept the fields in a later step.
+
+5) TESTS
+- Add tests in tests/test_impact_intake_payload.py (or similar):
+  - test_accepts_valid_payload_with_age_zip_ethnicity_stories
+  - test_rejects_invalid_age (negative or >120)
+  - test_rejects_bad_zip (too short, too long)
+  - test_rejects_ethnicity_too_long
+  - test_truncates_stories_to_four
+  - test_preserves_existing_payload_keys (backward compatibility)
+  - test_indexes_exist_or_are_declared (smoke: at least grant_id index)
+- Tests must not depend on frontend. Use the ORM/session directly or API if already present.
+
+6) SELF-CHECK
+- Run migrations up.
+- Run the test suite; report only pass/fail counts.
+- Print (to console) the list of created/altered DB objects (table and indexes names only; no data).
+- STOP if anything would require UI changes and report the exact hook needed.
+
+ACCEPTANCE
+- Migration applies cleanly and is reversible.
+- Model validation enforces the field rules without breaking old payloads.
+- Tests pass.
+- No UI or style changes were made.

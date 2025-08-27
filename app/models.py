@@ -1178,3 +1178,32 @@ class UsageLog(db.Model):
             'ai_tokens_used': self.ai_tokens_used,
             'created_at': self.created_at.isoformat() if self.created_at else None
         }
+
+class ImpactIntake(db.Model):
+    """Impact intake submissions with participant demographics and stories"""
+    __tablename__ = "impact_intake"
+    
+    id = db.Column(db.Integer, primary_key=True)
+    grant_id = db.Column(db.Integer, db.ForeignKey("grants.id", ondelete="CASCADE"), nullable=False)
+    submitted_by = db.Column(db.String(120), nullable=True)
+    role = db.Column(db.String(32), nullable=True)  # staff, board, participant, other
+    payload = db.Column(db.JSON, nullable=False, default=dict)  # JSONB for all dynamic fields
+    created_at = db.Column(db.DateTime(timezone=True), default=datetime.utcnow)
+    
+    # Relationships
+    grant = db.relationship("Grant", backref="impact_intakes")
+    
+    def validate_payload(self, incoming_data):
+        """Validate and normalize payload fields"""
+        from app.utils.impact_intake_validator import validate_and_merge_intake_payload
+        self.payload = validate_and_merge_intake_payload(self.payload or {}, incoming_data)
+    
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'grant_id': self.grant_id,
+            'submitted_by': self.submitted_by,
+            'role': self.role,
+            'payload': self.payload,
+            'created_at': self.created_at.isoformat() if self.created_at else None
+        }
