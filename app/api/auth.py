@@ -103,7 +103,7 @@ def register():
             return jsonify({
                 'message': 'Registration successful! Starting your onboarding journey...',
                 'user': result['user'],
-                'redirect': '/onboarding/step1'
+                'redirect': '/onboarding/welcome'
             }), 201
         else:
             return jsonify({'error': result['error']}), 400
@@ -140,11 +140,21 @@ def login():
             session['user_email'] = result['user']['email']
             session.permanent = remember
             
+            # Check if user needs onboarding
+            from app.models import Organization
+            user_id = result['user']['id']
+            org = Organization.query.filter_by(user_id=user_id).first()
+            
+            if not org or org.profile_completeness < 80:
+                redirect_url = '/onboarding/welcome'
+            else:
+                redirect_url = '/dashboard'
+            
             return jsonify({
                 'message': 'Login successful',
                 'token': result['token'],
                 'user': result['user'],
-                'redirect': '/dashboard'
+                'redirect': redirect_url
             }), 200
         else:
             return jsonify({'error': result['error']}), 401

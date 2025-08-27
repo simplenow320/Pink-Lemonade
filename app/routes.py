@@ -100,15 +100,6 @@ def applications():
     """Applications page"""
     return render_template('applications.html', active='apps')
 
-@bp.route('/login')
-def login():
-    """Login page"""
-    return render_template('login.html', active=None)
-
-@bp.route('/register')
-def register():
-    """Register page"""
-    return render_template('register.html', active=None)
 
 @bp.route('/reset-password')
 def reset_password():

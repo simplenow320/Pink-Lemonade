@@ -26,7 +26,7 @@
                 {% endif %}
             {% endwith %}
             
-            <form method="POST" action="{{ url_for('auth.login') }}" class="space-y-4">
+            <form id="loginForm" class="space-y-4">
                 <!-- Email -->
                 <div>
                     <label for="email" class="block text-sm text-gray-800 mb-1">
@@ -89,4 +89,60 @@
         </div>
     </div>
 </div>
+
+<script>
+    document.getElementById('loginForm').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        
+        const email = document.getElementById('email').value.trim();
+        const password = document.getElementById('password').value;
+        const remember = document.querySelector('input[name="remember"]').checked;
+        
+        try {
+            const response = await fetch('/api/auth/login', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ 
+                    email: email, 
+                    password: password,
+                    remember: remember
+                })
+            });
+            
+            const data = await response.json();
+            
+            if (response.ok) {
+                // Redirect to the URL provided by the backend
+                window.location.href = data.redirect || '/dashboard';
+            } else {
+                // Show error message
+                const errorMsg = data.error || 'Invalid email or password. Please try again.';
+                const flashDiv = document.createElement('div');
+                flashDiv.className = 'mb-4 p-3 rounded-md bg-red-50 text-red-700 border border-red-200';
+                flashDiv.textContent = errorMsg;
+                
+                // Remove any existing error messages
+                const existingErrors = document.querySelectorAll('.bg-red-50');
+                existingErrors.forEach(err => err.remove());
+                
+                // Add new error message before the form
+                document.getElementById('loginForm').parentNode.insertBefore(flashDiv, document.getElementById('loginForm'));
+            }
+        } catch (error) {
+            // Show network error
+            const flashDiv = document.createElement('div');
+            flashDiv.className = 'mb-4 p-3 rounded-md bg-red-50 text-red-700 border border-red-200';
+            flashDiv.textContent = 'Network error. Please check your connection and try again.';
+            
+            // Remove any existing error messages
+            const existingErrors = document.querySelectorAll('.bg-red-50');
+            existingErrors.forEach(err => err.remove());
+            
+            // Add new error message before the form
+            document.getElementById('loginForm').parentNode.insertBefore(flashDiv, document.getElementById('loginForm'));
+        }
+    });
+</script>
 {% endblock %}
