@@ -286,6 +286,44 @@
           <small>Your federal tax identification number</small>
         </div>
       </div>
+      
+      <!-- Candid Lookup Section -->
+      <div class="form-section" style="background: #F9F9F9; padding: 20px; border-radius: 8px; margin: 20px 0;">
+        <h3 style="font-size: 16px; margin-bottom: 12px;">Import from Candid Database</h3>
+        <div class="form-row">
+          <div class="form-group" style="flex: 2;">
+            <label for="candidLookup">EIN or Organization Name</label>
+            <input type="text" id="candidLookup" placeholder="Enter EIN (XX-XXXXXXX) or organization name">
+          </div>
+          <div class="form-group" style="flex: 1;">
+            <label style="visibility: hidden;">Search</label>
+            <button type="button" class="btn-secondary" onclick="searchCandid()" style="width: 100%;">Search Candid</button>
+          </div>
+        </div>
+        
+        <!-- Review Table (Hidden initially) -->
+        <div id="candidReview" style="display: none; margin-top: 20px;">
+          <h4 style="font-size: 14px; margin-bottom: 12px; color: #666;">Select fields to import:</h4>
+          <table style="width: 100%; border: 1px solid #E0E0E0; border-radius: 6px; overflow: hidden;">
+            <thead style="background: #F5F5F5;">
+              <tr>
+                <th style="padding: 8px; text-align: left; font-size: 13px; width: 40px;">Import</th>
+                <th style="padding: 8px; text-align: left; font-size: 13px; width: 150px;">Field</th>
+                <th style="padding: 8px; text-align: left; font-size: 13px;">Value</th>
+              </tr>
+            </thead>
+            <tbody id="candidReviewBody">
+              <!-- Rows will be added dynamically -->
+            </tbody>
+          </table>
+          <div style="margin-top: 16px; text-align: right;">
+            <button type="button" class="btn-secondary" onclick="cancelCandidImport()" style="margin-right: 8px;">Cancel</button>
+            <button type="button" class="btn-primary" onclick="applyCandidData()">Apply Selected</button>
+          </div>
+        </div>
+        
+        <div id="candidMessage" style="margin-top: 12px; padding: 10px; border-radius: 6px; display: none;"></div>
+      </div>
 
       <div class="form-row">
         <div class="form-group">
@@ -380,6 +418,174 @@
 </div>
 
 <script>
+// Global variables to store Candid data
+let candidRecord = null;
+let candidTokens = null;
+
+// Search Candid function
+async function searchCandid() {
+  const query = document.getElementById('candidLookup').value.trim();
+  const messageDiv = document.getElementById('candidMessage');
+  const reviewDiv = document.getElementById('candidReview');
+  
+  if (!query) {
+    messageDiv.style.display = 'block';
+    messageDiv.style.background = '#FEE';
+    messageDiv.style.color = '#C33';
+    messageDiv.textContent = 'Please enter an EIN or organization name to search';
+    return;
+  }
+  
+  // Show loading message
+  messageDiv.style.display = 'block';
+  messageDiv.style.background = '#E3F2FD';
+  messageDiv.style.color = '#1976D2';
+  messageDiv.textContent = 'Searching Candid database...';
+  reviewDiv.style.display = 'none';
+  
+  try {
+    const response = await fetch(`/api/onboarding/essentials/lookup?query=${encodeURIComponent(query)}`);
+    const data = await response.json();
+    
+    if (response.ok && data.record) {
+      candidRecord = data.record;
+      candidTokens = data.tokens;
+      
+      // Show success message
+      messageDiv.style.background = '#E8F5E9';
+      messageDiv.style.color = '#2E7D32';
+      messageDiv.textContent = 'Organization found! Review the data below and select fields to import.';
+      
+      // Build review table
+      const tbody = document.getElementById('candidReviewBody');
+      tbody.innerHTML = '';
+      
+      // Add rows for each field
+      const fields = [
+        { key: 'org_name', label: 'Organization Name', value: candidRecord.name || candidRecord.legal_name || '' },
+        { key: 'ein', label: 'EIN', value: candidRecord.ein || '' },
+        { key: 'website', label: 'Website', value: candidTokens.website || '' },
+        { key: 'mission', label: 'Mission', value: candidTokens.mission || '' },
+        { key: 'programs', label: 'Programs', value: candidRecord.programs || candidRecord.program_description || '' },
+        { key: 'pcs_subject_codes', label: 'Subject Codes', value: (candidTokens.pcs_subject_codes || []).join(', ') },
+        { key: 'pcs_population_codes', label: 'Population Codes', value: (candidTokens.pcs_population_codes || []).join(', ') },
+        { key: 'service_locations', label: 'Service Locations', value: (candidTokens.locations || []).join(', ') }
+      ];
+      
+      fields.forEach(field => {
+        if (field.value) {
+          const row = document.createElement('tr');
+          row.innerHTML = `
+            <td style="padding: 8px; border-top: 1px solid #E0E0E0;">
+              <input type="checkbox" id="import_${field.key}" checked>
+            </td>
+            <td style="padding: 8px; border-top: 1px solid #E0E0E0; font-size: 13px; font-weight: 500;">
+              ${field.label}
+            </td>
+            <td style="padding: 8px; border-top: 1px solid #E0E0E0; font-size: 13px; color: #666;">
+              ${field.value}
+            </td>
+          `;
+          tbody.appendChild(row);
+        }
+      });
+      
+      // Show review section
+      reviewDiv.style.display = 'block';
+      
+    } else if (response.status === 404) {
+      messageDiv.style.background = '#FFF3E0';
+      messageDiv.style.color = '#E65100';
+      messageDiv.textContent = 'No organization found with that EIN or name. You can still fill out the form manually.';
+      reviewDiv.style.display = 'none';
+    } else {
+      throw new Error(data.error || 'Search failed');
+    }
+  } catch (error) {
+    messageDiv.style.display = 'block';
+    messageDiv.style.background = '#FEE';
+    messageDiv.style.color = '#C33';
+    messageDiv.textContent = 'Error searching Candid database. Please try again or fill out the form manually.';
+    reviewDiv.style.display = 'none';
+  }
+}
+
+// Apply Candid data function
+async function applyCandidData() {
+  if (!candidRecord) return;
+  
+  const messageDiv = document.getElementById('candidMessage');
+  
+  // Get org ID (we'll use 1 for now, or you could generate one)
+  const orgId = 1; // This should be obtained from session or context
+  
+  // Build apply object based on checkboxes
+  const apply = {};
+  ['org_name', 'ein', 'website', 'mission', 'programs', 'pcs_subject_codes', 'pcs_population_codes', 'service_locations'].forEach(key => {
+    const checkbox = document.getElementById(`import_${key}`);
+    if (checkbox) {
+      apply[key] = checkbox.checked;
+    }
+  });
+  
+  try {
+    const response = await fetch('/api/onboarding/essentials/apply', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        org_id: orgId,
+        record: candidRecord,
+        apply: apply
+      })
+    });
+    
+    const result = await response.json();
+    
+    if (response.ok) {
+      // Update form fields with applied data
+      if (apply.org_name && candidRecord.name) {
+        document.getElementById('legalName').value = candidRecord.name;
+      }
+      if (apply.ein && candidRecord.ein) {
+        document.getElementById('ein').value = candidRecord.ein;
+      }
+      if (apply.website && candidTokens.website) {
+        document.getElementById('website').value = candidTokens.website;
+      }
+      if (apply.mission && candidTokens.mission) {
+        document.getElementById('mission').value = candidTokens.mission;
+      }
+      
+      // Show success message
+      messageDiv.style.background = '#E8F5E9';
+      messageDiv.style.color = '#2E7D32';
+      messageDiv.textContent = `Successfully imported ${result.appliedFields.length} fields from Candid. You can still edit any field manually.`;
+      
+      // Hide review section
+      document.getElementById('candidReview').style.display = 'none';
+    } else {
+      throw new Error(result.error || 'Failed to apply data');
+    }
+  } catch (error) {
+    messageDiv.style.display = 'block';
+    messageDiv.style.background = '#FEE';
+    messageDiv.style.color = '#C33';
+    messageDiv.textContent = 'Error applying Candid data. Please try again or fill out the form manually.';
+  }
+}
+
+// Cancel Candid import function
+function cancelCandidImport() {
+  document.getElementById('candidReview').style.display = 'none';
+  document.getElementById('candidMessage').style.display = 'none';
+  document.getElementById('candidLookup').value = '';
+  candidRecord = null;
+  candidTokens = null;
+}
+
+// Original form submission handler
 document.getElementById('onboardingForm').addEventListener('submit', async function(e) {
   e.preventDefault();
   
