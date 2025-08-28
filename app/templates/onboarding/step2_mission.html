@@ -1,9 +1,9 @@
-{% extends "base.html" %}
+{% extends "onboarding/base_onboarding.html" %}
 
 {% block title %}Organization Profile - Mission & Programs{% endblock %}
 
 {% block content %}
-<div class="min-h-screen bg-gradient-to-br from-pink-50 to-white">
+<div class="min-h-screen bg-white">
     <div class="max-w-4xl mx-auto px-4 py-8">
         <!-- Progress Bar -->
         <div class="mb-8">
@@ -16,7 +16,7 @@
                     <div style="width:66%" class="shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center bg-pink-500 transition-all duration-500"></div>
                 </div>
                 <div class="flex justify-between text-xs text-gray-600">
-                    <span class="text-green-600">✓ Basic Info</span>
+                    <span class="text-gray-900 font-semibold">Basic Info - Complete</span>
                     <span class="font-semibold text-pink-600">Mission & Programs</span>
                     <span>Capacity & History</span>
                 </div>
@@ -24,15 +24,15 @@
         </div>
 
         <!-- Encouragement Message -->
-        <div class="bg-green-50 border-l-4 border-green-400 p-4 mb-6">
+        <div class="bg-gray-100 border-l-4 border-pink-500 p-4 mb-6">
             <div class="flex">
                 <div class="flex-shrink-0">
-                    <svg class="h-5 w-5 text-green-400" viewBox="0 0 20 20" fill="currentColor">
+                    <svg class="h-5 w-5 text-pink-500" viewBox="0 0 20 20" fill="currentColor">
                         <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
                     </svg>
                 </div>
                 <div class="ml-3">
-                    <p class="text-sm text-green-700">
+                    <p class="text-sm text-gray-700">
                         Great progress! This section helps our AI understand your impact and match you with aligned funders.
                     </p>
                 </div>
