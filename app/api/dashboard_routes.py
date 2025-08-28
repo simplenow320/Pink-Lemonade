@@ -5,7 +5,8 @@ from flask import Blueprint, render_template, jsonify, request, session
 from app import db
 from app.models import User, Organization, Grant, Analytics
 from app.services.auth_manager import AuthManager
-from app.services.candid_grants_client import CandidGrantsClient
+from app.services.grant_fetcher import GrantFetcher
+from app.services.geoname_mapping import get_geoname_id
 from app.services.ai_service import AIService
 from datetime import datetime, timedelta
 import json
@@ -62,7 +63,9 @@ def get_profile_grants():
     ai_service = AIService()
     for grant in grants[:10]:  # Score top 10 for performance
         try:
-            score = ai_service.calculate_match_score(org.to_ai_context(), grant)
+            # Use the match_grant method which exists on AIService
+            score, explanation = ai_service.match_grant(org.to_dict(), grant)
+            grant['ai_score'] = score
             grant['ai_score'] = score
         except:
             grant['ai_score'] = None
@@ -99,45 +102,56 @@ def refresh_matches():
     })
 
 def get_profile_based_grants(org, limit=50, force_refresh=False):
-    """Get grants matching organization profile"""
+    """Get grants matching organization profile using real APIs"""
     grants = []
     
-    # Build search parameters from profile
-    search_params = {
-        'location': org.state or org.city,
-        'focus_area': org.focus_areas[0] if org.focus_areas else None,
-        'keywords': ' '.join(org.keywords) if org.keywords else org.mission_statement[:100]
-    }
+    # Use GrantFetcher to get real grants from multiple sources
+    fetcher = GrantFetcher()
     
-    # Try Candid API first
     try:
-        client = CandidGrantsClient()
+        # Fetch grants from all sources (Federal Register, USAspending, Candid)
+        fetch_result = fetcher.fetch_all_grants(limit=limit)
         
-        # Search based on organization profile
-        if org.focus_areas:
-            for focus in org.focus_areas[:2]:  # Search top 2 focus areas
-                results = client.search_grants(
-                    subject=focus,
-                    location=org.state,
-                    min_amount=get_min_grant_amount(org.annual_budget),
-                    max_amount=get_max_grant_amount(org.annual_budget)
-                )
-                if results and 'grants' in results:
-                    for grant in results['grants'][:10]:
-                        grants.append({
-                            'title': grant.get('grant_name', 'Untitled Grant'),
-                            'funder': grant.get('funder_name', 'Unknown Funder'),
-                            'amount': format_amount(grant.get('amount')),
-                            'deadline': grant.get('deadline', 'Rolling'),
-                            'description': grant.get('description', ''),
-                            'focus_areas': grant.get('subjects', []),
-                            'source': 'Candid',
-                            'match_reason': f"Matches your {focus} programs"
-                        })
+        # Also fetch Candid grants specifically for the org's state
+        if org.state:
+            candid_grants = fetcher.fetch_candid_grants(limit=20, state=org.state)
+            
+            # Format Candid grants for display
+            for grant in candid_grants:
+                grants.append({
+                    'title': grant.get('title', 'Untitled Grant'),
+                    'funder': grant.get('funder_name', 'Unknown Funder'),
+                    'amount': format_amount(grant.get('amount')),
+                    'deadline': grant.get('deadline', 'Rolling'),
+                    'description': grant.get('description', ''),
+                    'focus_areas': [grant.get('focus_area', 'General')],
+                    'source': 'Candid',
+                    'match_reason': f"Located in {org.state}"
+                })
+        
+        # Add grants from other sources
+        if fetch_result.get('success'):
+            # The grants were already stored in DB by fetch_all_grants
+            # We can query them from the database
+            from app.models import Grant
+            db_grants = Grant.query.order_by(Grant.created_at.desc()).limit(limit).all()
+            
+            for grant in db_grants:
+                grants.append({
+                    'title': grant.title,
+                    'funder': grant.funder,
+                    'amount': format_amount(grant.amount_min or grant.amount_max),
+                    'deadline': grant.deadline.strftime('%Y-%m-%d') if grant.deadline else 'Rolling',
+                    'description': grant.eligibility or '',
+                    'focus_areas': [grant.geography or 'National'],
+                    'source': grant.source_name or 'Federal',
+                    'match_reason': 'Recently added grant opportunity'
+                })
+                
     except Exception as e:
-        print(f"Candid API error: {e}")
+        print(f"Grant fetch error: {e}")
     
-    # Add some default high-quality grants if needed
+    # Add some default high-quality grants if we don't have enough
     if len(grants) < 5:
         grants.extend(get_default_grants_for_type(org.type))
     

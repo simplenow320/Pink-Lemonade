@@ -13,7 +13,8 @@ from app import db
 from app.models import Grant, Organization, ScraperSource
 from app.services.federal_register_client import FederalRegisterClient
 from app.services.usaspending_client import USAspendingClient
-from app.services.candid_grants_client import CandidGrantsClient
+from app.services.candid_client import GrantsClient
+from app.services.geoname_mapping import get_geoname_id, STATE_GEONAME_IDS
 from app.services.ai_service import AIService
 
 logger = logging.getLogger(__name__)
@@ -24,7 +25,7 @@ class GrantFetcher:
     def __init__(self):
         self.federal_client = FederalRegisterClient()
         self.usaspending_client = USAspendingClient()
-        self.candid_client = CandidGrantsClient()
+        self.candid_client = GrantsClient()
         self.ai_service = AIService()
         
         # Track fetch statistics
@@ -211,42 +212,60 @@ class GrantFetcher:
             logger.error(f"Error parsing USAspending grant: {e}")
             return None
     
-    def fetch_candid_grants(self, limit: int = 30) -> List[Dict]:
-        """Fetch grants from Candid API"""
+    def fetch_candid_grants(self, limit: int = 30, state: str = None) -> List[Dict]:
+        """Fetch grants from Candid API using transactions endpoint"""
         if not self.candid_client:
             return []
         
         grants = []
         
         try:
-            # Use Candid client to search for grants
-            results = self.candid_client.search_grants(
-                keywords=['nonprofit', 'community', 'education', 'health'],
-                limit=limit
-            )
+            # Use proper transactions method with geoname ID for location
+            location_id = None
+            if state:
+                location_id = get_geoname_id(state)
             
-            for result in results:
-                grant = self.parse_candid_grant(result)
-                if grant:
-                    grants.append(grant)
+            # Search with different keywords to get variety
+            keywords = ['nonprofit', 'community', 'education', 'health', 'youth']
+            for keyword in keywords[:2]:  # Limit to avoid too many API calls
+                # Use the transactions method with proper parameters
+                results = self.candid_client.transactions(
+                    query=keyword,
+                    location=location_id,  # Pass geoname ID if we have state
+                    page=1
+                )
+                
+                # Parse the results
+                if isinstance(results, list):
+                    for result in results[:limit//2]:  # Split limit across keywords
+                        grant = self.parse_candid_grant(result)
+                        if grant:
+                            grants.append(grant)
+                            if len(grants) >= limit:
+                                break
+                
+                if len(grants) >= limit:
+                    break
+                    
         except Exception as e:
             logger.error(f"Candid API error: {e}")
         
-        return grants
+        return grants[:limit]
     
     def parse_candid_grant(self, result: Dict) -> Optional[Dict]:
-        """Parse Candid grant into standard format"""
+        """Parse Candid grant transaction into standard format"""
         try:
+            # Parse the transaction data from Candid API
             return {
-                'title': result.get('title', 'Foundation Grant'),
+                'title': result.get('description', result.get('title', 'Foundation Grant')),
                 'description': result.get('description', ''),
-                'funder_name': result.get('funder_name', 'Private Foundation'),
-                'amount': result.get('amount_awarded', 0),
-                'deadline': result.get('deadline'),
+                'funder_name': result.get('funder_name', result.get('funder', 'Private Foundation')),
+                'amount': result.get('amount', result.get('amount_awarded', 0)),
+                'deadline': result.get('deadline', result.get('grant_date')),
                 'source_name': 'Candid',
-                'source_url': result.get('url', ''),
-                'eligibility': result.get('eligibility_description', ''),
-                'focus_area': ', '.join(result.get('subject_areas', ['General'])),
+                'source_url': result.get('url', result.get('link', '')),
+                'eligibility': result.get('eligibility_description', result.get('recipient_name', '')),
+                'focus_area': result.get('focus_area', result.get('description', 'General'))[:100],
                 'match_score': None,
                 'status': 'active'
             }
