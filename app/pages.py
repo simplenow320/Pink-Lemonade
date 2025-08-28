@@ -53,8 +53,36 @@ def verify_email():
         return redirect(url_for('pages.login'))
 
 @pages.get("/dashboard")
+@login_required
 def dashboard():
-    org_id = 1
+    # Get the actual user's organization
+    from app.models import Organization
+    user_id = session.get('user_id')
+    if not user_id:
+        return redirect(url_for('pages.login'))
+    
+    # Find user's organization
+    org = Organization.query.filter(
+        (Organization.user_id == user_id) | 
+        (Organization.created_by_user_id == user_id)
+    ).first()
+    
+    if not org:
+        # No org yet, redirect to onboarding
+        return redirect('/onboarding/welcome')
+    
+    org_id = org.id
+    
+    # If organization profile is incomplete, suggest completing it
+    if org.profile_completeness < 80:
+        # Trigger grant discovery for initial matches
+        from app.services.grant_discovery_service import GrantDiscoveryService
+        discovery = GrantDiscoveryService()
+        try:
+            discovery.discover_grants(org_id, limit=10)
+        except:
+            pass  # Continue even if discovery fails
+    
     stats = get_dashboard_stats(org_id)
     top_matches = [{
         "title": g.title,
@@ -66,21 +94,49 @@ def dashboard():
     return render_template("dashboard.html", active="dashboard", stats=stats, top_matches=top_matches, org_id=org_id)
 
 @pages.get("/opportunities")
+@login_required
 def opportunities():
+    # Get user's organization and trigger grant discovery
+    from app.models import Organization, Grant
+    user_id = session.get('user_id')
+    
+    org = Organization.query.filter(
+        (Organization.user_id == user_id) | 
+        (Organization.created_by_user_id == user_id)
+    ).first()
+    
+    if org:
+        # Trigger grant discovery to find real opportunities
+        from app.services.grant_discovery_service import GrantDiscoveryService
+        discovery = GrantDiscoveryService()
+        try:
+            # Discover grants from real APIs
+            discovery.discover_grants(org.id, limit=20)
+        except Exception as e:
+            print(f"Grant discovery error: {e}")
+        
+        # Get discovered grants from database
+        grants = Grant.query.filter_by(org_id=org.id).order_by(Grant.match_score.desc()).limit(50).all()
+    else:
+        grants = []
+    
     # Use the comprehensive opportunities template with all 50 states and Candid access
-    return render_template("opportunities.html", active="opportunities")
+    return render_template("opportunities.html", active="opportunities", grants=grants, org=org)
 
 @pages.get("/saved")
+@login_required
 def saved():
     return render_template("saved.html", active="saved")
 
 
 
 @pages.get("/settings")
+@login_required
 def settings():
     return render_template("settings.html", active="settings")
 
 @pages.get("/smart-tools")
+@login_required
 def smart_tools():
     return render_template("smart_tools.html", active="smart-tools")
 
@@ -116,6 +172,7 @@ def profile():
     return render_template("profile/organization.html")
 
 @pages.get("/writing")
+@login_required
 def writing():
     return render_template("writing.html", active="writing")
 
