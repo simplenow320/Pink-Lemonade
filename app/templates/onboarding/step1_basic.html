@@ -2,222 +2,284 @@
 
 {% block title %}Organization Profile - Basic Information{% endblock %}
 
-{% block content %}
-<div class="min-h-screen bg-white">
-    <div class="max-w-4xl mx-auto px-4 py-8">
-        <!-- Progress Bar -->
-        <div class="mb-8">
-            <div class="flex items-center justify-between mb-4">
-                <h2 class="text-lg font-semibold text-gray-700">Setting Up Your Profile</h2>
-                <span class="text-sm text-gray-600">Step 1 of 3 • ~2 minutes</span>
-            </div>
-            <div class="relative">
-                <div class="overflow-hidden h-3 mb-4 text-xs flex rounded-full bg-gray-200">
-                    <div style="width:33%" class="shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center bg-pink-500 transition-all duration-500"></div>
-                </div>
-                <div class="flex justify-between text-xs text-gray-600">
-                    <span class="font-semibold text-pink-600">Basic Info</span>
-                    <span>Mission & Programs</span>
-                    <span>Capacity & History</span>
-                </div>
-            </div>
-        </div>
+{% block extra_css %}
+<style>
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Helvetica', 'Arial', sans-serif;
+    background: #ffffff;
+}
 
-        <!-- Form Card -->
-        <div class="bg-white rounded-2xl shadow-xl p-8">
-            <div class="mb-6">
-                <h1 class="text-2xl font-bold text-gray-900 mb-2">Basic Organization Information</h1>
-                <p class="text-gray-600">Let's start with the essentials about your organization</p>
-            </div>
+.container {
+    max-width: 700px;
+    margin: 0 auto;
+    padding: 60px 20px;
+}
 
-            <form id="step1Form" method="POST" action="{{ url_for('onboarding_flow.save_step1') }}">
-                <div class="space-y-6">
-                    <!-- Organization Name -->
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">
-                            Organization Name <span class="text-red-500">*</span>
-                        </label>
-                        <input type="text" 
-                               name="org_name" 
-                               id="org_name"
-                               class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-pink-500"
-                               placeholder="e.g., Hope Community Center"
-                               required
-                               value="{{ org.name if org else '' }}">
-                        <p class="mt-1 text-sm text-gray-500">Your organization's legal name</p>
-                    </div>
+.progress-section {
+    margin-bottom: 60px;
+    text-align: center;
+}
 
-                    <!-- Organization Type -->
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">
-                            Organization Type <span class="text-red-500">*</span>
-                        </label>
-                        <select name="org_type" 
-                                id="org_type"
-                                class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-pink-500"
-                                required
-                                onchange="showMatchPreview()">
-                            <option value="">Select your organization type...</option>
-                            <option value="501c3" {{ 'selected' if org and org.type == '501c3' else '' }}>501(c)(3) Nonprofit</option>
-                            <option value="faith_based" {{ 'selected' if org and org.type == 'faith_based' else '' }}>Faith-Based Organization</option>
-                            <option value="educational" {{ 'selected' if org and org.type == 'educational' else '' }}>Educational Institution</option>
-                            <option value="community" {{ 'selected' if org and org.type == 'community' else '' }}>Community Organization</option>
-                            <option value="healthcare" {{ 'selected' if org and org.type == 'healthcare' else '' }}>Healthcare Organization</option>
-                            <option value="arts" {{ 'selected' if org and org.type == 'arts' else '' }}>Arts & Culture</option>
-                            <option value="other" {{ 'selected' if org and org.type == 'other' else '' }}>Other</option>
-                        </select>
-                    </div>
+.step-indicator {
+    font-size: 14px;
+    color: #999;
+    margin-bottom: 10px;
+    font-weight: 500;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+}
 
-                    <!-- Location -->
-                    <div class="grid md:grid-cols-2 gap-4">
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">
-                                City <span class="text-red-500">*</span>
-                            </label>
-                            <input type="text" 
-                                   name="city" 
-                                   id="city"
-                                   class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-pink-500"
-                                   placeholder="e.g., Detroit"
-                                   required
-                                   value="{{ org.city if org else '' }}"
-                                   onblur="showMatchPreview()">
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">
-                                State <span class="text-red-500">*</span>
-                            </label>
-                            <select name="state" 
-                                    id="state"
-                                    class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-pink-500"
-                                    required
-                                    onchange="showMatchPreview()">
-                                <option value="">Select state...</option>
-                                <option value="MI" {{ 'selected' if org and org.state == 'MI' else '' }}>Michigan</option>
-                                <option value="IL">Illinois</option>
-                                <option value="OH">Ohio</option>
-                                <!-- Add all states -->
-                            </select>
-                        </div>
-                    </div>
+.time-estimate {
+    font-size: 14px;
+    color: #B8899A;
+    margin-bottom: 30px;
+}
 
-                    <!-- Tax ID (Optional) -->
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">
-                            Tax ID / EIN <span class="text-gray-400">(Optional)</span>
-                        </label>
-                        <input type="text" 
-                               name="ein" 
-                               class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-pink-500"
-                               placeholder="XX-XXXXXXX"
-                               value="{{ org.ein if org else '' }}">
-                        <p class="mt-1 text-sm text-gray-500">Helps us find grants specific to your organization</p>
-                    </div>
+.progress-bar {
+    height: 3px;
+    background: #f5f5f5;
+    border-radius: 3px;
+    overflow: hidden;
+    margin-bottom: 10px;
+}
 
-                    <!-- Website (Optional) -->
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">
-                            Website <span class="text-gray-400">(Optional)</span>
-                        </label>
-                        <input type="url" 
-                               name="website" 
-                               class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-pink-500"
-                               placeholder="https://www.yourorganization.org"
-                               value="{{ org.website if org else '' }}">
-                    </div>
+.progress-fill {
+    height: 100%;
+    background: #B8899A;
+    transition: width 0.5s ease;
+}
 
-                    <!-- Year Established (Optional) -->
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">
-                            Year Established <span class="text-gray-400">(Optional)</span>
-                        </label>
-                        <input type="number" 
-                               name="year_established" 
-                               min="1800" 
-                               max="2024"
-                               class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-pink-500"
-                               placeholder="e.g., 1995"
-                               value="{{ org.year_established if org else '' }}">
-                        <p class="mt-1 text-sm text-gray-500">Helps match you with grants for established organizations</p>
-                    </div>
-                </div>
+.progress-dots {
+    display: flex;
+    justify-content: space-between;
+    padding: 0 20px;
+}
 
-                <!-- Live Match Preview -->
-                <div id="matchPreview" class="hidden mt-8 p-6 bg-gradient-to-r from-pink-50 to-pink-100 rounded-lg">
-                    <h3 class="text-lg font-semibold text-gray-800 mb-3">
-                        <span class="text-pink-600">✨</span> Potential Matches Found!
-                    </h3>
-                    <p class="text-gray-700 mb-3">Based on what you've entered, we're already finding grants like:</p>
-                    <div id="previewGrants" class="space-y-2">
-                        <!-- Dynamically populated -->
-                    </div>
-                    <p class="text-sm text-gray-600 mt-3">Complete your profile to see all matches with AI scoring!</p>
-                </div>
+.dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #e0e0e0;
+}
 
-                <!-- Action Buttons -->
-                <div class="flex justify-between items-center mt-8 pt-6 border-t">
-                    <a href="{{ url_for('onboarding_flow.welcome') }}" 
-                       class="text-gray-600 hover:text-gray-800 font-medium">
-                        ← Back
-                    </a>
-                    <div class="flex gap-4">
-                        <button type="button" 
-                                onclick="saveAndSkip()"
-                                class="px-6 py-3 bg-gray-200 text-gray-700 font-medium rounded-lg hover:bg-gray-300 transition-all">
-                            Skip for Now
-                        </button>
-                        <button type="submit" 
-                                class="px-8 py-3 bg-pink-500 text-white font-semibold rounded-lg hover:bg-pink-600 transition-all transform hover:scale-105 shadow-lg">
-                            Continue to Mission →
-                        </button>
-                    </div>
-                </div>
-            </form>
-        </div>
+.dot.active {
+    background: #B8899A;
+}
 
-        <!-- Encouragement Message -->
-        <div class="mt-6 text-center text-gray-600">
-            <p>Great start! Each detail helps us find better grant matches for you.</p>
-        </div>
-    </div>
-</div>
+.form-section {
+    background: white;
+    padding: 50px;
+    border-radius: 20px;
+    border: 1px solid #f0f0f0;
+}
 
-<script>
-// Show live grant preview as user types
-function showMatchPreview() {
-    const orgType = document.getElementById('org_type').value;
-    const state = document.getElementById('state').value;
+.section-title {
+    font-size: 28px;
+    font-weight: 600;
+    color: #1a1a1a;
+    margin-bottom: 10px;
+}
+
+.section-subtitle {
+    font-size: 16px;
+    color: #6b6b6b;
+    margin-bottom: 40px;
+}
+
+.form-group {
+    margin-bottom: 30px;
+}
+
+.form-label {
+    display: block;
+    font-size: 14px;
+    font-weight: 500;
+    color: #333;
+    margin-bottom: 8px;
+    letter-spacing: 0.3px;
+}
+
+.form-input,
+.form-select,
+.form-textarea {
+    width: 100%;
+    padding: 12px 16px;
+    font-size: 16px;
+    border: 1px solid #e0e0e0;
+    border-radius: 10px;
+    background: #fafafa;
+    transition: all 0.2s ease;
+    font-family: inherit;
+}
+
+.form-input:focus,
+.form-select:focus,
+.form-textarea:focus {
+    outline: none;
+    border-color: #B8899A;
+    background: white;
+}
+
+.form-textarea {
+    min-height: 120px;
+    resize: vertical;
+}
+
+.help-text {
+    font-size: 13px;
+    color: #999;
+    margin-top: 5px;
+}
+
+.form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+}
+
+.button-group {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 50px;
+}
+
+.skip-button {
+    color: #999;
+    text-decoration: none;
+    font-size: 14px;
+    padding: 10px;
+}
+
+.skip-button:hover {
+    color: #666;
+}
+
+.continue-button {
+    background: #B8899A;
+    color: white;
+    padding: 14px 40px;
+    border-radius: 50px;
+    font-size: 16px;
+    font-weight: 500;
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.continue-button:hover {
+    background: #a07384;
+    transform: translateY(-1px);
+}
+
+.required {
+    color: #B8899A;
+}
+
+@media (max-width: 640px) {
+    .form-section {
+        padding: 30px 20px;
+    }
     
-    if (orgType && state) {
-        document.getElementById('matchPreview').classList.remove('hidden');
-        
-        // Simulate showing relevant grants
-        const previewHtml = `
-            <div class="bg-white p-3 rounded border-l-4 border-pink-500">
-                <strong>Ford Foundation</strong> - Community Development Grant
-                <span class="text-sm text-gray-600 ml-2">$50,000 - $250,000</span>
-            </div>
-            <div class="bg-white p-3 rounded border-l-4 border-pink-400">
-                <strong>Michigan Council for Arts</strong> - Capacity Building
-                <span class="text-sm text-gray-600 ml-2">$25,000 - $100,000</span>
-            </div>
-        `;
-        document.getElementById('previewGrants').innerHTML = previewHtml;
+    .form-row {
+        grid-template-columns: 1fr;
     }
 }
+</style>
+{% endblock %}
 
-// Save progress and skip to dashboard
-function saveAndSkip() {
-    const form = document.getElementById('step1Form');
-    const formData = new FormData(form);
-    formData.append('skip', 'true');
+{% block content %}
+<div class="container">
+    <div class="progress-section">
+        <div class="step-indicator">Step 1 of 3</div>
+        <div class="time-estimate">~2 minutes</div>
+        <div class="progress-bar">
+            <div class="progress-fill" style="width: 33%"></div>
+        </div>
+        <div class="progress-dots">
+            <div class="dot active"></div>
+            <div class="dot"></div>
+            <div class="dot"></div>
+        </div>
+    </div>
     
-    fetch('{{ url_for("onboarding.save_step1") }}', {
-        method: 'POST',
-        body: formData
-    }).then(() => {
-        window.location.href = '{{ url_for("dashboard.index") }}';
-    });
-}
-</script>
+    <form method="POST" action="{{ url_for('onboarding_flow.step1') }}" class="form-section">
+        {{ form.hidden_tag() }}
+        
+        <h1 class="section-title">Basic Organization Information</h1>
+        <p class="section-subtitle">Let's start with the essentials about your organization</p>
+        
+        <div class="form-group">
+            <label for="org_name" class="form-label">
+                Organization Name <span class="required">*</span>
+            </label>
+            {{ form.org_name(class="form-input", placeholder="e.g., Hope Community Center") }}
+            {% if form.org_name.errors %}
+                <div class="help-text" style="color: #e74c3c;">{{ form.org_name.errors[0] }}</div>
+            {% endif %}
+        </div>
+        
+        <div class="form-row">
+            <div class="form-group">
+                <label for="org_type" class="form-label">
+                    Organization Type <span class="required">*</span>
+                </label>
+                {{ form.org_type(class="form-select") }}
+            </div>
+            
+            <div class="form-group">
+                <label for="ein" class="form-label">
+                    EIN/Tax ID
+                </label>
+                {{ form.ein(class="form-input", placeholder="XX-XXXXXXX") }}
+                <div class="help-text">Required for federal grants</div>
+            </div>
+        </div>
+        
+        <div class="form-row">
+            <div class="form-group">
+                <label for="city" class="form-label">
+                    City <span class="required">*</span>
+                </label>
+                {{ form.city(class="form-input", placeholder="e.g., Atlanta") }}
+            </div>
+            
+            <div class="form-group">
+                <label for="state" class="form-label">
+                    State <span class="required">*</span>
+                </label>
+                {{ form.state(class="form-select") }}
+            </div>
+        </div>
+        
+        <div class="form-row">
+            <div class="form-group">
+                <label for="annual_budget" class="form-label">
+                    Annual Budget Range
+                </label>
+                {{ form.annual_budget(class="form-select") }}
+                <div class="help-text">Helps match appropriate grant sizes</div>
+            </div>
+            
+            <div class="form-group">
+                <label for="founded_year" class="form-label">
+                    Year Founded
+                </label>
+                {{ form.founded_year(class="form-input", placeholder="e.g., 2010") }}
+            </div>
+        </div>
+        
+        <div class="form-group">
+            <label for="website" class="form-label">
+                Website
+            </label>
+            {{ form.website(class="form-input", placeholder="https://www.yourorganization.org") }}
+        </div>
+        
+        <div class="button-group">
+            <a href="/dashboard" class="skip-button">Skip setup for now</a>
+            {{ form.submit(class="continue-button") }}
+        </div>
+    </form>
+</div>
 {% endblock %}
