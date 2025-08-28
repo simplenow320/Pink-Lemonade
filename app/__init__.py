@@ -273,6 +273,20 @@ def create_app():
     from app.api.phase0_onboarding import phase0_bp
     flask_app.register_blueprint(phase0_bp)
     
+    # Register Candid API import endpoints
+    try:
+        from app.api.candid_import import candid_import_bp
+        flask_app.register_blueprint(candid_import_bp)
+    except ImportError as e:
+        print(f"Candid import blueprint not available: {e}")
+    
+    # Register Test Integration endpoints
+    try:
+        from app.api.test_integration import test_integration_bp
+        flask_app.register_blueprint(test_integration_bp)
+    except ImportError as e:
+        print(f"Test integration blueprint not available: {e}")
+    
     # Register Phase 1 World-Class Matching endpoints
     from app.api.phase1_matching import phase1_bp
     flask_app.register_blueprint(phase1_bp)

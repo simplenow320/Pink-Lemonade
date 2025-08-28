@@ -1,7 +1,7 @@
 """
 Smart Dashboard Routes - Profile-driven grant discovery
 """
-from flask import Blueprint, render_template, jsonify, request, session
+from flask import Blueprint, render_template, jsonify, request, session, redirect
 from app import db
 from app.models import User, Organization, Grant, Analytics
 from app.services.auth_manager import AuthManager
@@ -18,6 +18,8 @@ dashboard_bp = Blueprint('dashboard', __name__, url_prefix='/dashboard')
 def index():
     """Main dashboard - different views for new vs returning users"""
     user = AuthManager.get_current_user()
+    if not user:
+        return redirect('/login')
     org = Organization.query.filter_by(user_id=user.id).first()
     
     # Check if new or returning user
@@ -36,6 +38,8 @@ def index():
 def smart_discovery():
     """Smart grant discovery based on profile"""
     user = AuthManager.get_current_user()
+    if not user:
+        return redirect('/login')
     org = Organization.query.filter_by(user_id=user.id).first()
     
     # Get personalized grants
@@ -51,6 +55,8 @@ def smart_discovery():
 def get_profile_grants():
     """API endpoint for profile-based grant recommendations"""
     user = AuthManager.get_current_user()
+    if not user:
+        return jsonify({'error': 'Not authenticated'}), 401
     org = Organization.query.filter_by(user_id=user.id).first()
     
     if not org:
@@ -87,6 +93,8 @@ def get_profile_grants():
 def refresh_matches():
     """Refresh grant matches with latest data"""
     user = AuthManager.get_current_user()
+    if not user:
+        return jsonify({'error': 'Not authenticated'}), 401
     org = Organization.query.filter_by(user_id=user.id).first()
     
     if not org:

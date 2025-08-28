@@ -182,7 +182,21 @@ def save_step3():
     
     db.session.commit()
     
-    flash('🎉 Congratulations! Your profile is complete. Let\'s find your perfect grants!', 'success')
+    # Trigger immediate grant discovery for the new organization
+    try:
+        from app.services.grant_discovery_service import GrantDiscoveryService
+        discovery_service = GrantDiscoveryService()
+        discovery_result = discovery_service.discover_and_persist(org.id, limit=25)
+        
+        if discovery_result.get('success'):
+            grant_count = len(discovery_result.get('top_matches', []))
+            flash(f'🎉 Congratulations! Your profile is complete. We found {grant_count} grants for you!', 'success')
+        else:
+            flash('🎉 Profile complete! Finding your perfect grants...', 'success')
+    except Exception as e:
+        print(f"Discovery error after onboarding: {e}")
+        flash('🎉 Profile complete! Let\'s find your perfect grants!', 'success')
+    
     return redirect('/dashboard/smart-discovery')
 
 @onboarding_bp.route('/progress')
