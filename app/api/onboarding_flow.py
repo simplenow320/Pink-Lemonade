@@ -23,7 +23,7 @@ def welcome():
     
     # If already onboarded, redirect to dashboard
     if org and org.profile_completeness >= 80:
-        return redirect(url_for('dashboard.index'))
+        return redirect('/dashboard')
     
     return render_template('onboarding/welcome.html', user=user)
 
@@ -74,7 +74,7 @@ def save_step1():
     
     if request.form.get('skip') == 'true':
         flash('Profile saved! You can complete it anytime from Settings.', 'info')
-        return redirect(url_for('dashboard.index'))
+        return redirect('/dashboard')
     
     flash('Great start! Let\'s continue with your mission.', 'success')
     return redirect(url_for('onboarding.step2'))
@@ -127,7 +127,7 @@ def save_step2():
     
     if request.form.get('skip') == 'true':
         flash('Profile saved! Complete the final step anytime.', 'info')
-        return redirect(url_for('dashboard.index'))
+        return redirect('/dashboard')
     
     flash('Excellent! One more step to go.', 'success')
     return redirect(url_for('onboarding.step3'))
@@ -183,7 +183,7 @@ def save_step3():
     db.session.commit()
     
     flash('🎉 Congratulations! Your profile is complete. Let\'s find your perfect grants!', 'success')
-    return redirect(url_for('dashboard.smart_discovery'))
+    return redirect('/dashboard/smart-discovery')
 
 @onboarding_bp.route('/progress')
 @AuthManager.require_auth
