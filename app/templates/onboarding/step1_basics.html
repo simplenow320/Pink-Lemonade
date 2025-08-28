@@ -1,440 +1,454 @@
 {% extends "onboarding/base_onboarding.html" %}
 
-{% block title %}Organization Profile - Basic Information{% endblock %}
+{% block title %}Organization Setup - Basic Information{% endblock %}
 
 {% block extra_css %}
 <style>
 body {
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Helvetica', 'Arial', sans-serif;
-    background: #ffffff;
 }
 
-.container {
-    max-width: 700px;
-    margin: 0 auto;
-    padding: 60px 20px;
-}
-
-.progress-section {
-    margin-bottom: 60px;
-    text-align: center;
-}
-
-.step-indicator {
-    font-size: 14px;
-    color: #999;
-    margin-bottom: 10px;
-    font-weight: 500;
-    letter-spacing: 0.5px;
-    text-transform: uppercase;
-}
-
-.time-estimate {
-    font-size: 14px;
-    color: #B8899A;
-    margin-bottom: 30px;
+.onboarding-container {
+  max-width: 800px;
+  margin: 60px auto;
+  padding: 40px;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
 }
 
 .progress-bar {
-    height: 3px;
-    background: #f5f5f5;
-    border-radius: 3px;
-    overflow: hidden;
-    margin-bottom: 10px;
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 40px;
+  position: relative;
 }
 
-.progress-fill {
-    height: 100%;
-    background: #B8899A;
-    transition: width 0.5s ease;
+.progress-bar::before {
+  content: '';
+  position: absolute;
+  top: 20px;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: #E0E0E0;
+  z-index: 0;
 }
 
-.progress-dots {
-    display: flex;
-    justify-content: space-between;
-    padding: 0 20px;
+.progress-step {
+  position: relative;
+  z-index: 1;
+  text-align: center;
+  flex: 1;
 }
 
-.dot {
-    width: 8px;
-    height: 8px;
-    border-radius: 50%;
-    background: #e0e0e0;
+.step-circle {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: white;
+  border: 2px solid #E0E0E0;
+  margin: 0 auto 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  color: #999;
 }
 
-.dot.active {
-    background: #B8899A;
+.step-circle.active {
+  background: #B8899A;
+  border-color: #B8899A;
+  color: white;
+}
+
+.step-circle.completed {
+  background: #6b7280;
+  border-color: #6b7280;
+  color: white;
+}
+
+.step-label {
+  font-size: 12px;
+  color: #666;
+}
+
+.onboarding-header {
+  margin-bottom: 32px;
+}
+
+.onboarding-header h2 {
+  font-size: 28px;
+  font-weight: 600;
+  color: #1a1a1a;
+  margin: 0 0 8px 0;
+}
+
+.onboarding-header p {
+  color: #666;
+  font-size: 14px;
 }
 
 .form-section {
-    background: white;
-    padding: 50px;
-    border-radius: 20px;
-    border: 1px solid #f0f0f0;
+  margin-bottom: 32px;
 }
 
-.section-title {
-    font-size: 28px;
-    font-weight: 600;
-    color: #1a1a1a;
-    margin-bottom: 10px;
-}
-
-.section-subtitle {
-    font-size: 16px;
-    color: #6b6b6b;
-    margin-bottom: 40px;
-}
-
-.form-group {
-    margin-bottom: 30px;
-}
-
-.form-label {
-    display: block;
-    font-size: 14px;
-    font-weight: 500;
-    color: #333;
-    margin-bottom: 8px;
-    letter-spacing: 0.3px;
-}
-
-.form-input,
-.form-select,
-.form-textarea {
-    width: 100%;
-    padding: 12px 16px;
-    font-size: 16px;
-    border: 1px solid #e0e0e0;
-    border-radius: 10px;
-    background: #fafafa;
-    transition: all 0.2s ease;
-    font-family: inherit;
-}
-
-.form-input:focus,
-.form-select:focus,
-.form-textarea:focus {
-    outline: none;
-    border-color: #B8899A;
-    background: white;
-}
-
-.form-textarea {
-    min-height: 120px;
-    resize: vertical;
-}
-
-.help-text {
-    font-size: 13px;
-    color: #999;
-    margin-top: 5px;
+.form-section h3 {
+  font-size: 18px;
+  color: #1a1a1a;
+  margin-bottom: 16px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #F0F0F0;
 }
 
 .form-row {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 20px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+  margin-bottom: 20px;
 }
 
-.section-divider {
-    font-size: 18px;
-    font-weight: 600;
-    color: #333;
-    margin: 40px 0 20px 0;
-    padding-bottom: 10px;
-    border-bottom: 1px solid #f0f0f0;
+.form-group {
+  margin-bottom: 20px;
 }
 
-.checkbox-item {
-    display: flex;
-    align-items: center;
-    margin-bottom: 15px;
+.form-group label {
+  display: block;
+  margin-bottom: 8px;
+  color: #1a1a1a;
+  font-size: 14px;
+  font-weight: 500;
 }
 
-.checkbox-item input[type="checkbox"] {
-    width: 18px;
-    height: 18px;
-    margin-right: 10px;
-    accent-color: #B8899A;
+.form-group label .required {
+  color: #B8899A;
 }
 
-.checkbox-item label {
-    font-size: 15px;
-    color: #333;
-    cursor: pointer;
+.form-group input,
+.form-group select,
+.form-group textarea {
+  width: 100%;
+  padding: 10px 14px;
+  border: 1px solid #E0E0E0;
+  border-radius: 8px;
+  font-size: 14px;
+  transition: all 0.2s ease;
 }
 
-.button-group {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-top: 50px;
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus {
+  outline: none;
+  border-color: #B8899A;
+  box-shadow: 0 0 0 3px rgba(184, 137, 154, 0.1);
 }
 
-.skip-button {
-    color: #999;
-    text-decoration: none;
-    font-size: 14px;
-    padding: 10px;
+.form-group textarea {
+  resize: vertical;
+  min-height: 100px;
 }
 
-.skip-button:hover {
-    color: #666;
+.form-group small {
+  display: block;
+  margin-top: 6px;
+  color: #666;
+  font-size: 12px;
 }
 
-.continue-button {
-    background: #B8899A;
-    color: white;
-    padding: 14px 40px;
-    border-radius: 50px;
-    font-size: 16px;
-    font-weight: 500;
-    border: none;
-    cursor: pointer;
-    transition: all 0.2s ease;
+.checkbox-group {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  margin-bottom: 12px;
 }
 
-.continue-button:hover {
-    background: #a07384;
-    transform: translateY(-1px);
+.checkbox-group input[type="checkbox"] {
+  margin-top: 3px;
+  width: auto;
+  accent-color: #B8899A;
 }
 
-.continue-button:disabled {
-    opacity: 0.6;
-    cursor: not-allowed;
+.checkbox-group label {
+  flex: 1;
+  font-size: 14px;
+  font-weight: normal;
+  margin-bottom: 0;
 }
 
-.required {
-    color: #B8899A;
+.form-actions {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 40px;
+  padding-top: 24px;
+  border-top: 1px solid #F0F0F0;
 }
 
-.success-message {
-    background: #f0fdf4;
-    color: #166534;
-    padding: 12px 16px;
-    border-radius: 10px;
-    margin-bottom: 20px;
-    display: none;
+.btn-secondary {
+  padding: 12px 24px;
+  background: #F5F5F5;
+  color: #1a1a1a;
+  border: 1px solid #E0E0E0;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  text-decoration: none;
+}
+
+.btn-secondary:hover {
+  background: #E8E8E8;
+}
+
+.btn-primary {
+  padding: 12px 32px;
+  background: #B8899A;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.btn-primary:hover {
+  background: #a07384;
+  transform: translateY(-1px);
+}
+
+.btn-primary:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 
 .error-message {
-    background: #fef2f2;
-    color: #991b1b;
-    padding: 12px 16px;
-    border-radius: 10px;
-    margin-bottom: 20px;
-    display: none;
+  background: #FEE;
+  color: #C33;
+  padding: 12px;
+  border-radius: 6px;
+  margin-bottom: 20px;
+  font-size: 14px;
+  display: none;
 }
 
-@media (max-width: 640px) {
-    .form-section {
-        padding: 30px 20px;
-    }
-    
-    .form-row {
-        grid-template-columns: 1fr;
-    }
+.success-message {
+  background: #E8F5E9;
+  color: #2E7D32;
+  padding: 12px;
+  border-radius: 6px;
+  margin-bottom: 20px;
+  font-size: 14px;
+  display: none;
 }
 </style>
 {% endblock %}
 
 {% block content %}
-<div class="container">
-    <div class="progress-section">
-        <div class="step-indicator">Step 1 of 3</div>
-        <div class="time-estimate">~2 minutes</div>
-        <div class="progress-bar">
-            <div class="progress-fill" style="width: 33%"></div>
-        </div>
-        <div class="progress-dots">
-            <div class="dot active"></div>
-            <div class="dot"></div>
-            <div class="dot"></div>
-        </div>
+<div class="onboarding-container">
+  <!-- Progress Bar -->
+  <div class="progress-bar">
+    <div class="progress-step">
+      <div class="step-circle active">1</div>
+      <div class="step-label">Basic Info</div>
     </div>
-    
-    <form id="onboardingForm" class="form-section">
-        <h1 class="section-title">Basic Organization Information</h1>
-        <p class="section-subtitle">Let's start with the essentials about your organization</p>
-        
-        <div id="errorMessage" class="error-message"></div>
-        <div id="successMessage" class="success-message"></div>
-        
-        <h3 class="section-divider">Organization Identity</h3>
-        
-        <div class="form-row">
-            <div class="form-group">
-                <label for="legal_name" class="form-label">
-                    Legal Name <span class="required">*</span>
-                </label>
-                <input type="text" id="legal_name" name="legal_name" class="form-input" required>
-                <div class="help-text">As registered with the IRS</div>
-            </div>
-            
-            <div class="form-group">
-                <label for="ein" class="form-label">
-                    EIN/Tax ID
-                </label>
-                <input type="text" id="ein" name="ein" class="form-input" placeholder="XX-XXXXXXX">
-                <div class="help-text">Your federal tax identification number</div>
-            </div>
-        </div>
-        
-        <div class="form-row">
-            <div class="form-group">
-                <label for="org_type" class="form-label">
-                    Organization Type <span class="required">*</span>
-                </label>
-                <select id="org_type" name="org_type" class="form-select" required>
-                    <option value="">Select type...</option>
-                    <option value="501c3">501(c)(3) Nonprofit</option>
-                    <option value="faith_based">Faith-Based Organization</option>
-                    <option value="educational">Educational Institution</option>
-                    <option value="community">Community Organization</option>
-                    <option value="healthcare">Healthcare Organization</option>
-                    <option value="arts">Arts & Culture</option>
-                    <option value="environmental">Environmental</option>
-                    <option value="social_services">Social Services</option>
-                    <option value="other">Other</option>
-                </select>
-            </div>
-            
-            <div class="form-group">
-                <label for="year_founded" class="form-label">
-                    Year Founded
-                </label>
-                <input type="number" id="year_founded" name="year_founded" class="form-input" min="1800" max="2025" placeholder="YYYY">
-            </div>
-        </div>
-        
-        <div class="form-row">
-            <div class="form-group">
-                <label for="website" class="form-label">
-                    Website
-                </label>
-                <input type="text" id="website" name="website" class="form-input" placeholder="www.yourorganization.org">
-            </div>
-            
-            <div class="form-group">
-                <label for="social_media" class="form-label">
-                    Primary Social Media
-                </label>
-                <input type="text" id="social_media" name="social_media" class="form-input" placeholder="@yourorg">
-                <div class="help-text">Twitter, Facebook, or Instagram handle</div>
-            </div>
-        </div>
-        
-        <h3 class="section-divider">Mission & Vision</h3>
-        
+    <div class="progress-step">
+      <div class="step-circle">2</div>
+      <div class="step-label">Programs</div>
+    </div>
+    <div class="progress-step">
+      <div class="step-circle">3</div>
+      <div class="step-label">Capacity</div>
+    </div>
+    <div class="progress-step">
+      <div class="step-circle">4</div>
+      <div class="step-label">Grant History</div>
+    </div>
+    <div class="progress-step">
+      <div class="step-circle">5</div>
+      <div class="step-label">AI Learning</div>
+    </div>
+  </div>
+
+  <div class="onboarding-header">
+    <h2>Tell Us About Your Organization</h2>
+    <p>This information helps our AI match you with the most relevant grant opportunities</p>
+  </div>
+
+  <div id="errorMessage" class="error-message"></div>
+  <div id="successMessage" class="success-message"></div>
+
+  <form id="onboardingForm">
+    <!-- Core Identity Section -->
+    <div class="form-section">
+      <h3>Organization Identity</h3>
+      
+      <div class="form-row">
         <div class="form-group">
-            <label for="mission" class="form-label">
-                Mission Statement <span class="required">*</span>
-            </label>
-            <textarea id="mission" name="mission" class="form-textarea" required 
-                      placeholder="What is your organization's purpose and primary goal?"></textarea>
-            <div class="help-text">This is crucial for AI matching - be specific about your impact goals</div>
+          <label for="legalName">Legal Name <span class="required">*</span></label>
+          <input type="text" id="legalName" name="legal_name" required>
+          <small>As registered with the IRS</small>
         </div>
         
         <div class="form-group">
-            <label for="vision" class="form-label">
-                Vision Statement
-            </label>
-            <textarea id="vision" name="vision" class="form-textarea" 
-                      placeholder="What future change does your organization want to see?"></textarea>
+          <label for="ein">EIN/Tax ID</label>
+          <input type="text" id="ein" name="ein" placeholder="XX-XXXXXXX">
+          <small>Your federal tax identification number</small>
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label for="orgType">Organization Type <span class="required">*</span></label>
+          <select id="orgType" name="org_type" required>
+            <option value="">Select type...</option>
+            <option value="501c3">501(c)(3) Nonprofit</option>
+            <option value="faith_based">Faith-Based Organization</option>
+            <option value="educational">Educational Institution</option>
+            <option value="community">Community Organization</option>
+            <option value="healthcare">Healthcare Organization</option>
+            <option value="arts">Arts & Culture</option>
+            <option value="environmental">Environmental</option>
+            <option value="social_services">Social Services</option>
+            <option value="other">Other</option>
+          </select>
         </div>
         
-        <h3 class="section-divider">Special Characteristics</h3>
-        
-        <p style="font-size: 14px; color: #666; margin-bottom: 20px;">
-            Many funders prioritize organizations with specific leadership characteristics
-        </p>
-        
-        <div class="checkbox-item">
-            <input type="checkbox" id="faith_based" name="faith_based">
-            <label for="faith_based">Faith-Based Organization</label>
+        <div class="form-group">
+          <label for="yearFounded">Year Founded</label>
+          <input type="number" id="yearFounded" name="year_founded" min="1800" max="2025" placeholder="YYYY">
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label for="website">Website</label>
+          <input type="text" id="website" name="website" placeholder="www.yourorganization.org">
         </div>
         
-        <div class="checkbox-item">
-            <input type="checkbox" id="minority_led" name="minority_led">
-            <label for="minority_led">Minority-Led (51% or more leadership)</label>
+        <div class="form-group">
+          <label for="socialMedia">Primary Social Media</label>
+          <input type="text" id="socialMedia" name="social_media" placeholder="@yourorg">
+          <small>Twitter, Facebook, or Instagram handle</small>
         </div>
-        
-        <div class="checkbox-item">
-            <input type="checkbox" id="woman_led" name="woman_led">
-            <label for="woman_led">Woman-Led (51% or more leadership)</label>
-        </div>
-        
-        <div class="checkbox-item">
-            <input type="checkbox" id="veteran_led" name="veteran_led">
-            <label for="veteran_led">Veteran-Led Organization</label>
-        </div>
-        
-        <div class="button-group">
-            <a href="/dashboard" class="skip-button">Skip setup for now</a>
-            <button type="submit" class="continue-button" id="submitBtn">Continue →</button>
-        </div>
-    </form>
+      </div>
+    </div>
+
+    <!-- Mission & Vision Section -->
+    <div class="form-section">
+      <h3>Mission & Vision</h3>
+      
+      <div class="form-group">
+        <label for="mission">Mission Statement <span class="required">*</span></label>
+        <textarea id="mission" name="mission" required placeholder="What is your organization's purpose and primary goal?"></textarea>
+        <small>This is crucial for AI matching - be specific about your impact goals</small>
+      </div>
+      
+      <div class="form-group">
+        <label for="vision">Vision Statement</label>
+        <textarea id="vision" name="vision" placeholder="What future change does your organization want to see?"></textarea>
+      </div>
+      
+      <div class="form-group">
+        <label for="values">Core Values</label>
+        <textarea id="values" name="values" placeholder="What principles guide your work? (e.g., equity, compassion, innovation)"></textarea>
+      </div>
+    </div>
+
+    <!-- Special Characteristics -->
+    <div class="form-section">
+      <h3>Special Characteristics</h3>
+      <p style="font-size: 14px; color: #666; margin-bottom: 16px;">Many funders prioritize organizations with specific leadership characteristics</p>
+      
+      <div class="checkbox-group">
+        <input type="checkbox" id="faithBased" name="faith_based">
+        <label for="faithBased">Faith-Based Organization</label>
+      </div>
+      
+      <div class="checkbox-group">
+        <input type="checkbox" id="minorityLed" name="minority_led">
+        <label for="minorityLed">Minority-Led (51% or more leadership)</label>
+      </div>
+      
+      <div class="checkbox-group">
+        <input type="checkbox" id="womanLed" name="woman_led">
+        <label for="womanLed">Woman-Led (51% or more leadership)</label>
+      </div>
+      
+      <div class="checkbox-group">
+        <input type="checkbox" id="veteranLed" name="veteran_led">
+        <label for="veteranLed">Veteran-Led Organization</label>
+      </div>
+    </div>
+
+    <div class="form-actions">
+      <a href="/dashboard" class="btn-secondary">Skip for Now</a>
+      <button type="submit" class="btn-primary" id="submitBtn">Save & Continue</button>
+    </div>
+  </form>
 </div>
 
 <script>
 document.getElementById('onboardingForm').addEventListener('submit', async function(e) {
-    e.preventDefault();
-    
-    const errorMsg = document.getElementById('errorMessage');
-    const successMsg = document.getElementById('successMessage');
-    const submitBtn = document.getElementById('submitBtn');
-    
-    errorMsg.style.display = 'none';
-    successMsg.style.display = 'none';
-    
-    // Collect form data
-    const formData = new FormData(e.target);
-    const data = {step: 1};
-    
-    // Convert form data to object
-    for (let [key, value] of formData.entries()) {
-        if (e.target.elements[key].type === 'checkbox') {
-            data[key] = e.target.elements[key].checked;
-        } else {
-            data[key] = value;
-        }
+  e.preventDefault();
+  
+  const errorMsg = document.getElementById('errorMessage');
+  const successMsg = document.getElementById('successMessage');
+  const submitBtn = document.getElementById('submitBtn');
+  
+  errorMsg.style.display = 'none';
+  successMsg.style.display = 'none';
+  
+  // Collect form data
+  const formData = new FormData(e.target);
+  const data = {};
+  
+  // Convert form data to object
+  for (let [key, value] of formData.entries()) {
+    if (e.target.elements[key].type === 'checkbox') {
+      data[key] = e.target.elements[key].checked;
+    } else {
+      data[key] = value;
     }
+  }
+  
+  // Add step number
+  data.step = 1;
+  
+  submitBtn.disabled = true;
+  submitBtn.textContent = 'Saving...';
+  
+  try {
+    const response = await fetch('/api/organization/onboarding', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(data)
+    });
     
-    submitBtn.disabled = true;
-    submitBtn.textContent = 'Saving...';
+    const result = await response.json();
     
-    try {
-        const response = await fetch('/api/organization/onboarding', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(data)
-        });
-        
-        const result = await response.json();
-        
-        if (response.ok) {
-            successMsg.textContent = 'Information saved! Redirecting to next step...';
-            successMsg.style.display = 'block';
-            
-            // Redirect to step 2
-            setTimeout(() => {
-                window.location.href = '/onboarding/step2';
-            }, 1500);
-        } else {
-            errorMsg.textContent = result.error || 'Failed to save information. Please try again.';
-            errorMsg.style.display = 'block';
-            submitBtn.disabled = false;
-            submitBtn.textContent = 'Continue →';
-        }
-    } catch (error) {
-        errorMsg.textContent = 'Network error. Please check your connection and try again.';
-        errorMsg.style.display = 'block';
-        submitBtn.disabled = false;
-        submitBtn.textContent = 'Continue →';
+    if (response.ok) {
+      successMsg.textContent = 'Information saved! Redirecting to next step...';
+      successMsg.style.display = 'block';
+      
+      // Redirect to step 2
+      setTimeout(() => {
+        window.location.href = '/onboarding/step2';
+      }, 1500);
+    } else {
+      errorMsg.textContent = result.error || 'Failed to save information. Please try again.';
+      errorMsg.style.display = 'block';
+      submitBtn.disabled = false;
+      submitBtn.textContent = 'Save & Continue';
     }
+  } catch (error) {
+    errorMsg.textContent = 'Network error. Please check your connection and try again.';
+    errorMsg.style.display = 'block';
+    submitBtn.disabled = false;
+    submitBtn.textContent = 'Save & Continue';
+  }
 });
 </script>
 {% endblock %}

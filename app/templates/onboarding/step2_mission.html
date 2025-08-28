@@ -2,379 +2,223 @@
 
 {% block title %}Organization Profile - Mission & Programs{% endblock %}
 
-{% block extra_css %}
-<style>
-body {
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Helvetica', 'Arial', sans-serif;
-    background: #ffffff;
-}
-
-.container {
-    max-width: 700px;
-    margin: 0 auto;
-    padding: 60px 20px;
-}
-
-.progress-section {
-    margin-bottom: 60px;
-    text-align: center;
-}
-
-.step-indicator {
-    font-size: 14px;
-    color: #999;
-    margin-bottom: 10px;
-    font-weight: 500;
-    letter-spacing: 0.5px;
-    text-transform: uppercase;
-}
-
-.time-estimate {
-    font-size: 14px;
-    color: #B8899A;
-    margin-bottom: 30px;
-}
-
-.progress-bar {
-    height: 3px;
-    background: #f5f5f5;
-    border-radius: 3px;
-    overflow: hidden;
-    margin-bottom: 10px;
-}
-
-.progress-fill {
-    height: 100%;
-    background: #B8899A;
-    transition: width 0.5s ease;
-}
-
-.progress-dots {
-    display: flex;
-    justify-content: space-between;
-    padding: 0 20px;
-}
-
-.dot {
-    width: 8px;
-    height: 8px;
-    border-radius: 50%;
-    background: #e0e0e0;
-}
-
-.dot.active {
-    background: #B8899A;
-}
-
-.form-section {
-    background: white;
-    padding: 50px;
-    border-radius: 20px;
-    border: 1px solid #f0f0f0;
-}
-
-.section-title {
-    font-size: 28px;
-    font-weight: 600;
-    color: #1a1a1a;
-    margin-bottom: 10px;
-}
-
-.section-subtitle {
-    font-size: 16px;
-    color: #6b6b6b;
-    margin-bottom: 40px;
-}
-
-.form-group {
-    margin-bottom: 30px;
-}
-
-.form-label {
-    display: block;
-    font-size: 14px;
-    font-weight: 500;
-    color: #333;
-    margin-bottom: 8px;
-    letter-spacing: 0.3px;
-}
-
-.form-input,
-.form-select,
-.form-textarea {
-    width: 100%;
-    padding: 12px 16px;
-    font-size: 16px;
-    border: 1px solid #e0e0e0;
-    border-radius: 10px;
-    background: #fafafa;
-    transition: all 0.2s ease;
-    font-family: inherit;
-}
-
-.form-input:focus,
-.form-select:focus,
-.form-textarea:focus {
-    outline: none;
-    border-color: #B8899A;
-    background: white;
-}
-
-.form-textarea {
-    min-height: 120px;
-    resize: vertical;
-}
-
-.help-text {
-    font-size: 13px;
-    color: #999;
-    margin-top: 5px;
-}
-
-.checkbox-group {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 15px;
-    margin-top: 10px;
-}
-
-.checkbox-item {
-    display: flex;
-    align-items: center;
-}
-
-.checkbox-item input[type="checkbox"] {
-    width: 18px;
-    height: 18px;
-    margin-right: 10px;
-    accent-color: #B8899A;
-}
-
-.checkbox-item label {
-    font-size: 15px;
-    color: #333;
-    cursor: pointer;
-}
-
-.button-group {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-top: 50px;
-}
-
-.back-button {
-    color: #999;
-    text-decoration: none;
-    font-size: 14px;
-    padding: 10px;
-}
-
-.back-button:hover {
-    color: #666;
-}
-
-.continue-button {
-    background: #B8899A;
-    color: white;
-    padding: 14px 40px;
-    border-radius: 50px;
-    font-size: 16px;
-    font-weight: 500;
-    border: none;
-    cursor: pointer;
-    transition: all 0.2s ease;
-}
-
-.continue-button:hover {
-    background: #a07384;
-    transform: translateY(-1px);
-}
-
-.required {
-    color: #B8899A;
-}
-
-.preview-box {
-    background: #fafafa;
-    border-radius: 12px;
-    padding: 20px;
-    margin-top: 30px;
-}
-
-.preview-title {
-    font-size: 14px;
-    font-weight: 600;
-    color: #B8899A;
-    margin-bottom: 10px;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-}
-
-.preview-content {
-    font-size: 14px;
-    color: #666;
-    line-height: 1.6;
-}
-
-@media (max-width: 640px) {
-    .form-section {
-        padding: 30px 20px;
-    }
-    
-    .checkbox-group {
-        grid-template-columns: 1fr;
-    }
-}
-</style>
-{% endblock %}
-
 {% block content %}
-<div class="container">
-    <div class="progress-section">
-        <div class="step-indicator">Step 2 of 3</div>
-        <div class="time-estimate">~3 minutes</div>
-        <div class="progress-bar">
-            <div class="progress-fill" style="width: 66%"></div>
+<div class="min-h-screen bg-white">
+    <div class="max-w-4xl mx-auto px-4 py-8">
+        <!-- Progress Bar -->
+        <div class="mb-8">
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="text-lg font-semibold text-gray-700">Setting Up Your Profile</h2>
+                <span class="text-sm text-gray-600">Step 2 of 3 • ~3 minutes</span>
+            </div>
+            <div class="relative">
+                <div class="overflow-hidden h-3 mb-4 text-xs flex rounded-full bg-gray-200">
+                    <div style="width:66%; background: #B8899A;" class="shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center transition-all duration-500"></div>
+                </div>
+                <div class="flex justify-between text-xs text-gray-600">
+                    <span class="text-gray-900 font-semibold">Basic Info - Complete</span>
+                    <span class="font-semibold" style="color: #B8899A;">Mission & Programs</span>
+                    <span>Capacity & History</span>
+                </div>
+            </div>
         </div>
-        <div class="progress-dots">
-            <div class="dot active"></div>
-            <div class="dot active"></div>
-            <div class="dot"></div>
+
+        <!-- Form Card -->
+        <div class="bg-white rounded-2xl shadow-xl p-8">
+            <div class="mb-6">
+                <h1 class="text-2xl font-bold text-gray-900 mb-2">Mission & Programs</h1>
+                <p class="text-gray-600">Tell us about your organization's purpose and impact</p>
+            </div>
+
+            <form id="step2Form" method="POST" action="{{ url_for('onboarding_flow.save_step2') }}">
+                <div class="space-y-6">
+                    <!-- Mission Statement -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                            Mission Statement <span style="color: #B8899A;">*</span>
+                        </label>
+                        <textarea name="mission_statement" 
+                                  id="mission_statement"
+                                  rows="4"
+                                  class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:border-transparent"
+                                  style="focus:ring-color: #B8899A;"
+                                  placeholder="What is your organization's purpose? What change do you create?"
+                                  required
+                                  onkeyup="updateCharCount('mission_statement', 500)">{{ org.mission_statement if org else '' }}</textarea>
+                        <div class="flex justify-between mt-1">
+                            <p class="text-sm text-gray-500">Your mission in 2-3 sentences</p>
+                            <span id="mission_statement_count" class="text-sm text-gray-500">0/500</span>
+                        </div>
+                    </div>
+
+                    <!-- Focus Areas -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                            Primary Focus Areas <span style="color: #B8899A;">*</span>
+                            <span class="text-gray-400 text-xs ml-2">(Select up to 3)</span>
+                        </label>
+                        <div class="grid md:grid-cols-2 gap-3">
+                            {% set focus_options = [
+                                ('education', 'Education & Literacy'),
+                                ('youth', 'Youth Development'),
+                                ('housing', 'Housing & Shelter'),
+                                ('healthcare', 'Healthcare & Wellness'),
+                                ('arts', 'Arts & Culture'),
+                                ('environment', 'Environment & Conservation'),
+                                ('social_justice', 'Social Justice & Equity'),
+                                ('economic', 'Economic Development'),
+                                ('faith', 'Faith & Spirituality'),
+                                ('seniors', 'Senior Services'),
+                                ('food', 'Food Security'),
+                                ('mental_health', 'Mental Health'),
+                                ('workforce', 'Workforce Development'),
+                                ('community', 'Community Building')
+                            ] %}
+                            {% for value, label in focus_options %}
+                            <label class="flex items-start">
+                                <input type="checkbox" 
+                                       name="focus_areas" 
+                                       value="{{ value }}"
+                                       class="mt-1 h-4 w-4 border-gray-300 rounded"
+                                       style="accent-color: #B8899A;"
+                                       onchange="checkFocusLimit(this); showImpactPreview()"
+                                       {{ 'checked' if org and org.focus_areas and value in org.focus_areas else '' }}>
+                                <span class="ml-2 text-sm text-gray-700">{{ label }}</span>
+                            </label>
+                            {% endfor %}
+                        </div>
+                    </div>
+
+                    <!-- Target Population -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                            Who Do You Serve? <span style="color: #B8899A;">*</span>
+                        </label>
+                        <input type="text" 
+                               name="target_population" 
+                               id="target_population"
+                               class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:border-transparent"
+                               style="focus:ring-color: #B8899A;"
+                               placeholder="e.g., At-risk youth ages 12-18 in urban communities"
+                               required
+                               value="{{ org.target_population if org else '' }}"
+                               onblur="showImpactPreview()">
+                        <p class="mt-1 text-sm text-gray-500">Be specific about demographics, age groups, and communities</p>
+                    </div>
+
+                    <!-- Geographic Scope -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                            Geographic Scope <span style="color: #B8899A;">*</span>
+                        </label>
+                        <select name="geographic_scope" 
+                                id="geographic_scope"
+                                class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:border-transparent"
+                                style="focus:ring-color: #B8899A;"
+                                required
+                                onchange="showImpactPreview()">
+                            <option value="">Select your service area...</option>
+                            <option value="neighborhood" {{ 'selected' if org and org.geographic_scope == 'neighborhood' else '' }}>Neighborhood/Local</option>
+                            <option value="city" {{ 'selected' if org and org.geographic_scope == 'city' else '' }}>Citywide</option>
+                            <option value="county" {{ 'selected' if org and org.geographic_scope == 'county' else '' }}>County</option>
+                            <option value="regional" {{ 'selected' if org and org.geographic_scope == 'regional' else '' }}>Multi-County/Regional</option>
+                            <option value="statewide" {{ 'selected' if org and org.geographic_scope == 'statewide' else '' }}>Statewide</option>
+                            <option value="national" {{ 'selected' if org and org.geographic_scope == 'national' else '' }}>National</option>
+                            <option value="international" {{ 'selected' if org and org.geographic_scope == 'international' else '' }}>International</option>
+                        </select>
+                    </div>
+
+                    <!-- Key Programs -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                            Key Programs & Services <span class="text-gray-400">(Optional but helpful)</span>
+                        </label>
+                        <textarea name="key_programs" 
+                                  rows="3"
+                                  class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:border-transparent"
+                                  style="focus:ring-color: #B8899A;"
+                                  placeholder="Briefly describe your main programs or services">{{ org.key_programs if org else '' }}</textarea>
+                        <p class="mt-1 text-sm text-gray-500">List your 2-3 main programs or services</p>
+                    </div>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="flex justify-between items-center mt-8 pt-6 border-t">
+                    <a href="{{ url_for('onboarding_flow.step1') }}" 
+                       class="text-gray-600 hover:text-gray-800 font-medium">
+                        ← Back
+                    </a>
+                    <div class="flex gap-4">
+                        <button type="button" 
+                                onclick="saveAndSkip()"
+                                class="px-6 py-3 bg-gray-200 text-gray-700 font-medium rounded-lg hover:bg-gray-300 transition-all">
+                            Skip for Now
+                        </button>
+                        <button type="submit" 
+                                class="px-8 py-3 text-white font-semibold rounded-lg hover:opacity-90 transition-all transform hover:scale-105 shadow-lg"
+                                style="background: #B8899A;">
+                            Continue to Capacity →
+                        </button>
+                    </div>
+                </div>
+            </form>
         </div>
     </div>
-    
-    <form method="POST" action="{{ url_for('onboarding_flow.save_step2') }}" class="form-section">
-        <h1 class="section-title">Mission & Programs</h1>
-        <p class="section-subtitle">Help our AI understand your organization's purpose and impact</p>
-        
-        <div class="form-group">
-            <label for="mission_statement" class="form-label">
-                Mission Statement <span class="required">*</span>
-            </label>
-            <textarea name="mission_statement" 
-                      id="mission_statement"
-                      class="form-textarea" 
-                      placeholder="Describe your organization's mission in 2-3 sentences..."
-                      required>{{ org.mission_statement if org else '' }}</textarea>
-            <div class="help-text">This helps our AI match you with aligned funders</div>
-        </div>
-        
-        <div class="form-group">
-            <label class="form-label">
-                Focus Areas <span class="required">*</span>
-            </label>
-            <div class="help-text" style="margin-bottom: 10px;">Select up to 3 that apply</div>
-            <div class="checkbox-group">
-                {% set focus_options = [
-                    ('education', 'Education & Literacy'),
-                    ('youth', 'Youth Development'),
-                    ('housing', 'Housing & Shelter'),
-                    ('healthcare', 'Healthcare & Wellness'),
-                    ('arts', 'Arts & Culture'),
-                    ('environment', 'Environment'),
-                    ('social_justice', 'Social Justice'),
-                    ('economic', 'Economic Development'),
-                    ('faith', 'Faith & Spirituality'),
-                    ('seniors', 'Senior Services'),
-                    ('food', 'Food Security'),
-                    ('mental_health', 'Mental Health'),
-                    ('workforce', 'Workforce Development'),
-                    ('community', 'Community Building')
-                ] %}
-                {% for value, label in focus_options %}
-                <div class="checkbox-item">
-                    <input type="checkbox" 
-                           name="focus_areas" 
-                           value="{{ value }}"
-                           id="focus_{{ value }}"
-                           {{ 'checked' if org and org.focus_areas and value in org.focus_areas else '' }}>
-                    <label for="focus_{{ value }}">{{ label }}</label>
-                </div>
-                {% endfor %}
-            </div>
-        </div>
-        
-        <div class="form-group">
-            <label for="target_population" class="form-label">
-                Who Do You Serve? <span class="required">*</span>
-            </label>
-            <input type="text" 
-                   name="target_population" 
-                   id="target_population"
-                   class="form-input"
-                   placeholder="e.g., At-risk youth ages 12-18 in urban communities"
-                   required
-                   value="{{ org.target_population if org else '' }}">
-            <div class="help-text">Be specific about demographics and communities</div>
-        </div>
-        
-        <div class="form-group">
-            <label for="geographic_scope" class="form-label">
-                Geographic Scope <span class="required">*</span>
-            </label>
-            <select name="geographic_scope" 
-                    id="geographic_scope"
-                    class="form-select"
-                    required>
-                <option value="">Select your service area...</option>
-                <option value="neighborhood" {{ 'selected' if org and org.geographic_scope == 'neighborhood' else '' }}>Neighborhood/Local</option>
-                <option value="city" {{ 'selected' if org and org.geographic_scope == 'city' else '' }}>Citywide</option>
-                <option value="county" {{ 'selected' if org and org.geographic_scope == 'county' else '' }}>County</option>
-                <option value="regional" {{ 'selected' if org and org.geographic_scope == 'regional' else '' }}>Multi-County/Regional</option>
-                <option value="statewide" {{ 'selected' if org and org.geographic_scope == 'statewide' else '' }}>Statewide</option>
-                <option value="national" {{ 'selected' if org and org.geographic_scope == 'national' else '' }}>National</option>
-                <option value="international" {{ 'selected' if org and org.geographic_scope == 'international' else '' }}>International</option>
-            </select>
-        </div>
-        
-        <div class="form-group">
-            <label for="key_programs" class="form-label">
-                Key Programs & Services
-            </label>
-            <textarea name="key_programs" 
-                      id="key_programs"
-                      class="form-textarea"
-                      placeholder="List your main programs or services (e.g., After-school tutoring, Food pantry, Job training)...">{{ org.key_programs if org else '' }}</textarea>
-            <div class="help-text">Be specific - this improves grant matching accuracy</div>
-        </div>
-        
-        <div class="preview-box">
-            <div class="preview-title">Live Grant Preview</div>
-            <div class="preview-content">
-                As you complete this information, our AI will start matching you with relevant grants.
-                Organizations with similar missions typically match with 15-30 grant opportunities immediately.
-            </div>
-        </div>
-        
-        <div class="button-group">
-            <a href="{{ url_for('onboarding_flow.step1') }}" class="back-button">← Back</a>
-            <button type="submit" class="continue-button">Continue →</button>
-        </div>
-    </form>
 </div>
 
 <script>
-// Limit focus area selections to 3
-document.addEventListener('DOMContentLoaded', function() {
-    const checkboxes = document.querySelectorAll('input[name="focus_areas"]');
+// Character counter
+function updateCharCount(fieldId, maxLength) {
+    const field = document.getElementById(fieldId);
+    const counter = document.getElementById(fieldId + '_count');
+    const length = field.value.length;
+    counter.textContent = `${length}/${maxLength}`;
     
-    function checkLimit() {
-        const checked = document.querySelectorAll('input[name="focus_areas"]:checked');
-        const unchecked = document.querySelectorAll('input[name="focus_areas"]:not(:checked)');
-        
-        if (checked.length >= 3) {
-            unchecked.forEach(cb => cb.disabled = true);
-        } else {
-            unchecked.forEach(cb => cb.disabled = false);
-        }
+    if (length > maxLength) {
+        counter.classList.add('text-red-500');
+    } else {
+        counter.classList.remove('text-red-500');
     }
+}
+
+// Limit focus area selections to 3
+function checkFocusLimit(checkbox) {
+    const checkboxes = document.querySelectorAll('input[name="focus_areas"]:checked');
+    const unchecked = document.querySelectorAll('input[name="focus_areas"]:not(:checked)');
     
-    checkboxes.forEach(cb => {
-        cb.addEventListener('change', checkLimit);
+    if (checkboxes.length >= 3) {
+        unchecked.forEach(cb => cb.disabled = true);
+    } else {
+        unchecked.forEach(cb => cb.disabled = false);
+    }
+}
+
+// Show impact preview
+function showImpactPreview() {
+    // Optional: Add preview logic here
+}
+
+// Save and skip
+function saveAndSkip() {
+    const form = document.getElementById('step2Form');
+    const formData = new FormData(form);
+    formData.append('skip', 'true');
+    
+    fetch('{{ url_for("onboarding.save_step2") }}', {
+        method: 'POST',
+        body: formData
+    }).then(() => {
+        window.location.href = '{{ url_for("dashboard.index") }}';
     });
-    
-    checkLimit();
+}
+
+// Initialize character counter
+document.addEventListener('DOMContentLoaded', () => {
+    const mission = document.getElementById('mission_statement');
+    if (mission.value) {
+        updateCharCount('mission_statement', 500);
+    }
+    checkFocusLimit(null);
 });
 </script>
 {% endblock %}
