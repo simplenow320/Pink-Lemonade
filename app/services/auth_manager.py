@@ -58,7 +58,7 @@ class AuthManager:
             if not session.get('is_authenticated'):
                 flash('Please log in to access this page.', 'warning')
                 session['next_url'] = request.url
-                return redirect(url_for('auth.login'))
+                return redirect('/login')
             return f(*args, **kwargs)
         return decorated_function
     
