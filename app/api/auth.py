@@ -98,12 +98,23 @@ def register():
             session['user_email'] = result['user']['email']
             session.permanent = False  # Don't remember by default on registration
             
+            # Create Organization for the new user
+            from app.models import Organization
+            org = Organization()
+            org.name = org_name
+            org.legal_name = org_name
+            org.user_id = result['user']['id']
+            org.created_by_user_id = result['user']['id']
+            org.profile_completeness = 20  # Basic registration complete
+            db.session.add(org)
+            db.session.commit()
+            
             logger.info(f"User registered and logged in: {email}")
             
             return jsonify({
-                'message': 'Registration successful! Starting your onboarding journey...',
+                'message': 'Registration successful! Welcome to GrantFlow!',
                 'user': result['user'],
-                'redirect': '/onboarding/welcome'
+                'redirect': '/dashboard'
             }), 201
         else:
             return jsonify({'error': result['error']}), 400
@@ -143,12 +154,15 @@ def login():
             # Check if user needs onboarding
             from app.models import Organization
             user_id = result['user']['id']
-            org = Organization.query.filter_by(user_id=user_id).first()
+            # Check both user_id and created_by_user_id fields
+            org = Organization.query.filter(
+                (Organization.user_id == user_id) | 
+                (Organization.created_by_user_id == user_id)
+            ).first()
             
-            if not org or org.profile_completeness < 80:
-                redirect_url = '/onboarding/welcome'
-            else:
-                redirect_url = '/dashboard'
+            # Simplified - always redirect to dashboard after login
+            # Users can complete their profile from dashboard if needed
+            redirect_url = '/dashboard'
             
             return jsonify({
                 'message': 'Login successful',

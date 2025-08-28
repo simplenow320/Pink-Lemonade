@@ -375,7 +375,7 @@
                     
                     // Redirect to the URL provided by the backend (onboarding)
                     setTimeout(() => {
-                        window.location.href = data.redirect || '/onboarding/welcome';
+                        window.location.href = data.redirect || '/dashboard';
                     }, 1500);
                 } else {
                     errorDiv.textContent = data.error || 'Registration failed. Please try again.';

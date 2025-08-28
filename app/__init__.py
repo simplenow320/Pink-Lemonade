@@ -129,16 +129,17 @@ def create_app():
     except ImportError:
         pass
     
-    # Register new onboarding flow only (auth is handled by the main auth blueprint)
-    try:
-        from app.api.onboarding_flow import onboarding_bp as new_onboarding_bp
-        from app.api.dashboard_routes import dashboard_bp as smart_dashboard_bp
-        
-        # Register with unique names to avoid conflicts
-        flask_app.register_blueprint(new_onboarding_bp, name='onboarding_flow')
-        flask_app.register_blueprint(smart_dashboard_bp, name='smart_dashboard')
-    except ImportError as e:
-        print(f"Could not import onboarding/dashboard: {e}")
+    # DISABLED - Conflicting onboarding flow causing routing issues
+    # The main onboarding is handled by app.api.onboarding below
+    # try:
+    #     from app.api.onboarding_flow import onboarding_bp as new_onboarding_bp
+    #     from app.api.dashboard_routes import dashboard_bp as smart_dashboard_bp
+    #     
+    #     # Register with unique names to avoid conflicts
+    #     flask_app.register_blueprint(new_onboarding_bp, name='onboarding_flow')
+    #     flask_app.register_blueprint(smart_dashboard_bp, name='smart_dashboard')
+    # except ImportError as e:
+    #     print(f"Could not import onboarding/dashboard: {e}")
     
     # Register grant analysis endpoints
     from app.api.grant_analysis import bp as grant_analysis_bp
