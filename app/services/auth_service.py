@@ -31,7 +31,7 @@ class AuthService:
             user.first_name = first_name
             user.last_name = last_name
             user.job_title = job_title
-            user.is_verified = False
+            user.is_verified = True  # Auto-verify for simple secure login
             user.created_at = datetime.utcnow()
             
             # Generate verification token
@@ -43,12 +43,12 @@ class AuthService:
             db.session.add(user)
             db.session.commit()
             
-            # Send verification email
-            self.email_service.send_verification_email(
-                email, 
-                first_name,
-                verification_token
-            )
+            # Skip sending verification email - auto-verified
+            # self.email_service.send_verification_email(
+            #     email, 
+            #     first_name,
+            #     verification_token
+            # )
             
             return {
                 'success': True,
@@ -76,9 +76,8 @@ class AuthService:
             if not check_password_hash(user.password_hash, password):
                 return {'success': False, 'error': 'Invalid email or password'}
             
-            # Check if email is verified
-            if not user.is_verified:
-                return {'success': False, 'error': 'Please verify your email before logging in'}
+            # Skip email verification check - not needed for simple secure login
+            # Users can log in immediately after registration
             
             # Update last login
             user.last_login = datetime.utcnow()
