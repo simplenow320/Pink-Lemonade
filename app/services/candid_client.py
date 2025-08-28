@@ -111,13 +111,19 @@ class GrantsClient:
         self.api_key = os.environ.get('CANDID_GRANTS_KEYS', '9178555867b84c8fbe9a828a77eaf953')
         self.cache = SimpleCache()
     
-    def _make_request(self, url: str, params: Dict = None, method: str = 'GET') -> Optional[Dict]:
+    def _make_request(self, url: str, params: Optional[Dict] = None, method: str = 'GET') -> Optional[Dict]:
         """Make request to Candid Grants API"""
+        import logging
+        logger = logging.getLogger(__name__)
+        
         try:
             headers = {
                 'Accept': 'application/json',
                 'Subscription-Key': self.api_key
             }
+            
+            logger.debug(f"Making {method} request to: {url}")
+            logger.debug(f"Parameters: {params}")
             
             if method == 'POST':
                 headers['Content-Type'] = 'application/json'
@@ -125,32 +131,48 @@ class GrantsClient:
             else:
                 response = requests.get(url, params=params, headers=headers, timeout=30)
             
+            logger.debug(f"Response status: {response.status_code}")
+            
             if response.status_code == 200:
                 return response.json()
             elif response.status_code == 404:
                 # 404 means no results found for the search parameters - not an error
                 # As per Candid docs: broaden search parameters if this occurs
+                logger.info("404 - No results found for search parameters")
                 return {"results": [], "count": 0, "message": "No results found - consider broadening search parameters"}
             elif response.status_code == 400:
                 # 400 means bad request - try different format
+                logger.warning(f"400 Bad request: {response.text}")
                 return {"error": f"Bad request: {response.text}"}
             elif response.status_code in [401, 429]:
+                logger.error(f"Authentication/rate limit error: {response.status_code}")
                 return {"error": f"API authentication/rate limit error: {response.status_code}"}
             else:
+                logger.error(f"HTTP {response.status_code}: {response.text}")
                 return {"error": f"HTTP {response.status_code}: {response.text}"}
                 
         except requests.RequestException as e:
             return {"error": f"Request failed: {str(e)}"}
     
-    def transactions(self, query: str = None, page: int = 1, size: int = 25) -> List[Dict]:
-        """Search grant transactions - using summary endpoint for grants data"""
+    def transactions(self, query: Optional[str] = None, location: Optional[int] = None, page: int = 1) -> List[Dict]:
+        """Search grant transactions using the official transactions endpoint
         
-        # Use the summary endpoint which is available
+        Args:
+            query: Keyword to search for
+            location: Geoname ID for location (e.g., 5001836 for Michigan)
+            page: Page number (1-100)
+        """
+        
+        # Build parameters according to Candid API spec
         params = {}
         if query:
             params['query'] = query
+        if location:
+            params['location'] = location  # Geoname ID as integer
+        if page:
+            params['page'] = page  # Page number 1-100
         
-        url = f"{self.base_url}/summary"
+        url = f"{self.base_url}/transactions"  # Correct endpoint
         
         # Check cache first
         cached_result = self.cache.get('GET', url, params)
@@ -161,37 +183,40 @@ class GrantsClient:
         response_data = self._make_request(url, params, 'GET')
         
         if not response_data or 'error' in response_data:
-            # Return sample data for demo if API fails
-            if query and query.lower() in ['education', 'youth', 'community', 'health', 'arts']:
-                return self._generate_sample_transactions(query)
             return []
         
-        # The summary endpoint returns aggregate data, not individual transactions
-        # Create mock transactions from the summary data
+        # Parse transactions from the API response
         transactions = []
         
-        # Check if we got valid summary data
-        # The response format is {"meta": {...}, "data": {...}}
-        data = response_data.get('data', response_data)
-        
-        if data and (data.get('num_grants', 0) > 0 or data.get('total_value', 0) > 0):
-            # We got real data from the API!
-            transactions.append({
-                'funder_name': 'Summary Data',
-                'recipient_name': f"Total of {data.get('num_recipients', 0)} recipients",
-                'amount': data.get('total_value', 0),
-                'grant_date': 'Various',
-                'description': f"Summary: {data.get('num_grants', 0)} grants totaling ${data.get('total_value', 0):,}",
-                'source': 'candid_api',
-                'num_grants': data.get('num_grants', 0),
-                'num_funders': data.get('num_foundations', 0),
-                'num_recipients': data.get('num_recipients', 0)
-            })
+        # The transactions endpoint returns a list of grant records
+        # Expected format from API documentation
+        if isinstance(response_data, list):
+            # Direct list of transactions
+            grant_records = response_data
+        elif isinstance(response_data, dict):
+            # May be wrapped in data key or have meta information
+            grant_records = response_data.get('data', response_data.get('grants', []))
+            if not isinstance(grant_records, list):
+                grant_records = []
         else:
-            # No results from the API
-            if query and query.lower() in ['education', 'youth', 'community', 'health', 'arts']:
-                return self._generate_sample_transactions(query)
+            grant_records = []
         
+        # Parse each grant record
+        for grant in grant_records:
+            if isinstance(grant, dict):
+                transactions.append({
+                    'funder_name': grant.get('funder_name', ''),
+                    'recipient_name': grant.get('recip_name', grant.get('recipient_name', '')),
+                    'amount': grant.get('amount', 0),
+                    'grant_date': grant.get('year_issued', grant.get('grant_date', '')),
+                    'description': grant.get('description', ''),
+                    'source': 'candid_api',
+                    'funder_id': grant.get('funder_id', ''),
+                    'recipient_id': grant.get('recip_id', ''),
+                    'location': grant.get('recip_location', '')
+                })
+        
+        # Cache and return results
         self.cache.set('GET', url, transactions, 600, params)
         return transactions
     
@@ -258,7 +283,7 @@ class GrantsClient:
     def snapshot_for(self, topic: str, geo: str) -> Dict:
         """Get grant snapshot for topic and geography"""
         query = f"{topic} {geo}".strip()
-        transactions = self.transactions(query, size=100)  # Get more data for analysis
+        transactions = self.transactions(query=query)  # Use correct parameter name
         
         if not transactions:
             return {
@@ -313,15 +338,17 @@ class EssentialsClient:
         self.api_key = os.environ.get('CANDID_ESSENTIALS_KEY', '8b0f054101a24cd79a2f445632ec9ac2')
         self.cache = SimpleCache()
     
-    def _make_request(self, url: str, params: Dict) -> Optional[Dict]:
-        """Make request to Candid Essentials API"""
+    def _make_request(self, url: str, params: Dict, method: str = 'POST') -> Optional[Dict]:
+        """Make request to Candid Essentials API using POST method as required"""
         try:
             headers = {
                 'Accept': 'application/json',
+                'Content-Type': 'application/json',
                 'Subscription-Key': self.api_key
             }
             
-            response = requests.get(url, params=params, headers=headers, timeout=30)
+            # Essentials API requires POST method
+            response = requests.post(url, json=params, headers=headers, timeout=30)
             
             if response.status_code == 200:
                 return response.json()
@@ -337,35 +364,35 @@ class EssentialsClient:
         except requests.RequestException as e:
             return {"error": f"Request failed: {str(e)}"}
     
-    def search_org(self, name: str = None, ein: str = None, city: str = None, 
-                   state: str = None, zip_code: str = None, page: int = 1, 
+    def search_org(self, search_terms: Optional[str] = None, from_offset: int = 0, 
                    size: int = 25) -> List[Dict]:
-        """Search organizations in Candid Essentials"""
+        """Search organizations in Candid Essentials using proper v3 format
         
-        params = {}
-        if name:
-            params['search_terms'] = name
-        if ein:
-            params['ein'] = ein
-        if city:
-            params['city'] = city
-        if state:
-            params['state'] = state
-        if zip_code:
-            params['zip'] = zip_code
+        Args:
+            search_terms: Any string to search (EIN, organization name, keywords)
+            from_offset: Offset from first result (default 0)
+            size: Maximum results to return (default 25, max 25)
+        """
         
-        params['page'] = page
-        params['per_page'] = size  # Changed from page_size to per_page
+        # Build request body according to API spec
+        request_body = {}
+        
+        if search_terms:
+            request_body['search_terms'] = search_terms
+        
+        # Add pagination
+        request_body['from'] = from_offset
+        request_body['size'] = min(size, 25)  # Max 25 per API docs
         
         # Try cache first
-        # The v3 endpoint doesn't have a /search path
         url = self.base_url
-        cached_result = self.cache.get('GET', url, params)
+        cache_key = f"{search_terms}_{from_offset}_{size}"
+        cached_result = self.cache.get('POST', url, {'key': cache_key})
         if cached_result is not None:
             return cached_result
         
         # Make API request
-        response_data = self._make_request(url, params)
+        response_data = self._make_request(url, request_body)
         
         if not response_data or 'error' in response_data:
             return []
@@ -399,7 +426,9 @@ class EssentialsClient:
             results.append(formatted)
         
         # Cache results
-        self.cache.set('GET', url, results, 600, params)
+        search_terms = request_body.get('search_terms', '') if 'request_body' in locals() else ''
+        cache_key = f"{search_terms}_{request_body.get('from', 0)}_{request_body.get('size', 25)}" if 'request_body' in locals() else ""
+        self.cache.set('POST', url, results, 600, {'key': cache_key})
         return results
     
     def get_profile(self, ein: str) -> Optional[Dict]:

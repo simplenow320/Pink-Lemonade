@@ -16,14 +16,17 @@ def search_grants():
         client = get_grants_client()
         
         query = request.args.get('q', '')
-        limit = min(int(request.args.get('limit', 25)), 100)  # Cap at 100
+        location = request.args.get('location', type=int)  # Geoname ID
         page = int(request.args.get('page', 1))
         
         if not query:
             return jsonify({"error": "Query parameter 'q' is required"}), 400
         
-        # Use the actual method that exists: transactions()
-        result = client.transactions(query=query, page=page, size=limit)
+        # Use the transactions method with proper parameters
+        if location:
+            result = client.transactions(query=query, location=location, page=page)
+        else:
+            result = client.transactions(query=query, page=page)
         
         # Format response
         if result:
@@ -129,7 +132,7 @@ def get_foundation(ein):
             return jsonify({"error": "Valid EIN is required"}), 400
         
         # Use search_org method from EssentialsClient
-        result = client.search_org(name_or_ein=ein)
+        result = client.search_org(search_terms=ein)
         
         if result:
             return jsonify({
@@ -164,7 +167,7 @@ def search_foundation():
             return jsonify({"error": "Name parameter is required"}), 400
         
         # Use search_org method
-        result = client.search_org(name_or_ein=name)
+        result = client.search_org(search_terms=name)
         
         if result:
             return jsonify({
@@ -202,11 +205,12 @@ def status():
         # Test Grants API
         try:
             grants_client = get_grants_client()
-            test_result = grants_client.transactions("test", size=1)
-            if test_result is not None:
+            test_result = grants_client.transactions(query="test", page=1)
+            if test_result is not None and len(test_result) > 0:
                 status_report["grants_api"] = True
+            logger.info(f"Grants API test result: {test_result}")
         except Exception as e:
-            logger.debug(f"Grants API test failed: {e}")
+            logger.error(f"Grants API test failed: {e}")
         
         # Test News API
         try:

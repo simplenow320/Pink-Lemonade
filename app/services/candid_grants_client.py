@@ -56,9 +56,9 @@ class CandidGrantsClient:
                      recipient_name: str = "",
                      state: str = "",
                      keyword: str = "",
-                     min_amount: int = None,
-                     max_amount: int = None,
-                     year: int = None,
+                     min_amount: Optional[int] = None,
+                     max_amount: Optional[int] = None,
+                     year: Optional[int] = None,
                      limit: int = 25) -> List[Dict]:
         """
         Search for grants using Candid Grants API
