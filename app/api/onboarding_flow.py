@@ -16,6 +16,9 @@ onboarding_bp = Blueprint('onboarding', __name__, url_prefix='/onboarding')
 def welcome():
     """Show the welcome screen with preparation checklist"""
     user = AuthManager.get_current_user()
+    if not user:
+        flash('Please log in to continue.', 'warning')
+        return redirect(url_for('auth.login'))
     org = Organization.query.filter_by(user_id=user.id).first()
     
     # If already onboarded, redirect to dashboard
@@ -29,6 +32,9 @@ def welcome():
 def step1():
     """Step 1: Basic organization information"""
     user = AuthManager.get_current_user()
+    if not user:
+        flash('Please log in to continue.', 'warning')
+        return redirect(url_for('auth.login'))
     org = Organization.query.filter_by(user_id=user.id).first()
     
     return render_template('onboarding/step1_basic.html', user=user, org=org)
@@ -38,6 +44,9 @@ def step1():
 def save_step1():
     """Save step 1 data and proceed or skip"""
     user = AuthManager.get_current_user()
+    if not user:
+        flash('Please log in to continue.', 'warning')
+        return redirect(url_for('auth.login'))
     org = Organization.query.filter_by(user_id=user.id).first()
     
     if not org:
@@ -75,6 +84,9 @@ def save_step1():
 def step2():
     """Step 2: Mission and Programs"""
     user = AuthManager.get_current_user()
+    if not user:
+        flash('Please log in to continue.', 'warning')
+        return redirect(url_for('auth.login'))
     org = Organization.query.filter_by(user_id=user.id).first()
     
     if not org:
@@ -87,6 +99,9 @@ def step2():
 def save_step2():
     """Save step 2 data"""
     user = AuthManager.get_current_user()
+    if not user:
+        flash('Please log in to continue.', 'warning')
+        return redirect(url_for('auth.login'))
     org = Organization.query.filter_by(user_id=user.id).first()
     
     if not org:
@@ -122,6 +137,9 @@ def save_step2():
 def step3():
     """Step 3: Capacity and History"""
     user = AuthManager.get_current_user()
+    if not user:
+        flash('Please log in to continue.', 'warning')
+        return redirect(url_for('auth.login'))
     org = Organization.query.filter_by(user_id=user.id).first()
     
     if not org:
@@ -134,6 +152,9 @@ def step3():
 def save_step3():
     """Save step 3 data and complete onboarding"""
     user = AuthManager.get_current_user()
+    if not user:
+        flash('Please log in to continue.', 'warning')
+        return redirect(url_for('auth.login'))
     org = Organization.query.filter_by(user_id=user.id).first()
     
     if not org:
@@ -169,6 +190,8 @@ def save_step3():
 def get_progress():
     """Get current onboarding progress"""
     user = AuthManager.get_current_user()
+    if not user:
+        return jsonify({'error': 'Not authenticated'}), 401
     org = Organization.query.filter_by(user_id=user.id).first()
     progress = UserProgress.query.filter_by(user_id=user.id).first()
     

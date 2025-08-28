@@ -56,10 +56,10 @@ def get_steps():
 def complete_task():
     """Mark a task as complete and award XP"""
     try:
-        data = request.json
+        data = request.json or {}
         user_id = session.get('user_id', 1)
-        step_id = data.get('step_id')
-        task_id = data.get('task_id')
+        step_id = data.get('step_id') if data else None
+        task_id = data.get('task_id') if data else None
         
         if not step_id or not task_id:
             return jsonify({'success': False, 'error': 'Missing step_id or task_id'}), 400
@@ -75,9 +75,9 @@ def complete_task():
 def award_achievement():
     """Award an achievement to user"""
     try:
-        data = request.json
+        data = request.json or {}
         user_id = session.get('user_id', 1)
-        achievement_id = data.get('achievement_id')
+        achievement_id = data.get('achievement_id') if data else None
         
         if not achievement_id:
             return jsonify({'success': False, 'error': 'Missing achievement_id'}), 400
@@ -215,7 +215,9 @@ def apply_organization_data():
         org = Organization.query.get(org_id)
         if not org:
             # Create new org if doesn't exist
-            org = Organization(id=org_id, name="New Organization")
+            org = Organization()
+            org.name = "New Organization"
+            org.user_id = session.get('user_id')  # Set the user_id from session
             db.session.add(org)
         
         applied_fields = []

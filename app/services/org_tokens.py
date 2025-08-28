@@ -3,7 +3,7 @@ Organization Tokens Service
 Manages PCS codes, locations, and keywords for grant matching
 """
 from typing import Dict, List, Optional
-from app.services.candid_client import get_essentials_client
+from app.services.candid_essentials import extract_tokens, search_by_ein, search_by_name
 
 
 def get_org_tokens(org_id: int) -> Dict:
@@ -144,25 +144,18 @@ def _tokens_complete(tokens: Dict) -> bool:
 def _fetch_essentials_tokens(org) -> Optional[Dict]:
     """Attempt to fetch tokens from Candid Essentials API"""
     try:
-        essentials_client = get_essentials_client()
-        
         # Try EIN first, then name
-        search_term = None
+        org_record = None
         if org.ein and org.ein.strip():
-            search_term = org.ein
+            org_record = search_by_ein(org.ein)
         elif org.name:
-            search_term = org.name
+            org_record = search_by_name(org.name)
         
-        if not search_term:
-            return None
-        
-        # Search for organization
-        org_record = essentials_client.search_org(search_term)
         if not org_record:
             return None
         
         # Extract tokens from the record
-        return essentials_client.extract_tokens(org_record)
+        return extract_tokens(org_record)
         
     except Exception as e:
         print(f"Error fetching Essentials tokens: {str(e)}")

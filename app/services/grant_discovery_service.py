@@ -42,12 +42,14 @@ class GrantDiscoveryService:
             Dict with discovery stats and scored grants
         """
         try:
-            # Get organization - use filter_by to avoid primary key issues
-            org = Organization.query.filter_by(id=org_id).first()
+            # Get fresh organization instance to avoid stale references
+            # Use a new query to ensure we're not using a deleted object
+            org = db.session.query(Organization).filter_by(id=org_id).first()
             if not org:
+                logger.warning(f"Organization {org_id} not found - may have been deleted")
                 return {
                     'success': False,
-                    'error': 'Organization not found'
+                    'error': f'Organization {org_id} not found'
                 }
             
             # Step 1: Get org tokens for matching
@@ -313,25 +315,33 @@ class GrantDiscoveryService:
         """
         try:
             # Get all organizations with names (basic filter)
-            orgs = Organization.query.filter(Organization.name != None).all()
+            # Use fresh query to avoid stale references
+            org_ids = db.session.query(Organization.id).filter(Organization.name != None).all()
             
             results = {
-                'total_orgs': len(orgs),
+                'total_orgs': len(org_ids),
                 'successful': 0,
                 'failed': 0,
                 'total_grants_discovered': 0
             }
             
-            for org in orgs:
+            for (org_id,) in org_ids:
                 try:
-                    result = self.discover_and_persist(org.id, limit=30)
+                    # Verify organization still exists before processing
+                    org_exists = db.session.query(Organization.id).filter_by(id=org_id).first()
+                    if not org_exists:
+                        logger.warning(f"Skipping org {org_id} - no longer exists")
+                        results['failed'] += 1
+                        continue
+                        
+                    result = self.discover_and_persist(org_id, limit=30)
                     if result.get('success'):
                         results['successful'] += 1
                         results['total_grants_discovered'] += result['discovery_stats'].get('newly_added', 0)
                     else:
                         results['failed'] += 1
                 except Exception as e:
-                    logger.error(f"Error refreshing org {org.id}: {str(e)}")
+                    logger.error(f"Error refreshing org {org_id}: {str(e)}")
                     results['failed'] += 1
             
             results['timestamp'] = datetime.utcnow().isoformat()
