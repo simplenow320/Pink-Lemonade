@@ -17,7 +17,7 @@
                             class="px-4 py-2 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-all">
                         🔄 Refresh
                     </button>
-                    <a href="{{ url_for('dashboard.index') }}" 
+                    <a href="{{ url_for('smart_dashboard.index') }}" 
                        class="px-4 py-2 bg-pink-500 text-white rounded-lg hover:bg-pink-600 transition-all">
                         Dashboard
                     </a>
@@ -53,7 +53,7 @@
                 <div class="text-right">
                     <div class="text-2xl font-bold text-pink-600">{{ org.profile_completeness }}%</div>
                     <div class="text-sm text-gray-600">Profile Complete</div>
-                    <a href="{{ url_for('onboarding.step1') }}" class="text-sm text-pink-600 hover:text-pink-700">
+                    <a href="{{ url_for('onboarding_flow.step1') }}" class="text-sm text-pink-600 hover:text-pink-700">
                         Update Profile →
                     </a>
                 </div>
@@ -155,7 +155,7 @@
                 <p class="text-gray-600 mb-4">
                     Complete your profile to get personalized grant recommendations
                 </p>
-                <a href="{{ url_for('onboarding.step1') }}" 
+                <a href="{{ url_for('onboarding_flow.step1') }}" 
                    class="inline-block px-6 py-3 bg-pink-500 text-white rounded-lg hover:bg-pink-600 transition-all">
                     Complete Profile
                 </a>
@@ -177,7 +177,7 @@
 
 <script>
 function refreshMatches() {
-    fetch('{{ url_for("dashboard.refresh_matches") }}')
+    fetch('{{ url_for("smart_dashboard.refresh_matches") }}')
         .then(response => response.json())
         .then(data => {
             if (data.success) {

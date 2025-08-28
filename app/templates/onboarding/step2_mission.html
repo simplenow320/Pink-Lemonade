@@ -204,11 +204,11 @@ function saveAndSkip() {
     const formData = new FormData(form);
     formData.append('skip', 'true');
     
-    fetch('{{ url_for("onboarding.save_step2") }}', {
+    fetch('{{ url_for("onboarding_flow.save_step2") }}', {
         method: 'POST',
         body: formData
     }).then(() => {
-        window.location.href = '{{ url_for("dashboard.index") }}';
+        window.location.href = '{{ url_for("smart_dashboard.index") }}';
     });
 }
 

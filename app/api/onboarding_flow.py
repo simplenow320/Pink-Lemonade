@@ -77,7 +77,7 @@ def save_step1():
         return redirect('/dashboard')
     
     flash('Great start! Let\'s continue with your mission.', 'success')
-    return redirect(url_for('onboarding.step2'))
+    return redirect(url_for('onboarding_flow.step2'))
 
 @onboarding_bp.route('/step2')
 @AuthManager.require_auth
@@ -90,7 +90,7 @@ def step2():
     org = Organization.query.filter_by(user_id=user.id).first()
     
     if not org:
-        return redirect(url_for('onboarding.step1'))
+        return redirect(url_for('onboarding_flow.step1'))
     
     return render_template('onboarding/step2_mission.html', user=user, org=org)
 
@@ -105,7 +105,7 @@ def save_step2():
     org = Organization.query.filter_by(user_id=user.id).first()
     
     if not org:
-        return redirect(url_for('onboarding.step1'))
+        return redirect(url_for('onboarding_flow.step1'))
     
     # Update mission and programs
     org.mission_statement = request.form.get('mission_statement', '')
@@ -130,7 +130,7 @@ def save_step2():
         return redirect('/dashboard')
     
     flash('Excellent! One more step to go.', 'success')
-    return redirect(url_for('onboarding.step3'))
+    return redirect(url_for('onboarding_flow.step3'))
 
 @onboarding_bp.route('/step3')
 @AuthManager.require_auth
@@ -143,7 +143,7 @@ def step3():
     org = Organization.query.filter_by(user_id=user.id).first()
     
     if not org:
-        return redirect(url_for('onboarding.step1'))
+        return redirect(url_for('onboarding_flow.step1'))
     
     return render_template('onboarding/step3_capacity.html', user=user, org=org)
 
@@ -158,7 +158,7 @@ def save_step3():
     org = Organization.query.filter_by(user_id=user.id).first()
     
     if not org:
-        return redirect(url_for('onboarding.step1'))
+        return redirect(url_for('onboarding_flow.step1'))
     
     # Update capacity info
     org.annual_budget = request.form.get('annual_budget', '')
