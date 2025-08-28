@@ -380,14 +380,17 @@
                 });
                 
                 const data = await response.json();
+                console.log('Login response:', data);  // Debug log
                 
                 if (response.ok) {
                     successDiv.textContent = 'Login successful! Redirecting...';
                     successDiv.style.display = 'block';
                     
                     // Redirect to the URL provided by the backend
+                    const redirectUrl = data.redirect || '/dashboard';
+                    console.log('Redirecting to:', redirectUrl);  // Debug log
                     setTimeout(() => {
-                        window.location.href = data.redirect || '/dashboard';
+                        window.location.href = redirectUrl;
                     }, 500);
                 } else {
                     errorDiv.textContent = data.error || 'Invalid email or password. Please try again.';
