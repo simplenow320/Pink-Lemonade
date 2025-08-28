@@ -18,7 +18,7 @@ def welcome():
     user = AuthManager.get_current_user()
     if not user:
         flash('Please log in to continue.', 'warning')
-        return redirect(url_for('auth.login'))
+        return redirect('/login')
     org = Organization.query.filter_by(user_id=user.id).first()
     
     # If already onboarded, redirect to dashboard
@@ -34,7 +34,7 @@ def step1():
     user = AuthManager.get_current_user()
     if not user:
         flash('Please log in to continue.', 'warning')
-        return redirect(url_for('auth.login'))
+        return redirect('/login')
     org = Organization.query.filter_by(user_id=user.id).first()
     
     return render_template('onboarding/step1_basic.html', user=user, org=org)
@@ -46,7 +46,7 @@ def save_step1():
     user = AuthManager.get_current_user()
     if not user:
         flash('Please log in to continue.', 'warning')
-        return redirect(url_for('auth.login'))
+        return redirect('/login')
     org = Organization.query.filter_by(user_id=user.id).first()
     
     if not org:
@@ -86,7 +86,7 @@ def step2():
     user = AuthManager.get_current_user()
     if not user:
         flash('Please log in to continue.', 'warning')
-        return redirect(url_for('auth.login'))
+        return redirect('/login')
     org = Organization.query.filter_by(user_id=user.id).first()
     
     if not org:
@@ -101,7 +101,7 @@ def save_step2():
     user = AuthManager.get_current_user()
     if not user:
         flash('Please log in to continue.', 'warning')
-        return redirect(url_for('auth.login'))
+        return redirect('/login')
     org = Organization.query.filter_by(user_id=user.id).first()
     
     if not org:
@@ -139,7 +139,7 @@ def step3():
     user = AuthManager.get_current_user()
     if not user:
         flash('Please log in to continue.', 'warning')
-        return redirect(url_for('auth.login'))
+        return redirect('/login')
     org = Organization.query.filter_by(user_id=user.id).first()
     
     if not org:
@@ -154,7 +154,7 @@ def save_step3():
     user = AuthManager.get_current_user()
     if not user:
         flash('Please log in to continue.', 'warning')
-        return redirect(url_for('auth.login'))
+        return redirect('/login')
     org = Organization.query.filter_by(user_id=user.id).first()
     
     if not org:
