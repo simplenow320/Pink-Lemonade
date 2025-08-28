@@ -11,7 +11,7 @@ body {
 .welcome-container {
     max-width: 700px;
     margin: 0 auto;
-    padding: 100px 20px;
+    padding: 60px 20px;
     text-align: center;
 }
 
@@ -32,8 +32,168 @@ body {
     font-size: 22px;
     color: #6b6b6b;
     line-height: 1.5;
-    margin-bottom: 60px;
+    margin-bottom: 50px;
     font-weight: 400;
+}
+
+.prep-section {
+    background: #fafafa;
+    border-radius: 16px;
+    padding: 40px;
+    margin: 50px 0;
+    text-align: left;
+}
+
+.prep-title {
+    font-size: 24px;
+    font-weight: 600;
+    color: #1a1a1a;
+    margin-bottom: 16px;
+    text-align: center;
+}
+
+.prep-subtitle {
+    font-size: 16px;
+    color: #6b6b6b;
+    margin-bottom: 30px;
+    text-align: center;
+    line-height: 1.6;
+}
+
+.timeline-box {
+    background: white;
+    border: 1px solid #e0e0e0;
+    border-radius: 12px;
+    padding: 24px;
+    margin-bottom: 24px;
+}
+
+.timeline-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 20px;
+}
+
+.timeline-title {
+    font-size: 18px;
+    font-weight: 600;
+    color: #1a1a1a;
+}
+
+.timeline-duration {
+    background: #B8899A;
+    color: white;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 14px;
+}
+
+.steps-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.step-item {
+    display: flex;
+    align-items: flex-start;
+    margin-bottom: 16px;
+    color: #6b6b6b;
+    font-size: 15px;
+    line-height: 1.5;
+}
+
+.step-number {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 24px;
+    height: 24px;
+    background: #f0f0f0;
+    color: #666;
+    border-radius: 50%;
+    font-size: 12px;
+    font-weight: 600;
+    margin-right: 12px;
+}
+
+.checklist-section {
+    background: #fff9fc;
+    border-left: 4px solid #B8899A;
+    border-radius: 8px;
+    padding: 24px;
+    margin: 24px 0;
+}
+
+.checklist-title {
+    font-size: 18px;
+    font-weight: 600;
+    color: #1a1a1a;
+    margin-bottom: 16px;
+}
+
+.checklist-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+}
+
+.checklist-item {
+    display: flex;
+    align-items: flex-start;
+    font-size: 15px;
+    color: #6b6b6b;
+    line-height: 1.4;
+}
+
+.check-icon {
+    color: #B8899A;
+    margin-right: 8px;
+    margin-top: 2px;
+}
+
+.optional-tag {
+    font-size: 12px;
+    color: #999;
+    font-weight: normal;
+}
+
+.benefits-box {
+    background: white;
+    border: 1px solid #e0e0e0;
+    border-radius: 12px;
+    padding: 24px;
+    margin: 24px 0;
+}
+
+.benefits-title {
+    font-size: 18px;
+    font-weight: 600;
+    color: #1a1a1a;
+    margin-bottom: 16px;
+}
+
+.benefit-item {
+    display: flex;
+    align-items: flex-start;
+    margin-bottom: 12px;
+}
+
+.benefit-icon {
+    width: 20px;
+    height: 20px;
+    background: #B8899A;
+    border-radius: 50%;
+    margin-right: 12px;
+    flex-shrink: 0;
+    margin-top: 2px;
+}
+
+.benefit-text {
+    font-size: 15px;
+    color: #6b6b6b;
+    line-height: 1.5;
 }
 
 .start-button {
@@ -46,11 +206,30 @@ body {
     font-weight: 500;
     text-decoration: none;
     transition: all 0.2s ease;
+    margin-top: 30px;
 }
 
 .start-button:hover {
     background: #a07384;
     transform: translateY(-1px);
+}
+
+.skip-link {
+    display: block;
+    margin-top: 16px;
+    color: #999;
+    font-size: 14px;
+    text-decoration: none;
+}
+
+.skip-link:hover {
+    color: #666;
+}
+
+@media (max-width: 640px) {
+    .checklist-grid {
+        grid-template-columns: 1fr;
+    }
 }
 </style>
 {% endblock %}
@@ -71,9 +250,118 @@ body {
         you discover, match, and win more grants—all<br>
         while you focus on your mission.
     </p>
+
+    <div class="prep-section">
+        <h2 class="prep-title">Let's Get You Set Up for Success</h2>
+        <p class="prep-subtitle">
+            To match you with the best funding opportunities, we'll gather some key information about your organization. 
+            The more complete your profile, the better our AI can identify grants that align with your mission.
+        </p>
+
+        <div class="timeline-box">
+            <div class="timeline-header">
+                <h3 class="timeline-title">Your Onboarding Journey</h3>
+                <span class="timeline-duration">5-7 minutes</span>
+            </div>
+            <ul class="steps-list">
+                <li class="step-item">
+                    <span class="step-number">1</span>
+                    <div>
+                        <strong>Basic Information</strong> (2 min)<br>
+                        Organization details, legal status, and contact information
+                    </div>
+                </li>
+                <li class="step-item">
+                    <span class="step-number">2</span>
+                    <div>
+                        <strong>Mission & Programs</strong> (3 min)<br>
+                        Your purpose, focus areas, and the communities you serve
+                    </div>
+                </li>
+                <li class="step-item">
+                    <span class="step-number">3</span>
+                    <div>
+                        <strong>Capacity & Impact</strong> (2 min)<br>
+                        Organization size, budget, and key achievements
+                    </div>
+                </li>
+            </ul>
+        </div>
+
+        <div class="checklist-section">
+            <h3 class="checklist-title">What You'll Need</h3>
+            <div class="checklist-grid">
+                <div class="checklist-item">
+                    <span class="check-icon">✓</span>
+                    <span>Your organization's legal name</span>
+                </div>
+                <div class="checklist-item">
+                    <span class="check-icon">✓</span>
+                    <span>EIN/Tax ID <span class="optional-tag">(helpful but optional)</span></span>
+                </div>
+                <div class="checklist-item">
+                    <span class="check-icon">✓</span>
+                    <span>Mission statement</span>
+                </div>
+                <div class="checklist-item">
+                    <span class="check-icon">✓</span>
+                    <span>Primary focus areas</span>
+                </div>
+                <div class="checklist-item">
+                    <span class="check-icon">✓</span>
+                    <span>Annual budget range</span>
+                </div>
+                <div class="checklist-item">
+                    <span class="check-icon">✓</span>
+                    <span>Number of staff/volunteers</span>
+                </div>
+                <div class="checklist-item">
+                    <span class="check-icon">✓</span>
+                    <span>Geographic service area</span>
+                </div>
+                <div class="checklist-item">
+                    <span class="check-icon">✓</span>
+                    <span>Key programs or services</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="benefits-box">
+            <h3 class="benefits-title">What Happens After Setup</h3>
+            <div class="benefit-item">
+                <div class="benefit-icon"></div>
+                <div class="benefit-text">
+                    <strong>Instant Grant Matches:</strong> Our AI immediately analyzes thousands of opportunities to find grants that fit your mission
+                </div>
+            </div>
+            <div class="benefit-item">
+                <div class="benefit-icon"></div>
+                <div class="benefit-text">
+                    <strong>Personalized Dashboard:</strong> Track deadlines, manage applications, and monitor your grant pipeline in one place
+                </div>
+            </div>
+            <div class="benefit-item">
+                <div class="benefit-icon"></div>
+                <div class="benefit-text">
+                    <strong>AI-Powered Writing:</strong> Generate compelling narratives and proposals tailored to each funder's priorities
+                </div>
+            </div>
+        </div>
+
+        <div style="text-align: center; margin-top: 30px;">
+            <p style="color: #6b6b6b; font-size: 16px; margin-bottom: 20px;">
+                <strong>Ready to unlock your funding potential?</strong><br>
+                Don't worry if you don't have everything right now—you can always update your profile later.
+            </p>
+        </div>
+    </div>
     
     <a href="{{ url_for('onboarding_flow.step1') }}" class="start-button">
-        Get Started
+        Start Your Profile
+    </a>
+    
+    <a href="/dashboard" class="skip-link">
+        I'll do this later →
     </a>
 </div>
 {% endblock %}
