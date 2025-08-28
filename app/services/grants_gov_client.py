@@ -12,43 +12,49 @@ from typing import Optional, Dict, List
 logger = logging.getLogger(__name__)
 
 class GrantsGovClient:
-    """Client for Grants.gov API"""
+    """Client for Grants.gov using GSA Search API (same API grants.gov uses internally)"""
     
-    BASE_URL = "https://api.grants.gov/v1"
+    BASE_URL = "https://api.gsa.gov/technology/searchgov/v2/results/i14y"
+    AFFILIATE = "prod_grants"
+    ACCESS_KEY = "YNhIX2DaXaH2XZFS6cVf5O6hySoFtg5WsiiKCoV3eEg="
     
     def __init__(self):
         self.timeout = 30
         
-    def _post_json(self, endpoint: str, payload: Dict) -> Optional[Dict]:
-        """Make POST request with JSON payload"""
-        url = f"{self.BASE_URL}/api/{endpoint}"
+    def _get_json(self, params: Dict) -> Optional[Dict]:
+        """Make GET request with query parameters"""
+        # Add required GSA Search API parameters
+        params.update({
+            'affiliate': self.AFFILIATE,
+            'access_key': self.ACCESS_KEY
+        })
+        
+        url = f"{self.BASE_URL}?{urllib.parse.urlencode(params)}"
         
         headers = {
-            'Content-Type': 'application/json',
             'Accept': 'application/json',
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
         }
         
         try:
-            data = json.dumps(payload).encode('utf-8')
-            req = urllib.request.Request(url, data=data, headers=headers, method='POST')
+            req = urllib.request.Request(url, headers=headers)
             
             with urllib.request.urlopen(req, timeout=self.timeout) as response:
-                logger.info(f"Grants.gov API endpoint hit: {url}, status: {response.status}")
+                logger.info(f"GSA Search API endpoint hit: {url}, status: {response.status}")
                 if response.status == 200:
                     return json.loads(response.read().decode('utf-8'))
         except urllib.error.HTTPError as e:
-            logger.error(f"Grants.gov API endpoint hit: {url}, HTTP Error {e.code}: {e.reason}")
+            logger.error(f"GSA Search API HTTP Error {e.code}: {e.reason}")
             return None
         except Exception as e:
-            logger.error(f"Grants.gov API request error: {e}")
+            logger.error(f"GSA Search API request error: {e}")
             return None
             
         return None
     
     def search_opportunities(self, payload: Dict) -> List[Dict]:
         """
-        Search for grant opportunities
+        Search for grant opportunities using GSA Search API
         
         Args:
             payload: Search parameters dict
@@ -57,36 +63,45 @@ class GrantsGovClient:
             List of normalized opportunity dicts
         """
         try:
-            # Ensure payload has proper structure for Grants.gov API
-            search_payload = {
-                "keyword": payload.get("keywords", ["grant"])[0] if payload.get("keywords") else "grant",
-                "oppStatuses": payload.get("oppStatuses", ["posted"]),
-                "sortBy": "openDate|desc"
+            # Build search query from payload
+            keywords = payload.get("keywords", ["grant"])
+            if isinstance(keywords, list):
+                query = " ".join(keywords)
+            else:
+                query = str(keywords)
+            
+            # Add opportunity-specific terms to find actual grant opportunities
+            query += " opportunity OR funding OR NOFO OR solicitation"
+            
+            search_params = {
+                "query": query,
+                "limit": payload.get("limit", 20)
             }
             
-            result = self._post_json("search2", search_payload)
+            result = self._get_json(search_params)
             if not result:
                 return []
                 
             opportunities = []
             
-            # Extract opportunities from response - they come in oppHits
-            opps_data = result.get("oppHits", [])
-            if isinstance(opps_data, list):
-                for opp in opps_data:
-                    normalized = self._normalize_opportunity(opp)
+            # Extract web results that look like grant opportunities
+            web_results = result.get("web", {}).get("results", [])
+            for result_item in web_results:
+                if self._is_grant_opportunity(result_item):
+                    normalized = self._normalize_search_result(result_item)
                     if normalized:
                         opportunities.append(normalized)
                         
+            logger.info(f"Found {len(opportunities)} grant opportunities from GSA Search")
             return opportunities
             
         except Exception as e:
-            print(f"Search error: {e}")
+            logger.error(f"Grants.gov search error: {e}")
             return []
     
     def fetch_opportunity(self, opp_number: str) -> Dict:
         """
-        Fetch detailed opportunity by number
+        Fetch detailed opportunity by searching for the specific opportunity number
         
         Args:
             opp_number: Opportunity number
@@ -95,41 +110,81 @@ class GrantsGovClient:
             Detailed opportunity dict or empty dict on error
         """
         try:
-            payload = {"opportunityNumber": opp_number}
-            result = self._post_json("fetchOpportunity", payload)
+            # Search for the specific opportunity number
+            search_params = {
+                "query": opp_number,
+                "limit": 5
+            }
             
+            result = self._get_json(search_params)
             if not result:
                 return {}
                 
-            # Return detailed fields without guessing
-            detail = {
-                "source": "grants_gov",
-                "opp_number": opp_number,
-                "raw": result
-            }
-            
-            # Extract known fields safely
-            if "title" in result:
-                detail["title"] = result["title"]
-            if "agency" in result:
-                detail["agency"] = result["agency"]
-            if "description" in result:
-                detail["description"] = result["description"]
-            if "eligibility" in result:
-                detail["eligibility_text"] = result["eligibility"]
-            if "closeDate" in result:
-                detail["close_date"] = result["closeDate"]
-            if "postedDate" in result:
-                detail["posted_date"] = result["postedDate"]
-                
-            # Format link
-            detail["link"] = f"https://www.grants.gov/search-results-detail/{opp_number}"
-            
-            return detail
+            # Look for the exact opportunity in search results
+            web_results = result.get("web", {}).get("results", [])
+            for result_item in web_results:
+                if opp_number.lower() in result_item.get("url", "").lower():
+                    return self._normalize_search_result(result_item) or {}
+                    
+            return {}
             
         except Exception as e:
-            print(f"Fetch error: {e}")
+            logger.error(f"Grants.gov fetch error: {e}")
             return {}
+    
+    def _is_grant_opportunity(self, result: Dict) -> bool:
+        """Check if a search result looks like a grant opportunity"""
+        url = result.get("url", "").lower()
+        title = result.get("title", "").lower()
+        snippet = result.get("snippet", "").lower()
+        
+        # Look for opportunity indicators
+        opportunity_indicators = [
+            "/web/grants/search-grants.html",
+            "search-results-detail",
+            "funding-opportunity",
+            "notice-of-funding"
+        ]
+        
+        # Check URL for opportunity patterns
+        for indicator in opportunity_indicators:
+            if indicator in url:
+                return True
+                
+        # Check title/snippet for grant terms
+        grant_terms = ["funding", "grant", "opportunity", "nofo", "solicitation", "award"]
+        if any(term in title or term in snippet for term in grant_terms):
+            # But exclude general information pages
+            exclusions = ["about grants", "grant policies", "grant terminology", "help"]
+            if not any(excl in title or excl in snippet for excl in exclusions):
+                return True
+                
+        return False
+    
+    def _normalize_search_result(self, result: Dict) -> Optional[Dict]:
+        """Normalize search result to opportunity format"""
+        try:
+            url = result.get("url", "")
+            
+            # Extract opportunity number from URL if possible
+            opp_number = ""
+            if "search-results-detail" in url:
+                opp_number = url.split("/")[-1] if "/" in url else ""
+            
+            return {
+                "source": "grants_gov",
+                "source_type": "Federal",
+                "source_name": "Grants.gov Search",
+                "opp_number": opp_number,
+                "title": result.get("title", ""),
+                "description": result.get("snippet", ""),
+                "link": url,
+                "published_date": result.get("publication_date", ""),
+                "raw": result
+            }
+        except Exception as e:
+            logger.error(f"Error normalizing search result: {e}")
+            return None
     
     def _normalize_opportunity(self, opp: Dict) -> Optional[Dict]:
         """

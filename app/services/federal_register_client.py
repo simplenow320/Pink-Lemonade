@@ -72,7 +72,8 @@ class FederalRegisterClient:
                 'title': doc.get('title', ''),
                 'funder': ', '.join(agency_names) if agency_names else 'Federal Agency',
                 'description': doc.get('abstract', ''),
-                'url': doc.get('html_url', ''),
+                'link': doc.get('html_url', ''),
+                'url': doc.get('html_url', ''),  # Keep both for compatibility
                 'published_date': doc.get('publication_date', ''),
                 'document_type': doc.get('type', ''),
                 'docket_id': doc.get('docket_id', ''),
