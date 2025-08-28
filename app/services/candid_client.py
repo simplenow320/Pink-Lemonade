@@ -188,32 +188,32 @@ class GrantsClient:
         # Parse transactions from the API response
         transactions = []
         
-        # The transactions endpoint returns a list of grant records
-        # Expected format from API documentation
-        if isinstance(response_data, list):
-            # Direct list of transactions
-            grant_records = response_data
-        elif isinstance(response_data, dict):
-            # May be wrapped in data key or have meta information
-            grant_records = response_data.get('data', response_data.get('grants', []))
-            if not isinstance(grant_records, list):
+        # The transactions endpoint returns {"meta": {...}, "data": {"rows": [...]}}
+        if isinstance(response_data, dict) and 'data' in response_data:
+            data = response_data['data']
+            if isinstance(data, dict) and 'rows' in data:
+                grant_records = data['rows']
+            else:
                 grant_records = []
         else:
             grant_records = []
         
-        # Parse each grant record
+        # Parse each grant record - actual field names from API
         for grant in grant_records:
             if isinstance(grant, dict):
                 transactions.append({
                     'funder_name': grant.get('funder_name', ''),
-                    'recipient_name': grant.get('recip_name', grant.get('recipient_name', '')),
+                    'recipient_name': grant.get('recip_name', ''),
                     'amount': grant.get('amount', 0),
-                    'grant_date': grant.get('year_issued', grant.get('grant_date', '')),
+                    'grant_date': grant.get('year_issued', ''),
                     'description': grant.get('description', ''),
                     'source': 'candid_api',
-                    'funder_id': grant.get('funder_id', ''),
-                    'recipient_id': grant.get('recip_id', ''),
-                    'location': grant.get('recip_location', '')
+                    'funder_key': grant.get('funder_key', ''),
+                    'recip_key': grant.get('recip_key', ''),
+                    'funder_city': grant.get('funder_city', ''),
+                    'funder_state': grant.get('funder_state', ''),
+                    'recip_city': grant.get('recip_city', ''),
+                    'recip_state': grant.get('recip_state', '')
                 })
         
         # Cache and return results
@@ -397,15 +397,20 @@ class EssentialsClient:
         if not response_data or 'error' in response_data:
             return []
         
-        # Parse results  
+        # Parse results - Essentials v3 returns {"hits": [...]}
         results = []
-        orgs = response_data.get('data', []) if 'data' in response_data else response_data.get('results', [])
+        if isinstance(response_data, dict) and 'hits' in response_data:
+            orgs = response_data['hits']
+        else:
+            orgs = []
         
-        for org in orgs:
+        for hit in orgs:
+            # Each hit contains an 'organization' object
+            org = hit.get('organization', {}) if isinstance(hit, dict) else {}
             formatted = {
                 'source': 'candid_essentials',
                 'ein': org.get('ein', ''),
-                'name': org.get('name', ''),
+                'name': org.get('organization_name', ''),
                 'city': org.get('city', ''),
                 'state': org.get('state', ''),
                 'zip_code': org.get('zip_code', ''),
