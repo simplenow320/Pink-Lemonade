@@ -150,6 +150,7 @@ def login():
             # Set session
             session['user_id'] = result['user']['id']
             session['user_email'] = result['user']['email']
+            session['is_authenticated'] = True
             session.permanent = remember
             
             # Check if user needs onboarding
