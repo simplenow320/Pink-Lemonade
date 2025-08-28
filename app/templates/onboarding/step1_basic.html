@@ -30,7 +30,7 @@
                 <p class="text-gray-600">Let's start with the essentials about your organization</p>
             </div>
 
-            <form id="step1Form" method="POST" action="{{ url_for('onboarding.save_step1') }}">
+            <form id="step1Form" method="POST" action="{{ url_for('onboarding_flow.save_step1') }}">
                 <div class="space-y-6">
                     <!-- Organization Name -->
                     <div>
@@ -156,7 +156,7 @@
 
                 <!-- Action Buttons -->
                 <div class="flex justify-between items-center mt-8 pt-6 border-t">
-                    <a href="{{ url_for('onboarding.welcome') }}" 
+                    <a href="{{ url_for('onboarding_flow.welcome') }}" 
                        class="text-gray-600 hover:text-gray-800 font-medium">
                         ← Back
                     </a>
