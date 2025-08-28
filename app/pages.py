@@ -75,13 +75,13 @@ def dashboard():
     
     # If organization profile is incomplete, suggest completing it
     if org.profile_completeness < 80:
-        # Trigger grant discovery for initial matches
-        from app.services.grant_discovery_service import GrantDiscoveryService
-        discovery = GrantDiscoveryService()
+        # Trigger grant fetching for initial matches
+        from app.services.grant_fetcher import GrantFetcher
+        fetcher = GrantFetcher()
         try:
-            discovery.discover_grants(org_id, limit=10)
+            fetcher.fetch_all_grants(limit=10)
         except:
-            pass  # Continue even if discovery fails
+            pass  # Continue even if fetching fails
     
     stats = get_dashboard_stats(org_id)
     top_matches = [{
@@ -107,13 +107,13 @@ def opportunities():
     
     if org:
         # Trigger grant discovery to find real opportunities
-        from app.services.grant_discovery_service import GrantDiscoveryService
-        discovery = GrantDiscoveryService()
+        from app.services.grant_fetcher import GrantFetcher
+        fetcher = GrantFetcher()
         try:
-            # Discover grants from real APIs
-            discovery.discover_grants(org.id, limit=20)
+            # Fetch grants from real APIs (Federal Register, USAspending, Candid)
+            fetcher.fetch_all_grants(limit=30)
         except Exception as e:
-            print(f"Grant discovery error: {e}")
+            print(f"Grant fetching error: {e}")
         
         # Get discovered grants from database
         grants = Grant.query.filter_by(org_id=org.id).order_by(Grant.match_score.desc()).limit(50).all()
