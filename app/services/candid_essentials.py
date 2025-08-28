@@ -34,12 +34,10 @@ class CandidEssentialsClient:
             # Clean EIN (remove dashes/spaces)
             clean_ein = ein.replace("-", "").replace(" ", "").strip()
             
-            # Build search request
+            # Build search request using search_terms for v3 API
             url = self.BASE
             payload = {
-                "filters": {
-                    "ein": clean_ein
-                },
+                "search_terms": clean_ein,  # Use search_terms for EIN in v3
                 "limit": limit
             }
             
@@ -53,7 +51,7 @@ class CandidEssentialsClient:
             
             # Check for auth/rate limit issues
             if response.status_code in [401, 403, 429]:
-                # Don't log the secret, just return None
+                print(f"Candid API auth/rate limit issue: {response.status_code}")
                 return None
             
             response.raise_for_status()
@@ -61,19 +59,26 @@ class CandidEssentialsClient:
             # Parse response
             data = response.json()
             
-            # Return first record if found
-            if data and isinstance(data, dict) and "records" in data:
-                records = data.get("records", [])
-                if records and len(records) > 0:
-                    return records[0]
+            # v3 API returns hits array with nested organization data
+            if data and isinstance(data, dict):
+                hits = data.get("hits", [])
+                if hits and len(hits) > 0:
+                    # Verify EIN match (API might return fuzzy matches)
+                    for hit in hits:
+                        org_data = hit.get("organization", {})
+                        if org_data.get("ein", "").replace("-", "") == clean_ein:
+                            # Return the full hit which includes organization, geography, etc.
+                            return hit
+                    # If no exact match, return first result
+                    return hits[0] if hits else None
             
             return None
             
-        except requests.exceptions.RequestException:
-            # Network error - return None
+        except requests.exceptions.RequestException as e:
+            print(f"Candid API network error: {str(e)[:100]}")
             return None
-        except Exception:
-            # Any other error - return None
+        except Exception as e:
+            print(f"Candid API error: {str(e)[:100]}")
             return None
     
     def search_by_name(self, name: str, limit: int = 1) -> Optional[Dict[str, Any]]:
@@ -88,12 +93,10 @@ class CandidEssentialsClient:
             First matching record or None
         """
         try:
-            # Build search request
+            # Build search request using search_terms for v3 API
             url = self.BASE
             payload = {
-                "filters": {
-                    "name": name.strip()
-                },
+                "search_terms": name.strip(),  # Use search_terms for name search in v3
                 "limit": limit
             }
             
@@ -107,7 +110,7 @@ class CandidEssentialsClient:
             
             # Check for auth/rate limit issues
             if response.status_code in [401, 403, 429]:
-                # Don't log the secret, just return None
+                print(f"Candid API auth/rate limit issue: {response.status_code}")
                 return None
             
             response.raise_for_status()
@@ -115,11 +118,12 @@ class CandidEssentialsClient:
             # Parse response
             data = response.json()
             
-            # Return first record if found
-            if data and isinstance(data, dict) and "records" in data:
-                records = data.get("records", [])
-                if records and len(records) > 0:
-                    return records[0]
+            # v3 API returns hits array with nested organization data
+            if data and isinstance(data, dict):
+                hits = data.get("hits", [])
+                if hits and len(hits) > 0:
+                    # Return the full hit which includes organization, geography, etc.
+                    return hits[0]
             
             return None
             
@@ -135,7 +139,7 @@ class CandidEssentialsClient:
         Extract useful tokens from a Candid organization record
         
         Args:
-            record: Candid API record
+            record: Candid API record (v3 hit structure)
             
         Returns:
             Dictionary with extracted tokens
@@ -145,66 +149,67 @@ class CandidEssentialsClient:
             "pcs_population_codes": [],
             "locations": [],
             "mission": None,
-            "website": None
+            "website": None,
+            "ein": None,
+            "organization_name": None
         }
         
         if not record or not isinstance(record, dict):
             return result
         
-        # Extract PCS subject codes
-        if "pcs_subject_codes" in record:
-            codes = record.get("pcs_subject_codes")
+        # v3 API nests data under organization, taxonomies, geography sections
+        org_data = record.get("organization", {})
+        taxonomies = record.get("taxonomies", {})
+        geography = record.get("geography", {})
+        
+        # Extract basic organization info
+        if org_data.get("ein"):
+            result["ein"] = org_data["ein"]
+        if org_data.get("organization_name"):
+            result["organization_name"] = org_data["organization_name"]
+        
+        # Extract mission
+        if org_data.get("mission"):
+            result["mission"] = str(org_data["mission"])
+        
+        # Extract website
+        if org_data.get("website_url"):
+            result["website"] = str(org_data["website_url"])
+        
+        # Extract PCS codes from taxonomies
+        if taxonomies.get("pcs_subject_codes"):
+            codes = taxonomies["pcs_subject_codes"]
             if isinstance(codes, list):
                 result["pcs_subject_codes"] = [str(c) for c in codes if c]
         
-        # Extract PCS population codes
-        if "pcs_population_codes" in record:
-            codes = record.get("pcs_population_codes")
+        if taxonomies.get("pcs_population_codes"):
+            codes = taxonomies["pcs_population_codes"]
             if isinstance(codes, list):
                 result["pcs_population_codes"] = [str(c) for c in codes if c]
         
-        # Extract locations (city, state, country)
+        # Extract locations from geography
         locations = []
         
-        # Check for address fields
-        if "city" in record and record["city"]:
-            city = record["city"]
-            state = record.get("state", "")
-            if state:
-                locations.append(f"{city}, {state}")
-            else:
-                locations.append(city)
-        elif "state" in record and record["state"]:
-            locations.append(record["state"])
+        # Primary location
+        if geography.get("city") and geography.get("state"):
+            locations.append(f"{geography['city']}, {geography['state']}")
+        elif geography.get("city"):
+            locations.append(geography["city"])
+        elif geography.get("state"):
+            locations.append(geography["state"])
         
-        if "country" in record and record["country"]:
-            locations.append(record["country"])
+        if geography.get("country"):
+            locations.append(geography["country"])
         
-        # Also check for nested address object
-        if "address" in record and isinstance(record["address"], dict):
-            addr = record["address"]
-            city = addr.get("city", "")
-            state = addr.get("state", "")
-            if city and state:
-                locations.append(f"{city}, {state}")
-            elif city:
-                locations.append(city)
-            elif state:
-                locations.append(state)
+        # Service areas
+        if geography.get("service_areas"):
+            service_areas = geography["service_areas"]
+            if isinstance(service_areas, list):
+                for area in service_areas:
+                    if isinstance(area, str):
+                        locations.append(area)
         
-        result["locations"] = locations
-        
-        # Extract mission
-        if "mission" in record and record["mission"]:
-            result["mission"] = str(record["mission"])
-        elif "description" in record and record["description"]:
-            result["mission"] = str(record["description"])
-        
-        # Extract website
-        if "website" in record and record["website"]:
-            result["website"] = str(record["website"])
-        elif "url" in record and record["url"]:
-            result["website"] = str(record["url"])
+        result["locations"] = list(set(locations))  # Remove duplicates
         
         return result
 
