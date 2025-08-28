@@ -157,39 +157,6 @@
                 errorDiv.classList.remove('hidden');
             }
         });
-    
-            const formData = {
-                email: document.getElementById('email').value,
-                password: document.getElementById('password').value,
-                remember: document.querySelector('input[name="remember"]').checked
-            };
-            
-            try {
-                const response = await fetch('/api/auth/login', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify(formData)
-                });
-                
-                const data = await response.json();
-                
-                if (response.ok) {
-                    successDiv.textContent = 'Login successful! Redirecting...';
-                    successDiv.classList.remove('hidden');
-                    setTimeout(() => {
-                        window.location.href = '/dashboard';
-                    }, 1500);
-                } else {
-                    errorDiv.textContent = data.error || 'Login failed';
-                    errorDiv.classList.remove('hidden');
-                }
-            } catch (error) {
-                errorDiv.textContent = 'Network error. Please try again.';
-                errorDiv.classList.remove('hidden');
-            }
-        });
     </script>
 </body>
 </html>
