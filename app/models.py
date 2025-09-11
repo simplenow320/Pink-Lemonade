@@ -570,6 +570,17 @@ class Grant(db.Model):
     ai_summary = db.Column(db.Text)
     last_intelligence_update = db.Column(db.DateTime)
     
+    # Enhanced Contact Information Fields
+    contact_name = db.Column(db.String(255))  # Primary contact person
+    contact_email = db.Column(db.String(255))  # Direct email for inquiries
+    contact_phone = db.Column(db.String(100))  # Phone number with extension
+    contact_department = db.Column(db.String(255))  # Department/division
+    organization_website = db.Column(db.Text)  # Organization's main website
+    application_url = db.Column(db.Text)  # Direct link to application portal
+    alternate_contact = db.Column(db.JSON)  # Secondary contact info
+    contact_verified_date = db.Column(db.DateTime)  # When contact info was last verified
+    contact_confidence = db.Column(db.String(20))  # high, medium, low - reliability of contact data
+    
     # Phase 2: Workflow fields
     application_stage = db.Column(db.String(50), default='discovery')
     priority_level = db.Column(db.String(20), default='medium')
@@ -600,6 +611,17 @@ class Grant(db.Model):
             'source_url': self.source_url,
             'match_score': self.match_score,
             'match_reason': self.match_reason,
+            # Contact Information
+            'contact_name': self.contact_name,
+            'contact_email': self.contact_email,
+            'contact_phone': self.contact_phone,
+            'contact_department': self.contact_department,
+            'organization_website': self.organization_website,
+            'application_url': self.application_url,
+            'alternate_contact': self.alternate_contact,
+            'contact_verified_date': self.contact_verified_date.isoformat() if self.contact_verified_date else None,
+            'contact_confidence': self.contact_confidence,
+            'contact_info': self.contact_info,  # Keep legacy JSON field
             'created_at': self.created_at.isoformat() if self.created_at else None,
             'updated_at': self.updated_at.isoformat() if self.updated_at else None
         }
