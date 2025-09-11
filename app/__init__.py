@@ -222,12 +222,12 @@ def create_app():
     except ImportError as e:
         print(f"PDF Export blueprint not available: {e}")
     
-    # Register Payment endpoints (Phase 6)
-    try:
-        from app.api.payments import payments_bp
-        flask_app.register_blueprint(payments_bp)
-    except ImportError as e:
-        print(f"Payments blueprint not available: {e}")
+    # Payment endpoints removed - no longer supported
+    # try:
+    #     from app.api.payments import payments_bp
+    #     flask_app.register_blueprint(payments_bp)
+    # except ImportError as e:
+    #     print(f"Payments blueprint not available: {e}")
     
     # Register Team Collaboration endpoints (Phase 7)
     try:
@@ -314,9 +314,9 @@ def create_app():
     from app.api.phase5_reporting import phase5_bp
     flask_app.register_blueprint(phase5_bp)
     
-    # Register Payment API endpoints (Phase 3 of 100% Completion Plan)
-    from app.api.payment import payment_bp
-    flask_app.register_blueprint(payment_bp, url_prefix='/api/payment')
+    # Payment API endpoints removed - no longer supported
+    # from app.api.payment import payment_bp
+    # flask_app.register_blueprint(payment_bp, url_prefix='/api/payment')
     
     # Register Smart Templates API endpoints (Phase 5 of 100% Completion Plan)
     from app.api.templates import templates_bp

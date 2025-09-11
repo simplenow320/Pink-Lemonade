@@ -1004,8 +1004,9 @@ class SubscriptionPlan(db.Model):
     description = db.Column(db.Text)
     features_list = db.Column(db.JSON)
     is_active = db.Column(db.Boolean, default=True)
-    stripe_price_id = db.Column(db.String(100))
-    stripe_product_id = db.Column(db.String(100))
+    # Payment fields removed - no longer supported
+    # stripe_price_id = db.Column(db.String(100))
+    # stripe_product_id = db.Column(db.String(100))
     
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
@@ -1052,12 +1053,12 @@ class UserSubscription(db.Model):
     current_period_end = db.Column(db.DateTime)
     canceled_at = db.Column(db.DateTime)
     
-    # Billing information
-    stripe_customer_id = db.Column(db.String(100))
-    stripe_subscription_id = db.Column(db.String(100))
-    payment_method_type = db.Column(db.String(20))
-    last_payment_amount = db.Column(db.Float)
-    last_payment_date = db.Column(db.DateTime)
+    # Billing information - payment fields removed
+    # stripe_customer_id = db.Column(db.String(100))
+    # stripe_subscription_id = db.Column(db.String(100))
+    # payment_method_type = db.Column(db.String(20))
+    # last_payment_amount = db.Column(db.Float)
+    # last_payment_date = db.Column(db.DateTime)
     next_billing_date = db.Column(db.DateTime)
     
     # Usage tracking
