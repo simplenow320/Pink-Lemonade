@@ -12,7 +12,7 @@ logger = logging.getLogger(__name__)
 
 ai_grants_bp = Blueprint('ai_grants', __name__)
 
-@ai_grants_bp.route('/match/<int:org_id>', methods=['GET'])
+@ai_grants_bp.route('/match/<int:org_id>', methods=['GET', 'POST'])
 def get_ai_matched_grants(org_id):
     """Get AI-matched grants for an organization using REACTO"""
     try:
@@ -103,7 +103,7 @@ def get_ai_matched_grants(org_id):
             'error': str(e)
         }), 500
 
-@ai_grants_bp.route('/analyze/<int:grant_id>/<int:org_id>', methods=['GET'])
+@ai_grants_bp.route('/analyze/<int:grant_id>/<int:org_id>', methods=['GET', 'POST'])
 def analyze_grant_fit(grant_id, org_id):
     """Get detailed AI analysis of grant-organization fit"""
     try:

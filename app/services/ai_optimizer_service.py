@@ -175,8 +175,17 @@ Quality check: Ensure no placeholder text, all statistics are realistic, and ton
             model, explanation = self.select_model(complexity)
         
         try:
-            # Make API call with selected model
-            response = self.client.chat.completions.create(
+            # Make API call with selected model and timeout
+            import httpx
+            # Set timeout to 10 seconds to prevent hanging
+            timeout = httpx.Timeout(10.0, read=10.0, write=10.0, connect=5.0)
+            client_with_timeout = OpenAI(
+                api_key=os.environ.get("OPENAI_API_KEY"),
+                timeout=timeout,
+                max_retries=1
+            )
+            
+            response = client_with_timeout.chat.completions.create(
                 model=model.value,
                 messages=[{"role": "user", "content": prompt}],
                 temperature=context.get("temperature", 0.7),
@@ -218,7 +227,27 @@ Quality check: Ensure no placeholder text, all statistics are realistic, and ton
             }
             
         except Exception as e:
-            logger.error(f"AI optimization error with {model.value}: {str(e)}")
+            error_msg = str(e)
+            if "timeout" in error_msg.lower() or "timed out" in error_msg.lower():
+                logger.warning(f"AI request timed out for {model.value} - returning mock response")
+                # Return a mock response for testing/fallback
+                return {
+                    "success": False,
+                    "error": "AI service timeout",
+                    "content": {
+                        "match_score": 3,
+                        "verdict": "Moderate Match (AI unavailable - default score)",
+                        "recommendation": "This grant may be suitable. Review requirements carefully.",
+                        "key_alignments": ["Mission alignment needs review"],
+                        "potential_challenges": ["Requirements verification needed"],
+                        "next_steps": ["Review grant requirements", "Contact funder for details"],
+                        "application_tips": "Ensure all requirements are met before applying."
+                    } if context.get("json_output") else "AI service temporarily unavailable. Please try again later.",
+                    "model_used": "fallback",
+                    "explanation": "Using fallback response due to AI timeout"
+                }
+            
+            logger.error(f"AI optimization error with {model.value}: {error_msg}")
             
             # Fallback to other model if first fails
             if model == ModelType.TURBO_35 and not force_model:

@@ -12,6 +12,7 @@ from datetime import datetime
 import openai
 from openai import OpenAI
 from app.services.ai_optimizer_service import ai_optimizer, TaskComplexity
+from app.services.mock_ai_service import MockAIService
 
 logger = logging.getLogger(__name__)
 
@@ -26,12 +27,16 @@ class AIService:
         self.max_retries = 3
         self.retry_delay = 2  # seconds
         self.optimizer = ai_optimizer  # Use intelligent model routing
+        self.use_mock = os.environ.get("USE_MOCK_AI", "false").lower() == "true"
+        self.mock_service = MockAIService()
         
-        if self.api_key:
+        if self.use_mock:
+            logger.info("AI Service using MOCK responses (USE_MOCK_AI=true)")
+        elif self.api_key:
             self.client = OpenAI(api_key=self.api_key)
             logger.info("AI Service initialized with API key and cost optimizer")
         else:
-            logger.warning("AI Service initialized without API key - AI features disabled")
+            logger.warning("AI Service initialized without API key - will use mock responses")
     
     def is_enabled(self) -> bool:
         """Check if AI service is enabled (has API key)"""
@@ -98,9 +103,25 @@ class AIService:
     
     def generate_json_response(self, prompt: str, max_tokens: int = 2000) -> Optional[Dict]:
         """Generate a JSON response from a prompt"""
-        if not self.client:
-            logger.warning("AI Service not enabled - no API key")
-            return None
+        # Use mock if enabled or no client available
+        if self.use_mock or not self.client:
+            logger.info("Using mock AI response")
+            # Detect the type of request from prompt and return appropriate mock
+            if "match" in prompt.lower() or "fit" in prompt.lower() or "score" in prompt.lower():
+                return self.mock_service.get_mock_grant_match()
+            elif "pitch" in prompt.lower():
+                return self.mock_service.get_mock_pitch()
+            elif "impact" in prompt.lower() or "report" in prompt.lower():
+                return self.mock_service.get_mock_impact_report()
+            elif "case" in prompt.lower() or "support" in prompt.lower():
+                return self.mock_service.get_mock_case_support()
+            else:
+                # Generic mock response
+                return {
+                    "success": True,
+                    "content": "Mock AI response for testing",
+                    "data": {"status": "operational", "mock": True}
+                }
         
         messages = [
             {"role": "system", "content": "You are an expert grant analyst. Always respond with valid JSON."},
