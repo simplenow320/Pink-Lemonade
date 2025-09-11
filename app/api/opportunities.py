@@ -20,18 +20,21 @@ logger = logging.getLogger(__name__)
 
 bp = Blueprint('opportunities_api', __name__)
 
-@bp.route('/api/opportunities/search', methods=['POST'])
+@bp.route('/api/opportunities/search', methods=['POST', 'GET'])
 def search_opportunities():
     """
     Search opportunities with POST request
     Accepts filters in request body
     """
     try:
-        # Get search data from request body
-        data = request.get_json() or {}
+        # Handle both GET and POST requests
+        if request.method == 'POST':
+            data = request.get_json() or {}
+        else:  # GET request
+            data = request.args.to_dict()
         
         # Extract search parameters
-        search_query = data.get('query', '')
+        search_query = data.get('query', '') or data.get('q', '')
         location = data.get('location', '')
         focus_area = data.get('focus_area', '')
         amount = data.get('amount', '')
