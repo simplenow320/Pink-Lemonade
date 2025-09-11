@@ -47,13 +47,13 @@ def get_grants():
         
         # Apply filters
         if focus_area:
-            query = query.filter(Grant.focus_area.contains(focus_area))
+            query = query.filter(Grant.geography.contains(focus_area))
         
         if min_amount:
-            query = query.filter(Grant.amount >= min_amount)
+            query = query.filter(Grant.amount_min >= min_amount)
         
         if max_amount:
-            query = query.filter(Grant.amount <= max_amount)
+            query = query.filter(Grant.amount_max <= max_amount)
         
         if deadline_days:
             deadline_date = datetime.now() + timedelta(days=deadline_days)
@@ -64,7 +64,7 @@ def get_grants():
             query = query.filter(
                 db.or_(
                     Grant.title.ilike(search_term),
-                    Grant.description.ilike(search_term),
+                    Grant.eligibility.ilike(search_term),
                     Grant.funder.ilike(search_term)
                 )
             )
@@ -157,13 +157,13 @@ def fetch_new_grants():
         # Limit to admin users in production
         # For now, allow all for testing
         
-        limit = request.json.get('limit', 30)
+        limit = (request.json or {}).get('limit', 30)
         
         # Fetch grants from all sources
         result = grant_fetcher.fetch_all_grants(limit=limit)
         
         # Calculate match scores for default organization
-        org_id = request.json.get('org_id')
+        org_id = (request.json or {}).get('org_id')
         if org_id:
             grant_fetcher.calculate_match_scores(org_id)
         
@@ -184,7 +184,7 @@ def fetch_new_grants():
 def apply_to_grant(grant_id):
     """Create or update application for a grant"""
     try:
-        data = request.json
+        data = request.json or {}
         org_id = data.get('organization_id')
         
         if not org_id:
@@ -227,7 +227,7 @@ def update_grant_contact(grant_id):
                 'error': 'Grant not found'
             }), 404
         
-        data = request.json
+        data = request.json or {}
         
         # Update contact fields
         if 'contact_name' in data:
@@ -291,17 +291,17 @@ def get_grant_stats():
         total_grants = db.session.query(Grant).count()
         active_grants = db.session.query(Grant).filter_by(status='active').count()
         
-        # Get grants by source
+        # Get grants by source (filter out None values)
         sources = db.session.query(
             Grant.source_name,
             db.func.count(Grant.id)
-        ).group_by(Grant.source_name).all()
+        ).filter(Grant.source_name.isnot(None)).group_by(Grant.source_name).all()
         
-        # Get grants by geography since focus_area doesn't exist in model
+        # Get grants by geography since focus_area doesn't exist in model (filter out None values)
         geographies = db.session.query(
             Grant.geography,
             db.func.count(Grant.id)
-        ).group_by(Grant.geography).all()
+        ).filter(Grant.geography.isnot(None)).group_by(Grant.geography).all()
         
         # Calculate average amount using amount_max field
         avg_amount = db.session.query(db.func.avg(Grant.amount_max)).scalar() or 0
@@ -354,7 +354,7 @@ def get_recommended_grants(org_id):
                 grant.to_dict()
             )
             
-            if score >= 3:  # Only recommend good matches
+            if score is not None and score >= 3:  # Only recommend good matches
                 grant_dict = grant.to_dict()
                 grant_dict['match_score'] = score
                 grant_dict['match_explanation'] = explanation
