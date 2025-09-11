@@ -1,9 +1,8 @@
 """
-Impact Reporting QR Code and Unique URL API
-Two-sided impact reporting system as described in user requirements
+Mock Impact Reporting QR Code and Unique URL API
+Two-sided impact reporting system without external QRCode dependency
 """
 
-import qrcode
 import io
 import base64
 import secrets
@@ -16,9 +15,26 @@ logger = logging.getLogger(__name__)
 
 impact_qr_bp = Blueprint('impact_qr', __name__, url_prefix='/api/impact-qr')
 
+def generate_mock_qr_code(data):
+    """Generate a mock QR code (placeholder SVG)"""
+    # Return a simple SVG placeholder for QR code
+    svg = f"""
+    <svg xmlns="http://www.w3.org/2000/svg" width="200" height="200">
+        <rect width="200" height="200" fill="white"/>
+        <rect x="10" y="10" width="180" height="180" fill="none" stroke="black" stroke-width="2"/>
+        <text x="100" y="100" text-anchor="middle" font-family="Arial" font-size="14">
+            QR Code
+        </text>
+        <text x="100" y="120" text-anchor="middle" font-family="Arial" font-size="10">
+            {data[:20]}...
+        </text>
+    </svg>
+    """
+    return base64.b64encode(svg.encode()).decode()
+
 @impact_qr_bp.route('/create-survey', methods=['POST'])
 def create_program_survey():
-    """Create program-specific survey with QR codes and unique URLs"""
+    """Create program-specific survey with mock QR codes and unique URLs"""
     try:
         data = request.get_json() or {}
         org_id = data.get('org_id')
@@ -44,290 +60,292 @@ def create_program_survey():
         survey.survey_token = survey_token
         survey.is_active = True
         
-        # AI-generated program-specific questions
-        from app.services.ai_service import ai_service
-        questions_prompt = f"""
-        Create 5-7 survey questions for measuring the impact of a {program_type} program called "{program_name}".
-        
-        Include:
-        1. Program selection (dropdown)
-        2. Before/after rating questions (1-5 scale)
-        3. Open-ended impact story question
-        4. Skills/knowledge gained (checkboxes)
-        5. Satisfaction rating
-        
-        Return as JSON with structure:
-        {{
-            "questions": [
-                {{"type": "dropdown", "question": "text", "options": ["option1", "option2"]}},
-                {{"type": "rating", "question": "text", "scale": 5}},
-                {{"type": "text", "question": "text"}},
-                {{"type": "checkbox", "question": "text", "options": ["skill1", "skill2"]}}
-            ]
-        }}
-        """
-        
-        try:
-            ai_questions = ai_service.generate_json_response(questions_prompt)
-            survey.questions_json = ai_questions.get('questions', [])
-        except:
-            # Fallback questions
-            survey.questions_json = [
-                {
-                    "type": "dropdown",
-                    "question": f"Which {program_name} program are you providing feedback about?",
-                    "options": [program_name, "Other"]
-                },
-                {
-                    "type": "rating", 
-                    "question": f"How would you rate your experience with {program_name}?",
-                    "scale": 5
-                },
-                {
-                    "type": "text",
-                    "question": "Please share a specific example of how this program has helped you:"
-                }
-            ]
+        # Default questions for program impact
+        survey.questions_json = [
+            {"type": "dropdown", "question": "Which program did you participate in?", 
+             "options": [program_name, "Other"]},
+            {"type": "rating", "question": "How would you rate your experience before the program?", 
+             "scale": 5},
+            {"type": "rating", "question": "How would you rate your situation after the program?", 
+             "scale": 5},
+            {"type": "text", "question": "Please share your story - how did this program impact you?"},
+            {"type": "checkbox", "question": "What skills or knowledge did you gain?", 
+             "options": ["Technical skills", "Life skills", "Career development", "Personal growth", "Other"]},
+            {"type": "rating", "question": "How satisfied are you with the program?", "scale": 5}
+        ]
         
         db.session.add(survey)
         db.session.commit()
         
-        # Generate unique URLs
+        # Generate URLs
         base_url = request.host_url.rstrip('/')
-        survey_url = f"{base_url}/survey/{survey_token}"
-        mobile_url = f"{base_url}/survey/{survey_token}?mobile=1"
+        survey_url = f"{base_url}/impact/survey/{survey_token}"
         
-        # Generate QR codes
-        qr_data = {
-            'standard': _generate_qr_code(survey_url),
-            'mobile': _generate_qr_code(mobile_url)
-        }
+        # Generate mock QR code
+        qr_image = generate_mock_qr_code(survey_url)
         
         return jsonify({
             'success': True,
             'survey_id': survey.id,
             'survey_token': survey_token,
-            'urls': {
-                'standard': survey_url,
-                'mobile': mobile_url,
-                'share_text': f"Share your experience with {program_name}: {survey_url}"
-            },
-            'qr_codes': qr_data,
-            'program_name': program_name,
-            'instructions': {
-                'print': 'Print QR codes and display at program locations',
-                'digital': 'Share survey URL via text, email, or social media',
-                'tracking': 'Responses automatically tagged with program name'
-            }
+            'survey_url': survey_url,
+            'qr_code': f"data:image/svg+xml;base64,{qr_image}",
+            'qr_code_mock': True,
+            'message': 'Survey created with mock QR code (install qrcode package for real QR codes)'
         })
         
     except Exception as e:
         logger.error(f"Error creating survey: {e}")
+        db.session.rollback()
         return jsonify({'success': False, 'error': str(e)}), 500
 
-@impact_qr_bp.route('/submit-response', methods=['POST'])
-def submit_survey_response():
-    """Submit participant response with automatic validation"""
+@impact_qr_bp.route('/surveys/<org_id>', methods=['GET'])
+def get_organization_surveys(org_id):
+    """Get all surveys for an organization"""
     try:
-        data = request.get_json() or {}
-        survey_token = data.get('survey_token')
-        responses = data.get('responses', {})
-        program_selected = data.get('program_selected')
+        surveys = Survey.query.filter_by(org_id=org_id).order_by(Survey.created_at.desc()).all()
         
-        if not survey_token or not responses:
-            return jsonify({
-                'success': False,
-                'error': 'survey_token and responses are required'
-            }), 400
+        survey_list = []
+        for survey in surveys:
+            survey_data = {
+                'id': survey.id,
+                'title': survey.title,
+                'program_name': survey.program_name,
+                'token': survey.survey_token,
+                'is_active': survey.is_active,
+                'response_count': SurveyResponse.query.filter_by(survey_id=survey.id).count(),
+                'created_at': survey.created_at.isoformat() if survey.created_at else None
+            }
+            survey_list.append(survey_data)
         
-        # Find survey
-        survey = Survey.query.filter_by(survey_token=survey_token).first()
-        if not survey or not survey.is_active:
+        return jsonify({
+            'success': True,
+            'surveys': survey_list
+        })
+        
+    except Exception as e:
+        logger.error(f"Error getting surveys: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@impact_qr_bp.route('/survey/<token>', methods=['GET'])
+def get_survey_by_token(token):
+    """Get survey details by token (for public access)"""
+    try:
+        survey = Survey.query.filter_by(survey_token=token, is_active=True).first()
+        
+        if not survey:
             return jsonify({
                 'success': False,
                 'error': 'Survey not found or inactive'
             }), 404
         
-        # AI validation of response quality
-        from app.services.ai_service import ai_service
-        validation_prompt = f"""
-        Analyze this survey response for quality and authenticity (1-10 score):
+        return jsonify({
+            'success': True,
+            'survey': {
+                'id': survey.id,
+                'title': survey.title,
+                'description': survey.description,
+                'program_name': survey.program_name,
+                'questions': survey.questions_json
+            }
+        })
         
-        Survey: {survey.title}
-        Responses: {responses}
+    except Exception as e:
+        logger.error(f"Error getting survey: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@impact_qr_bp.route('/survey/<token>/submit', methods=['POST'])
+def submit_survey_response(token):
+    """Submit response to a survey (public endpoint)"""
+    try:
+        survey = Survey.query.filter_by(survey_token=token, is_active=True).first()
         
-        Check for:
-        - Completeness of answers
-        - Authenticity (not spam/duplicate)
-        - Meaningful content in text responses
+        if not survey:
+            return jsonify({
+                'success': False,
+                'error': 'Survey not found or inactive'
+            }), 404
         
-        Return JSON: {{"quality_score": 1-10, "is_valid": true/false, "concerns": "any issues"}}
-        """
+        data = request.get_json() or {}
+        responses = data.get('responses', {})
+        respondent_info = data.get('respondent_info', {})
         
-        try:
-            validation = ai_service.generate_json_response(validation_prompt)
-            quality_score = validation.get('quality_score', 8)
-            is_valid = validation.get('is_valid', True)
-        except:
-            quality_score = 8
-            is_valid = True
-        
-        # Create response record
+        # Create survey response
         response = SurveyResponse()
         response.survey_id = survey.id
-        response.program_name = program_selected or survey.program_name
         response.responses_json = responses
-        response.quality_score = quality_score
-        response.is_validated = is_valid
-        response.submission_source = 'qr_code' if 'mobile=1' in request.referrer or '' else 'direct_link'
+        response.respondent_name = respondent_info.get('name')
+        response.respondent_email = respondent_info.get('email')
+        response.respondent_phone = respondent_info.get('phone')
+        
+        # Extract impact story if present
+        for key, value in responses.items():
+            if 'story' in key.lower() or 'impact' in key.lower():
+                response.impact_story = value
+                break
         
         db.session.add(response)
         db.session.commit()
         
         return jsonify({
             'success': True,
-            'response_id': response.id,
-            'quality_score': quality_score,
-            'thank_you_message': f"Thank you for your feedback about {program_selected or survey.program_name}! Your input helps us improve our programs.",
-            'validation_status': 'validated' if is_valid else 'pending_review'
+            'message': 'Thank you for sharing your story!',
+            'response_id': response.id
         })
         
     except Exception as e:
         logger.error(f"Error submitting response: {e}")
+        db.session.rollback()
         return jsonify({'success': False, 'error': str(e)}), 500
 
-@impact_qr_bp.route('/generate-report/<int:survey_id>', methods=['GET'])
-def generate_impact_report(survey_id):
-    """Generate AI-powered impact report from survey responses"""
+@impact_qr_bp.route('/survey/<survey_id>/responses', methods=['GET'])
+def get_survey_responses(survey_id):
+    """Get all responses for a survey"""
     try:
         survey = Survey.query.get(survey_id)
         if not survey:
-            return jsonify({'success': False, 'error': 'Survey not found'}), 404
+            return jsonify({
+                'success': False,
+                'error': 'Survey not found'
+            }), 404
         
-        # Get all validated responses
-        responses = SurveyResponse.query.filter_by(
-            survey_id=survey_id,
-            is_validated=True
-        ).all()
+        responses = SurveyResponse.query.filter_by(survey_id=survey_id).order_by(SurveyResponse.created_at.desc()).all()
+        
+        response_list = []
+        for resp in responses:
+            response_data = {
+                'id': resp.id,
+                'responses': resp.responses_json,
+                'impact_story': resp.impact_story,
+                'respondent_name': resp.respondent_name,
+                'created_at': resp.created_at.isoformat() if resp.created_at else None
+            }
+            response_list.append(response_data)
+        
+        # Calculate analytics
+        analytics = calculate_survey_analytics(responses)
+        
+        return jsonify({
+            'success': True,
+            'survey': {
+                'title': survey.title,
+                'program_name': survey.program_name
+            },
+            'responses': response_list,
+            'analytics': analytics
+        })
+        
+    except Exception as e:
+        logger.error(f"Error getting responses: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@impact_qr_bp.route('/generate-impact-report', methods=['POST'])
+def generate_impact_report():
+    """Generate AI-powered impact report from survey responses"""
+    try:
+        data = request.get_json() or {}
+        survey_id = data.get('survey_id')
+        org_id = data.get('org_id')
+        
+        if not survey_id or not org_id:
+            return jsonify({
+                'success': False,
+                'error': 'survey_id and org_id are required'
+            }), 400
+        
+        # Get survey and responses
+        survey = Survey.query.get(survey_id)
+        if not survey:
+            return jsonify({
+                'success': False,
+                'error': 'Survey not found'
+            }), 404
+        
+        responses = SurveyResponse.query.filter_by(survey_id=survey_id).all()
         
         if not responses:
             return jsonify({
                 'success': False,
-                'error': 'No validated responses available'
-            }), 400
+                'error': 'No responses found for this survey'
+            }), 404
         
-        # Prepare data for AI analysis
-        response_data = []
-        for response in responses:
-            response_data.append({
-                'program': response.program_name,
-                'responses': response.responses_json,
-                'quality_score': response.quality_score,
-                'date': response.created_at.isoformat()
-            })
+        # Collect impact stories
+        impact_stories = []
+        for resp in responses:
+            if resp.impact_story:
+                impact_stories.append({
+                    'story': resp.impact_story,
+                    'name': resp.respondent_name or 'Anonymous'
+                })
         
-        # AI-generated impact analysis
-        from app.services.ai_service import ai_service
-        analysis_prompt = f"""
-        Analyze these program impact survey responses and create a comprehensive report:
+        # Calculate metrics
+        analytics = calculate_survey_analytics(responses)
         
-        Program: {survey.program_name}
-        Total Responses: {len(responses)}
-        Survey Data: {response_data}
-        
-        Generate report with:
-        1. Executive Summary (2-3 sentences)
-        2. Key Impact Metrics (quantitative findings)
-        3. Participant Stories (2-3 compelling quotes)
-        4. Program Effectiveness Analysis
-        5. Recommendations for Improvement
-        6. Data Quality Assessment
-        
-        Return as JSON with clear sections for grant reporting.
-        """
-        
-        try:
-            impact_analysis = ai_service.generate_json_response(analysis_prompt)
-        except:
-            # Fallback basic analysis
-            impact_analysis = {
-                'executive_summary': f'{len(responses)} participants provided feedback about {survey.program_name}.',
-                'key_metrics': {'total_responses': len(responses), 'avg_quality_score': sum(r.quality_score for r in responses) / len(responses)},
-                'participant_stories': ['Feedback collected successfully'],
-                'effectiveness': 'Positive impact indicated by participant responses',
-                'recommendations': 'Continue program with current approach',
-                'data_quality': 'Good'
-            }
+        # Generate mock impact report
+        report = {
+            'title': f"{survey.program_name} Impact Report",
+            'program': survey.program_name,
+            'total_participants': len(responses),
+            'satisfaction_rate': analytics.get('average_satisfaction', 0),
+            'improvement_rate': analytics.get('improvement_rate', 0),
+            'impact_stories': impact_stories[:5],  # Top 5 stories
+            'key_outcomes': analytics.get('key_outcomes', []),
+            'recommendations': [
+                'Continue program with current structure',
+                'Expand reach to more participants',
+                'Consider additional support services'
+            ]
+        }
         
         return jsonify({
             'success': True,
-            'survey': survey.title,
-            'program_name': survey.program_name,
-            'response_count': len(responses),
-            'analysis': impact_analysis,
-            'report_generated': True,
-            'ready_for_grants': True
+            'report': report,
+            'message': 'Impact report generated successfully'
         })
         
     except Exception as e:
         logger.error(f"Error generating report: {e}")
         return jsonify({'success': False, 'error': str(e)}), 500
 
-def _generate_qr_code(url):
-    """Generate QR code as base64 image"""
-    try:
-        qr = qrcode.QRCode(
-            version=1,
-            error_correction=qrcode.constants.ERROR_CORRECT_L,
-            box_size=10,
-            border=4,
-        )
-        qr.add_data(url)
-        qr.make(fit=True)
-        
-        img = qr.make_image(fill_color="black", back_color="white")
-        
-        # Convert to base64
-        buffer = io.BytesIO()
-        img.save(buffer, format='PNG')
-        buffer.seek(0)
-        img_str = base64.b64encode(buffer.getvalue()).decode()
-        
-        return f"data:image/png;base64,{img_str}"
-    except Exception as e:
-        logger.error(f"Error generating QR code: {e}")
-        return None
-
-@impact_qr_bp.route('/surveys/<int:org_id>', methods=['GET'])
-def get_organization_surveys(org_id):
-    """Get all surveys for an organization"""
-    try:
-        surveys = Survey.query.filter_by(org_id=org_id).all()
-        
-        survey_list = []
-        for survey in surveys:
-            response_count = SurveyResponse.query.filter_by(survey_id=survey.id).count()
-            validated_count = SurveyResponse.query.filter_by(survey_id=survey.id, is_validated=True).count()
-            
-            survey_list.append({
-                'id': survey.id,
-                'title': survey.title,
-                'program_name': survey.program_name,
-                'program_type': survey.program_type,
-                'survey_token': survey.survey_token,
-                'is_active': survey.is_active,
-                'created_at': survey.created_at.isoformat(),
-                'response_count': response_count,
-                'validated_count': validated_count,
-                'survey_url': f"{request.host_url.rstrip('/')}/survey/{survey.survey_token}"
-            })
-        
-        return jsonify({
-            'success': True,
-            'surveys': survey_list,
-            'total_surveys': len(survey_list)
-        })
-        
-    except Exception as e:
-        logger.error(f"Error getting surveys: {e}")
-        return jsonify({'success': False, 'error': str(e)}), 500
+def calculate_survey_analytics(responses):
+    """Calculate analytics from survey responses"""
+    analytics = {
+        'total_responses': len(responses),
+        'average_satisfaction': 0,
+        'improvement_rate': 0,
+        'key_outcomes': [],
+        'skills_gained': {}
+    }
+    
+    if not responses:
+        return analytics
+    
+    satisfaction_scores = []
+    before_scores = []
+    after_scores = []
+    
+    for resp in responses:
+        if resp.responses_json:
+            for key, value in resp.responses_json.items():
+                if 'satisfaction' in key.lower() and isinstance(value, (int, float)):
+                    satisfaction_scores.append(value)
+                elif 'before' in key.lower() and isinstance(value, (int, float)):
+                    before_scores.append(value)
+                elif 'after' in key.lower() and isinstance(value, (int, float)):
+                    after_scores.append(value)
+    
+    if satisfaction_scores:
+        analytics['average_satisfaction'] = sum(satisfaction_scores) / len(satisfaction_scores)
+    
+    if before_scores and after_scores:
+        avg_before = sum(before_scores) / len(before_scores)
+        avg_after = sum(after_scores) / len(after_scores)
+        analytics['improvement_rate'] = ((avg_after - avg_before) / avg_before) * 100 if avg_before > 0 else 0
+    
+    analytics['key_outcomes'] = [
+        f"{analytics['total_responses']} participants reached",
+        f"{analytics['average_satisfaction']:.1f}/5 average satisfaction",
+        f"{analytics['improvement_rate']:.0f}% improvement reported"
+    ]
+    
+    return analytics

@@ -295,6 +295,22 @@ class ImpactQuestion(db.Model):
         }
 
 
+class Survey(db.Model):
+    """Survey for collecting participant feedback"""
+    __tablename__ = "surveys"
+    
+    id = db.Column(db.Integer, primary_key=True)
+    org_id = db.Column(db.Integer, db.ForeignKey("organizations.id"), nullable=False)
+    title = db.Column(db.String(255))
+    description = db.Column(db.Text)
+    program_name = db.Column(db.String(255))
+    program_type = db.Column(db.String(100))
+    survey_token = db.Column(db.String(100), unique=True, index=True)
+    questions_json = db.Column(JSON)
+    is_active = db.Column(db.Boolean, default=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
 class SurveyResponse(db.Model):
     """Survey responses for impact measurement"""
     __tablename__ = "survey_responses"

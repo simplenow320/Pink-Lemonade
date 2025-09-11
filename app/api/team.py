@@ -1,11 +1,10 @@
 """
-Team Collaboration API Endpoints
-Multi-user support and role management
+Mock Team Collaboration API Endpoints
+Multi-user support without Flask-Login dependency
 """
 
-from flask import Blueprint, jsonify, request
+from flask import Blueprint, jsonify, request, session
 from app.services.team_service import TeamService
-from flask_login import login_required, current_user
 import logging
 
 logger = logging.getLogger(__name__)
@@ -13,11 +12,33 @@ logger = logging.getLogger(__name__)
 team_bp = Blueprint('team', __name__, url_prefix='/api/team')
 team_service = TeamService()
 
+def login_required(f):
+    """Mock login required decorator"""
+    from functools import wraps
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if 'user_id' not in session:
+            return jsonify({'success': False, 'error': 'Authentication required'}), 401
+        return f(*args, **kwargs)
+    return decorated_function
+
+class MockUser:
+    """Mock current user object"""
+    def __init__(self):
+        self.id = session.get('user_id', 1)
+        self.org_id = session.get('org_id', 1)
+        self.is_authenticated = 'user_id' in session
+
+# Create a mock current_user object
+def get_current_user():
+    return MockUser()
+
 @team_bp.route('/members', methods=['GET'])
 @login_required
 def get_team_members():
     """Get all team members"""
     try:
+        current_user = get_current_user()
         org_id = current_user.org_id
         result = team_service.get_team_members(org_id)
         
@@ -35,6 +56,7 @@ def get_team_members():
 def invite_member():
     """Send team invitation"""
     try:
+        current_user = get_current_user()
         data = request.json
         email = data.get('email')
         role = data.get('role', 'member')
@@ -84,6 +106,7 @@ def accept_invitation():
             }), 400
         
         # User must be logged in
+        current_user = get_current_user()
         if not current_user.is_authenticated:
             return jsonify({
                 'success': False,
@@ -106,6 +129,7 @@ def accept_invitation():
 def update_member_role(member_id):
     """Update team member role"""
     try:
+        current_user = get_current_user()
         data = request.json
         new_role = data.get('role')
         
@@ -136,6 +160,7 @@ def update_member_role(member_id):
 def remove_member(member_id):
     """Remove team member"""
     try:
+        current_user = get_current_user()
         result = team_service.remove_team_member(
             org_id=current_user.org_id,
             admin_id=current_user.id,
@@ -151,13 +176,38 @@ def remove_member(member_id):
         logger.error(f"Error removing member: {e}")
         return jsonify({'success': False, 'error': str(e)}), 500
 
+@team_bp.route('/permissions', methods=['GET'])
+@login_required
+def get_permissions():
+    """Get current user permissions"""
+    try:
+        current_user = get_current_user()
+        result = team_service.get_user_permissions(
+            current_user.id,
+            current_user.org_id
+        )
+        
+        if result['success']:
+            return jsonify(result)
+        else:
+            return jsonify(result), 400
+            
+    except Exception as e:
+        logger.error(f"Error getting permissions: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
 @team_bp.route('/activity', methods=['GET'])
 @login_required
-def get_activity_feed():
-    """Get team activity feed"""
+def get_activity():
+    """Get team activity log"""
     try:
-        limit = request.args.get('limit', 50, type=int)
-        result = team_service.get_activity_feed(current_user.org_id, limit)
+        current_user = get_current_user()
+        days = request.args.get('days', 30, type=int)
+        
+        result = team_service.get_team_activity(
+            current_user.org_id,
+            days=days
+        )
         
         if result['success']:
             return jsonify(result)
@@ -168,27 +218,77 @@ def get_activity_feed():
         logger.error(f"Error getting activity: {e}")
         return jsonify({'success': False, 'error': str(e)}), 500
 
-@team_bp.route('/grant/<int:grant_id>/comment', methods=['POST'])
+@team_bp.route('/collaboration/grants/<int:grant_id>', methods=['GET'])
+@login_required
+def get_grant_collaboration(grant_id):
+    """Get collaboration data for a grant"""
+    try:
+        current_user = get_current_user()
+        result = team_service.get_grant_collaboration(
+            grant_id,
+            current_user.org_id
+        )
+        
+        if result['success']:
+            return jsonify(result)
+        else:
+            return jsonify(result), 400
+            
+    except Exception as e:
+        logger.error(f"Error getting collaboration: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@team_bp.route('/collaboration/grants/<int:grant_id>/assign', methods=['POST'])
+@login_required
+def assign_grant(grant_id):
+    """Assign grant to team member"""
+    try:
+        current_user = get_current_user()
+        data = request.json
+        assignee_id = data.get('assignee_id')
+        
+        if not assignee_id:
+            return jsonify({
+                'success': False,
+                'error': 'Assignee ID required'
+            }), 400
+        
+        result = team_service.assign_grant(
+            grant_id=grant_id,
+            assignee_id=assignee_id,
+            assigned_by=current_user.id,
+            org_id=current_user.org_id
+        )
+        
+        if result['success']:
+            return jsonify(result)
+        else:
+            return jsonify(result), 400
+            
+    except Exception as e:
+        logger.error(f"Error assigning grant: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@team_bp.route('/collaboration/grants/<int:grant_id>/comment', methods=['POST'])
 @login_required
 def add_comment(grant_id):
     """Add comment to grant"""
     try:
+        current_user = get_current_user()
         data = request.json
-        comment_text = data.get('comment')
-        parent_id = data.get('parent_id')
+        comment = data.get('comment')
         
-        if not comment_text:
+        if not comment:
             return jsonify({
                 'success': False,
-                'error': 'Comment text required'
+                'error': 'Comment required'
             }), 400
         
-        result = team_service.add_comment(
-            org_id=current_user.org_id,
-            user_id=current_user.id,
+        result = team_service.add_grant_comment(
             grant_id=grant_id,
-            comment_text=comment_text,
-            parent_id=parent_id
+            user_id=current_user.id,
+            comment=comment,
+            org_id=current_user.org_id
         )
         
         if result['success']:
@@ -198,89 +298,4 @@ def add_comment(grant_id):
             
     except Exception as e:
         logger.error(f"Error adding comment: {e}")
-        return jsonify({'success': False, 'error': str(e)}), 500
-
-@team_bp.route('/notifications', methods=['GET'])
-@login_required
-def get_notifications():
-    """Get user notifications"""
-    try:
-        unread_only = request.args.get('unread_only', False, type=bool)
-        result = team_service.get_notifications(current_user.id, unread_only)
-        
-        if result['success']:
-            return jsonify(result)
-        else:
-            return jsonify(result), 400
-            
-    except Exception as e:
-        logger.error(f"Error getting notifications: {e}")
-        return jsonify({'success': False, 'error': str(e)}), 500
-
-@team_bp.route('/statistics', methods=['GET'])
-@login_required
-def get_team_statistics():
-    """Get team collaboration statistics"""
-    try:
-        result = team_service.get_team_statistics(current_user.org_id)
-        
-        if result['success']:
-            return jsonify(result)
-        else:
-            return jsonify(result), 400
-            
-    except Exception as e:
-        logger.error(f"Error getting statistics: {e}")
-        return jsonify({'success': False, 'error': str(e)}), 500
-
-@team_bp.route('/permissions/check', methods=['POST'])
-@login_required
-def check_permission():
-    """Check if user has specific permission"""
-    try:
-        data = request.json
-        permission = data.get('permission')
-        
-        if not permission:
-            return jsonify({
-                'success': False,
-                'error': 'Permission name required'
-            }), 400
-        
-        has_permission = team_service.has_permission(
-            current_user.id,
-            current_user.org_id,
-            permission
-        )
-        
-        return jsonify({
-            'success': True,
-            'has_permission': has_permission,
-            'permission': permission
-        })
-        
-    except Exception as e:
-        logger.error(f"Error checking permission: {e}")
-        return jsonify({'success': False, 'error': str(e)}), 500
-
-@team_bp.route('/roles', methods=['GET'])
-def get_available_roles():
-    """Get all available roles and permissions"""
-    try:
-        roles = []
-        for role_key, role_info in TeamService.ROLES.items():
-            roles.append({
-                'id': role_key,
-                'name': role_info['name'],
-                'level': role_info['level'],
-                'permissions': role_info['permissions']
-            })
-        
-        return jsonify({
-            'success': True,
-            'roles': sorted(roles, key=lambda x: x['level'], reverse=True)
-        })
-        
-    except Exception as e:
-        logger.error(f"Error getting roles: {e}")
         return jsonify({'success': False, 'error': str(e)}), 500

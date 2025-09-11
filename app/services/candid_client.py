@@ -154,6 +154,17 @@ class GrantsClient:
         except requests.RequestException as e:
             return {"error": f"Request failed: {str(e)}"}
     
+    def search_transactions(self, query: Optional[str] = None, location: Optional[int] = None, page: int = 1, size: int = 25) -> List[Dict]:
+        """Search grant transactions using the official transactions endpoint
+        
+        Args:
+            query: Keyword to search for
+            location: Geoname ID for location (e.g., 5001836 for Michigan)
+            page: Page number (1-100)
+            size: Maximum results to return (default 25)
+        """
+        return self.transactions(query=query, location=location, page=page)
+    
     def transactions(self, query: Optional[str] = None, location: Optional[int] = None, page: int = 1) -> List[Dict]:
         """Search grant transactions using the official transactions endpoint
         
@@ -333,7 +344,8 @@ class EssentialsClient:
     """Candid Essentials API Client"""
     
     def __init__(self):
-        self.base_url = "https://api.candid.org/essentials/v3"  # Updated to v3
+        # Use premier endpoint which is more stable
+        self.base_url = "https://api.candid.org/premier/v3"  
         # Updated Essentials API key from Candid support
         self.api_key = os.environ.get('CANDID_ESSENTIALS_KEY', '8b0f054101a24cd79a2f445632ec9ac2')
         self.cache = SimpleCache()

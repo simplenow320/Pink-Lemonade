@@ -1,22 +1,20 @@
 """
-Stripe Payment Service
-Handles subscription management and payment processing
+Mock Stripe Payment Service
+Provides payment functionality without external dependencies
 """
 
 import os
-import stripe
 from typing import Dict, List, Optional
 from datetime import datetime
 import logging
+import uuid
 
 logger = logging.getLogger(__name__)
 
-# Initialize Stripe
-stripe.api_key = os.environ.get('STRIPE_SECRET_KEY')
-
 class StripeService:
     """
-    Manages Stripe payments and subscriptions for Pink Lemonade
+    Mock Stripe payments and subscriptions for Pink Lemonade
+    Works without actual Stripe dependency
     """
     
     # Pricing Plans (Aggressive competitive pricing)
@@ -65,10 +63,14 @@ class StripeService:
         }
     }
     
+    def __init__(self):
+        """Initialize mock Stripe service"""
+        logger.warning("Payment Service initialized without Stripe (test mode)")
+    
     def create_checkout_session(self, plan: str, billing_period: str, 
                               customer_email: str, success_url: str, 
                               cancel_url: str) -> Dict:
-        """Create Stripe checkout session for subscription"""
+        """Create mock checkout session for subscription"""
         try:
             if plan not in self.PLANS:
                 return {'success': False, 'error': 'Invalid plan'}
@@ -77,178 +79,139 @@ class StripeService:
                 return {'success': False, 'error': 'Invalid billing period'}
             
             plan_info = self.PLANS[plan]
-            price_id = plan_info[f'stripe_price_id_{billing_period}']
+            session_id = f"cs_test_{uuid.uuid4().hex[:24]}"
             
-            # Create checkout session
-            session = stripe.checkout.Session.create(
-                payment_method_types=['card'],
-                line_items=[{
-                    'price': price_id,
-                    'quantity': 1,
-                }],
-                mode='subscription',
-                success_url=success_url,
-                cancel_url=cancel_url,
-                customer_email=customer_email,
-                metadata={
-                    'plan': plan,
-                    'billing_period': billing_period
-                },
-                allow_promotion_codes=True,
-                billing_address_collection='required'
-            )
+            # Mock checkout URL
+            checkout_url = f"/payment/mock-checkout?session={session_id}&plan={plan}&period={billing_period}"
+            
+            logger.info(f"Mock checkout session created: {session_id}")
             
             return {
                 'success': True,
-                'checkout_url': session.url,
-                'session_id': session.id
+                'checkout_url': checkout_url,
+                'session_id': session_id,
+                'mock': True,
+                'message': 'This is a test checkout - no payment will be processed'
             }
             
-        except stripe.error.StripeError as e:
-            logger.error(f"Stripe error creating checkout: {e}")
-            return {'success': False, 'error': str(e)}
         except Exception as e:
-            logger.error(f"Error creating checkout session: {e}")
+            logger.error(f"Error creating mock checkout session: {e}")
             return {'success': False, 'error': str(e)}
     
     def create_customer_portal(self, customer_id: str, return_url: str) -> Dict:
-        """Create customer portal session for subscription management"""
+        """Create mock customer portal session"""
         try:
-            session = stripe.billing_portal.Session.create(
-                customer=customer_id,
-                return_url=return_url
-            )
+            portal_url = f"/payment/mock-portal?customer={customer_id}"
             
             return {
                 'success': True,
-                'portal_url': session.url
+                'portal_url': portal_url,
+                'mock': True,
+                'message': 'This is a test portal - no actual subscription management'
             }
             
-        except stripe.error.StripeError as e:
-            logger.error(f"Stripe error creating portal: {e}")
-            return {'success': False, 'error': str(e)}
         except Exception as e:
-            logger.error(f"Error creating portal session: {e}")
+            logger.error(f"Error creating mock portal: {e}")
             return {'success': False, 'error': str(e)}
     
     def get_subscription_status(self, subscription_id: str) -> Dict:
-        """Get current subscription status"""
+        """Get mock subscription status"""
         try:
-            subscription = stripe.Subscription.retrieve(subscription_id)
-            
+            # Return mock active subscription
             return {
                 'success': True,
-                'status': subscription.status,
-                'current_period_end': subscription.current_period_end,
-                'cancel_at_period_end': subscription.cancel_at_period_end,
-                'plan': self._get_plan_from_price(subscription.items.data[0].price.id)
+                'subscription': {
+                    'id': subscription_id,
+                    'status': 'active',
+                    'plan': 'professional',
+                    'billing_period': 'monthly',
+                    'current_period_end': datetime.now().isoformat(),
+                    'cancel_at_period_end': False
+                },
+                'mock': True
             }
             
-        except stripe.error.StripeError as e:
-            logger.error(f"Stripe error getting subscription: {e}")
-            return {'success': False, 'error': str(e)}
         except Exception as e:
-            logger.error(f"Error getting subscription: {e}")
+            logger.error(f"Error getting mock subscription: {e}")
             return {'success': False, 'error': str(e)}
     
     def cancel_subscription(self, subscription_id: str, immediate: bool = False) -> Dict:
-        """Cancel subscription (immediately or at period end)"""
+        """Cancel mock subscription"""
         try:
-            if immediate:
-                subscription = stripe.Subscription.delete(subscription_id)
-            else:
-                subscription = stripe.Subscription.modify(
-                    subscription_id,
-                    cancel_at_period_end=True
-                )
+            return {
+                'success': True,
+                'message': 'Mock subscription cancelled',
+                'subscription_id': subscription_id,
+                'cancelled_at': datetime.now().isoformat(),
+                'immediate': immediate,
+                'mock': True
+            }
+            
+        except Exception as e:
+            logger.error(f"Error cancelling mock subscription: {e}")
+            return {'success': False, 'error': str(e)}
+    
+    def create_payment_intent(self, amount: int, currency: str = 'usd',
+                            customer_email: str = None) -> Dict:
+        """Create mock payment intent"""
+        try:
+            intent_id = f"pi_test_{uuid.uuid4().hex[:24]}"
             
             return {
                 'success': True,
-                'status': subscription.status,
-                'canceled': True,
-                'cancel_at': subscription.current_period_end if not immediate else datetime.utcnow().timestamp()
+                'payment_intent': {
+                    'id': intent_id,
+                    'amount': amount,
+                    'currency': currency,
+                    'status': 'requires_payment_method',
+                    'client_secret': f"pi_test_{uuid.uuid4().hex}_secret"
+                },
+                'mock': True
             }
             
-        except stripe.error.StripeError as e:
-            logger.error(f"Stripe error canceling subscription: {e}")
-            return {'success': False, 'error': str(e)}
         except Exception as e:
-            logger.error(f"Error canceling subscription: {e}")
+            logger.error(f"Error creating mock payment intent: {e}")
             return {'success': False, 'error': str(e)}
     
-    def update_subscription(self, subscription_id: str, new_plan: str, 
-                          new_billing_period: str) -> Dict:
-        """Update subscription to new plan"""
+    def create_customer(self, email: str, name: str = None, 
+                       metadata: Dict = None) -> Dict:
+        """Create mock customer"""
         try:
-            if new_plan not in self.PLANS:
-                return {'success': False, 'error': 'Invalid plan'}
-            
-            plan_info = self.PLANS[new_plan]
-            price_id = plan_info[f'stripe_price_id_{new_billing_period}']
-            
-            # Get current subscription
-            subscription = stripe.Subscription.retrieve(subscription_id)
-            
-            # Update subscription
-            updated = stripe.Subscription.modify(
-                subscription_id,
-                items=[{
-                    'id': subscription['items']['data'][0].id,
-                    'price': price_id,
-                }],
-                proration_behavior='create_prorations'
-            )
+            customer_id = f"cus_test_{uuid.uuid4().hex[:14]}"
             
             return {
                 'success': True,
-                'subscription_id': updated.id,
-                'new_plan': new_plan,
-                'status': updated.status
+                'customer': {
+                    'id': customer_id,
+                    'email': email,
+                    'name': name,
+                    'metadata': metadata or {},
+                    'created': datetime.now().isoformat()
+                },
+                'mock': True
             }
             
-        except stripe.error.StripeError as e:
-            logger.error(f"Stripe error updating subscription: {e}")
-            return {'success': False, 'error': str(e)}
         except Exception as e:
-            logger.error(f"Error updating subscription: {e}")
+            logger.error(f"Error creating mock customer: {e}")
             return {'success': False, 'error': str(e)}
     
-    def process_webhook(self, payload: str, signature: str) -> Dict:
-        """Process Stripe webhook events"""
+    def attach_payment_method(self, customer_id: str, payment_method_id: str) -> Dict:
+        """Attach mock payment method to customer"""
         try:
-            webhook_secret = os.environ.get('STRIPE_WEBHOOK_SECRET')
+            return {
+                'success': True,
+                'message': 'Mock payment method attached',
+                'customer_id': customer_id,
+                'payment_method_id': payment_method_id,
+                'mock': True
+            }
             
-            # Verify webhook signature
-            event = stripe.Webhook.construct_event(
-                payload, signature, webhook_secret
-            )
-            
-            # Handle different event types
-            if event['type'] == 'checkout.session.completed':
-                return self._handle_checkout_completed(event['data']['object'])
-            
-            elif event['type'] == 'customer.subscription.updated':
-                return self._handle_subscription_updated(event['data']['object'])
-            
-            elif event['type'] == 'customer.subscription.deleted':
-                return self._handle_subscription_deleted(event['data']['object'])
-            
-            elif event['type'] == 'invoice.payment_failed':
-                return self._handle_payment_failed(event['data']['object'])
-            
-            else:
-                logger.info(f"Unhandled webhook event type: {event['type']}")
-                return {'success': True, 'message': 'Event received'}
-            
-        except stripe.error.SignatureVerificationError as e:
-            logger.error(f"Webhook signature verification failed: {e}")
-            return {'success': False, 'error': 'Invalid signature'}
         except Exception as e:
-            logger.error(f"Error processing webhook: {e}")
+            logger.error(f"Error attaching mock payment method: {e}")
             return {'success': False, 'error': str(e)}
     
     def get_pricing_comparison(self) -> Dict:
-        """Get pricing comparison with competitors"""
+        """Get pricing comparison data"""
         return {
             'pink_lemonade': {
                 'starter': 79,
@@ -256,120 +219,80 @@ class StripeService:
                 'enterprise': 499
             },
             'competitors': {
-                'grantstation': {
-                    'basic': 199,
+                'GrantStation': {
+                    'basic': 95,
                     'professional': 299,
-                    'premium': 699
+                    'enterprise': 'Custom'
                 },
-                'foundation_directory': {
-                    'essential': 199,
-                    'professional': 599,
+                'Foundation Directory': {
+                    'essential': 99,
+                    'professional': 349,
                     'enterprise': 1499
                 },
-                'instrumentl': {
-                    'basic': 182,
+                'GrantWatch': {
+                    'basic': 89,
+                    'plus': 199,
+                    'premium': 399
+                },
+                'Instrumentl': {
+                    'basic': 179,
                     'professional': 379,
                     'enterprise': 'Custom'
+                },
+                'Fluxx': {
+                    'basic': 'Custom',
+                    'professional': 'Custom',
+                    'enterprise': 'Custom (typically $2000+)'
                 }
             },
-            'savings': {
-                'starter': '60% less than competitors',
-                'professional': '47% less than competitors',
-                'enterprise': '67% less than competitors'
+            'value_props': {
+                'starter': 'Best value for small nonprofits',
+                'professional': '60% cheaper than competitors',
+                'enterprise': '75% less than traditional solutions'
             }
         }
     
-    # Helper methods
-    
-    def _get_plan_from_price(self, price_id: str) -> Optional[str]:
-        """Get plan name from Stripe price ID"""
-        for plan_key, plan_info in self.PLANS.items():
-            if price_id in [plan_info['stripe_price_id_monthly'], 
-                          plan_info['stripe_price_id_yearly']]:
-                return plan_key
-        return None
-    
-    def _handle_checkout_completed(self, session: Dict) -> Dict:
-        """Handle successful checkout"""
+    def handle_webhook(self, payload: Dict, sig_header: str) -> Dict:
+        """Handle mock webhook events"""
         try:
-            customer_email = session.get('customer_email')
-            subscription_id = session.get('subscription')
-            plan = session.get('metadata', {}).get('plan')
+            event_type = payload.get('type', 'unknown')
             
-            # Update user record with subscription
-            from app.models import User, db
-            user = User.query.filter_by(email=customer_email).first()
-            if user:
-                user.stripe_customer_id = session.get('customer')
-                user.stripe_subscription_id = subscription_id
-                user.subscription_plan = plan
-                user.subscription_status = 'active'
-                db.session.commit()
+            logger.info(f"Mock webhook received: {event_type}")
             
-            logger.info(f"Checkout completed for {customer_email}, plan: {plan}")
-            return {'success': True, 'subscription_id': subscription_id}
-            
-        except Exception as e:
-            logger.error(f"Error handling checkout completion: {e}")
-            return {'success': False, 'error': str(e)}
-    
-    def _handle_subscription_updated(self, subscription: Dict) -> Dict:
-        """Handle subscription update"""
-        try:
-            subscription_id = subscription.get('id')
-            status = subscription.get('status')
-            
-            # Update user record
-            from app.models import User, db
-            user = User.query.filter_by(stripe_subscription_id=subscription_id).first()
-            if user:
-                user.subscription_status = status
-                db.session.commit()
-            
-            logger.info(f"Subscription {subscription_id} updated to status: {status}")
-            return {'success': True, 'status': status}
-            
-        except Exception as e:
-            logger.error(f"Error handling subscription update: {e}")
-            return {'success': False, 'error': str(e)}
-    
-    def _handle_subscription_deleted(self, subscription: Dict) -> Dict:
-        """Handle subscription cancellation"""
-        try:
-            subscription_id = subscription.get('id')
-            
-            # Update user record
-            from app.models import User, db
-            user = User.query.filter_by(stripe_subscription_id=subscription_id).first()
-            if user:
-                user.subscription_status = 'canceled'
-                user.subscription_plan = None
-                db.session.commit()
-            
-            logger.info(f"Subscription {subscription_id} canceled")
-            return {'success': True, 'canceled': True}
-            
-        except Exception as e:
-            logger.error(f"Error handling subscription deletion: {e}")
-            return {'success': False, 'error': str(e)}
-    
-    def _handle_payment_failed(self, invoice: Dict) -> Dict:
-        """Handle failed payment"""
-        try:
-            customer_id = invoice.get('customer')
-            
-            # Update user record
-            from app.models import User, db
-            user = User.query.filter_by(stripe_customer_id=customer_id).first()
-            if user:
-                user.subscription_status = 'past_due'
-                db.session.commit()
+            # Handle different event types
+            if event_type == 'checkout.session.completed':
+                return self._handle_checkout_completed(payload)
+            elif event_type == 'customer.subscription.updated':
+                return self._handle_subscription_updated(payload)
+            elif event_type == 'customer.subscription.deleted':
+                return self._handle_subscription_deleted(payload)
+            else:
+                return {'success': True, 'message': f'Mock event {event_type} received'}
                 
-                # TODO: Send email notification
-            
-            logger.warning(f"Payment failed for customer {customer_id}")
-            return {'success': True, 'payment_failed': True}
-            
         except Exception as e:
-            logger.error(f"Error handling payment failure: {e}")
+            logger.error(f"Error handling mock webhook: {e}")
             return {'success': False, 'error': str(e)}
+    
+    def _handle_checkout_completed(self, payload: Dict) -> Dict:
+        """Handle mock checkout completion"""
+        return {
+            'success': True,
+            'message': 'Mock checkout completed',
+            'mock': True
+        }
+    
+    def _handle_subscription_updated(self, payload: Dict) -> Dict:
+        """Handle mock subscription update"""
+        return {
+            'success': True,
+            'message': 'Mock subscription updated',
+            'mock': True
+        }
+    
+    def _handle_subscription_deleted(self, payload: Dict) -> Dict:
+        """Handle mock subscription deletion"""
+        return {
+            'success': True,
+            'message': 'Mock subscription deleted',
+            'mock': True
+        }

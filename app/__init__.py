@@ -215,6 +215,13 @@ def create_app():
     except ImportError as e:
         print(f"Smart Tools blueprint not available: {e}")
     
+    # Register PDF Export endpoints
+    try:
+        from app.api.pdf_export import pdf_export_bp
+        flask_app.register_blueprint(pdf_export_bp)
+    except ImportError as e:
+        print(f"PDF Export blueprint not available: {e}")
+    
     # Register Payment endpoints (Phase 6)
     try:
         from app.api.payments import payments_bp
