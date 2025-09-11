@@ -438,9 +438,9 @@ def get_opportunities():
                 
                 transactions = client.search_transactions(trans_query, page=1, size=15)
                 
-                if transactions and not transactions.get("error"):
-                    grants_data = transactions.get("grants", [])
-                    for grant in grants_data:
+                if transactions:
+                    # transactions is already a list of grants
+                    for grant in transactions:
                         # Transform transaction to opportunity format
                         opportunity = {
                             'source': 'candid_grants',
@@ -455,7 +455,7 @@ def get_opportunities():
                         }
                         all_opportunities.append(opportunity)
                     
-                    logger.info(f"Found {len(grants_data)} historical grants")
+                    logger.info(f"Found {len(transactions)} historical grants")
             except Exception as e:
                 logger.error(f"Error fetching Candid transactions: {e}")
         
