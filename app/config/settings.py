@@ -11,5 +11,13 @@ SQLALCHEMY_ENGINE_OPTIONS = {
 # Security
 SECRET_KEY = os.environ.get("SESSION_SECRET", "dev-secret-key")
 
+# Session Configuration
+SESSION_TYPE = "filesystem"
+SESSION_PERMANENT = False
+PERMANENT_SESSION_LIFETIME = 86400  # 24 hours in seconds
+SESSION_COOKIE_NAME = "grantflow_session"
+SESSION_COOKIE_HTTPONLY = True
+SESSION_COOKIE_SAMESITE = "Lax"
+
 # OpenAI
 OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY")
