@@ -61,7 +61,7 @@ a[style*="background:#B8899A"]:hover {
   transform: scale(1.05);
 }
 *{box-sizing:border-box}
-html,body{margin:0;padding:0;background:var(--white);color:var(--grey);font-family:var(--font);line-height:1.6}
+html,body{margin:0;padding:0;background:#FFFFFF;color:var(--grey);font-family:var(--font);line-height:1.6}
 h1,h2,h3{color:var(--black);margin:0 0 var(--space);font-weight:500}
 a{text-decoration:none;color:var(--black)}
 .container{max-width:1100px;margin:0 auto;padding:24px}
