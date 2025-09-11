@@ -215,6 +215,75 @@ def apply_to_grant(grant_id):
             'error': str(e)
         }), 500
 
+@bp.route('/<int:grant_id>/contact', methods=['PUT'])
+def update_grant_contact(grant_id):
+    """Update contact information for a specific grant"""
+    try:
+        grant = db.session.query(Grant).get(grant_id)
+        
+        if not grant:
+            return jsonify({
+                'success': False,
+                'error': 'Grant not found'
+            }), 404
+        
+        data = request.json
+        
+        # Update contact fields
+        if 'contact_name' in data:
+            grant.contact_name = data['contact_name'] or None
+        if 'contact_email' in data:
+            grant.contact_email = data['contact_email'] or None
+        if 'contact_phone' in data:
+            grant.contact_phone = data['contact_phone'] or None
+        if 'contact_department' in data:
+            grant.contact_department = data['contact_department'] or None
+        if 'organization_website' in data:
+            grant.organization_website = data['organization_website'] or None
+        if 'application_url' in data:
+            grant.application_url = data['application_url'] or None
+        
+        # Set confidence based on how much data we have
+        contact_fields = [
+            grant.contact_name,
+            grant.contact_email,
+            grant.contact_phone,
+            grant.contact_department,
+            grant.organization_website,
+            grant.application_url
+        ]
+        filled_fields = sum(1 for field in contact_fields if field)
+        
+        if filled_fields >= 5:
+            grant.contact_confidence = 'high'
+        elif filled_fields >= 3:
+            grant.contact_confidence = 'medium'
+        else:
+            grant.contact_confidence = 'low'
+        
+        # Set verified date when contact info is updated
+        if filled_fields > 0:
+            grant.contact_verified_date = datetime.utcnow()
+        
+        # Update the updated_at timestamp
+        grant.updated_at = datetime.utcnow()
+        
+        db.session.commit()
+        
+        return jsonify({
+            'success': True,
+            'message': 'Contact information updated successfully',
+            'grant': grant.to_dict()
+        })
+        
+    except Exception as e:
+        logger.error(f"Error updating grant contact: {e}")
+        db.session.rollback()
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
 @bp.route('/stats', methods=['GET'])
 def get_grant_stats():
     """Get statistics about grants in the system"""
