@@ -1,10 +1,18 @@
-from flask import send_from_directory, send_file
+from flask import send_from_directory, send_file, jsonify
 from app import create_app
 import os
 
+# Create the Flask app using the factory function
 app = create_app()
 
-# Database initialization handled automatically in create_app()
+# Add a simple health check endpoint for deployment
+@app.route('/health')
+def health():
+    """Simple health check for deployment monitoring"""
+    return jsonify({
+        'status': 'healthy',
+        'message': 'Application is running'
+    }), 200
 
 # Register enhanced grant data blueprints
 try:
@@ -38,9 +46,10 @@ def serve_static(path):
 # Catch all other routes and serve React app (for client-side routing)
 @app.route('/<path:path>')
 def catch_all(path):
-    # Don't catch API routes
+    # Don't catch API routes - let blueprints handle them
     if path.startswith('api/'):
-        return {'error': 'API endpoint not found'}, 404
+        from flask import abort
+        abort(404)  # Let Flask handle 404 properly for API routes
     try:
         return send_file('client/build/index.html')
     except:
