@@ -96,7 +96,15 @@ def search_opportunities():
                     'amount_max': grant.amount_max,
                     'geography': grant.geography,
                     'focus_areas': '',  # Not in model
-                    'status': grant.status or 'available'
+                    'status': grant.status or 'available',
+                    # Add contact information fields
+                    'contact_name': getattr(grant, 'contact_name', None),
+                    'contact_email': getattr(grant, 'contact_email', None),
+                    'contact_phone': getattr(grant, 'contact_phone', None),
+                    'contact_department': getattr(grant, 'contact_department', None),
+                    'organization_website': getattr(grant, 'organization_website', None),
+                    'application_url': getattr(grant, 'application_url', None),
+                    'contact_confidence': getattr(grant, 'contact_confidence', None)
                 }
                 all_opportunities.append(opportunity)
             

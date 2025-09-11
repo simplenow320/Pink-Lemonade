@@ -444,6 +444,25 @@ document.addEventListener('DOMContentLoaded', function() {
                     </p>` : ''}
                 </div>
                 
+                <!-- Contact Information Section -->
+                ${(grant.contact_email || grant.contact_phone || grant.contact_name || grant.application_url) ? `
+                    <div style="background:#F8F9FA;border-radius:12px;padding:12px;margin-bottom:16px">
+                        <h5 style="margin:0 0 8px 0;color:#2A2A2A;font-size:0.9rem;font-weight:600">📞 Contact Information</h5>
+                        ${grant.contact_name ? `<p style="color:#6B6B6B;font-size:0.9rem;margin:0 0 4px 0">
+                            <strong>Contact:</strong> ${grant.contact_name}
+                        </p>` : ''}
+                        ${grant.contact_email ? `<p style="color:#6B6B6B;font-size:0.9rem;margin:0 0 4px 0">
+                            <strong>Email:</strong> <a href="mailto:${grant.contact_email}" style="color:#B8899A;text-decoration:none">${grant.contact_email}</a>
+                        </p>` : ''}
+                        ${grant.contact_phone ? `<p style="color:#6B6B6B;font-size:0.9rem;margin:0 0 4px 0">
+                            <strong>Phone:</strong> <a href="tel:${grant.contact_phone.replace(/\D/g,'')}" style="color:#B8899A;text-decoration:none">${grant.contact_phone}</a>
+                        </p>` : ''}
+                        ${grant.application_url ? `<p style="color:#6B6B6B;font-size:0.9rem;margin:0">
+                            <strong>Apply:</strong> <a href="${grant.application_url}" target="_blank" style="color:#B8899A;text-decoration:none">Application Portal →</a>
+                        </p>` : ''}
+                    </div>
+                ` : ''}
+                
                 ${grant.description ? `<p style="color:#6B6B6B;font-size:0.95rem;line-height:1.5;margin:0 0 20px 0">${grant.description}</p>` : ''}
                 
                 <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap">
