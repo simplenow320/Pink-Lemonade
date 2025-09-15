@@ -49,8 +49,42 @@ def _initialize_database_if_needed():
         pass
 
 def create_app():
+    import os
+    import requests
+    
     flask_app = Flask(__name__)
     flask_app.config.from_object("app.config.settings")
+    
+    # CRITICAL: Central kill-switch to stop ALL Candid API calls
+    # Load from environment with fallback to demo mode for safety
+    demo_mode = os.environ.get('DEMO_MODE', 'true').lower() == 'true'  # Default to demo mode for safety
+    candid_enabled = os.environ.get('CANDID_ENABLED', 'false').lower() == 'true'  # Default to disabled for safety
+    
+    if demo_mode or not candid_enabled:
+        print(f"🛑 CANDID DISABLED - DEMO_MODE: {demo_mode}, CANDID_ENABLED: {candid_enabled}")
+        
+        # Monkey-patch requests to block all api.candid.org calls
+        original_request = requests.Session.request
+        def blocked_request(self, method, url, **kwargs):
+            if 'api.candid.org' in str(url):
+                print(f"🚫 BLOCKED Candid API call to: {url}")
+                # Return robust mock response to prevent TypeErrors
+                class MockResponse:
+                    def __init__(self):
+                        self.status_code = 200
+                        self.text = '{"message": "Candid disabled in demo mode"}'
+                        self.content = self.text.encode('utf-8')
+                        self.headers = {'Content-Type': 'application/json'}
+                        self.ok = True
+                    def json(self):
+                        return {'message': 'Candid disabled in demo mode', 'results': [], 'hits': [], 'count': 0}
+                    def raise_for_status(self):
+                        pass
+                return MockResponse()
+            return original_request(self, method, url, **kwargs)
+        requests.Session.request = blocked_request
+    else:
+        print(f"✅ CANDID ENABLED - DEMO_MODE: {demo_mode}, CANDID_ENABLED: {candid_enabled}")
     
     CORS(flask_app, supports_credentials=True)
     db.init_app(flask_app)
