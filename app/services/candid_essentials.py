@@ -3,13 +3,28 @@ Candid Essentials API client for organization lookups
 """
 import os
 import requests
+import time
 from typing import Dict, List, Optional, Any
 
 
 class CandidEssentialsClient:
-    """Client for Candid Essentials API v3"""
+    """Client for Candid Essentials API v3 with rate limiting"""
     
     BASE = "https://api.candid.org/essentials/v3"
+    
+    def __init__(self):
+        # Rate limiting: minimum 1 second between calls
+        self.last_call_time = 0
+        self.min_interval = 1.0  # seconds
+    
+    def _rate_limit(self):
+        """Enforce rate limiting to prevent quota waste"""
+        now = time.time()
+        time_since_last = now - self.last_call_time
+        if time_since_last < self.min_interval:
+            sleep_time = self.min_interval - time_since_last
+            time.sleep(sleep_time)
+        self.last_call_time = time.time()
     
     def headers(self) -> Dict[str, str]:
         """Get required headers for API requests"""
@@ -33,6 +48,9 @@ class CandidEssentialsClient:
         # Circuit breaker: disable Candid calls if DEMO_MODE
         if os.environ.get('DEMO_MODE', 'false').lower() == 'true':
             return None
+            
+        # Rate limiting to prevent quota waste
+        self._rate_limit()
             
         try:
             # Clean EIN (remove dashes/spaces)
@@ -99,6 +117,9 @@ class CandidEssentialsClient:
         # Circuit breaker: disable Candid calls if DEMO_MODE
         if os.environ.get('DEMO_MODE', 'false').lower() == 'true' or os.environ.get('CANDID_ENABLED', 'true').lower() == 'false':
             return None
+            
+        # Rate limiting to prevent quota waste
+        self._rate_limit()
             
         try:
             # Build search request using search_terms for v3 API

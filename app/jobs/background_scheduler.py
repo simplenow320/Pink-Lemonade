@@ -22,7 +22,8 @@ class BackgroundScheduler:
         self.running = False
         self.thread = None
         self.discovery_service = GrantDiscoveryService()
-        self.refresh_interval_hours = 6
+        # Smart scheduling - much less frequent to save quota
+        self.refresh_interval_hours = 24  # Reduced from 6 to 24 hours
         
     def start(self):
         """
