@@ -18,13 +18,14 @@ class AIGrantMatcher:
         self.ai_service = AIService()
         self.prompts = ReactoPrompts()
         
-    def match_grants_for_organization(self, org_id: int, limit: int = 20) -> List[Dict]:
+    def match_grants_for_organization(self, org_id: int, limit: int = 20, grant_ids: List[int] = None) -> List[Dict]:
         """
         Match grants for an organization using AI scoring
         
         Args:
             org_id: Organization ID
             limit: Maximum number of grants to return
+            grant_ids: Optional list of specific grant IDs to score (for discovery optimization)
             
         Returns:
             List of grants with AI match scores and explanations
@@ -38,15 +39,25 @@ class AIGrantMatcher:
             
             org_context = org.to_ai_context()
             
-            # Get grants relevant to this organization (recently created)
-            grants = Grant.query.order_by(Grant.created_at.desc()).limit(limit * 2).all()
+            # Get grants based on discovery context
+            if grant_ids:
+                # Discovery mode: Score only specific grants that were just discovered
+                logger.info(f"AI scoring {len(grant_ids)} discovered grants for org {org_id}")
+                grants = Grant.query.filter(Grant.id.in_(grant_ids)).all()
+                # Filter by organization if grants were discovered for this org
+                grants = [g for g in grants if g.org_id == org_id]
+            else:
+                # Legacy mode: Score recent grants (fallback for other uses)
+                logger.info(f"AI scoring recent grants for org {org_id} (legacy mode)")
+                grants = Grant.query.filter_by(org_id=org_id).order_by(Grant.created_at.desc()).limit(limit * 2).all()
             
             # Filter by deadline if available
             if any(grant.deadline for grant in grants):
                 grants = [g for g in grants if not g.deadline or g.deadline >= datetime.utcnow().date()]
             
-            # Limit to reasonable number for processing
-            grants = grants[:limit * 2]
+            # Log scoring statistics
+            total_available = len(grants)
+            logger.info(f"Processing {total_available} grants for AI scoring (org: {org_id})")
             
             matched_grants = []
             
@@ -105,6 +116,11 @@ class AIGrantMatcher:
             
             # Sort by match score and return top matches
             matched_grants.sort(key=lambda x: x.get('match_score', 0), reverse=True)
+            
+            # Log final statistics
+            scored_count = len([g for g in matched_grants if g.get('match_score', 0) > 0])
+            logger.info(f"AI scoring complete: {scored_count}/{total_available} grants scored successfully")
+            
             return matched_grants[:limit]
             
         except Exception as e:

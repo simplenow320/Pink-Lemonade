@@ -62,24 +62,45 @@ class GrantDiscoveryService:
             # Step 3: Persist discovered grants
             stats = self._persist_grants(org_id, external_results)
             
-            # Step 4: Apply AI scoring with fail-safe fallback
+            # Step 4: Apply AI scoring to discovered grants only (OPTIMIZED)
             try:
-                scored_grants = self.ai_matcher.match_grants_for_organization(org_id, limit=limit)
+                discovered_grant_ids = stats.get('grant_ids_for_ai', [])
+                start_time = datetime.utcnow()
+                logger.info(f"🚀 OPTIMIZED AI SCORING: Processing {len(discovered_grant_ids)} discovered grants for org {org_id} (vs ALL grants in legacy mode)")
+                
+                scored_grants = self.ai_matcher.match_grants_for_organization(
+                    org_id, limit=limit, grant_ids=discovered_grant_ids
+                )
+                
+                end_time = datetime.utcnow()
+                duration = (end_time - start_time).total_seconds()
+                logger.info(f"✅ AI SCORING COMPLETED in {duration:.2f}s for org {org_id}: {len(scored_grants)} grants scored")
                 ai_status = 'completed'
             except Exception as e:
-                logger.warning(f"AI scoring failed, returning government grants without AI analysis: {e}")
-                # Fallback: return recent grants without AI scoring
-                fallback_grants = Grant.query.order_by(Grant.created_at.desc()).limit(limit).all()
+                logger.warning(f"⚠️ AI scoring failed, returning discovered grants without AI analysis: {e}")
+                # Fallback: return discovered grants without AI scoring
+                discovered_grant_ids = stats.get('grant_ids_for_ai', [])
+                if discovered_grant_ids:
+                    fallback_grants = Grant.query.filter(Grant.id.in_(discovered_grant_ids)).all()
+                    logger.info(f"📋 Fallback: Returning {len(fallback_grants)} discovered grants without AI scoring")
+                else:
+                    fallback_grants = Grant.query.filter_by(org_id=org_id).order_by(Grant.created_at.desc()).limit(limit).all()
+                    logger.info(f"📋 Fallback: Returning {len(fallback_grants)} recent grants from database")
                 scored_grants = [grant.to_dict() for grant in fallback_grants]
                 ai_status = 'skipped_due_to_timeout'
             
-            # Step 5: Return comprehensive results
+            # Step 5: Return comprehensive results with performance metrics
             return {
                 'success': True,
                 'organization': org.name,
                 'discovery_stats': stats,
                 'top_matches': scored_grants,
                 'ai_status': ai_status,
+                'performance_metrics': {
+                    'grants_discovered': stats.get('total_discovered', 0),
+                    'grants_scored': len(discovered_grant_ids),
+                    'optimization_active': len(discovered_grant_ids) > 0
+                },
                 'timestamp': datetime.utcnow().isoformat()
             }
             
@@ -99,13 +120,14 @@ class GrantDiscoveryService:
             external_results: Results from MatchingService.assemble()
             
         Returns:
-            Stats about persisted grants
+            Stats about persisted grants plus list of grant IDs for AI scoring
         """
         stats = {
             'total_discovered': 0,
             'newly_added': 0,
             'updated': 0,
-            'duplicates_avoided': 0
+            'duplicates_avoided': 0,
+            'grant_ids_for_ai': []  # Track grants that need AI scoring
         }
         
         try:
@@ -115,8 +137,10 @@ class GrantDiscoveryService:
                 if grant:
                     if grant['status'] == 'created':
                         stats['newly_added'] += 1
+                        stats['grant_ids_for_ai'].append(grant['grant'].id)
                     elif grant['status'] == 'updated':
                         stats['updated'] += 1
+                        stats['grant_ids_for_ai'].append(grant['grant'].id)
                     else:
                         stats['duplicates_avoided'] += 1
                     stats['total_discovered'] += 1
@@ -127,8 +151,10 @@ class GrantDiscoveryService:
                 if grant:
                     if grant['status'] == 'created':
                         stats['newly_added'] += 1
+                        stats['grant_ids_for_ai'].append(grant['grant'].id)
                     elif grant['status'] == 'updated':
                         stats['updated'] += 1
+                        stats['grant_ids_for_ai'].append(grant['grant'].id)
                     else:
                         stats['duplicates_avoided'] += 1
                     stats['total_discovered'] += 1
@@ -139,14 +165,17 @@ class GrantDiscoveryService:
                 if grant:
                     if grant['status'] == 'created':
                         stats['newly_added'] += 1
+                        stats['grant_ids_for_ai'].append(grant['grant'].id)
                     elif grant['status'] == 'updated':
                         stats['updated'] += 1
+                        stats['grant_ids_for_ai'].append(grant['grant'].id)
                     else:
                         stats['duplicates_avoided'] += 1
                     stats['total_discovered'] += 1
             
             db.session.commit()
             logger.info(f"Persisted grants for org {org_id}: {stats}")
+            logger.info(f"Grant IDs for AI scoring: {len(stats['grant_ids_for_ai'])} grants")
             
         except Exception as e:
             logger.error(f"Error persisting grants: {str(e)}")
