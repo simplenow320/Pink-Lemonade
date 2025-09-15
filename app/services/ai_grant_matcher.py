@@ -18,7 +18,7 @@ class AIGrantMatcher:
         self.ai_service = AIService()
         self.prompts = ReactoPrompts()
         
-    def match_grants_for_organization(self, org_id: int, limit: int = 20, grant_ids: List[int] = None) -> List[Dict]:
+    def match_grants_for_organization(self, org_id: int, limit: int = 20, grant_ids: Optional[List[int]] = None) -> List[Dict]:
         """
         Match grants for an organization using AI scoring
         

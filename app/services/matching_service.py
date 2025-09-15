@@ -419,15 +419,38 @@ class MatchingService:
         Returns:
             Complete matching results with scores and context
         """
+        from datetime import datetime
+        import logging
+        logger = logging.getLogger(__name__)
+        
+        # Start timing instrumentation  
+        assemble_start = datetime.utcnow()
+        timing_metrics = {}
+        
         try:
-            # Get organization tokens
+            # DEFENSIVE CAPS: Prevent over-fetching to reduce external API load
+            per_source_limit = min(limit, 15)  # Cap each source at 15 items max
+            logger.info(f"🔍 ASSEMBLE STARTING for org {org_id}: limit={limit}, per_source_limit={per_source_limit}")
+            
+            # Get organization tokens with timing
+            tokens_start = datetime.utcnow()
             tokens = get_org_tokens(org_id)
+            timing_metrics['tokens_ms'] = (datetime.utcnow() - tokens_start).total_seconds() * 1000
             
-            # Get funding context
+            # Get funding context with timing  
+            context_start = datetime.utcnow()
             snapshot = self.context_snapshot(tokens)
+            timing_metrics['context_ms'] = (datetime.utcnow() - context_start).total_seconds() * 1000
             
-            # Get news opportunities
+            # Get news opportunities with timing and defensive caps
+            news_start = datetime.utcnow()
             news_items = self.news_feed(tokens)
+            # Apply defensive cap BEFORE scoring to reduce processing load
+            news_items = news_items[:per_source_limit] if news_items else []
+            timing_metrics['news_fetch_ms'] = (datetime.utcnow() - news_start).total_seconds() * 1000
+            
+            # Score news items with timing
+            news_scoring_start = datetime.utcnow()
             scored_news = []
             for item in news_items:
                 scoring = self.score_item(item, tokens, snapshot)
@@ -439,12 +462,20 @@ class MatchingService:
                     "window": "45d"
                 }
                 scored_news.append(item_with_score)
+            timing_metrics['news_scoring_ms'] = (datetime.utcnow() - news_scoring_start).total_seconds() * 1000
             
             # Sort by score desc, then date asc
             scored_news.sort(key=lambda x: (-x['score'], x.get('publication_date', '9999-12-31')))
             
-            # Get federal opportunities
+            # Get federal opportunities with timing and defensive caps
+            federal_start = datetime.utcnow()
             federal_items = self.federal_feed(tokens)
+            # Apply defensive cap BEFORE scoring to reduce processing load
+            federal_items = federal_items[:per_source_limit] if federal_items else []
+            timing_metrics['federal_fetch_ms'] = (datetime.utcnow() - federal_start).total_seconds() * 1000
+            
+            # Score federal items with timing
+            federal_scoring_start = datetime.utcnow()
             scored_federal = []
             for item in federal_items:
                 scoring = self.score_item(item, tokens, snapshot)
@@ -456,9 +487,20 @@ class MatchingService:
                     "window": "45d"
                 }
                 scored_federal.append(item_with_score)
+            timing_metrics['federal_scoring_ms'] = (datetime.utcnow() - federal_scoring_start).total_seconds() * 1000
             
             # Sort federal items
             scored_federal.sort(key=lambda x: (-x['score'], x.get('posted_date', '9999-12-31')))
+            
+            # Calculate total assemble time
+            assemble_duration = (datetime.utcnow() - assemble_start).total_seconds()
+            timing_metrics['total_assemble_ms'] = assemble_duration * 1000
+            
+            # Log comprehensive timing breakdown
+            news_final_count = len(scored_news[:limit])
+            federal_final_count = len(scored_federal[:limit])
+            logger.info(f"✅ ASSEMBLE COMPLETED in {assemble_duration:.2f}s for org {org_id}: {news_final_count} news, {federal_final_count} federal")
+            logger.info(f"⏱️ ASSEMBLE TIMING: Tokens={timing_metrics['tokens_ms']:.0f}ms, Context={timing_metrics['context_ms']:.0f}ms, News={timing_metrics['news_fetch_ms']:.0f}ms+{timing_metrics['news_scoring_ms']:.0f}ms, Federal={timing_metrics['federal_fetch_ms']:.0f}ms+{timing_metrics['federal_scoring_ms']:.0f}ms")
             
             return {
                 "tokens": tokens,
@@ -471,16 +513,20 @@ class MatchingService:
                     }
                 },
                 "news": scored_news[:limit],
-                "federal": scored_federal[:limit]
+                "federal": scored_federal[:limit],
+                "foundation": [],  # Add foundation support for future
+                "performance_timing": timing_metrics
             }
             
         except Exception as e:
-            print(f"Error in assemble: {e}")
+            assemble_duration = (datetime.utcnow() - assemble_start).total_seconds()
+            logger.error(f"❌ ASSEMBLE FAILED in {assemble_duration:.2f}s for org {org_id}: {e}")
             return {
                 "tokens": {},
                 "context": {"error": str(e)},
                 "news": [],
-                "federal": []
+                "federal": [],
+                "foundation": []
             }
 
 

@@ -41,6 +41,10 @@ class GrantDiscoveryService:
         Returns:
             Dict with discovery stats and scored grants
         """
+        # Start timing instrumentation
+        pipeline_start = datetime.utcnow()
+        timing_metrics = {}
+        
         try:
             # Get fresh organization instance to avoid stale references
             # Use a new query to ensure we're not using a deleted object
@@ -53,43 +57,72 @@ class GrantDiscoveryService:
                 }
             
             # Step 1: Get org tokens for matching
+            tokens_start = datetime.utcnow()
             tokens = get_org_tokens(org_id)
+            timing_metrics['tokens_ms'] = (datetime.utcnow() - tokens_start).total_seconds() * 1000
             
-            # Step 2: Fetch from all external APIs
-            logger.info(f"Discovering grants for org {org_id}: {org.name}")
-            external_results = self.matching_service.assemble(org_id, limit=limit)
+            # Step 2: Fetch from all external APIs with timing
+            logger.info(f"🌐 DISCOVERY STARTING for org {org_id}: {org.name} (limit={limit})")
+            fetch_start = datetime.utcnow()
+            external_results = self.matching_service.assemble(org_id, limit=min(limit, 20))  # Cap external fetch
+            fetch_duration = (datetime.utcnow() - fetch_start).total_seconds()
+            timing_metrics['external_fetch_ms'] = fetch_duration * 1000
             
-            # Step 3: Persist discovered grants
+            # Log fetch results
+            news_count = len(external_results.get('news', []))
+            federal_count = len(external_results.get('federal', []))
+            foundation_count = len(external_results.get('foundation', []))
+            logger.info(f"📊 EXTERNAL FETCH COMPLETED in {fetch_duration:.2f}s: {news_count} news, {federal_count} federal, {foundation_count} foundation")
+            
+            # Step 3: Persist discovered grants with timing
+            persist_start = datetime.utcnow()
             stats = self._persist_grants(org_id, external_results)
+            persist_duration = (datetime.utcnow() - persist_start).total_seconds()
+            timing_metrics['persist_ms'] = persist_duration * 1000
             
-            # Step 4: Apply AI scoring to discovered grants only (OPTIMIZED)
-            try:
-                discovered_grant_ids = stats.get('grant_ids_for_ai', [])
-                start_time = datetime.utcnow()
-                logger.info(f"🚀 OPTIMIZED AI SCORING: Processing {len(discovered_grant_ids)} discovered grants for org {org_id} (vs ALL grants in legacy mode)")
+            logger.info(f"💾 PERSISTENCE COMPLETED in {persist_duration:.2f}s: {stats}")
+            
+            # Step 4: DEFENSIVE AI SCORING - Skip if no new grants discovered
+            discovered_grant_ids = stats.get('grant_ids_for_ai', [])
+            
+            if not discovered_grant_ids:
+                # NO NEW GRANTS: Skip AI scoring entirely to prevent legacy fallback timeout
+                logger.info(f"⏭️ SKIPPING AI SCORING: No new grants discovered for org {org_id} - returning recent grants")
+                recent_grants = Grant.query.filter_by(org_id=org_id).order_by(Grant.created_at.desc()).limit(limit).all()
+                scored_grants = [grant.to_dict() for grant in recent_grants]
+                ai_status = 'skipped_no_new_discoveries'
+                timing_metrics['ai_scoring_ms'] = 0
+            else:
+                # Cap AI scoring to prevent timeouts
+                grants_to_score = discovered_grant_ids[:min(len(discovered_grant_ids), 20)]  # Hard cap at 20
+                logger.info(f"🤖 AI SCORING STARTING: {len(grants_to_score)} grants (capped from {len(discovered_grant_ids)}) for org {org_id}")
                 
-                scored_grants = self.ai_matcher.match_grants_for_organization(
-                    org_id, limit=limit, grant_ids=discovered_grant_ids
-                )
-                
-                end_time = datetime.utcnow()
-                duration = (end_time - start_time).total_seconds()
-                logger.info(f"✅ AI SCORING COMPLETED in {duration:.2f}s for org {org_id}: {len(scored_grants)} grants scored")
-                ai_status = 'completed'
-            except Exception as e:
-                logger.warning(f"⚠️ AI scoring failed, returning discovered grants without AI analysis: {e}")
-                # Fallback: return discovered grants without AI scoring
-                discovered_grant_ids = stats.get('grant_ids_for_ai', [])
-                if discovered_grant_ids:
-                    fallback_grants = Grant.query.filter(Grant.id.in_(discovered_grant_ids)).all()
-                    logger.info(f"📋 Fallback: Returning {len(fallback_grants)} discovered grants without AI scoring")
-                else:
-                    fallback_grants = Grant.query.filter_by(org_id=org_id).order_by(Grant.created_at.desc()).limit(limit).all()
-                    logger.info(f"📋 Fallback: Returning {len(fallback_grants)} recent grants from database")
-                scored_grants = [grant.to_dict() for grant in fallback_grants]
-                ai_status = 'skipped_due_to_timeout'
+                try:
+                    ai_start = datetime.utcnow()
+                    scored_grants = self.ai_matcher.match_grants_for_organization(
+                        org_id, limit=limit, grant_ids=grants_to_score
+                    )
+                    
+                    ai_duration = (datetime.utcnow() - ai_start).total_seconds()
+                    timing_metrics['ai_scoring_ms'] = ai_duration * 1000
+                    logger.info(f"✅ AI SCORING COMPLETED in {ai_duration:.2f}s for org {org_id}: {len(scored_grants)} grants scored")
+                    ai_status = 'completed'
+                except Exception as e:
+                    logger.warning(f"⚠️ AI scoring failed, returning discovered grants without AI analysis: {e}")
+                    # Fallback: return discovered grants without AI scoring
+                    fallback_grants = Grant.query.filter(Grant.id.in_(grants_to_score)).all()
+                    scored_grants = [grant.to_dict() for grant in fallback_grants]
+                    ai_status = 'skipped_due_to_error'
+                    timing_metrics['ai_scoring_ms'] = 0
+            
+            # Calculate total pipeline time
+            pipeline_duration = (datetime.utcnow() - pipeline_start).total_seconds()
+            timing_metrics['total_pipeline_ms'] = pipeline_duration * 1000
             
             # Step 5: Return comprehensive results with performance metrics
+            logger.info(f"🏁 DISCOVERY PIPELINE COMPLETED in {pipeline_duration:.2f}s for org {org_id}")
+            logger.info(f"⏱️ TIMING BREAKDOWN: External={timing_metrics['external_fetch_ms']:.0f}ms, Persist={timing_metrics['persist_ms']:.0f}ms, AI={timing_metrics['ai_scoring_ms']:.0f}ms")
+            
             return {
                 'success': True,
                 'organization': org.name,
@@ -99,7 +132,8 @@ class GrantDiscoveryService:
                 'performance_metrics': {
                     'grants_discovered': stats.get('total_discovered', 0),
                     'grants_scored': len(discovered_grant_ids),
-                    'optimization_active': len(discovered_grant_ids) > 0
+                    'optimization_active': len(discovered_grant_ids) > 0,
+                    'timing_ms': timing_metrics
                 },
                 'timestamp': datetime.utcnow().isoformat()
             }
@@ -360,7 +394,8 @@ class GrantDiscoveryService:
                 'total_orgs': len(org_ids),
                 'successful': 0,
                 'failed': 0,
-                'total_grants_discovered': 0
+                'total_grants_discovered': 0,
+                'timestamp': datetime.utcnow().isoformat()
             }
             
             for (org_id,) in org_ids:
@@ -382,7 +417,6 @@ class GrantDiscoveryService:
                     logger.error(f"Error refreshing org {org_id}: {str(e)}")
                     results['failed'] += 1
             
-            results['timestamp'] = datetime.utcnow().isoformat()
             return results
             
         except Exception as e:
