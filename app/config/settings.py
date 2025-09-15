@@ -21,3 +21,11 @@ SESSION_COOKIE_SAMESITE = "Lax"
 
 # OpenAI
 OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY")
+
+# Demo Mode Configuration
+DEMO_MODE = os.environ.get("DEMO_MODE", "false").lower() == "true"
+SCHEDULER_ENABLED = not DEMO_MODE  # Disable scheduler in demo mode
+
+# Data sources in demo mode (only free APIs)
+USE_CANDID_APIS = not DEMO_MODE  # Disable paid Candid APIs in demo mode
+USE_FREE_GOVERNMENT_APIS = True  # Always enable free APIs

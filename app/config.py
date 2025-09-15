@@ -17,8 +17,15 @@ class Config:
     # OpenAI API key from environment
     OPENAI_API_KEY = os.environ.get('OPENAI_API_KEY')
     
-    # Scheduler settings
-    SCHEDULER_ENABLED = True
+    # Demo Mode Configuration
+    DEMO_MODE = os.environ.get('DEMO_MODE', 'false').lower() == 'true'
+    
+    # Scheduler settings - disabled in demo mode
+    SCHEDULER_ENABLED = not DEMO_MODE
+    
+    # API Configuration - disable paid APIs in demo mode
+    USE_CANDID_APIS = not DEMO_MODE
+    USE_FREE_GOVERNMENT_APIS = True
     
     # Application settings
     GRANTS_PER_PAGE = 10

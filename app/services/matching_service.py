@@ -14,6 +14,7 @@ try:
     from app.services.grants_gov_client import GrantsGovClient
     FEDERAL_AVAILABLE = True
 except ImportError:
+    GrantsGovClient = None
     FEDERAL_AVAILABLE = False
 
 
@@ -77,7 +78,7 @@ class MatchingService:
         self.grants = GrantsClient()
         self.federal_client = None
         
-        if FEDERAL_AVAILABLE:
+        if FEDERAL_AVAILABLE and GrantsGovClient is not None:
             try:
                 self.federal_client = GrantsGovClient()
             except Exception:

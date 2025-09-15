@@ -123,8 +123,16 @@ def init_scheduler(app):
     """
     Initialize scheduler with Flask app
     """
-    # Start scheduler in production mode
+    # Check demo mode first
     import os
+    demo_mode = os.environ.get('DEMO_MODE', 'false').lower() == 'true'
+    
+    if demo_mode:
+        app.logger.info("🎯 DEMO MODE - background scheduler disabled to prevent API quota exhaustion")
+        app.logger.info("💡 Use manual refresh buttons for demo purposes")
+        return
+    
+    # Start scheduler in production mode
     if os.environ.get('FLASK_ENV') != 'development':
         scheduler.start()
         app.logger.info("Production background scheduler initialized")
