@@ -434,6 +434,10 @@ def create_app():
     from app.api.demo_opportunities import bp as demo_opportunities_bp
     flask_app.register_blueprint(demo_opportunities_bp)
     
+    # Register Candid test endpoint
+    from app.api.test_candid import test_candid_bp
+    flask_app.register_blueprint(test_candid_bp)
+    
     # Initialize monitoring
     from app.services.monitoring_service import init_monitoring
     init_monitoring(flask_app)

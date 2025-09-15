@@ -243,18 +243,25 @@ class CandidEssentialsClient:
         return result
 
 
-# Create singleton instance
-candid_client = CandidEssentialsClient()
+# Lazy singleton instance - only create when needed
+_candid_client = None
+
+def get_candid_client() -> CandidEssentialsClient:
+    """Get singleton Candid client (lazy loaded)"""
+    global _candid_client
+    if _candid_client is None:
+        _candid_client = CandidEssentialsClient()
+    return _candid_client
 
 # Export convenience functions
 def search_by_ein(ein: str, limit: int = 1) -> Optional[Dict[str, Any]]:
     """Search for organization by EIN"""
-    return candid_client.search_by_ein(ein, limit)
+    return get_candid_client().search_by_ein(ein, limit)
 
 def search_by_name(name: str, limit: int = 1) -> Optional[Dict[str, Any]]:
     """Search for organization by name"""
-    return candid_client.search_by_name(name, limit)
+    return get_candid_client().search_by_name(name, limit)
 
 def extract_tokens(record: Optional[Dict[str, Any]]) -> Dict[str, Any]:
     """Extract useful tokens from a Candid organization record"""
-    return candid_client.extract_tokens(record)
+    return get_candid_client().extract_tokens(record)
