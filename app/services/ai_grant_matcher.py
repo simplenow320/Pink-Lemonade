@@ -38,8 +38,8 @@ class AIGrantMatcher:
             
             org_context = org.to_ai_context()
             
-            # Get available grants
-            grants = Grant.query.all()  # Get all grants for now
+            # Get grants relevant to this organization (recently created)
+            grants = Grant.query.order_by(Grant.created_at.desc()).limit(limit * 2).all()
             
             # Filter by deadline if available
             if any(grant.deadline for grant in grants):

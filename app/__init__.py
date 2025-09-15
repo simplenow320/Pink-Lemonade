@@ -48,18 +48,51 @@ def _initialize_database_if_needed():
         logging.warning(f"Database initialization skipped: {e}")
         pass
 
+def load_env_file():
+    """Load .env file into os.environ if it exists"""
+    import os
+    
+    env_path = '.env'
+    if os.path.exists(env_path):
+        try:
+            with open(env_path, 'r') as f:
+                for line in f:
+                    line = line.strip()
+                    if line and not line.startswith('#') and '=' in line:
+                        key, value = line.split('=', 1)
+                        key = key.strip()
+                        value = value.strip().strip('"').strip("'")
+                        # Only set if not already in environment
+                        if key not in os.environ:
+                            os.environ[key] = value
+        except Exception as e:
+            print(f"Warning: Could not load .env file: {e}")
+
 def create_app():
+    # Load environment variables from .env file FIRST
+    load_env_file()
+    
     import os
     import requests
     
     flask_app = Flask(__name__)
     flask_app.config.from_object("app.config.settings")
     
-    # Smart Candid Configuration - Enable with rate limiting
-    demo_mode = os.environ.get('DEMO_MODE', 'false').lower() == 'true'
-    candid_enabled = os.environ.get('CANDID_ENABLED', 'true').lower() == 'true'
+    # Smart Candid Configuration - Enable if keys are present
+    # Override demo mode if we're in production with Candid keys
+    demo_mode = False  # Force production mode when Candid keys are present
     
-    print(f"🔧 CANDID CONFIG - DEMO_MODE: {demo_mode}, CANDID_ENABLED: {candid_enabled}")
+    # Check if Candid keys are actually present in environment
+    has_candid_keys = (
+        os.environ.get('CANDID_ESSENTIALS_KEY') or 
+        os.environ.get('CANDID_GRANTS_KEYS') or 
+        os.environ.get('CANDID_NEWS_KEYS')
+    )
+    
+    # Enable Candid if keys exist, regardless of .env setting
+    candid_enabled = has_candid_keys and not demo_mode
+    
+    print(f"🔧 CANDID CONFIG - DEMO_MODE: {demo_mode}, CANDID_ENABLED: {candid_enabled}, HAS_KEYS: {has_candid_keys}")
     
     # Store config for other modules to use
     flask_app.config['DEMO_MODE'] = demo_mode
@@ -132,6 +165,13 @@ def create_app():
     flask_app.register_blueprint(simple_org_bp)
     flask_app.register_blueprint(user_settings_bp)
     flask_app.register_blueprint(grants_bp, url_prefix='/api/grants')
+    
+    # Register grant discovery endpoints
+    try:
+        from app.api.discovery import bp as discovery_bp
+        flask_app.register_blueprint(discovery_bp)
+    except ImportError as e:
+        print(f"Discovery blueprint not available: {e}")
     
     # Register organizations API for profile retrieval
     from app.api.organizations import bp as organizations_bp

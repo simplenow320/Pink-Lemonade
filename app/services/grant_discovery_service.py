@@ -62,8 +62,16 @@ class GrantDiscoveryService:
             # Step 3: Persist discovered grants
             stats = self._persist_grants(org_id, external_results)
             
-            # Step 4: Apply AI scoring to persisted grants
-            scored_grants = self.ai_matcher.match_grants_for_organization(org_id, limit=limit)
+            # Step 4: Apply AI scoring with fail-safe fallback
+            try:
+                scored_grants = self.ai_matcher.match_grants_for_organization(org_id, limit=limit)
+                ai_status = 'completed'
+            except Exception as e:
+                logger.warning(f"AI scoring failed, returning government grants without AI analysis: {e}")
+                # Fallback: return recent grants without AI scoring
+                fallback_grants = Grant.query.order_by(Grant.created_at.desc()).limit(limit).all()
+                scored_grants = [grant.to_dict() for grant in fallback_grants]
+                ai_status = 'skipped_due_to_timeout'
             
             # Step 5: Return comprehensive results
             return {
@@ -71,6 +79,7 @@ class GrantDiscoveryService:
                 'organization': org.name,
                 'discovery_stats': stats,
                 'top_matches': scored_grants,
+                'ai_status': ai_status,
                 'timestamp': datetime.utcnow().isoformat()
             }
             

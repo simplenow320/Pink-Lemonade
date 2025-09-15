@@ -74,14 +74,15 @@ class MatchingService:
     """
     
     def __init__(self):
-        # Check DEMO_MODE to avoid burning API quotas
+        # Check DEMO_MODE and CANDID_ENABLED to avoid burning API quotas
         import os
         demo_mode = os.environ.get('DEMO_MODE', 'false').lower() == 'true'
+        candid_disabled = os.environ.get('CANDID_ENABLED', 'true').lower() == 'false'
         
-        if demo_mode:
+        if demo_mode or candid_disabled:
             # Use demo-safe mock clients that don't call external APIs
-            self.news = None  # Disable Candid News API in demo mode
-            self.grants = None  # Disable Candid Grants API in demo mode
+            self.news = None  # Disable Candid News API
+            self.grants = None  # Disable Candid Grants API
         else:
             self.news = NewsClient()
             self.grants = GrantsClient()

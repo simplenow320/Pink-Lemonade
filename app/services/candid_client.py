@@ -16,15 +16,17 @@ class NewsClient:
     def __init__(self):
         self.base_url = "https://api.candid.org/news/v1"
         # Confirmed News API key from Candid support  
-        self.api_key = os.environ.get('CANDID_NEWS_KEYS')
+        self.api_key = os.environ.get('CANDID_NEWS_KEY') or os.environ.get('CANDID_NEWS_KEYS')
         self.cache = SimpleCache()
     
     def _make_request(self, url: str, params: Dict) -> Optional[Dict]:
         """Make request to Candid News API"""
-        # Circuit breaker: disable Candid calls if DEMO_MODE or quota exhausted
+        # Circuit breaker: disable Candid calls if DEMO_MODE, CANDID_ENABLED=false, or quota exhausted
         import os
         if os.environ.get('DEMO_MODE', 'false').lower() == 'true':
             return {"results": [], "count": 0, "message": "Candid API disabled in demo mode"}
+        if os.environ.get('CANDID_ENABLED', 'true').lower() == 'false':
+            return {"results": [], "count": 0, "message": "Candid API disabled by CANDID_ENABLED=false"}
         
         try:
             headers = {
@@ -113,7 +115,7 @@ class GrantsClient:
     def __init__(self):
         self.base_url = "https://api.candid.org/grants/v1"
         # Confirmed Grants API key from Candid support
-        self.api_key = os.environ.get('CANDID_GRANTS_KEYS')
+        self.api_key = os.environ.get('CANDID_GRANTS_KEY') or os.environ.get('CANDID_GRANTS_KEYS')
         self.cache = SimpleCache()
     
     def _make_request(self, url: str, params: Optional[Dict] = None, method: str = 'GET') -> Optional[Dict]:
@@ -121,10 +123,12 @@ class GrantsClient:
         import logging
         logger = logging.getLogger(__name__)
         
-        # Circuit breaker: disable Candid calls if DEMO_MODE or quota exhausted
+        # Circuit breaker: disable Candid calls if DEMO_MODE, CANDID_ENABLED=false, or quota exhausted
         import os
         if os.environ.get('DEMO_MODE', 'false').lower() == 'true':
             return {"results": [], "count": 0, "message": "Candid API disabled in demo mode"}
+        if os.environ.get('CANDID_ENABLED', 'true').lower() == 'false':
+            return {"results": [], "count": 0, "message": "Candid API disabled by CANDID_ENABLED=false"}
         
         try:
             headers = {
@@ -366,7 +370,7 @@ class EssentialsClient:
             headers = {
                 'Accept': 'application/json',
                 'Content-Type': 'application/json',
-                'Subscription-Key': self.api_key
+                'Ocp-Apim-Subscription-Key': self.api_key
             }
             
             # Essentials API requires POST method

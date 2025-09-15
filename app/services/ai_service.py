@@ -59,12 +59,27 @@ class AIService:
             "json_output": response_format and response_format.get("type") == "json_object"
         }
         
-        # Use optimizer to route request to appropriate model
-        result = self.optimizer.optimize_request(
-            task_type=task_type,
-            prompt=prompt,
-            context=context
-        )
+        # Use optimizer with timeout wrapper to prevent hangs
+        import concurrent.futures
+        import threading
+        
+        def run_with_timeout():
+            return self.optimizer.optimize_request(
+                task_type=task_type,
+                prompt=prompt,
+                context=context
+            )
+        
+        try:
+            with concurrent.futures.ThreadPoolExecutor() as executor:
+                future = executor.submit(run_with_timeout)
+                result = future.result(timeout=8)  # 8-second timeout
+        except concurrent.futures.TimeoutError:
+            logger.warning("OpenAI API timeout - skipping AI scoring")
+            return None
+        except Exception as e:
+            logger.warning(f"OpenAI API error - skipping AI scoring: {e}")
+            return None
         
         if result.get("success"):
             logger.info(f"AI request successful: {result.get('explanation')}")
