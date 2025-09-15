@@ -6,6 +6,7 @@ from functools import lru_cache
 import hashlib
 import json
 from datetime import datetime, timedelta
+from typing import Optional
 
 from app.services.matching_service import MatchingService
 from app.services.grants_gov_client import get_grants_gov_client
@@ -21,7 +22,7 @@ def _get_cache_key(org_id: int, keywords_hash: str) -> str:
     """Generate cache key"""
     return f"matching:{org_id}:{keywords_hash}"
 
-def _get_from_cache(key: str) -> dict:
+def _get_from_cache(key: str) -> Optional[dict]:
     """Get from cache if not expired"""
     if key in _cache:
         data, expires_at = _cache[key]

@@ -17,9 +17,9 @@ class CandidNewsClient:
     BASE_URL = "https://api.candid.org/news/v1"
     
     def __init__(self):
-        # Use the working News API keys
-        self.primary_key = os.environ.get('CANDID_NEWS_KEY', '7647f9fe2d9645d48def7a04b6835083')
-        self.secondary_key = '0da558d408e74654baa000836cb88bef'
+        # Use environment variable only - no hard-coded keys
+        self.primary_key = os.environ.get('CANDID_NEWS_KEY')
+        self.secondary_key = None
         self.timeout = 30
         
     def search_news(self, 
@@ -47,6 +47,10 @@ class CandidNewsClient:
         Returns:
             Dict with news articles and metadata
         """
+        # Circuit breaker: disable Candid calls if DEMO_MODE
+        if os.environ.get('DEMO_MODE', 'false').lower() == 'true':
+            return {"results": [], "count": 0, "message": "Candid API disabled in demo mode"}
+            
         try:
             # Start with base URL - News API doesn't require parameters
             url = f"{self.BASE_URL}/search"

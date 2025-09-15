@@ -17,10 +17,10 @@ class CandidV3Client:
     BASE_URL = "https://api.candid.org"
     
     def __init__(self):
-        # Get API keys from environment - use the new working keys
-        self.grants_keys = os.environ.get('CANDID_GRANTS_KEYS', 'cd6150ff5b27410899495f96969451ea,243699cfa8c9422f9347b970e391fb59').split(',')
-        self.news_keys = os.environ.get('CANDID_NEWS_KEYS', '7647f9fe2d9645d48def7a04b6835083,0da558d408e74654baa000836cb88bef').split(',')
-        self.primary_key = os.environ.get('CANDID_API_KEY', 'cd6150ff5b27410899495f96969451ea')
+        # Get API keys from environment only - no hard-coded keys
+        self.grants_keys = os.environ.get('CANDID_GRANTS_KEYS', '').split(',') if os.environ.get('CANDID_GRANTS_KEYS') else []
+        self.news_keys = os.environ.get('CANDID_NEWS_KEYS', '').split(',') if os.environ.get('CANDID_NEWS_KEYS') else []
+        self.primary_key = os.environ.get('CANDID_API_KEY')
         self.current_key_index = 0
         self.timeout = 30
         
@@ -36,6 +36,10 @@ class CandidV3Client:
         Returns:
             List of foundation profiles
         """
+        # Circuit breaker: disable Candid calls if DEMO_MODE
+        if os.environ.get('DEMO_MODE', 'false').lower() == 'true':
+            return []
+            
         try:
             # Use Essentials API v3 search endpoint (works with trial keys)
             params = {}

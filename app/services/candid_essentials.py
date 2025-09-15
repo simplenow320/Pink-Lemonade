@@ -30,6 +30,10 @@ class CandidEssentialsClient:
         Returns:
             First matching record or None
         """
+        # Circuit breaker: disable Candid calls if DEMO_MODE
+        if os.environ.get('DEMO_MODE', 'false').lower() == 'true':
+            return None
+            
         try:
             # Clean EIN (remove dashes/spaces)
             clean_ein = ein.replace("-", "").replace(" ", "").strip()
@@ -92,6 +96,10 @@ class CandidEssentialsClient:
         Returns:
             First matching record or None
         """
+        # Circuit breaker: disable Candid calls if DEMO_MODE
+        if os.environ.get('DEMO_MODE', 'false').lower() == 'true' or os.environ.get('CANDID_ENABLED', 'true').lower() == 'false':
+            return None
+            
         try:
             # Build search request using search_terms for v3 API
             url = self.BASE

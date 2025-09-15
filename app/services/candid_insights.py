@@ -15,6 +15,11 @@ def transactions_snapshot(topic: str, geo: str) -> Optional[Dict]:
     Returns:
         Dictionary with award statistics or None if no data
     """
+    # Circuit breaker: disable Candid calls if DEMO_MODE
+    import os
+    if os.environ.get('DEMO_MODE', 'false').lower() == 'true':
+        return None
+        
     try:
         client = get_candid_client()
         

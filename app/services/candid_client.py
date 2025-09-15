@@ -15,12 +15,17 @@ class NewsClient:
     
     def __init__(self):
         self.base_url = "https://api.candid.org/news/v1"
-        # Confirmed News API key from Candid support
-        self.api_key = os.environ.get('CANDID_NEWS_KEYS', 'dea86cce366d452a87b9b3a2e5eadbae')
+        # Confirmed News API key from Candid support  
+        self.api_key = os.environ.get('CANDID_NEWS_KEYS')
         self.cache = SimpleCache()
     
     def _make_request(self, url: str, params: Dict) -> Optional[Dict]:
         """Make request to Candid News API"""
+        # Circuit breaker: disable Candid calls if DEMO_MODE or quota exhausted
+        import os
+        if os.environ.get('DEMO_MODE', 'false').lower() == 'true':
+            return {"results": [], "count": 0, "message": "Candid API disabled in demo mode"}
+        
         try:
             headers = {
                 'Accept': 'application/json',
@@ -108,13 +113,18 @@ class GrantsClient:
     def __init__(self):
         self.base_url = "https://api.candid.org/grants/v1"
         # Confirmed Grants API key from Candid support
-        self.api_key = os.environ.get('CANDID_GRANTS_KEYS', '9178555867b84c8fbe9a828a77eaf953')
+        self.api_key = os.environ.get('CANDID_GRANTS_KEYS')
         self.cache = SimpleCache()
     
     def _make_request(self, url: str, params: Optional[Dict] = None, method: str = 'GET') -> Optional[Dict]:
         """Make request to Candid Grants API"""
         import logging
         logger = logging.getLogger(__name__)
+        
+        # Circuit breaker: disable Candid calls if DEMO_MODE or quota exhausted
+        import os
+        if os.environ.get('DEMO_MODE', 'false').lower() == 'true':
+            return {"results": [], "count": 0, "message": "Candid API disabled in demo mode"}
         
         try:
             headers = {

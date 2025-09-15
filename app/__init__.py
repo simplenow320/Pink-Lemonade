@@ -65,11 +65,16 @@ def create_app():
         _initialize_database_if_needed()
         
     # Initialize background scheduler for automatic grant discovery
-    try:
-        from app.jobs.background_scheduler import init_scheduler
-        init_scheduler(flask_app)
-    except ImportError:
-        pass
+    # Only start if not in demo mode to prevent quota burning
+    import os
+    if os.environ.get('DEMO_MODE', 'false').lower() != 'true':
+        try:
+            from app.jobs.background_scheduler import init_scheduler
+            init_scheduler(flask_app)
+        except ImportError:
+            pass
+    else:
+        flask_app.logger.info("DEMO_MODE enabled - background scheduler disabled to prevent API quota usage")
     
     # Register blueprints
     from app.pages import pages as pages_bp

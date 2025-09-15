@@ -74,8 +74,18 @@ class MatchingService:
     """
     
     def __init__(self):
-        self.news = NewsClient()
-        self.grants = GrantsClient()
+        # Check DEMO_MODE to avoid burning API quotas
+        import os
+        demo_mode = os.environ.get('DEMO_MODE', 'false').lower() == 'true'
+        
+        if demo_mode:
+            # Use demo-safe mock clients that don't call external APIs
+            self.news = None  # Disable Candid News API in demo mode
+            self.grants = None  # Disable Candid Grants API in demo mode
+        else:
+            self.news = NewsClient()
+            self.grants = GrantsClient()
+            
         self.federal_client = None
         
         if FEDERAL_AVAILABLE and GrantsGovClient is not None:
@@ -94,6 +104,10 @@ class MatchingService:
         Returns:
             List of opportunity-focused news items
         """
+        # Return empty list in demo mode (Candid disabled)
+        if self.news is None:
+            return []
+            
         try:
             query_terms = build_query_terms(tokens)
             
@@ -200,6 +214,7 @@ class MatchingService:
     def context_snapshot(self, tokens: Dict) -> Dict:
         """
         Get funding context snapshot from Candid Grants API
+        Returns empty context in demo mode to avoid API calls
         
         Args:
             tokens: Organization tokens
@@ -207,6 +222,20 @@ class MatchingService:
         Returns:
             Dict with award_count, median_award, recent_funders, query_used
         """
+        # Return empty context in demo mode (Candid disabled)
+        if self.grants is None:
+            return {
+                'award_count': 0,
+                'median_award': None,
+                'query_used': 'Demo mode - Candid APIs disabled',
+                'recent_funders': [],
+                'sourceNotes': {
+                    'api': 'demo.mode',
+                    'endpoint': 'disabled',
+                    'query': 'Candid APIs disabled in demo mode'
+                }
+            }
+            
         try:
             query_terms = build_query_terms(tokens)
             query = query_terms['transactions_query']
