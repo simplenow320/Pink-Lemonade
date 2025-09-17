@@ -792,7 +792,10 @@ class SmartToolsService:
     # ============= HELPER METHODS =============
     
     def _build_comprehensive_org_context(self, org: Organization) -> Dict:
-        """Build comprehensive organization context with platform data"""
+        """Build extremely detailed organization context with ALL available data including website insights"""
+        # Import website context service
+        from app.services.website_context_service import WebsiteContextService
+        
         # Get analytics data
         analytics = Analytics.query.filter_by(org_id=org.id).order_by(Analytics.created_at.desc()).limit(12).all()
         
@@ -800,45 +803,363 @@ class SmartToolsService:
         grants = Grant.query.filter_by(org_id=org.id).all()
         total_grants = len(grants)
         won_grants = len([g for g in grants if g.status == 'awarded'])
+        pending_grants = len([g for g in grants if g.status in ['submitted', 'pending']])
         
-        # Calculate totals
-        total_funding = sum(g.amount_max or 0 for g in grants if g.amount_max)
+        # Calculate detailed funding metrics
+        total_funding_pursued = sum(g.amount_max or 0 for g in grants if g.amount_max)
+        total_funding_won = sum(g.amount_max or 0 for g in grants if g.status == 'awarded' and g.amount_max)
+        average_grant_size = (total_funding_won / won_grants) if won_grants > 0 else 0
         success_rate = (won_grants / total_grants * 100) if total_grants > 0 else 0
         
         # Get recent impact data
         recent_intakes = ImpactIntake.query.join(Grant).filter(Grant.org_id == org.id).limit(10).all()
         story_count = len(recent_intakes)
         
-        return {
+        # Extract participant stories and testimonials
+        participant_stories = []
+        for intake in recent_intakes[:5]:
+            stories = intake.payload.get('stories', [])
+            for story in stories[:2]:
+                participant_stories.append({
+                    'narrative': story.get('narrative', ''),
+                    'attribution': story.get('attribution', 'Anonymous'),
+                    'impact_area': story.get('impactArea', '')
+                })
+        
+        # Get previous funders from grants
+        previous_funders = list(set([g.funder for g in grants if g.funder and g.status == 'awarded']))[:20]
+        
+        # Fetch website context if website URL is available
+        website_context = {}
+        if org.website:
+            try:
+                website_service = WebsiteContextService()
+                website_context = website_service.fetch_website_context(org.website, org.id)
+                logger.info(f"Fetched website context for {org.name}")
+            except Exception as e:
+                logger.warning(f"Could not fetch website context for {org.name}: {e}")
+                website_context = {}
+        
+        # Build comprehensive context with ALL organization fields
+        comprehensive_context = {
+            # Core Identity (Complete)
             'name': org.name,
-            'mission': org.mission,
-            'vision': getattr(org, 'vision', ''),
-            'values': getattr(org, 'values', []),
-            'focus_areas': org.primary_focus_areas,
-            'geography': f"{org.primary_city}, {org.primary_state}",
-            'budget': org.annual_budget_range,
-            'staff_size': org.staff_size,
-            'unique_capabilities': org.unique_capabilities,
-            'past_successes': getattr(org, 'past_successes', []),
-            'current_programs': getattr(org, 'current_programs', []),
-            # Platform performance data
+            'legal_name': org.legal_name or org.name,
+            'ein': org.ein or '',
+            'org_type': org.org_type or '501(c)(3)',
+            'year_founded': org.year_founded or '',
+            'website': org.website or '',
+            'social_media': org.social_media or {},
+            
+            # Mission, Vision, Values (Complete)
+            'mission': org.mission or '',
+            'vision': org.vision or '',
+            'values': org.values or '',
+            
+            # Program & Service Details (Complete)
+            'primary_focus_areas': org.primary_focus_areas or [],
+            'secondary_focus_areas': getattr(org, 'secondary_focus_areas', []) or [],
+            'programs_services': getattr(org, 'programs_services', '') or '',
+            'unique_capabilities': org.unique_capabilities or '',
+            'service_delivery_model': getattr(org, 'service_delivery_model', '') or '',
+            
+            # Geographic & Demographic Reach (Complete)
+            'primary_state': org.primary_state or '',
+            'primary_city': org.primary_city or '',
+            'primary_zip': getattr(org, 'primary_zip', '') or '',
+            'service_states': getattr(org, 'service_states', []) or [],
+            'service_counties': getattr(org, 'service_counties', []) or [],
+            'service_zips': getattr(org, 'service_zips', []) or [],
+            'target_demographics': getattr(org, 'target_demographics', '') or '',
+            'age_groups_served': getattr(org, 'age_groups_served', []) or [],
+            'populations_served': getattr(org, 'populations_served', []) or [],
+            'geography': f"{org.primary_city or 'City'}, {org.primary_state or 'State'}",
+            'service_area_description': f"Serving {', '.join(getattr(org, 'service_states', [])[:3]) if getattr(org, 'service_states', []) else org.primary_state or 'local area'}",
+            
+            # Organizational Capacity (Complete)
+            'annual_budget_range': org.annual_budget_range or '',
+            'annual_budget_exact': getattr(org, 'annual_budget_exact', 0) or 0,
+            'staff_size': org.staff_size or 0,
+            'volunteer_count': getattr(org, 'volunteer_count', 0) or 0,
+            'board_size': getattr(org, 'board_size', 0) or 0,
+            'facilities': getattr(org, 'facilities', '') or '',
+            
+            # Grant History & Experience (Complete)
+            'typical_grant_size': getattr(org, 'typical_grant_size', '') or '',
+            'largest_grant_received': getattr(org, 'largest_grant_received', 0) or 0,
+            'smallest_grant_received': getattr(org, 'smallest_grant_received', 0) or 0,
+            'grant_writing_experience': getattr(org, 'grant_writing_experience', '') or '',
+            'grant_writing_capacity': getattr(org, 'grant_writing_capacity', '') or '',
+            'previous_funders': previous_funders or getattr(org, 'previous_funders', []) or [],
+            'preferred_grant_types': getattr(org, 'preferred_grant_types', []) or [],
+            
+            # Impact & Measurement (Complete)
+            'impact_measurement': getattr(org, 'impact_measurement', '') or '',
+            'key_metrics': getattr(org, 'key_metrics', []) or [],
+            'annual_beneficiaries': getattr(org, 'annual_beneficiaries', 0) or 0,
+            'success_stories': participant_stories[:5],  # Real stories from platform
+            'program_outcomes': getattr(org, 'program_outcomes', '') or '',
+            
+            # Financial Information (Complete)
+            'fiscal_year_end': org.fiscal_year_end.strftime('%B %d') if hasattr(org, 'fiscal_year_end') and org.fiscal_year_end else '',
+            'audit_status': getattr(org, 'audit_status', '') or '',
+            'financial_transparency': getattr(org, 'financial_transparency', '') or '',
+            'revenue_sources': getattr(org, 'revenue_sources', {}) or {},
+            'expense_breakdown': getattr(org, 'expense_breakdown', {}) or {},
+            
+            # Partnerships & Collaborations (Complete)
+            'key_partnerships': getattr(org, 'key_partnerships', []) or [],
+            'collaboration_types': getattr(org, 'collaboration_types', []) or [],
+            'partner_testimonials': getattr(org, 'partner_testimonials', []) or [],
+            
+            # Leadership & Governance (Complete)
+            'executive_director': getattr(org, 'executive_director', '') or '',
+            'board_chair': getattr(org, 'board_chair', '') or '',
+            'leadership_bios': getattr(org, 'leadership_bios', {}) or {},
+            
+            # Compliance & Certifications (Complete)
+            'tax_exempt_status': getattr(org, 'tax_exempt_status', True),
+            'good_standing': getattr(org, 'good_standing', True),
+            'certifications': getattr(org, 'certifications', []) or [],
+            'accreditations': getattr(org, 'accreditations', []) or [],
+            
+            # Diversity & Inclusion Markers (Complete)
+            'minority_led': getattr(org, 'minority_led', False),
+            'woman_led': getattr(org, 'woman_led', False),
+            'faith_based': getattr(org, 'faith_based', False),
+            'lgbtq_led': getattr(org, 'lgbtq_led', False),
+            'disability_led': getattr(org, 'disability_led', False),
+            'veteran_led': getattr(org, 'veteran_led', False),
+            'diversity_statement': getattr(org, 'diversity_statement', '') or '',
+            
+            # Strategic Planning (Complete)
+            'strategic_plan_years': getattr(org, 'strategic_plan_years', '') or '',
+            'strategic_priorities': getattr(org, 'strategic_priorities', []) or [],
+            'growth_plans': getattr(org, 'growth_plans', '') or '',
+            'sustainability_plan': getattr(org, 'sustainability_plan', '') or '',
+            
+            # Communication & Outreach (Complete)
+            'communication_channels': getattr(org, 'communication_channels', []) or [],
+            'marketing_materials': getattr(org, 'marketing_materials', []) or [],
+            'media_coverage': getattr(org, 'media_coverage', []) or [],
+            'brand_assets': getattr(org, 'brand_assets', {}) or {},
+            
+            # Technology & Systems (Complete)
+            'technology_platforms': getattr(org, 'technology_platforms', []) or [],
+            'data_systems': getattr(org, 'data_systems', []) or [],
+            'digital_capacity': getattr(org, 'digital_capacity', '') or '',
+            
+            # Platform Performance Data (Enhanced)
             'grant_performance': {
                 'total_grants_submitted': total_grants,
                 'grants_won': won_grants,
+                'grants_pending': pending_grants,
                 'success_rate': round(success_rate, 1),
-                'total_funding_pursued': total_funding,
-                'recent_wins': [g.title for g in grants if g.status == 'awarded'][-3:]
+                'total_funding_pursued': total_funding_pursued,
+                'total_funding_won': total_funding_won,
+                'average_grant_size': round(average_grant_size, 0),
+                'recent_wins': [{'title': g.title, 'funder': g.funder, 'amount': g.amount_max} 
+                              for g in grants if g.status == 'awarded'][-5:],
+                'upcoming_deadlines': [{'title': g.title, 'deadline': g.deadline.strftime('%Y-%m-%d') if g.deadline else 'TBD'} 
+                                      for g in grants if g.status in ['draft', 'pending'] and g.deadline][:5]
             },
+            
+            # Impact Metrics (Enhanced)
             'impact_metrics': {
                 'participant_stories': story_count,
                 'recent_analytics_reports': len(analytics),
-                'data_collection_active': story_count > 0
+                'data_collection_active': story_count > 0,
+                'total_beneficiaries_tracked': sum(intake.payload.get('totalParticipants', 0) for intake in recent_intakes),
+                'success_story_themes': list(set([s.get('impactArea', '') for intake in recent_intakes 
+                                                 for s in intake.payload.get('stories', []) if s.get('impactArea')]))[:10]
+            },
+            
+            # Website Intelligence (From website_context_service)
+            'website_insights': {
+                'organization_voice': website_context.get('organization_voice', {}),
+                'mission_from_website': website_context.get('mission_vision', {}).get('mission', ''),
+                'vision_from_website': website_context.get('mission_vision', {}).get('vision', ''),
+                'tagline': website_context.get('mission_vision', {}).get('tagline', ''),
+                'values_from_website': website_context.get('mission_vision', {}).get('values', []),
+                'about_overview': website_context.get('about_content', {}).get('overview', ''),
+                'history_narrative': website_context.get('about_content', {}).get('history', ''),
+                'approach_methodology': website_context.get('about_content', {}).get('approach', ''),
+                'programs_detailed': website_context.get('programs', []),
+                'team_profiles': website_context.get('team_leadership', [])[:10],
+                'impact_stories_web': website_context.get('impact_stories', [])[:5],
+                'recent_news': website_context.get('news_updates', [])[:5],
+                'testimonials': website_context.get('testimonials', [])[:5],
+                'partners_funders_web': website_context.get('partners_funders', {}),
+                'contact_info': website_context.get('contact_info', {}),
+                'social_media_links': website_context.get('social_media', {}),
+                'key_statistics_web': website_context.get('key_statistics', [])[:10],
+                'unique_value_props': website_context.get('unique_value_props', [])[:5],
+                'awards_recognition': website_context.get('awards_recognition', [])[:5],
+                'media_mentions': website_context.get('media_mentions', [])[:5],
+                'donation_language': website_context.get('donation_language', {}),
+                'calls_to_action': website_context.get('calls_to_action', [])[:5],
+                'keywords_seo': website_context.get('keywords', [])[:10],
+                'writing_guidelines': website_context.get('writing_guidelines', {})
+            },
+            
+            # Composite Intelligence (Merged insights)
+            'composite_insights': {
+                'verified_impact': participant_stories[:3] if participant_stories else [],
+                'proven_success_rate': f"{round(success_rate, 1)}% success rate across {total_grants} grants",
+                'funding_momentum': f"${total_funding_won:,.0f} secured, ${total_funding_pursued - total_funding_won:,.0f} pending",
+                'organizational_maturity': self._calculate_maturity_score(org, grants, analytics),
+                'competitive_advantages': self._identify_competitive_advantages(org, website_context),
+                'grant_readiness_score': self._calculate_grant_readiness(org, grants),
+                'recommended_tone': website_context.get('writing_guidelines', {}).get('tone', 'professional'),
+                'recommended_formality': website_context.get('writing_guidelines', {}).get('formality', 'formal'),
+                'power_words': website_context.get('writing_guidelines', {}).get('words_to_use', [])[:10],
+                'proof_points': website_context.get('writing_guidelines', {}).get('proof_points', [])[:10]
             }
         }
+        
+        return comprehensive_context
     
     def _build_org_context(self, org: Organization) -> Dict:
         """Legacy method - redirects to comprehensive version"""
         return self._build_comprehensive_org_context(org)
+    
+    def _calculate_maturity_score(self, org: Organization, grants: list, analytics: list) -> int:
+        """Calculate organizational maturity score based on various factors"""
+        score = 0
+        
+        # Years in operation
+        if org.year_founded:
+            years_active = datetime.utcnow().year - org.year_founded
+            if years_active >= 10:
+                score += 20
+            elif years_active >= 5:
+                score += 15
+            elif years_active >= 2:
+                score += 10
+        
+        # Grant experience
+        if len(grants) >= 20:
+            score += 20
+        elif len(grants) >= 10:
+            score += 15
+        elif len(grants) >= 5:
+            score += 10
+        
+        # Staff and volunteer capacity
+        staff_size = getattr(org, 'staff_size', 0) or 0
+        if staff_size >= 10:
+            score += 15
+        elif staff_size >= 5:
+            score += 10
+        
+        volunteer_count = getattr(org, 'volunteer_count', 0) or 0
+        if volunteer_count >= 50:
+            score += 10
+        
+        # Financial stability
+        budget = getattr(org, 'annual_budget_exact', 0)
+        if budget >= 1000000:
+            score += 15
+        elif budget >= 500000:
+            score += 10
+        
+        # Compliance and certifications
+        if getattr(org, 'tax_exempt_status', True):
+            score += 5
+        if getattr(org, 'audit_status', '') == 'Current':
+            score += 10
+        certs = getattr(org, 'certifications', [])
+        if certs and len(certs) > 0:
+            score += 5
+        
+        return min(score, 100)  # Cap at 100
+    
+    def _identify_competitive_advantages(self, org: Organization, website_context: Dict) -> list:
+        """Identify unique competitive advantages from org data and website"""
+        advantages = []
+        
+        # Leadership diversity advantages
+        if getattr(org, 'minority_led', False):
+            advantages.append("Minority-led organization with lived experience perspective")
+        if getattr(org, 'woman_led', False):
+            advantages.append("Woman-led organization bringing diverse leadership")
+        if getattr(org, 'veteran_led', False):
+            advantages.append("Veteran-led with military discipline and values")
+        
+        # Program uniqueness
+        unique_cap = getattr(org, 'unique_capabilities', '')
+        if unique_cap:
+            advantages.append(f"Unique capabilities: {unique_cap[:100]}")
+        
+        # Geographic advantages
+        service_states = getattr(org, 'service_states', [])
+        if service_states and len(service_states) > 3:
+            advantages.append(f"Multi-state reach across {len(service_states)} states")
+        
+        # Website-identified advantages
+        if website_context:
+            unique_props = website_context.get('unique_value_props', [])
+            for prop in unique_props[:3]:
+                if prop and len(prop) < 150:
+                    advantages.append(prop)
+            
+            # Awards and recognition
+            awards = website_context.get('awards_recognition', [])
+            if awards:
+                advantages.append(f"Award-winning: {awards[0][:100]}")
+        
+        # Scale advantages
+        beneficiaries = getattr(org, 'annual_beneficiaries', 0)
+        if beneficiaries > 1000:
+            advantages.append(f"Proven scale: serving {beneficiaries:,} beneficiaries annually")
+        
+        # Partnership advantages  
+        partnerships = getattr(org, 'key_partnerships', [])
+        if partnerships and len(partnerships) > 5:
+            advantages.append(f"Strong coalition with {len(partnerships)} key partners")
+        
+        return advantages[:10]  # Return top 10 advantages
+    
+    def _calculate_grant_readiness(self, org: Organization, grants: list) -> int:
+        """Calculate grant readiness score"""
+        score = 0
+        
+        # Grant writing experience
+        experience = getattr(org, 'grant_writing_experience', '')
+        if experience == 'Expert':
+            score += 25
+        elif experience == 'Intermediate':
+            score += 15
+        elif experience == 'Beginner':
+            score += 5
+        
+        # Grant writing capacity
+        capacity = getattr(org, 'grant_writing_capacity', '')
+        if capacity == 'Dedicated team':
+            score += 25
+        elif capacity == 'Part-time staff':
+            score += 15
+        elif capacity == 'Volunteer-based':
+            score += 5
+        
+        # Track record
+        won_grants = len([g for g in grants if g.status == 'awarded'])
+        if won_grants >= 10:
+            score += 25
+        elif won_grants >= 5:
+            score += 15
+        elif won_grants >= 1:
+            score += 10
+        
+        # Documentation readiness
+        if getattr(org, 'audit_status', '') == 'Current':
+            score += 10
+        if getattr(org, 'impact_measurement', ''):
+            score += 10
+        if getattr(org, 'strategic_plan_years', ''):
+            score += 5
+        
+        return min(score, 100)  # Cap at 100
     
     def _create_enhanced_pitch_prompt(self, org_context: Dict, grant_context: Optional[Dict], 
                                     pitch_type: str) -> str:
