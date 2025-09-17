@@ -10,7 +10,8 @@ from typing import Dict, List, Optional
 from datetime import datetime, timedelta
 from urllib.parse import urlparse, urljoin
 import requests
-from bs4 import BeautifulSoup
+from bs4 import BeautifulSoup, Tag
+from bs4.element import NavigableString
 from app import db
 from app.models import Organization
 from functools import lru_cache
@@ -180,7 +181,7 @@ class WebsiteContextService:
         
         # Look for values
         values_section = soup.find(['div', 'section', 'ul'], class_=re.compile('values', re.I))
-        if values_section:
+        if values_section and isinstance(values_section, Tag):
             values_items = values_section.find_all(['li', 'p'])[:10]
             mission_vision['values'] = [item.get_text(strip=True)[:100] for item in values_items]
         
@@ -202,7 +203,7 @@ class WebsiteContextService:
         
         # Find About section
         about_section = soup.find(['div', 'section'], class_=re.compile('about', re.I))
-        if about_section:
+        if about_section and isinstance(about_section, Tag):
             paragraphs = about_section.find_all('p')[:5]
             about_content['overview'] = ' '.join([p.get_text(strip=True) for p in paragraphs])[:1000]
         
@@ -229,21 +230,26 @@ class WebsiteContextService:
             program = {}
             
             # Get program name
-            title = section.find(['h2', 'h3', 'h4'])
-            if title:
-                program['name'] = title.get_text(strip=True)
+            if isinstance(section, Tag):
+                title = section.find(['h2', 'h3', 'h4'])
+                if title and isinstance(title, Tag):
+                    program['name'] = title.get_text(strip=True)
             
             # Get description
-            desc = section.find(['p', 'div'], class_=re.compile('desc|summary|overview', re.I))
-            if desc:
-                program['description'] = desc.get_text(strip=True)[:300]
-            elif section.find('p'):
-                program['description'] = section.find('p').get_text(strip=True)[:300]
+            if isinstance(section, Tag):
+                desc = section.find(['p', 'div'], class_=re.compile('desc|summary|overview', re.I))
+                if desc and isinstance(desc, Tag):
+                    program['description'] = desc.get_text(strip=True)[:300]
+                else:
+                    p_elem = section.find('p')
+                    if p_elem and isinstance(p_elem, Tag):
+                        program['description'] = p_elem.get_text(strip=True)[:300]
             
             # Get impact/outcomes
-            impact = section.find(['p', 'div', 'ul'], class_=re.compile('impact|outcome|result', re.I))
-            if impact:
-                program['impact'] = impact.get_text(strip=True)[:200]
+            if isinstance(section, Tag):
+                impact = section.find(['p', 'div', 'ul'], class_=re.compile('impact|outcome|result', re.I))
+                if impact and isinstance(impact, Tag):
+                    program['impact'] = impact.get_text(strip=True)[:200]
             
             if program:
                 programs.append(program)
@@ -258,24 +264,28 @@ class WebsiteContextService:
         team_sections = soup.find_all(['div', 'section'], class_=re.compile('team|staff|leadership|board', re.I))[:5]
         
         for section in team_sections:
+            if not isinstance(section, Tag):
+                continue
             members = section.find_all(['div', 'article'], class_=re.compile('member|person|profile', re.I))[:20]
             
             for member in members:
+                if not isinstance(member, Tag):
+                    continue
                 person = {}
                 
                 # Get name
                 name_elem = member.find(['h3', 'h4', 'h5', 'strong'])
-                if name_elem:
+                if name_elem and isinstance(name_elem, Tag):
                     person['name'] = name_elem.get_text(strip=True)
                 
                 # Get title/role
                 title_elem = member.find(['p', 'span'], class_=re.compile('title|role|position', re.I))
-                if title_elem:
+                if title_elem and isinstance(title_elem, Tag):
                     person['title'] = title_elem.get_text(strip=True)
                 
                 # Get bio
                 bio_elem = member.find(['p', 'div'], class_=re.compile('bio|description', re.I))
-                if bio_elem:
+                if bio_elem and isinstance(bio_elem, Tag):
                     person['bio'] = bio_elem.get_text(strip=True)[:200]
                 
                 if person and 'name' in person:
@@ -292,19 +302,23 @@ class WebsiteContextService:
                                       class_=re.compile('impact|success|story|case-study|testimonial', re.I))[:10]
         
         for section in story_sections:
+            if not isinstance(section, Tag):
+                continue
             story = {}
             
             # Get title
             title = section.find(['h2', 'h3', 'h4'])
-            if title:
+            if title and isinstance(title, Tag):
                 story['title'] = title.get_text(strip=True)
             
             # Get content
             content = section.find(['p', 'div'], class_=re.compile('content|story|description', re.I))
-            if content:
+            if content and isinstance(content, Tag):
                 story['content'] = content.get_text(strip=True)[:500]
-            elif section.find('p'):
-                story['content'] = ' '.join([p.get_text(strip=True) for p in section.find_all('p')[:3]])[:500]
+            elif isinstance(section, Tag):
+                p_elems = section.find_all('p')[:3]
+                if p_elems:
+                    story['content'] = ' '.join([p.get_text(strip=True) for p in p_elems if isinstance(p, Tag)])[:500]
             
             # Look for metrics/numbers
             numbers = re.findall(r'\b(\d+[,\d]*)\s*(people|families|children|students|clients|participants|volunteers|%)', 
@@ -326,25 +340,29 @@ class WebsiteContextService:
                                      class_=re.compile('news|blog|update|announcement|press', re.I))[:10]
         
         for section in news_sections:
+            if not isinstance(section, Tag):
+                continue
             article = {}
             
             # Get title
             title = section.find(['h2', 'h3', 'h4', 'a'])
-            if title:
+            if title and isinstance(title, Tag):
                 article['title'] = title.get_text(strip=True)
                 
                 # Get link if available
-                if title.name == 'a' and title.get('href'):
-                    article['link'] = urljoin(base_url, title['href'])
+                if title.name == 'a':
+                    href = title.get('href')
+                    if href:
+                        article['link'] = urljoin(base_url, str(href))
             
             # Get date
             date_elem = section.find(['time', 'span', 'p'], class_=re.compile('date|time|published', re.I))
-            if date_elem:
+            if date_elem and isinstance(date_elem, Tag):
                 article['date'] = date_elem.get_text(strip=True)
             
             # Get excerpt
             excerpt = section.find(['p', 'div'], class_=re.compile('excerpt|summary|description', re.I))
-            if excerpt:
+            if excerpt and isinstance(excerpt, Tag):
                 article['excerpt'] = excerpt.get_text(strip=True)[:300]
             
             if article:
@@ -361,16 +379,18 @@ class WebsiteContextService:
                                             class_=re.compile('testimonial|quote|review|feedback', re.I))[:10]
         
         for section in testimonial_sections:
+            if not isinstance(section, Tag):
+                continue
             testimonial = {}
             
             # Get quote text
             quote = section.find(['p', 'blockquote', 'q'])
-            if quote:
+            if quote and isinstance(quote, Tag):
                 testimonial['quote'] = quote.get_text(strip=True)[:400]
             
             # Get author
             author = section.find(['cite', 'span', 'p'], class_=re.compile('author|name|source|attribution', re.I))
-            if author:
+            if author and isinstance(author, Tag):
                 testimonial['author'] = author.get_text(strip=True)
             
             if testimonial and 'quote' in testimonial:
@@ -391,23 +411,40 @@ class WebsiteContextService:
                                         class_=re.compile('partner|funder|supporter|sponsor|donor', re.I))
         
         for section in partner_sections:
+            if not isinstance(section, Tag):
+                continue
             # Look for lists of partners
             partner_lists = section.find_all(['ul', 'div'], class_=re.compile('list|grid|logos', re.I))
             
             for plist in partner_lists:
+                if not isinstance(plist, Tag):
+                    continue
                 items = plist.find_all(['li', 'img', 'a'])[:20]
                 
                 for item in items:
+                    if not isinstance(item, Tag):
+                        continue
                     name = ''
-                    if item.name == 'img' and item.get('alt'):
-                        name = item['alt']
-                    elif item.get_text(strip=True):
+                    if item.name == 'img':
+                        alt_text = item.get('alt')
+                        if alt_text:
+                            name = str(alt_text)
+                    elif hasattr(item, 'get_text'):
                         name = item.get_text(strip=True)
                     
                     if name and len(name) < 100:
-                        if 'funder' in section.get('class', []) or 'funder' in section.get_text().lower():
+                        section_classes = section.get('class') if isinstance(section, Tag) else []
+                        section_text = section.get_text().lower() if isinstance(section, Tag) else ''
+                        if isinstance(section_classes, list):
+                            section_classes_str = ' '.join(section_classes)
+                        elif section_classes:
+                            section_classes_str = str(section_classes)
+                        else:
+                            section_classes_str = ''
+                        
+                        if 'funder' in section_classes_str or 'funder' in section_text:
                             partners['funders'].append(name)
-                        elif 'partner' in section.get('class', []) or 'partner' in section.get_text().lower():
+                        elif 'partner' in section_classes_str or 'partner' in section_text:
                             partners['partners'].append(name)
                         else:
                             partners['supporters'].append(name)
@@ -447,8 +484,10 @@ class WebsiteContextService:
         
         # Look for contact page link
         contact_link = soup.find('a', text=re.compile('contact', re.I))
-        if contact_link and contact_link.get('href'):
-            contact['contact_page'] = contact_link['href']
+        if contact_link and isinstance(contact_link, Tag):
+            href = contact_link.get('href')
+            if href:
+                contact['contact_page'] = str(href)
         
         return contact
     
@@ -460,8 +499,10 @@ class WebsiteContextService:
         
         for platform in platforms:
             link = soup.find('a', href=re.compile(platform, re.I))
-            if link and link.get('href'):
-                social[platform] = link['href']
+            if link and isinstance(link, Tag):
+                href = link.get('href')
+                if href:
+                    social[platform] = str(href)
         
         return social
     
@@ -502,6 +543,8 @@ class WebsiteContextService:
                                       class_=re.compile('why|unique|different|advantage|benefit', re.I))
         
         for section in value_sections:
+            if not isinstance(section, Tag):
+                continue
             # Get list items or paragraphs
             items = section.find_all(['li', 'p'])[:10]
             for item in items:
@@ -520,6 +563,8 @@ class WebsiteContextService:
                                       class_=re.compile('award|recognition|achievement|honor|accreditation', re.I))
         
         for section in award_sections:
+            if not isinstance(section, Tag):
+                continue
             items = section.find_all(['li', 'p', 'h3', 'h4'])[:10]
             for item in items:
                 text = item.get_text(strip=True)
@@ -537,19 +582,23 @@ class WebsiteContextService:
                                       class_=re.compile('press|media|news|coverage|featured', re.I))
         
         for section in media_sections:
+            if not isinstance(section, Tag):
+                continue
             items = section.find_all(['li', 'div', 'article'])[:10]
             
             for item in items:
+                if not isinstance(item, Tag):
+                    continue
                 mention = {}
                 
                 # Get outlet name
                 outlet = item.find(['strong', 'b', 'h4'])
-                if outlet:
+                if outlet and isinstance(outlet, Tag):
                     mention['outlet'] = outlet.get_text(strip=True)
                 
                 # Get title/description
                 title = item.find(['a', 'p'])
-                if title:
+                if title and isinstance(title, Tag):
                     mention['title'] = title.get_text(strip=True)[:200]
                 
                 if mention:
@@ -571,12 +620,14 @@ class WebsiteContextService:
                                          class_=re.compile('donat|give|support|contribute|help', re.I))
         
         for section in donation_sections[:3]:
+            if not isinstance(section, Tag):
+                continue
             text = section.get_text()
             
             # Get main CTA
             if not donation['call_to_action']:
                 cta = section.find(['button', 'a'], text=re.compile('donate|give|support', re.I))
-                if cta:
+                if cta and isinstance(cta, Tag):
                     donation['call_to_action'] = cta.get_text(strip=True)
             
             # Look for impact levels ($25 provides...)
@@ -620,8 +671,10 @@ class WebsiteContextService:
     def _extract_meta_description(self, soup: BeautifulSoup) -> str:
         """Extract meta description for SEO understanding"""
         meta = soup.find('meta', attrs={'name': 'description'})
-        if meta and meta.get('content'):
-            return meta['content'][:300]
+        if meta and isinstance(meta, Tag):
+            content = meta.get('content')
+            if content:
+                return str(content)[:300]
         return ''
     
     def _extract_keywords(self, soup: BeautifulSoup) -> List[str]:
@@ -630,8 +683,10 @@ class WebsiteContextService:
         
         # Get meta keywords
         meta_keywords = soup.find('meta', attrs={'name': 'keywords'})
-        if meta_keywords and meta_keywords.get('content'):
-            keywords.extend(meta_keywords['content'].split(',')[:10])
+        if meta_keywords and isinstance(meta_keywords, Tag):
+            content = meta_keywords.get('content')
+            if content:
+                keywords.extend(str(content).split(',')[:10])
         
         # Extract frequent important words from headers
         headers = soup.find_all(['h1', 'h2', 'h3'])[:20]
@@ -653,20 +708,22 @@ class WebsiteContextService:
         for page_type in target_pages:
             # Find link to this page
             link = soup.find('a', href=re.compile(f'/{page_type}', re.I))
-            if link and link.get('href'):
-                try:
-                    page_url = urljoin(base_url, link['href'])
-                    response = self.session.get(page_url, timeout=5)
-                    if response.status_code == 200:
-                        page_soup = BeautifulSoup(response.content, 'html.parser')
-                        # Get main content
-                        main = page_soup.find(['main', 'div'], class_=re.compile('content|main', re.I))
-                        if main:
-                            # Get first few paragraphs
-                            paragraphs = main.find_all('p')[:5]
-                            key_pages[page_type] = ' '.join([p.get_text(strip=True) for p in paragraphs])[:1000]
-                except:
-                    continue
+            if link and isinstance(link, Tag):
+                href = link.get('href')
+                if href:
+                    try:
+                        page_url = urljoin(base_url, str(href))
+                        response = self.session.get(page_url, timeout=5)
+                        if response.status_code == 200:
+                            page_soup = BeautifulSoup(response.content, 'html.parser')
+                            # Get main content
+                            main = page_soup.find(['main', 'div'], class_=re.compile('content|main', re.I))
+                            if main and isinstance(main, Tag):
+                                # Get first few paragraphs
+                                paragraphs = main.find_all('p')[:5]
+                                key_pages[page_type] = ' '.join([p.get_text(strip=True) for p in paragraphs if isinstance(p, Tag)])[:1000]
+                    except:
+                        continue
         
         return key_pages
     
@@ -736,7 +793,7 @@ class WebsiteContextService:
             word_freq[word_lower] = word_freq.get(word_lower, 0) + 1
         
         # Get top used words
-        guidelines['words_to_use'] = sorted(word_freq.keys(), key=word_freq.get, reverse=True)[:10]
+        guidelines['words_to_use'] = sorted(word_freq.keys(), key=lambda x: word_freq.get(x, 0), reverse=True)[:10]
         
         # Set words to avoid based on tone
         if context['organization_voice']['tone'] == 'compassionate':
