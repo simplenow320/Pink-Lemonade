@@ -296,20 +296,77 @@ Generate the comprehensive Case for Support now:"""
 
 @bp.route('/grant-pitch', methods=['POST'])
 def create_grant_pitch():
-    """Generate a Grant Pitch in three formats using organization profile from database"""
+    """Generate a Grant Pitch in three formats using provided organization data or database fallback"""
     try:
         data = request.get_json() or {}
         
         # Import Organization model
         from app.models import Organization
         
-        # Fetch organization from database
-        org = Organization.query.first()
-        if not org:
-            return jsonify({'error': 'No organization profile found. Please complete your organization profile first.'}), 404
+        # Check if organization data is provided in the form
+        has_form_data = data.get('org_name') or data.get('mission') or data.get('programs')
         
-        # Use organization data from database
-        org_data = org.to_dict()
+        if has_form_data:
+            # Use organization data from the form submission
+            org_data = {
+                'name': data.get('org_name', 'Organization'),
+                'legal_name': data.get('org_name', 'Organization'),
+                'org_type': 'Nonprofit',  # Default value
+                'year_founded': None,
+                'mission': data.get('mission', ''),
+                'vision': None,
+                'values': None,
+                'primary_focus_areas': [],
+                'programs_services': data.get('programs', ''),
+                'target_demographics': [],
+                'service_area_type': None,
+                'primary_city': data.get('geographic_focus', '').split(',')[0].strip() if data.get('geographic_focus') else None,
+                'primary_state': data.get('geographic_focus', '').split(',')[1].strip() if data.get('geographic_focus') and ',' in data.get('geographic_focus') else None,
+                'annual_budget_range': None,
+                'staff_size': None,
+                'people_served_annually': None,
+                'key_achievements': data.get('impact', ''),
+                'previous_funders': [],
+                'grant_success_rate': None,
+                'faith_based': False,
+                'minority_led': False,
+                'woman_led': False,
+                'unique_capabilities': None,
+                'impact_metrics': {}
+            }
+        else:
+            # Fallback: Fetch organization from database
+            org = Organization.query.first()
+            if not org:
+                return jsonify({'error': 'No organization profile found. Please complete your organization profile first.'}), 404
+            
+            # Use organization data from database
+            org_data = {
+                'name': org.name,
+                'legal_name': org.legal_name,
+                'org_type': org.org_type,
+                'year_founded': org.year_founded,
+                'mission': org.mission,
+                'vision': org.vision,
+                'values': org.values,
+                'primary_focus_areas': org.primary_focus_areas or [],
+                'programs_services': org.programs_services,
+                'target_demographics': org.target_demographics or [],
+                'service_area_type': org.service_area_type,
+                'primary_city': org.primary_city,
+                'primary_state': org.primary_state,
+                'annual_budget_range': org.annual_budget_range,
+                'staff_size': org.staff_size,
+                'people_served_annually': org.people_served_annually,
+                'key_achievements': org.key_achievements,
+                'previous_funders': org.previous_funders or [],
+                'grant_success_rate': org.grant_success_rate,
+                'faith_based': org.faith_based,
+                'minority_led': org.minority_led,
+                'woman_led': org.woman_led,
+                'unique_capabilities': org.unique_capabilities,
+                'impact_metrics': org.impact_metrics or {}
+            }
         
         # Validate required pitch-specific fields
         funder_name = data.get('funder_name', 'Potential Funder')
@@ -321,34 +378,6 @@ def create_grant_pitch():
         # Use OpenAI for document generation
         from openai import OpenAI
         client = OpenAI(api_key=os.environ.get('OPENAI_API_KEY'))
-        
-        # Get comprehensive organization data
-        org_data = {
-            'name': org.name,
-            'legal_name': org.legal_name,
-            'org_type': org.org_type,
-            'year_founded': org.year_founded,
-            'mission': org.mission,
-            'vision': org.vision,
-            'values': org.values,
-            'primary_focus_areas': org.primary_focus_areas or [],
-            'programs_services': org.programs_services,
-            'target_demographics': org.target_demographics or [],
-            'service_area_type': org.service_area_type,
-            'primary_city': org.primary_city,
-            'primary_state': org.primary_state,
-            'annual_budget_range': org.annual_budget_range,
-            'staff_size': org.staff_size,
-            'people_served_annually': org.people_served_annually,
-            'key_achievements': org.key_achievements,
-            'previous_funders': org.previous_funders or [],
-            'grant_success_rate': org.grant_success_rate,
-            'faith_based': org.faith_based,
-            'minority_led': org.minority_led,
-            'woman_led': org.woman_led,
-            'unique_capabilities': org.unique_capabilities,
-            'impact_metrics': org.impact_metrics or {}
-        }
         
         # Enhanced strategic grant pitch prompt using comprehensive data
         prompt = f"""You are a professional grant and donor pitch strategist specializing in creating compelling funding requests using comprehensive organizational intelligence.
