@@ -7,12 +7,19 @@ import os
 import json
 from datetime import datetime, date
 from typing import Dict, Any, List, Generator
+from unittest.mock import Mock, patch
 
 from app import create_app, db
 from app.models.grant import Grant
 from app.models.organization import Organization
 from app.models.narrative import Narrative
 from app.models.scraper import ScraperSource, ScraperHistory
+from app.services.apiManager import APIManager, CircuitBreaker, RateLimiter, CacheManager
+from app.config.apiConfig import APIConfig
+
+# Import our test fixtures
+from .fixtures.api_responses import *
+from .fixtures.mock_server import MockAPIServer, CircuitBreakerTestHelper, RateLimitTestHelper, CacheTestHelper
 
 @pytest.fixture
 def app():
@@ -194,4 +201,137 @@ def mock_openai_response() -> Dict[str, Any]:
                 "index": 0
             }
         ]
+    }
+
+# API Testing Fixtures
+
+@pytest.fixture
+def clean_environment():
+    """Clean environment variables for testing credential scenarios"""
+    original_env = {}
+    # List of all API-related environment variables
+    api_env_vars = [
+        'SAM_GOV_API_KEY', 'SAM_API_KEY', 'SAMGOV_KEY',
+        'MICHIGAN_SOCRATA_API_KEY', 'SOCRATA_APP_TOKEN', 'MICHIGAN_API_KEY',
+        'ZYTE_API_KEY', 'SCRAPINGHUB_API_KEY', 'ZYTE_KEY',
+        'GOVINFO_API_KEY', 'GOVINFO_KEY',
+        'CANDID_API_KEY', 'FDO_API_KEY', 'GRANTWATCH_API_KEY',
+        'HHS_GRANTS_API_KEY', 'ED_GRANTS_API_KEY', 'NSF_API_KEY'
+    ]
+    
+    # Save original values and clear
+    for var in api_env_vars:
+        if var in os.environ:
+            original_env[var] = os.environ[var]
+            del os.environ[var]
+    
+    yield
+    
+    # Restore original values
+    for var, value in original_env.items():
+        os.environ[var] = value
+
+@pytest.fixture
+def mock_api_server():
+    """Mock API server for testing HTTP requests"""
+    server = MockAPIServer()
+    with patch('app.services.apiManager.requests.request', side_effect=server.mock_request):
+        yield server
+    server.reset()
+
+@pytest.fixture
+def api_manager():
+    """APIManager instance for testing"""
+    return APIManager()
+
+@pytest.fixture
+def api_config():
+    """APIConfig instance for testing"""
+    return APIConfig()
+
+@pytest.fixture
+def circuit_breaker_helper():
+    """Helper for circuit breaker testing"""
+    return CircuitBreakerTestHelper()
+
+@pytest.fixture
+def rate_limit_helper():
+    """Helper for rate limit testing"""
+    return RateLimitTestHelper()
+
+@pytest.fixture
+def cache_helper():
+    """Helper for cache testing"""
+    return CacheTestHelper()
+
+@pytest.fixture
+def sample_circuit_breaker():
+    """Sample circuit breaker for testing"""
+    return CircuitBreaker("test_source", failure_threshold=3, cooldown_minutes=5)
+
+@pytest.fixture
+def sample_rate_limiter():
+    """Sample rate limiter for testing"""
+    return RateLimiter()
+
+@pytest.fixture
+def sample_cache_manager():
+    """Sample cache manager for testing"""
+    return CacheManager()
+
+@pytest.fixture
+def mock_successful_response():
+    """Mock successful API response"""
+    response = Mock()
+    response.status_code = 200
+    response.headers = {'Content-Type': 'application/json'}
+    response.json.return_value = get_mock_response("grants_gov", "success")
+    response.text = json.dumps(get_mock_response("grants_gov", "success"))
+    return response
+
+@pytest.fixture
+def mock_error_response():
+    """Mock error API response"""
+    response = Mock()
+    response.status_code = 401
+    response.headers = {'Content-Type': 'application/json'}
+    response.json.return_value = {"error": "Unauthorized", "message": "Invalid API key"}
+    response.text = json.dumps({"error": "Unauthorized", "message": "Invalid API key"})
+    return response
+
+@pytest.fixture
+def mock_rate_limit_response():
+    """Mock rate limit error response"""
+    response = Mock()
+    response.status_code = 429
+    response.headers = {
+        'Content-Type': 'application/json',
+        'X-RateLimit-Limit': '100',
+        'X-RateLimit-Remaining': '0',
+        'X-RateLimit-Reset': '3600'
+    }
+    response.json.return_value = {"error": "Rate limit exceeded", "message": "Too many requests"}
+    response.text = json.dumps({"error": "Rate limit exceeded", "message": "Too many requests"})
+    return response
+
+@pytest.fixture(params=[
+    'grants_gov', 'federal_register', 'govinfo',
+    'sam_gov_opportunities', 'foundation_directory', 'candid'
+])
+def api_source(request):
+    """Parametrized fixture for testing different API sources"""
+    return request.param
+
+@pytest.fixture(params=[
+    ('missing_credentials', None),
+    ('invalid_credentials', 'invalid-key-123'),
+    ('valid_credentials', 'valid-test-key-456')
+])
+def credential_scenario(request):
+    """Parametrized fixture for testing different credential scenarios"""
+    scenario_type, credential_value = request.param
+    return {
+        'type': scenario_type,
+        'value': credential_value,
+        'description': f"Testing {scenario_type.replace('_', ' ')}"
     }

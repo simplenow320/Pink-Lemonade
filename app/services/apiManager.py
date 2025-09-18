@@ -16,8 +16,205 @@ from flask import current_app
 from app.config.apiConfig import APIConfig, API_SOURCES
 from app.services.mode import is_live
 import base64
+from enum import Enum
 
 logger = logging.getLogger(__name__)
+
+class CircuitBreakerState(Enum):
+    """Circuit breaker states"""
+    CLOSED = "closed"      # Normal operation
+    OPEN = "open"          # Failed - blocking calls
+    HALF_OPEN = "half_open" # Testing if service recovered
+
+class CircuitBreaker:
+    """
+    Robust Circuit Breaker implementation for API source resilience
+    
+    Features:
+    - Configurable failure threshold and cooldown periods
+    - Automatic recovery testing
+    - Credential-safe error logging
+    - Graceful degradation
+    """
+    
+    def __init__(self, source_name: str, failure_threshold: int = 5, 
+                 cooldown_minutes: int = 15, half_open_max_calls: int = 3):
+        """
+        Initialize circuit breaker for a source
+        
+        Args:
+            source_name: Name of the API source
+            failure_threshold: Number of failures before opening circuit
+            cooldown_minutes: Minutes to wait before attempting recovery
+            half_open_max_calls: Max calls to allow in half-open state for testing
+        """
+        self.source_name = source_name
+        self.failure_threshold = failure_threshold
+        self.cooldown_period = timedelta(minutes=cooldown_minutes)
+        self.half_open_max_calls = half_open_max_calls
+        
+        # State tracking
+        self.state = CircuitBreakerState.CLOSED
+        self.failure_count = 0
+        self.last_failure_time = None
+        self.half_open_calls = 0
+        
+        # Statistics
+        self.total_calls = 0
+        self.total_failures = 0
+        self.state_changes = []
+        
+        logger.info(f"Circuit breaker initialized for {source_name} - "
+                   f"threshold: {failure_threshold}, cooldown: {cooldown_minutes}min")
+    
+    def can_execute(self) -> bool:
+        """Check if calls to the source are allowed"""
+        now = datetime.now()
+        
+        if self.state == CircuitBreakerState.CLOSED:
+            return True
+        elif self.state == CircuitBreakerState.OPEN:
+            # Check if cooldown period has passed
+            if (self.last_failure_time and 
+                now - self.last_failure_time >= self.cooldown_period):
+                self._transition_to_half_open()
+                return True
+            return False
+        elif self.state == CircuitBreakerState.HALF_OPEN:
+            # Allow limited calls for testing recovery
+            return self.half_open_calls < self.half_open_max_calls
+        
+        return False
+    
+    def record_success(self):
+        """Record a successful call"""
+        self.total_calls += 1
+        
+        if self.state == CircuitBreakerState.HALF_OPEN:
+            self.half_open_calls += 1
+            # If we've made enough successful test calls, close the circuit
+            if self.half_open_calls >= self.half_open_max_calls:
+                self._transition_to_closed()
+                logger.info(f"Circuit breaker for {self.source_name} recovered - "
+                           f"closing circuit after {self.half_open_calls} successful test calls")
+        elif self.state == CircuitBreakerState.CLOSED:
+            # Reset failure count on success
+            self.failure_count = 0
+    
+    def record_failure(self, error: str, is_credential_error: bool = False):
+        """Record a failed call"""
+        self.total_calls += 1
+        self.total_failures += 1
+        self.failure_count += 1
+        self.last_failure_time = datetime.now()
+        
+        # Log error safely without exposing credentials
+        safe_error = self._sanitize_error(error)
+        error_type = "credential" if is_credential_error else "general"
+        
+        logger.warning(f"Circuit breaker for {self.source_name} recorded {error_type} failure "
+                      f"({self.failure_count}/{self.failure_threshold}): {safe_error}")
+        
+        if self.state == CircuitBreakerState.HALF_OPEN:
+            # Any failure in half-open state opens circuit immediately
+            self._transition_to_open()
+            logger.warning(f"Circuit breaker for {self.source_name} failed recovery test - opening circuit")
+        elif self.state == CircuitBreakerState.CLOSED:
+            # Check if we've hit failure threshold
+            if self.failure_count >= self.failure_threshold:
+                self._transition_to_open()
+                logger.error(f"Circuit breaker for {self.source_name} opened due to "
+                           f"{self.failure_count} consecutive failures")
+    
+    def _transition_to_open(self):
+        """Transition to open state"""
+        old_state = self.state
+        self.state = CircuitBreakerState.OPEN
+        self.half_open_calls = 0
+        self._record_state_change(old_state, self.state)
+    
+    def _transition_to_half_open(self):
+        """Transition to half-open state"""
+        old_state = self.state
+        self.state = CircuitBreakerState.HALF_OPEN
+        self.half_open_calls = 0
+        self._record_state_change(old_state, self.state)
+        logger.info(f"Circuit breaker for {self.source_name} entering half-open state for recovery test")
+    
+    def _transition_to_closed(self):
+        """Transition to closed state"""
+        old_state = self.state
+        self.state = CircuitBreakerState.CLOSED
+        self.failure_count = 0
+        self.half_open_calls = 0
+        self._record_state_change(old_state, self.state)
+    
+    def _record_state_change(self, from_state: CircuitBreakerState, to_state: CircuitBreakerState):
+        """Record state change for monitoring"""
+        change = {
+            'timestamp': datetime.now().isoformat(),
+            'from_state': from_state.value,
+            'to_state': to_state.value,
+            'failure_count': self.failure_count
+        }
+        self.state_changes.append(change)
+        
+        # Keep only last 10 state changes
+        if len(self.state_changes) > 10:
+            self.state_changes = self.state_changes[-10:]
+    
+    def _sanitize_error(self, error: str) -> str:
+        """Remove potential credentials from error messages"""
+        import re
+        
+        sanitized = str(error)
+        
+        # Remove API keys (various formats)
+        sanitized = re.sub(r'[aA][pP][iI][-_]?[kK][eE][yY][-_:=\s]+[A-Za-z0-9+/]{16,}', 
+                          'API_KEY=[REDACTED]', sanitized)
+        
+        # Remove bearer tokens
+        sanitized = re.sub(r'[bB]earer\s+[A-Za-z0-9+/._-]{16,}', 
+                          'Bearer [REDACTED]', sanitized)
+        
+        # Remove basic auth
+        sanitized = re.sub(r'[bB]asic\s+[A-Za-z0-9+/=]{16,}', 
+                          'Basic [REDACTED]', sanitized)
+        
+        # Remove URLs with embedded credentials
+        sanitized = re.sub(r'https?://[^:]+:[^@]+@', 
+                          'https://[USER]:[PASS]@', sanitized)
+        
+        # Remove access tokens
+        sanitized = re.sub(r'access[-_]?token[-_:=\s]+[A-Za-z0-9+/._-]{16,}', 
+                          'access_token=[REDACTED]', sanitized)
+        
+        return sanitized
+    
+    def get_status(self) -> Dict[str, Any]:
+        """Get current circuit breaker status"""
+        return {
+            'source': self.source_name,
+            'state': self.state.value,
+            'failure_count': self.failure_count,
+            'failure_threshold': self.failure_threshold,
+            'total_calls': self.total_calls,
+            'total_failures': self.total_failures,
+            'success_rate': (self.total_calls - self.total_failures) / max(self.total_calls, 1) * 100,
+            'last_failure_time': self.last_failure_time.isoformat() if self.last_failure_time else None,
+            'cooldown_period_minutes': self.cooldown_period.total_seconds() / 60,
+            'is_available': self.can_execute(),
+            'state_changes': self.state_changes[-5:] if self.state_changes else []  # Last 5 changes
+        }
+    
+    def reset(self):
+        """Manually reset circuit breaker to closed state"""
+        old_state = self.state
+        self.state = CircuitBreakerState.CLOSED
+        self.failure_count = 0
+        self.half_open_calls = 0
+        self._record_state_change(old_state, self.state)
+        logger.info(f"Circuit breaker for {self.source_name} manually reset to closed state")
 
 class RateLimiter:
     """Simple rate limiter for API calls"""
@@ -75,8 +272,10 @@ class APIManager:
         self.config = APIConfig()
         self.rate_limiter = RateLimiter()
         self.cache = CacheManager()
+        self.circuit_breakers = {}  # Circuit breakers for each source
         self.sources = self._initialize_sources()
-        logger.info(f"Initialized APIManager with {len(self.sources)} enabled sources")
+        self._initialize_circuit_breakers()
+        logger.info(f"Initialized APIManager with {len(self.sources)} enabled sources and circuit breakers")
     
     def _initialize_sources(self) -> Dict:
         """Initialize all API sources from enhanced config"""
@@ -88,9 +287,32 @@ class APIManager:
             logger.info(f"Initialized source: {source_id} ({auth_status})")
         return sources
     
+    def _initialize_circuit_breakers(self):
+        """Initialize circuit breakers for all sources"""
+        for source_id in self.sources:
+            # Configure circuit breaker parameters based on source type
+            source_config = self.sources[source_id]
+            
+            # Use more strict settings for credential-required sources
+            if source_config.get('credential_required', False):
+                failure_threshold = 3  # Fail faster for auth issues
+                cooldown_minutes = 30  # Longer cooldown for credential issues
+            else:
+                failure_threshold = 5  # More tolerant for public APIs
+                cooldown_minutes = 15  # Shorter cooldown for general issues
+            
+            self.circuit_breakers[source_id] = CircuitBreaker(
+                source_name=source_id,
+                failure_threshold=failure_threshold,
+                cooldown_minutes=cooldown_minutes,
+                half_open_max_calls=2  # Conservative recovery testing
+            )
+            
+        logger.info(f"Initialized circuit breakers for {len(self.circuit_breakers)} sources")
+    
     def get_grants_from_source(self, source_name: str, params: Optional[Dict] = None) -> List[Dict]:
         """
-        Fetch grants from a specific source
+        Fetch grants from a specific source with circuit breaker protection
         Returns list of standardized grant objects
         """
         params = params or {}
@@ -98,6 +320,12 @@ class APIManager:
         # Check if source is enabled
         if source_name not in self.sources:
             logger.warning(f"Source {source_name} not found or disabled")
+            return []
+        
+        # Check circuit breaker - don't proceed if circuit is open
+        circuit_breaker = self.circuit_breakers.get(source_name)
+        if circuit_breaker and not circuit_breaker.can_execute():
+            logger.info(f"Circuit breaker for {source_name} is {circuit_breaker.state.value} - skipping call")
             return []
         
         # Check cache first
@@ -116,31 +344,42 @@ class APIManager:
             logger.warning(f"Rate limit exceeded for {source_name}")
             return []  # Return empty when rate limited
         
-        # Route to appropriate fetcher with enhanced error handling
+        # Route to appropriate fetcher with enhanced circuit breaker error handling
         try:
             grants = self._dispatch_to_fetcher(source_name, params)
+            
+            # Record success in circuit breaker
+            if circuit_breaker:
+                circuit_breaker.record_success()
+            
             if not grants:
                 logger.info(f"No data returned from {source_name}")
-            
-            # Cache successful response
-            if grants:
+            else:
+                # Cache successful response
                 self.cache.set(source_name, params, grants)
             
             return grants
             
         except Exception as e:
-            # Check if this is a credential-related error
-            if "401" in str(e) or "403" in str(e) or "Unauthorized" in str(e):
-                logger.warning(f"Authentication failed for {source_name}: {e}")
-                self._disable_source_temporarily(source_name, "Authentication failed")
-            elif "429" in str(e) or "rate limit" in str(e).lower():
-                logger.warning(f"Rate limit exceeded for {source_name}: {e}")
+            # Record failure in circuit breaker with error classification
+            is_credential_error = self._is_credential_error(e)
+            is_rate_limit_error = self._is_rate_limit_error(e)
+            
+            if circuit_breaker:
+                circuit_breaker.record_failure(str(e), is_credential_error)
+            
+            # Log errors based on type and mode
+            if is_credential_error:
+                logger.warning(f"Authentication failed for {source_name} - circuit breaker updated")
+            elif is_rate_limit_error:
+                logger.warning(f"Rate limit exceeded for {source_name}")
             else:
                 if is_live():
-                    logger.error(f"LIVE MODE: Error fetching from {source_name}: {e}")
+                    logger.error(f"LIVE MODE: Error fetching from {source_name} - circuit breaker updated")
                     logger.error(f"GUIDANCE: {source_name} API is unavailable. Check credentials and API status.")
                 else:
-                    logger.warning(f"DEMO MODE: Error simulated for {source_name}: {e}")
+                    logger.warning(f"DEMO MODE: Error simulated for {source_name}")
+                    
             return []  # Return empty on error, never fake data
     
     def get_enabled_sources(self) -> Dict[str, Dict]:
@@ -256,11 +495,91 @@ class APIManager:
             logger.warning(f"Unknown source: {source_name}")
             return []  # No data for unknown sources
     
-    def _disable_source_temporarily(self, source_name: str, reason: str):
-        """Temporarily disable a source due to errors"""
-        if source_name in self.sources:
-            logger.warning(f"Temporarily disabling {source_name}: {reason}")
-            # Don't actually disable in config, just skip for this session
+    def _is_credential_error(self, error: Exception) -> bool:
+        """Check if error is related to credentials/authentication"""
+        error_str = str(error).lower()
+        error_indicators = [
+            "401", "403", "unauthorized", "forbidden", "invalid_grant",
+            "access_denied", "invalid_token", "authentication failed",
+            "invalid_client", "invalid credentials", "api key"
+        ]
+        return any(indicator in error_str for indicator in error_indicators)
+    
+    def _is_rate_limit_error(self, error: Exception) -> bool:
+        """Check if error is related to rate limiting"""
+        error_str = str(error).lower()
+        rate_limit_indicators = [
+            "429", "rate limit", "too many requests", "quota exceeded",
+            "throttled", "rate exceeded"
+        ]
+        return any(indicator in error_str for indicator in rate_limit_indicators)
+    
+    def get_circuit_breaker_status(self, source_name: Optional[str] = None) -> Dict[str, Any]:
+        """Get circuit breaker status for one or all sources"""
+        if source_name:
+            circuit_breaker = self.circuit_breakers.get(source_name)
+            if circuit_breaker:
+                return circuit_breaker.get_status()
+            return {'error': f'No circuit breaker found for source: {source_name}'}
+        
+        # Return status for all sources
+        return {
+            source_name: breaker.get_status() 
+            for source_name, breaker in self.circuit_breakers.items()
+        }
+    
+    def reset_circuit_breaker(self, source_name: str) -> bool:
+        """Manually reset a circuit breaker"""
+        circuit_breaker = self.circuit_breakers.get(source_name)
+        if circuit_breaker:
+            circuit_breaker.reset()
+            logger.info(f"Circuit breaker for {source_name} manually reset")
+            return True
+        logger.warning(f"No circuit breaker found for source: {source_name}")
+        return False
+    
+    def get_circuit_breaker_summary(self) -> Dict[str, Any]:
+        """Get summary of all circuit breaker states"""
+        summary = {
+            'total_sources': len(self.circuit_breakers),
+            'open_circuits': 0,
+            'half_open_circuits': 0,
+            'closed_circuits': 0,
+            'sources_by_state': {
+                'open': [],
+                'half_open': [],
+                'closed': []
+            },
+            'total_failures': 0,
+            'total_calls': 0
+        }
+        
+        for source_name, breaker in self.circuit_breakers.items():
+            status = breaker.get_status()
+            state = status['state']
+            
+            if state == 'open':
+                summary['open_circuits'] += 1
+                summary['sources_by_state']['open'].append(source_name)
+            elif state == 'half_open':
+                summary['half_open_circuits'] += 1
+                summary['sources_by_state']['half_open'].append(source_name)
+            else:
+                summary['closed_circuits'] += 1
+                summary['sources_by_state']['closed'].append(source_name)
+            
+            summary['total_failures'] += status['total_failures']
+            summary['total_calls'] += status['total_calls']
+        
+        if summary['total_calls'] > 0:
+            summary['overall_success_rate'] = (
+                (summary['total_calls'] - summary['total_failures']) / 
+                summary['total_calls'] * 100
+            )
+        else:
+            summary['overall_success_rate'] = 100.0
+        
+        return summary
     
     def _prepare_authenticated_request(self, source_name: str, url: str, method: str = 'GET', 
                                      data: Optional[Dict] = None, params: Optional[Dict] = None) -> Dict:
