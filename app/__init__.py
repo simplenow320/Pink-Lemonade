@@ -478,6 +478,10 @@ def create_app():
     from app.api.test_candid import test_candid_bp
     flask_app.register_blueprint(test_candid_bp)
     
+    # Register Credential Status Management endpoints
+    from app.api.credential_status import credential_status_bp
+    flask_app.register_blueprint(credential_status_bp)
+    
     # Initialize monitoring
     from app.services.monitoring_service import init_monitoring
     init_monitoring(flask_app)

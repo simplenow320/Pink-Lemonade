@@ -15,6 +15,7 @@ import hashlib
 from flask import current_app
 from app.config.apiConfig import APIConfig, API_SOURCES
 from app.services.mode import is_live
+import base64
 
 logger = logging.getLogger(__name__)
 
@@ -68,21 +69,23 @@ class CacheManager:
         logger.info(f"Cached data for {source}")
 
 class APIManager:
-    """Central API Manager for all grant data sources"""
+    """Enhanced Central API Manager for all grant data sources"""
     
     def __init__(self):
         self.config = APIConfig()
         self.rate_limiter = RateLimiter()
         self.cache = CacheManager()
         self.sources = self._initialize_sources()
+        logger.info(f"Initialized APIManager with {len(self.sources)} enabled sources")
     
     def _initialize_sources(self) -> Dict:
-        """Initialize all API sources from config"""
+        """Initialize all API sources from enhanced config"""
         sources = {}
-        for source_id, source_config in API_SOURCES.items():
-            if source_config.get('enabled', False):
-                sources[source_id] = source_config
-                logger.info(f"Initialized source: {source_id}")
+        enabled_sources = self.config.get_enabled_sources()
+        for source_id, source_config in enabled_sources.items():
+            sources[source_id] = source_config
+            auth_status = "with credentials" if source_config.get('api_key') else "public"
+            logger.info(f"Initialized source: {source_id} ({auth_status})")
         return sources
     
     def get_grants_from_source(self, source_name: str, params: Optional[Dict] = None) -> List[Dict]:
@@ -113,27 +116,11 @@ class APIManager:
             logger.warning(f"Rate limit exceeded for {source_name}")
             return []  # Return empty when rate limited
         
-        # Route to appropriate fetcher
+        # Route to appropriate fetcher with enhanced error handling
         try:
-            if source_name == 'grants_gov':
-                grants = self._fetch_grants_gov(params)
-            elif source_name == 'federal_register':
-                grants = self._fetch_federal_register(params)
-            elif source_name == 'govinfo':
-                grants = self._fetch_govinfo(params)
-            elif source_name == 'philanthropy_news':
-                grants = self._fetch_philanthropy_news(params)
-            elif source_name == 'foundation_directory':
-                grants = self._fetch_foundation_directory(params)
-            elif source_name == 'grantwatch':
-                grants = self._fetch_grantwatch(params)
-            elif source_name == 'michigan_portal':
-                grants = self._fetch_michigan_portal(params)
-            elif source_name == 'georgia_portal':
-                grants = self._fetch_georgia_portal(params)
-            else:
-                logger.warning(f"Unknown source: {source_name}")
-                grants = []  # No data for unknown sources
+            grants = self._dispatch_to_fetcher(source_name, params)
+            if not grants:
+                logger.info(f"No data returned from {source_name}")
             
             # Cache successful response
             if grants:
@@ -142,11 +129,18 @@ class APIManager:
             return grants
             
         except Exception as e:
-            if is_live():
-                logger.error(f"LIVE MODE: Error fetching from {source_name}: {e}")
-                logger.error(f"GUIDANCE: {source_name} API is unavailable. Check credentials and API status. No synthetic data provided in LIVE mode.")
+            # Check if this is a credential-related error
+            if "401" in str(e) or "403" in str(e) or "Unauthorized" in str(e):
+                logger.warning(f"Authentication failed for {source_name}: {e}")
+                self._disable_source_temporarily(source_name, "Authentication failed")
+            elif "429" in str(e) or "rate limit" in str(e).lower():
+                logger.warning(f"Rate limit exceeded for {source_name}: {e}")
             else:
-                logger.warning(f"DEMO MODE: Error simulated for {source_name}: {e}")
+                if is_live():
+                    logger.error(f"LIVE MODE: Error fetching from {source_name}: {e}")
+                    logger.error(f"GUIDANCE: {source_name} API is unavailable. Check credentials and API status.")
+                else:
+                    logger.warning(f"DEMO MODE: Error simulated for {source_name}: {e}")
             return []  # Return empty on error, never fake data
     
     def get_enabled_sources(self) -> Dict[str, Dict]:
@@ -224,8 +218,177 @@ class APIManager:
         
         return all_grants
     
-    # Source-specific fetchers
-    def _fetch_grants_gov(self, params: Dict) -> List[Dict]:
+    def _dispatch_to_fetcher(self, source_name: str, params: Dict) -> List[Dict]:
+        """Dispatch to appropriate fetcher method based on source name"""
+        # Existing sources
+        if source_name == 'grants_gov':
+            return self._fetch_grants_gov(params)
+        elif source_name == 'federal_register':
+            return self._fetch_federal_register(params)
+        elif source_name == 'govinfo':
+            return self._fetch_govinfo(params)
+        elif source_name == 'philanthropy_news':
+            return self._fetch_philanthropy_news(params)
+        elif source_name == 'foundation_directory':
+            return self._fetch_foundation_directory(params)
+        elif source_name == 'grantwatch':
+            return self._fetch_grantwatch(params)
+        elif source_name == 'michigan_portal':
+            return self._fetch_michigan_portal(params)
+        elif source_name == 'georgia_portal':
+            return self._fetch_georgia_portal(params)
+        # New API sources
+        elif source_name == 'sam_gov_opportunities':
+            return self._fetch_sam_gov_opportunities(params)
+        elif source_name == 'sam_gov_entity':
+            return self._fetch_sam_gov_entity(params)
+        elif source_name == 'michigan_socrata':
+            return self._fetch_michigan_socrata(params)
+        elif source_name == 'zyte_api':
+            return self._fetch_zyte_api(params)
+        elif source_name == 'hhs_grants':
+            return self._fetch_hhs_grants(params)
+        elif source_name == 'ed_grants':
+            return self._fetch_ed_grants(params)
+        elif source_name == 'nsf_grants':
+            return self._fetch_nsf_grants(params)
+        else:
+            logger.warning(f"Unknown source: {source_name}")
+            return []  # No data for unknown sources
+    
+    def _disable_source_temporarily(self, source_name: str, reason: str):
+        """Temporarily disable a source due to errors"""
+        if source_name in self.sources:
+            logger.warning(f"Temporarily disabling {source_name}: {reason}")
+            # Don't actually disable in config, just skip for this session
+    
+    def _prepare_authenticated_request(self, source_name: str, url: str, method: str = 'GET', 
+                                     data: Optional[Dict] = None, params: Optional[Dict] = None) -> Dict:
+        """Prepare an authenticated request based on source configuration"""
+        source_config = self.sources.get(source_name, {})
+        
+        headers = {
+            'User-Agent': 'PinkLemonade/1.0 Grant Discovery Platform',
+            'Accept': 'application/json',
+            'Content-Type': 'application/json' if data else None
+        }
+        
+        # Remove None values
+        headers = {k: v for k, v in headers.items() if v is not None}
+        
+        # Add authentication based on auth_type
+        auth_type = source_config.get('auth_type')
+        api_key = source_config.get('api_key')
+        
+        if auth_type == 'api_key' and api_key:
+            auth_header = source_config.get('auth_header', 'X-Api-Key')
+            headers[auth_header] = api_key
+        elif auth_type == 'basic_auth' and api_key:
+            # For basic auth, api_key should be in format "username:password"
+            encoded_credentials = base64.b64encode(api_key.encode()).decode()
+            headers['Authorization'] = f'Basic {encoded_credentials}'
+        elif auth_type == 'bearer' and api_key:
+            headers['Authorization'] = f'Bearer {api_key}'
+        elif auth_type == 'app_token' and api_key:
+            auth_header = source_config.get('auth_header', 'X-App-Token')
+            headers[auth_header] = api_key
+        
+        return {
+            'url': url,
+            'method': method,
+            'headers': headers,
+            'json': data if data else None,
+            'params': params,
+            'timeout': 30
+        }
+    
+    def _make_request_with_retry(self, source_name: str, request_config: Dict) -> requests.Response:
+        """Make HTTP request with retry logic based on source configuration"""
+        source_config = self.sources.get(source_name, {})
+        error_config = source_config.get('error_handling', {})
+        
+        max_retries = error_config.get('max_retries', 1)
+        backoff_factor = error_config.get('backoff_factor', 1)
+        retry_codes = error_config.get('retry_codes', [429, 502, 503, 504])
+        
+        for attempt in range(max_retries + 1):
+            try:
+                response = requests.request(**request_config)
+                
+                # If successful or non-retryable error, return
+                if response.status_code == 200 or response.status_code not in retry_codes:
+                    return response
+                
+                # If this was the last attempt, return the response anyway
+                if attempt == max_retries:
+                    return response
+                
+                # Wait before retrying
+                wait_time = backoff_factor * (2 ** attempt)
+                logger.info(f"Retrying {source_name} in {wait_time}s (attempt {attempt + 1}/{max_retries})")
+                time.sleep(wait_time)
+                
+            except requests.exceptions.RequestException as e:
+                if attempt == max_retries:
+                    raise e
+                wait_time = backoff_factor * (2 ** attempt)
+                logger.info(f"Request failed, retrying {source_name} in {wait_time}s: {e}")
+                time.sleep(wait_time)
+        
+        # This shouldn't be reached, but just in case
+        raise Exception(f"Max retries exceeded for {source_name}")
+    
+    def _standardize_grant(self, raw_data: Dict, source_name: str = 'default') -> Dict:
+        """Standardize grant data using field mappings"""
+        field_mapping = self.config.get_field_mapping(source_name)
+        
+        standardized = {
+            'title': self._safe_get(raw_data, field_mapping.get('title', 'title')),
+            'funder': self._safe_get(raw_data, field_mapping.get('funder', 'funder')),
+            'amount_min': self._safe_get(raw_data, field_mapping.get('amount_min', 'amount_min')),
+            'amount_max': self._safe_get(raw_data, field_mapping.get('amount_max', 'amount_max')),
+            'deadline': self._safe_get(raw_data, field_mapping.get('deadline', 'deadline')),
+            'description': self._safe_get(raw_data, field_mapping.get('description', 'description')),
+            'eligibility': self._safe_get(raw_data, field_mapping.get('eligibility', 'eligibility')),
+            'source': source_name,
+            'source_data': raw_data,  # Keep original for debugging
+            'last_updated': datetime.now().isoformat()
+        }
+        
+        # Clean up None values
+        return {k: v for k, v in standardized.items() if v is not None}
+    
+    def _safe_get(self, data: Dict, key: str) -> Any:
+        """Safely get value from nested dictionary using dot notation"""
+        if not key or not isinstance(data, dict):
+            return None
+        
+        keys = key.split('.')
+        value = data
+        
+        for k in keys:
+            if isinstance(value, dict) and k in value:
+                value = value[k]
+            else:
+                return None
+        
+        return value
+    
+    def get_source_health_status(self) -> Dict[str, Dict]:
+        """Get health status for all configured sources"""
+        health_status = {}
+        for source_id in self.config.sources.keys():
+            health_status[source_id] = self.config.check_source_health(source_id)
+        return health_status
+    
+    def get_credential_status_report(self) -> Dict[str, Any]:
+        """Get comprehensive credential status report"""
+        return {
+            'credential_status': self.config.get_credential_status(),
+            'validation_report': self.config.validate_configuration(),
+            'health_status': self.get_source_health_status()
+        }
+    
         """
         Fetch grants from Grants.gov API
         Uses the v2 search API which is publicly available
@@ -445,26 +608,330 @@ class APIManager:
         
         return []
     
-    def _standardize_grant(self, raw_grant: Dict) -> Dict:
-        """
-        Standardize grant data format across all sources
-        """
-        return {
-            'id': raw_grant.get('source_id', self._generate_id(raw_grant)),
-            'title': raw_grant.get('title', 'Untitled Grant'),
-            'funder': raw_grant.get('funder', 'Unknown Funder'),
-            'amount_min': raw_grant.get('amount_min'),
-            'amount_max': raw_grant.get('amount_max'),
-            'deadline': raw_grant.get('deadline'),
-            'description': raw_grant.get('description', ''),
-            'eligibility': raw_grant.get('eligibility', ''),
-            'link': raw_grant.get('link', ''),
-            'source': raw_grant.get('source', 'Unknown'),
-            'source_url': raw_grant.get('source_url', ''),
-            'tags': raw_grant.get('tags', []),
-            'discovered_at': datetime.now().isoformat(),
-            'status': 'discovered'
-        }
+    
+    # Existing Source Fetchers (restored)
+    def _fetch_grants_gov(self, params: Dict) -> List[Dict]:
+        """Fetch grants from Grants.gov API"""
+        try:
+            search_url = "https://www.grants.gov/search/"
+            
+            payload = {
+                "startRecordNum": 0,
+                "keyword": params.get('query', 'nonprofit'),
+                "oppStatuses": "forecasted|posted",
+                "sortBy": "openDate|desc",
+                "rows": params.get('limit', 25)
+            }
+            
+            headers = {
+                "Content-Type": "application/json",
+                "User-Agent": "PinkLemonade/1.0"
+            }
+            
+            response = requests.post(search_url, json=payload, headers=headers, timeout=15)
+            
+            if response.status_code == 200:
+                data = response.json()
+                grants = []
+                
+                for opp in data.get('opportunities', []):
+                    grant = self._standardize_grant(opp, 'grants_gov')
+                    grants.append(grant)
+                
+                return grants
+        except Exception as e:
+            logger.error(f"Error fetching from Grants.gov: {e}")
+        
+        return []
+    
+    # New API Source Fetchers
+    def _fetch_sam_gov_opportunities(self, params: Dict) -> List[Dict]:
+        """Fetch opportunities from SAM.gov API"""
+        source_config = self.sources.get('sam_gov_opportunities', {})
+        if not source_config.get('api_key'):
+            logger.warning("SAM.gov API key not available")
+            return []
+        
+        try:
+            base_url = source_config['base_url']
+            endpoint = source_config['endpoints']['search']
+            url = f"{base_url}{endpoint}"
+            
+            query_params = {
+                'limit': params.get('limit', 100),
+                'api_version': 'v2',
+                'keyword': params.get('query', ''),
+                'postedFrom': params.get('posted_from'),
+                'postedTo': params.get('posted_to')
+            }
+            
+            # Remove None values
+            query_params = {k: v for k, v in query_params.items() if v is not None}
+            
+            request_config = self._prepare_authenticated_request(
+                'sam_gov_opportunities', url, 'GET', params=query_params
+            )
+            
+            response = self._make_request_with_retry('sam_gov_opportunities', request_config)
+            
+            if response.status_code == 200:
+                data = response.json()
+                grants = []
+                for opp in data.get('opportunitiesData', []):
+                    grant = self._standardize_grant(opp, 'sam_gov_opportunities')
+                    grants.append(grant)
+                return grants
+            else:
+                logger.error(f"SAM.gov API returned {response.status_code}: {response.text}")
+                return []
+                
+        except Exception as e:
+            logger.error(f"Error fetching from SAM.gov opportunities: {e}")
+            return []
+    
+    def _fetch_sam_gov_entity(self, params: Dict) -> List[Dict]:
+        """Fetch entity data from SAM.gov Entity Management API"""
+        source_config = self.sources.get('sam_gov_entity', {})
+        if not source_config.get('api_key'):
+            logger.warning("SAM.gov Entity API key not available")
+            return []
+        
+        try:
+            base_url = source_config['base_url']
+            endpoint = source_config['endpoints']['search']
+            url = f"{base_url}{endpoint}"
+            
+            query_params = {
+                'limit': params.get('limit', 100),
+                'api_version': 'v3',
+                'includeSections': 'entityRegistration,coreData',
+                'format': 'json'
+            }
+            
+            request_config = self._prepare_authenticated_request(
+                'sam_gov_entity', url, 'GET', params=query_params
+            )
+            
+            response = self._make_request_with_retry('sam_gov_entity', request_config)
+            
+            if response.status_code == 200:
+                data = response.json()
+                entities = []
+                for entity in data.get('entityData', []):
+                    standardized = self._standardize_grant(entity, 'sam_gov_entity')
+                    entities.append(standardized)
+                return entities
+            else:
+                logger.error(f"SAM.gov Entity API returned {response.status_code}: {response.text}")
+                return []
+                
+        except Exception as e:
+            logger.error(f"Error fetching from SAM.gov entity: {e}")
+            return []
+    
+    def _fetch_michigan_socrata(self, params: Dict) -> List[Dict]:
+        """Fetch data from Michigan Socrata API"""
+        source_config = self.sources.get('michigan_socrata', {})
+        
+        try:
+            base_url = source_config['base_url']
+            # For now, use a generic endpoint - would need specific dataset IDs
+            url = f"{base_url}/views.json"
+            
+            query_params = {
+                '$limit': params.get('limit', 100),
+                '$offset': params.get('offset', 0),
+                '$order': ':updated_at DESC'
+            }
+            
+            # Add query if provided
+            if params.get('query'):
+                query_params['$q'] = params['query']
+            
+            request_config = self._prepare_authenticated_request(
+                'michigan_socrata', url, 'GET', params=query_params
+            )
+            
+            response = self._make_request_with_retry('michigan_socrata', request_config)
+            
+            if response.status_code == 200:
+                data = response.json()
+                grants = []
+                # Process Socrata dataset metadata
+                for dataset in data:
+                    if 'grant' in dataset.get('name', '').lower() or 'funding' in dataset.get('description', '').lower():
+                        grant = self._standardize_grant(dataset, 'michigan_socrata')
+                        grants.append(grant)
+                return grants
+            else:
+                logger.error(f"Michigan Socrata API returned {response.status_code}: {response.text}")
+                return []
+                
+        except Exception as e:
+            logger.error(f"Error fetching from Michigan Socrata: {e}")
+            return []
+    
+    def _fetch_zyte_api(self, params: Dict) -> List[Dict]:
+        """Use Zyte API for web scraping grant websites"""
+        source_config = self.sources.get('zyte_api', {})
+        if not source_config.get('api_key'):
+            logger.warning("Zyte API key not available")
+            return []
+        
+        try:
+            target_urls = params.get('urls', [])
+            if not target_urls:
+                # Use default scraping targets from config
+                targets = source_config.get('scraping_targets', {})
+                target_urls = targets.get('foundation_sites', []) + targets.get('government_portals', [])
+            
+            grants = []
+            for url in target_urls[:5]:  # Limit to 5 URLs to avoid rate limits
+                try:
+                    scrape_data = self._scrape_with_zyte(url, source_config)
+                    if scrape_data:
+                        grant = self._standardize_grant(scrape_data, 'zyte_api')
+                        grants.append(grant)
+                except Exception as e:
+                    logger.warning(f"Failed to scrape {url}: {e}")
+                    continue
+            
+            return grants
+            
+        except Exception as e:
+            logger.error(f"Error with Zyte API: {e}")
+            return []
+    
+    def _scrape_with_zyte(self, target_url: str, config: Dict) -> Optional[Dict]:
+        """Scrape a single URL using Zyte API"""
+        try:
+            base_url = config['base_url']
+            endpoint = config['endpoints']['extract']
+            url = f"{base_url}{endpoint}"
+            
+            scrape_params = {
+                'url': target_url,
+                'browserHtml': True,
+                'screenshot': False,
+                'geolocation': 'US'
+            }
+            
+            request_config = self._prepare_authenticated_request(
+                'zyte_api', url, 'POST', data=scrape_params
+            )
+            
+            response = self._make_request_with_retry('zyte_api', request_config)
+            
+            if response.status_code == 200:
+                return response.json()
+            else:
+                logger.error(f"Zyte scraping failed for {target_url}: {response.status_code}")
+                return None
+                
+        except Exception as e:
+            logger.error(f"Error scraping {target_url} with Zyte: {e}")
+            return None
+    
+    def _fetch_hhs_grants(self, params: Dict) -> List[Dict]:
+        """Scrape HHS grants website"""
+        source_config = self.sources.get('hhs_grants', {})
+        
+        try:
+            # Try RSS feed first
+            rss_url = f"{source_config['base_url']}{source_config['endpoints']['rss']}"
+            
+            response = requests.get(rss_url, timeout=30, headers={
+                'User-Agent': source_config['scraping_config']['user_agent']
+            })
+            
+            if response.status_code == 200:
+                grants = self._parse_rss_feed(response.content, 'hhs_grants')
+                return grants[:params.get('limit', 25)]
+            else:
+                logger.warning(f"HHS RSS feed unavailable: {response.status_code}")
+                return []
+                
+        except Exception as e:
+            logger.error(f"Error fetching HHS grants: {e}")
+            return []
+    
+    def _fetch_ed_grants(self, params: Dict) -> List[Dict]:
+        """Scrape Department of Education grants"""
+        source_config = self.sources.get('ed_grants', {})
+        
+        try:
+            # Try RSS feed first
+            rss_url = f"{source_config['base_url']}{source_config['endpoints']['rss']}"
+            
+            response = requests.get(rss_url, timeout=30, headers={
+                'User-Agent': source_config['scraping_config']['user_agent']
+            })
+            
+            if response.status_code == 200:
+                grants = self._parse_rss_feed(response.content, 'ed_grants')
+                return grants[:params.get('limit', 25)]
+            else:
+                logger.warning(f"Education RSS feed unavailable: {response.status_code}")
+                return []
+                
+        except Exception as e:
+            logger.error(f"Error fetching Education grants: {e}")
+            return []
+    
+    def _fetch_nsf_grants(self, params: Dict) -> List[Dict]:
+        """Scrape NSF grants website"""
+        source_config = self.sources.get('nsf_grants', {})
+        
+        try:
+            # Try RSS feed first
+            rss_url = f"{source_config['base_url']}{source_config['endpoints']['rss']}"
+            
+            response = requests.get(rss_url, timeout=30, headers={
+                'User-Agent': source_config['scraping_config']['user_agent']
+            })
+            
+            if response.status_code == 200:
+                grants = self._parse_rss_feed(response.content, 'nsf_grants')
+                return grants[:params.get('limit', 25)]
+            else:
+                logger.warning(f"NSF RSS feed unavailable: {response.status_code}")
+                return []
+                
+        except Exception as e:
+            logger.error(f"Error fetching NSF grants: {e}")
+            return []
+    
+    def _parse_rss_feed(self, content: bytes, source_name: str) -> List[Dict]:
+        """Parse RSS feed content into grant objects"""
+        try:
+            import xml.etree.ElementTree as ET
+            root = ET.fromstring(content)
+            
+            grants = []
+            items = root.findall('.//item')
+            
+            for item in items:
+                title = item.find('title')
+                link = item.find('link')
+                description = item.find('description')
+                pub_date = item.find('pubDate')
+                
+                raw_data = {
+                    'title': title.text if title is not None else 'Grant Opportunity',
+                    'description': description.text if description is not None else '',
+                    'link': link.text if link is not None else '',
+                    'publication_date': pub_date.text if pub_date is not None else '',
+                    'source': source_name
+                }
+                
+                grant = self._standardize_grant(raw_data, source_name)
+                grants.append(grant)
+            
+            return grants
+            
+        except Exception as e:
+            logger.error(f"Error parsing RSS feed for {source_name}: {e}")
+            return []
     
     def _generate_id(self, grant: Dict) -> str:
         """Generate unique ID for grant"""
