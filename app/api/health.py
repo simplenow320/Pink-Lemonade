@@ -1,10 +1,12 @@
 """Health check API endpoints"""
 from flask import Blueprint, jsonify
 from app import db
+from sqlalchemy import text
 import os
 import requests
 from datetime import datetime, timedelta
 import logging
+from app.services.apiManager import api_manager
 
 logger = logging.getLogger(__name__)
 
@@ -15,7 +17,7 @@ def health_check():
     """Simple health check endpoint"""
     try:
         # Check database connection
-        db.session.execute('SELECT 1')
+        db.session.execute(text('SELECT 1'))
         db_status = 'healthy'
     except:
         db_status = 'unhealthy'
@@ -246,3 +248,162 @@ def ping_integrations():
         logger.debug(f"Grants.gov ping failed: {type(e).__name__}")
     
     return jsonify(results)
+
+
+@bp.route('/health/api-sources', methods=['GET'])
+def api_sources_diagnostics():
+    """Comprehensive API sources health and diagnostics endpoint"""
+    try:
+        # Get comprehensive status report from APIManager
+        status_report = api_manager.get_credential_status_report()
+        
+        # Add enhanced diagnostic information
+        diagnostics = {
+            'timestamp': datetime.now().isoformat(),
+            'summary': {
+                'total_sources': len(api_manager.sources),
+                'enabled_sources': len([s for s in api_manager.sources.values() if s.get('enabled')]),
+                'sources_with_credentials': len([s for s in api_manager.sources.values() if s.get('api_key')]),
+                'healthy_sources': 0
+            },
+            'sources': {},
+            'credential_requirements': {},
+            'configuration_validation': status_report.get('validation_report', {}),
+            'recommendations': []
+        }
+        
+        # Analyze each source
+        for source_id, config in api_manager.sources.items():
+            source_health = api_manager.config.check_source_health(source_id)
+            if source_health['healthy']:
+                diagnostics['summary']['healthy_sources'] += 1
+            
+            # Detailed source information
+            diagnostics['sources'][source_id] = {
+                'name': config.get('name', source_id),
+                'enabled': config.get('enabled', False),
+                'healthy': source_health['healthy'],
+                'description': config.get('description', 'No description available'),
+                'base_url': config.get('base_url'),
+                'supports': config.get('supports', []),
+                'auth_type': config.get('auth_type'),
+                'auth_header': config.get('auth_header'),
+                'credential_required': config.get('credential_required', False),
+                'has_credentials': bool(config.get('api_key')),
+                'rate_limit': config.get('rate_limit', {}),
+                'cache_ttl': config.get('cache_ttl'),
+                'errors': source_health.get('errors', []),
+                'warnings': source_health.get('warnings', [])
+            }
+            
+            # Track why sources are enabled/disabled
+            enabled_reason = 'Unknown'
+            if not config.get('enabled', False):
+                if config.get('credential_required', False) and not config.get('api_key'):
+                    enabled_reason = 'Disabled: Missing required credentials'
+                else:
+                    enabled_reason = 'Disabled: Explicitly disabled in configuration'
+            else:
+                if config.get('credential_required', False):
+                    enabled_reason = 'Enabled: Has required credentials'
+                else:
+                    enabled_reason = 'Enabled: Public API (no credentials required)'
+            
+            diagnostics['sources'][source_id]['enabled_reason'] = enabled_reason
+        
+        # Credential requirements breakdown
+        for source_id, cred_status in status_report.get('credential_status', {}).items():
+            diagnostics['credential_requirements'][source_id] = {
+                'primary_env_var': cred_status.get('primary_env_var'),
+                'fallback_env_vars': cred_status.get('fallback_env_vars', []),
+                'credential_required': cred_status.get('credential_required', False),
+                'has_credentials': cred_status.get('has_credentials', False),
+                'auth_type': cred_status.get('auth_type')
+            }
+        
+        # Generate recommendations
+        disabled_sources = [
+            source_id for source_id, info in diagnostics['sources'].items()
+            if not info['enabled'] and info['credential_required']
+        ]
+        
+        if disabled_sources:
+            diagnostics['recommendations'].append({
+                'type': 'missing_credentials',
+                'message': f'Consider adding credentials for: {", ".join(disabled_sources)}',
+                'sources': disabled_sources
+            })
+        
+        unhealthy_sources = [
+            source_id for source_id, info in diagnostics['sources'].items()
+            if info['enabled'] and not info['healthy']
+        ]
+        
+        if unhealthy_sources:
+            diagnostics['recommendations'].append({
+                'type': 'configuration_issues',
+                'message': f'Check configuration for: {", ".join(unhealthy_sources)}',
+                'sources': unhealthy_sources
+            })
+        
+        return jsonify(diagnostics), 200
+        
+    except Exception as e:
+        logger.error(f"Error generating API sources diagnostics: {e}")
+        return jsonify({
+            'error': 'Failed to generate diagnostics',
+            'message': str(e),
+            'timestamp': datetime.now().isoformat()
+        }), 500
+
+
+@bp.route('/health/api-sources/test/<source_id>', methods=['POST'])
+def test_api_source(source_id):
+    """Test a specific API source with a simple request"""
+    try:
+        if source_id not in api_manager.sources:
+            return jsonify({
+                'error': 'Source not found',
+                'source_id': source_id,
+                'available_sources': list(api_manager.sources.keys())
+            }), 404
+        
+        # Attempt to fetch a small amount of data from the source
+        test_params = {'limit': 1, 'query': 'test'}
+        start_time = datetime.now()
+        
+        try:
+            results = api_manager.get_grants_from_source(source_id, test_params)
+            end_time = datetime.now()
+            response_time = (end_time - start_time).total_seconds()
+            
+            return jsonify({
+                'source_id': source_id,
+                'test_successful': True,
+                'response_time_seconds': response_time,
+                'results_count': len(results) if results else 0,
+                'timestamp': end_time.isoformat(),
+                'sample_result': results[0] if results else None
+            }), 200
+            
+        except Exception as fetch_error:
+            end_time = datetime.now()
+            response_time = (end_time - start_time).total_seconds()
+            
+            return jsonify({
+                'source_id': source_id,
+                'test_successful': False,
+                'error': str(fetch_error),
+                'error_type': type(fetch_error).__name__,
+                'response_time_seconds': response_time,
+                'timestamp': end_time.isoformat()
+            }), 200  # Return 200 because the test endpoint itself worked
+            
+    except Exception as e:
+        logger.error(f"Error testing API source {source_id}: {e}")
+        return jsonify({
+            'error': 'Test failed',
+            'source_id': source_id,
+            'message': str(e),
+            'timestamp': datetime.now().isoformat()
+        }), 500

@@ -137,7 +137,7 @@ class CredentialSetupGuide:
     def _get_validation_info(self, credential_id: str) -> Dict[str, Any]:
         """Get validation information for a credential"""
         
-        config = self.credential_manager.credentials.get(credential_id, {})
+        config = self.credential_manager.credentials.get(credential_id)
         
         validation = {
             "format_requirements": [],
@@ -145,11 +145,15 @@ class CredentialSetupGuide:
             "common_errors": []
         }
         
-        if hasattr(config, 'required_prefix') and config.required_prefix:
-            validation["format_requirements"].append(f"Must start with '{config.required_prefix}'")
-        
-        if hasattr(config, 'min_length') and config.min_length:
-            validation["format_requirements"].append(f"Minimum length: {config.min_length} characters")
+        # Only access config attributes if config exists and is a CredentialConfig object
+        if config is not None:
+            # Check for required prefix in credential config
+            if hasattr(config, 'required_prefix') and config.required_prefix:
+                validation["format_requirements"].append(f"Must start with '{config.required_prefix}'")
+            
+            # Check for minimum length requirement in credential config
+            if hasattr(config, 'min_length') and config.min_length:
+                validation["format_requirements"].append(f"Minimum length: {config.min_length} characters")
         
         # Add service-specific validation info
         validation_map = {

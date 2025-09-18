@@ -183,8 +183,12 @@ API_SOURCES = {
         'name': 'GovInfo API',
         'enabled': True,
         'base_url': 'https://api.govinfo.gov',
-        'api_key': None,  # Public API
-        'credential_required': False,
+        'api_key_env': 'GOVINFO_API_KEY',
+        'api_key': None,  # Public API, but supports optional API key
+        'credential_required': False,  # Optional API key for enhanced access
+        'credential_fallbacks': ['GOVINFO_KEY'],
+        'auth_type': 'api_key',
+        'auth_header': 'X-API-Key',
         'rate_limit': {
             'calls': 1000,
             'period': 3600
@@ -223,7 +227,7 @@ API_SOURCES = {
         'description': 'Federal contract opportunities from SAM.gov',
         'endpoints': {
             'search': '/search',
-            'details': '/v1/api/opportunities/{id}'
+            'details': '/opportunities/{id}'
         },
         'params': {
             'limit': 100,
@@ -304,8 +308,9 @@ API_SOURCES = {
             '$query': None  # SoQL query
         },
         'datasets': {
-            'grants': 'michigan-grants-dataset-id',  # Placeholder - needs real dataset ID
-            'funding': 'michigan-funding-dataset-id'
+            'grants': os.environ.get('MICHIGAN_GRANTS_DATASET_ID', 'michigan-grants-dataset-id'),
+            'funding': os.environ.get('MICHIGAN_FUNDING_DATASET_ID', 'michigan-funding-dataset-id'),
+            'contracts': os.environ.get('MICHIGAN_CONTRACTS_DATASET_ID', 'michigan-contracts-dataset-id')
         },
         'error_handling': {
             'retry_codes': [429, 502, 503, 504],
