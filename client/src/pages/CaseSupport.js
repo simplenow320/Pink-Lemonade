@@ -1,30 +1,43 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
+import { useOrganization } from '../hooks/useOrganization';
 
 const CaseSupport = () => {
+  const { organization, loading: orgLoading, error: orgError } = useOrganization();
   const [loading, setLoading] = useState(false);
   const [generatedContent, setGeneratedContent] = useState('');
   const [editableContent, setEditableContent] = useState('');
   const [error, setError] = useState('');
-  const [financialNeed, setFinancialNeed] = useState('');
-  const [audienceType, setAudienceType] = useState('foundations and individual donors');
-  const [wordCount, setWordCount] = useState('600-900');
+  const [campaignGoal, setCampaignGoal] = useState('');
+  const [campaignPurpose, setCampaignPurpose] = useState('');
+  const [timeline, setTimeline] = useState('12 months');
+  const [targetDonors, setTargetDonors] = useState('foundations and individual donors');
+
+  // Auto-populate fields from organization data
+  useEffect(() => {
+    if (organization && !campaignPurpose) {
+      if (organization.mission) {
+        setCampaignPurpose(`Support our mission: ${organization.mission}`);
+      }
+    }
+  }, [organization, campaignPurpose]);
 
   const generateCaseSupport = async () => {
     setLoading(true);
     setError('');
     
     try {
-      const response = await fetch('/api/writing/case-support', {
+      const response = await fetch('/api/smart-tools/case/generate', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          financial_need: financialNeed || 'Funding to expand our programs and services',
-          audience_type: audienceType,
-          word_count_range: wordCount
+          campaign_goal: campaignGoal || 100000,
+          campaign_purpose: campaignPurpose || 'general support',
+          timeline: timeline,
+          target_donors: targetDonors
         }),
       });
 
@@ -34,8 +47,12 @@ const CaseSupport = () => {
         throw new Error(data.error || 'Failed to generate Case for Support');
       }
 
-      setGeneratedContent(data.content);
-      setEditableContent(data.content);
+      if (data.success) {
+        setGeneratedContent(data.content);
+        setEditableContent(data.content);
+      } else {
+        throw new Error(data.error || 'Failed to generate content');
+      }
     } catch (err) {
       setError(err.message);
     } finally {
@@ -78,6 +95,16 @@ const CaseSupport = () => {
             <p className="text-xl text-gray-600">
               Create compelling case documents that make the argument for why your organization deserves funding
             </p>
+            {organization && (
+              <div className="mt-4 p-3 bg-pink-50 border border-pink-200 rounded-md">
+                <p className="text-pink-800">
+                  <span className="font-medium">Creating case for:</span> {organization.name || 'Your Organization'}
+                  {organization.mission && (
+                    <span className="text-sm ml-2 text-pink-600">- {organization.mission}</span>
+                  )}
+                </p>
+              </div>
+            )}
           </motion.div>
         </div>
 
@@ -94,12 +121,25 @@ const CaseSupport = () => {
             <div className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Financial Need Statement
+                  Campaign Goal (Amount)
+                </label>
+                <input
+                  type="number"
+                  value={campaignGoal}
+                  onChange={(e) => setCampaignGoal(e.target.value)}
+                  placeholder="e.g., 100000, 250000, 500000"
+                  className="w-full p-3 border border-gray-300 rounded-md focus:ring-pink-500 focus:border-pink-500"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Campaign Purpose
                 </label>
                 <textarea
-                  value={financialNeed}
-                  onChange={(e) => setFinancialNeed(e.target.value)}
-                  placeholder="Describe your funding needs (e.g., 'To expand our after-school programs to serve 200 more students')"
+                  value={campaignPurpose}
+                  onChange={(e) => setCampaignPurpose(e.target.value)}
+                  placeholder="Describe what the funding will be used for (e.g., 'To expand our after-school programs to serve 200 more students')"
                   className="w-full p-3 border border-gray-300 rounded-md focus:ring-pink-500 focus:border-pink-500"
                   rows="3"
                 />
@@ -107,11 +147,28 @@ const CaseSupport = () => {
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Target Audience
+                  Timeline
                 </label>
                 <select
-                  value={audienceType}
-                  onChange={(e) => setAudienceType(e.target.value)}
+                  value={timeline}
+                  onChange={(e) => setTimeline(e.target.value)}
+                  className="w-full p-3 border border-gray-300 rounded-md focus:ring-pink-500 focus:border-pink-500"
+                >
+                  <option value="6 months">6 months</option>
+                  <option value="12 months">12 months</option>
+                  <option value="18 months">18 months</option>
+                  <option value="24 months">24 months</option>
+                  <option value="36 months">36 months</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Target Donors
+                </label>
+                <select
+                  value={targetDonors}
+                  onChange={(e) => setTargetDonors(e.target.value)}
                   className="w-full p-3 border border-gray-300 rounded-md focus:ring-pink-500 focus:border-pink-500"
                 >
                   <option value="foundations and individual donors">Foundations & Individual Donors</option>
@@ -119,22 +176,7 @@ const CaseSupport = () => {
                   <option value="government agencies">Government Agencies</option>
                   <option value="community foundations">Community Foundations</option>
                   <option value="faith-based funders">Faith-Based Funders</option>
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Word Count Range
-                </label>
-                <select
-                  value={wordCount}
-                  onChange={(e) => setWordCount(e.target.value)}
-                  className="w-full p-3 border border-gray-300 rounded-md focus:ring-pink-500 focus:border-pink-500"
-                >
-                  <option value="300-500">300-500 words (Brief)</option>
-                  <option value="600-900">600-900 words (Standard)</option>
-                  <option value="1000-1500">1000-1500 words (Detailed)</option>
-                  <option value="1500-2000">1500-2000 words (Comprehensive)</option>
+                  <option value="major donors">Major Donors</option>
                 </select>
               </div>
 

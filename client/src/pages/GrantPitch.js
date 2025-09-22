@@ -1,8 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
+import { useOrganization } from '../hooks/useOrganization';
 
 const GrantPitch = () => {
+  const { organization, loading: orgLoading, error: orgError } = useOrganization();
   const [loading, setLoading] = useState(false);
   const [generatedContent, setGeneratedContent] = useState('');
   const [editableContent, setEditableContent] = useState('');
@@ -11,24 +13,36 @@ const GrantPitch = () => {
   const [alignment, setAlignment] = useState('');
   const [fundingNeed, setFundingNeed] = useState('');
   const [fundingAmount, setFundingAmount] = useState('');
-  const [wordLimit, setWordLimit] = useState('250');
+  const [pitchType, setPitchType] = useState('elevator');
+
+  // Auto-populate fields from organization data
+  useEffect(() => {
+    if (organization && !alignment && !fundingNeed) {
+      if (organization.mission) {
+        setAlignment(`Our mission: ${organization.mission}`);
+      }
+      if (organization.focus_areas) {
+        setFundingNeed(`Support for our ${organization.focus_areas} programs`);
+      }
+    }
+  }, [organization, alignment, fundingNeed]);
 
   const generateGrantPitch = async () => {
     setLoading(true);
     setError('');
     
     try {
-      const response = await fetch('/api/writing/grant-pitch', {
+      const response = await fetch('/api/smart-tools/pitch/generate', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
+          pitch_type: pitchType,
           funder_name: funderName || 'Potential Funder',
           alignment: alignment || 'Mission alignment and shared values',
           funding_need: fundingNeed || 'General operating support',
-          funding_amount: fundingAmount || 'Not specified',
-          word_limit: wordLimit
+          funding_amount: fundingAmount || 'Not specified'
         }),
       });
 
@@ -38,8 +52,12 @@ const GrantPitch = () => {
         throw new Error(data.error || 'Failed to generate Grant Pitch');
       }
 
-      setGeneratedContent(data.content);
-      setEditableContent(data.content);
+      if (data.success) {
+        setGeneratedContent(data.content);
+        setEditableContent(data.content);
+      } else {
+        throw new Error(data.error || 'Failed to generate content');
+      }
     } catch (err) {
       setError(err.message);
     } finally {
@@ -82,6 +100,16 @@ const GrantPitch = () => {
             <p className="text-xl text-gray-600">
               AI-powered pitch generator for presentations, emails, and verbal delivery to funders
             </p>
+            {organization && (
+              <div className="mt-4 p-3 bg-green-50 border border-green-200 rounded-md">
+                <p className="text-green-800">
+                  <span className="font-medium">Creating pitches for:</span> {organization.name || 'Your Organization'}
+                  {organization.mission && (
+                    <span className="text-sm ml-2 text-green-600">- {organization.mission}</span>
+                  )}
+                </p>
+              </div>
+            )}
           </motion.div>
         </div>
 
@@ -150,17 +178,16 @@ const GrantPitch = () => {
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Word Limit per Format
+                  Pitch Type
                 </label>
                 <select
-                  value={wordLimit}
-                  onChange={(e) => setWordLimit(e.target.value)}
+                  value={pitchType}
+                  onChange={(e) => setPitchType(e.target.value)}
                   className="w-full p-3 border border-gray-300 rounded-md focus:ring-green-500 focus:border-green-500"
                 >
-                  <option value="150">150 words (Very Brief)</option>
-                  <option value="250">250 words (Standard)</option>
-                  <option value="350">350 words (Detailed)</option>
-                  <option value="500">500 words (Comprehensive)</option>
+                  <option value="elevator">Elevator Pitch (30-60 seconds)</option>
+                  <option value="executive">Executive Summary (2-3 minutes)</option>
+                  <option value="detailed">Detailed Presentation (5-10 minutes)</option>
                 </select>
               </div>
 
