@@ -17,19 +17,46 @@ smart_tools = SmartToolsService()
 # ============= GRANT PITCH ENDPOINTS =============
 
 @smart_tools_bp.route('/pitch/generate', methods=['POST'])
+@login_required
 def generate_pitch():
     """Generate a grant pitch (elevator, executive, or detailed)"""
     try:
+        # Get current authenticated user
+        user = get_current_user()
+        if not user:
+            return jsonify({
+                'success': False,
+                'error': 'Authentication required'
+            }), 401
+        
+        # Get organization for current user
+        org = None
+        if user.org_id:
+            org = Organization.query.filter_by(id=user.org_id).first()
+        else:
+            # Fallback: find org created by this user
+            org = Organization.query.filter_by(created_by_user_id=user.id).first()
+        
+        if not org:
+            return jsonify({
+                'success': False,
+                'error': 'No organization found for user'
+            }), 400
+        
+        org_id = org.id
+        
         data = request.get_json() or {}
-        org_id = data.get('org_id')
         grant_id = data.get('grant_id')
         pitch_type = data.get('pitch_type', 'elevator')
         
-        if not org_id:
-            return jsonify({
-                'success': False,
-                'error': 'org_id is required'
-            }), 400
+        # Validate grant ownership if grant_id is provided
+        if grant_id:
+            grant = Grant.query.filter_by(id=grant_id, org_id=org_id).first()
+            if not grant:
+                return jsonify({
+                    'success': False,
+                    'error': 'Grant not found or access denied'
+                }), 403
         
         if pitch_type not in ['elevator', 'executive', 'detailed']:
             return jsonify({
@@ -51,23 +78,41 @@ def generate_pitch():
 # ============= CASE FOR SUPPORT ENDPOINTS =============
 
 @smart_tools_bp.route('/case/generate', methods=['POST'])
+@login_required
 def generate_case():
     """Generate a comprehensive case for support"""
     try:
+        # Get current authenticated user
+        user = get_current_user()
+        if not user:
+            return jsonify({
+                'success': False,
+                'error': 'Authentication required'
+            }), 401
+        
+        # Get organization for current user
+        org = None
+        if user.org_id:
+            org = Organization.query.filter_by(id=user.org_id).first()
+        else:
+            # Fallback: find org created by this user
+            org = Organization.query.filter_by(created_by_user_id=user.id).first()
+        
+        if not org:
+            return jsonify({
+                'success': False,
+                'error': 'No organization found for user'
+            }), 400
+        
+        org_id = org.id
+        
         data = request.get_json() or {}
-        org_id = data.get('org_id')
         campaign_details = {
             'goal': data.get('campaign_goal', 100000),
             'purpose': data.get('campaign_purpose', 'general support'),
             'timeline': data.get('timeline', '12 months'),
             'target_donors': data.get('target_donors', 'major donors')
         }
-        
-        if not org_id:
-            return jsonify({
-                'success': False,
-                'error': 'org_id is required'
-            }), 400
         
         result = smart_tools.generate_case_for_support(org_id, campaign_details)
         
@@ -83,12 +128,46 @@ def generate_case():
 # ============= IMPACT REPORTING ENDPOINTS =============
 
 @smart_tools_bp.route('/impact/generate', methods=['POST'])
+@login_required
 def generate_impact_report():
     """Generate an impact report with metrics and stories from verified data"""
     try:
+        # Get current authenticated user
+        user = get_current_user()
+        if not user:
+            return jsonify({
+                'success': False,
+                'error': 'Authentication required'
+            }), 401
+        
+        # Get organization for current user
+        org = None
+        if user.org_id:
+            org = Organization.query.filter_by(id=user.org_id).first()
+        else:
+            # Fallback: find org created by this user
+            org = Organization.query.filter_by(created_by_user_id=user.id).first()
+        
+        if not org:
+            return jsonify({
+                'success': False,
+                'error': 'No organization found for user'
+            }), 400
+        
+        org_id = org.id
+        
         data = request.get_json() or {}
-        org_id = data.get('org_id')
         grant_id = data.get('grant_id')  # Optional - uses intake data if provided
+        
+        # Validate grant ownership if grant_id is provided
+        if grant_id:
+            grant = Grant.query.filter_by(id=grant_id, org_id=org_id).first()
+            if not grant:
+                return jsonify({
+                    'success': False,
+                    'error': 'Grant not found or access denied'
+                }), 403
+        
         report_period = {
             'start': data.get('period_start', '2024-01-01'),
             'end': data.get('period_end', '2024-12-31')
@@ -101,12 +180,6 @@ def generate_impact_report():
             'programs_delivered': 5,
             'volunteer_hours': 0
         })
-        
-        if not org_id:
-            return jsonify({
-                'success': False,
-                'error': 'org_id is required'
-            }), 400
         
         result = smart_tools.generate_impact_report(
             org_id, 
