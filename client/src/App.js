@@ -30,7 +30,10 @@ const SmartTools = lazy(() => import('./pages/SmartTools'));
 const Survey = lazy(() => import('./pages/Survey'));
 const CaseSupport = lazy(() => import('./pages/CaseSupport'));
 const GrantPitch = lazy(() => import('./pages/GrantPitch'));
+const ThankYouLetter = lazy(() => import('./pages/ThankYouLetter'));
 const ImpactReport = lazy(() => import('./pages/ImpactReport'));
+const SocialMedia = lazy(() => import('./pages/SocialMedia'));
+const Newsletter = lazy(() => import('./pages/Newsletter'));
 const Templates = lazy(() => import('./pages/Templates'));
 const Governance = lazy(() => import('./pages/Governance'));
 
@@ -333,10 +336,34 @@ function App() {
                     }
                   />
                   <Route
+                    path="/thank-you-letter"
+                    element={
+                      <ErrorBoundary>
+                        <ThankYouLetter />
+                      </ErrorBoundary>
+                    }
+                  />
+                  <Route
                     path="/impact-report"
                     element={
                       <ErrorBoundary>
                         <ImpactReport />
+                      </ErrorBoundary>
+                    }
+                  />
+                  <Route
+                    path="/social-media"
+                    element={
+                      <ErrorBoundary>
+                        <SocialMedia />
+                      </ErrorBoundary>
+                    }
+                  />
+                  <Route
+                    path="/newsletter"
+                    element={
+                      <ErrorBoundary>
+                        <Newsletter />
                       </ErrorBoundary>
                     }
                   />

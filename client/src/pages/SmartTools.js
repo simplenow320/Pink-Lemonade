@@ -93,6 +93,42 @@ const SmartTools = () => {
       phase: 'practical',
       category: 'content'
     },
+    {
+      id: 'thank-you-letter',
+      name: 'Thank You Letters',
+      description: 'AI-powered personalized thank you letters to show appreciation for your donors\' generosity',
+      icon: '💝',
+      color: 'from-pink-500 to-pink-600',
+      features: ['Personalized donor letters', 'Professional formatting', 'Impact acknowledgment'],
+      endpoint: '/api/smart-tools/thank-you/generate',
+      route: '/thank-you-letter',
+      phase: 'practical',
+      category: 'content'
+    },
+    {
+      id: 'social-media',
+      name: 'Social Media Generator',
+      description: 'Create platform-optimized social media content for Twitter, Facebook, Instagram, and LinkedIn',
+      icon: '📱',
+      color: 'from-cyan-500 to-blue-600',
+      features: ['Platform optimization', 'Character limits', 'Hashtag suggestions', 'Multi-platform'],
+      endpoint: '/api/smart-tools/social/generate',
+      route: '/social-media',
+      phase: 'practical',
+      category: 'content'
+    },
+    {
+      id: 'newsletter',
+      name: 'Newsletter Generator',
+      description: 'AI-powered newsletter content creation for stakeholder communication and engagement',
+      icon: '📰',
+      color: 'from-purple-500 to-purple-600',
+      features: ['Professional newsletter content', 'Audience-appropriate tone', 'Multiple sections', 'Email-ready formatting'],
+      endpoint: '/api/smart-tools/newsletter/generate',
+      route: '/newsletter',
+      phase: 'practical',
+      category: 'content'
+    },
     
     // Comprehensive Reporting System
     {

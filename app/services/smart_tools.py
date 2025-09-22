@@ -73,7 +73,7 @@ class SmartToolsService:
                 
                 # Market analysis
                 competitive_landscape = self.competitive_intelligence.analyze_competitive_landscape(
-                    org_context, grant_context.get('focus_area', ''), org_context.get('geography', '')
+                    org_context, grant_context.get('focus_area', '') if grant_context else '', org_context.get('geography', '')
                 )
                 
                 # Optimal messaging based on intelligence
@@ -579,7 +579,7 @@ class SmartToolsService:
             - Recent wins: {', '.join(performance.get('recent_wins', []))} 
             - {impact_data.get('participant_stories', 0)} participant stories collected
             - Active impact measurement showing organizational accountability
-            {market_insights}
+            # Market insights integrated into organizational context
             
             # C - CONTEXT
             Organization Profile:
@@ -901,7 +901,7 @@ class SmartToolsService:
             'program_outcomes': getattr(org, 'program_outcomes', '') or '',
             
             # Financial Information (Complete)
-            'fiscal_year_end': org.fiscal_year_end.strftime('%B %d') if hasattr(org, 'fiscal_year_end') and org.fiscal_year_end else '',
+            'fiscal_year_end': getattr(org, 'fiscal_year_end', None).strftime('%B %d') if getattr(org, 'fiscal_year_end', None) else '',
             'audit_status': getattr(org, 'audit_status', '') or '',
             'financial_transparency': getattr(org, 'financial_transparency', '') or '',
             'revenue_sources': getattr(org, 'revenue_sources', {}) or {},
