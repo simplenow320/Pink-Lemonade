@@ -210,8 +210,12 @@ def lookup_ein():
                     'message': 'No organization found for the provided EIN'
                 }), 404
             
-            # Extract tokens for matching
-            tokens = essentials.extract_tokens(org_data)
+            # Ensure org_data is a dictionary (type safety)
+            if not isinstance(org_data, dict):
+                return jsonify({
+                    'error': 'Invalid organization data format',
+                    'message': 'Organization data is not in expected format'
+                }), 500
             
             # Return organization data for profile population
             profile_data = {
@@ -221,10 +225,10 @@ def lookup_ein():
                 'state': org_data.get('state', ''),
                 'mission': org_data.get('mission_statement', ''),
                 'website': org_data.get('website', ''),
-                'pcs_subject_codes': tokens.get('pcs_subject_codes', []),
-                'pcs_population_codes': tokens.get('pcs_population_codes', []),
-                'locations': tokens.get('locations', []),
-                'keywords': tokens.get('keywords', []),
+                'pcs_subject_codes': org_data.get('pcs_subject_codes', []),
+                'pcs_population_codes': org_data.get('pcs_population_codes', []),
+                'locations': org_data.get('locations', []),
+                'keywords': org_data.get('keywords', []),
                 'annual_revenue': org_data.get('annual_revenue'),
                 'total_assets': org_data.get('total_assets'),
                 'ntee_code': org_data.get('ntee_code', ''),

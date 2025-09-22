@@ -16,7 +16,9 @@ ai_service = AIService()
 def update_onboarding():
     """Update organization profile during onboarding"""
     try:
-        data = request.json
+        data = request.get_json()
+        if not data:
+            return jsonify({'error': 'No JSON data provided'}), 400
         step = data.get('step', 1)
         
         # Get current user
@@ -131,7 +133,10 @@ def update_onboarding():
 def get_profile():
     """Get current organization profile"""
     try:
-        org = Organization.query.filter_by(created_by_user_id=current_user.id).first()
+        user = get_current_user()
+        if not user:
+            return jsonify({'error': 'User not found'}), 404
+        org = Organization.query.filter_by(created_by_user_id=user.id).first()
         
         if not org:
             return jsonify({'error': 'Organization not found'}), 404
@@ -150,8 +155,13 @@ def get_profile():
 def update_profile():
     """Update organization profile (from profile page)"""
     try:
-        data = request.json
-        org = Organization.query.filter_by(created_by_user_id=current_user.id).first()
+        data = request.get_json()
+        if not data:
+            return jsonify({'error': 'No JSON data provided'}), 400
+        user = get_current_user()
+        if not user:
+            return jsonify({'error': 'User not found'}), 404
+        org = Organization.query.filter_by(created_by_user_id=user.id).first()
         
         if not org:
             return jsonify({'error': 'Organization not found'}), 404
@@ -172,7 +182,7 @@ def update_profile():
         ]
         
         for field in updateable_fields:
-            if field in data:
+            if data and field in data:
                 setattr(org, field, data[field])
         
         # Recalculate completeness
@@ -204,7 +214,10 @@ def update_profile():
 def get_ai_context():
     """Get organization's AI context for debugging/transparency"""
     try:
-        org = Organization.query.filter_by(created_by_user_id=current_user.id).first()
+        user = get_current_user()
+        if not user:
+            return jsonify({'error': 'User not found'}), 404
+        org = Organization.query.filter_by(created_by_user_id=user.id).first()
         
         if not org:
             return jsonify({'error': 'Organization not found'}), 404
@@ -224,7 +237,10 @@ def get_ai_context():
 def check_onboarding_status():
     """Check if user needs to complete onboarding"""
     try:
-        org = Organization.query.filter_by(created_by_user_id=current_user.id).first()
+        user = get_current_user()
+        if not user:
+            return jsonify({'error': 'User not found'}), 404
+        org = Organization.query.filter_by(created_by_user_id=user.id).first()
         
         needs_onboarding = not org or not org.onboarding_completed_at
         current_step = 1
