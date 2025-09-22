@@ -169,7 +169,7 @@ def onboarding_step5():
 @pages.get("/profile")
 @login_required
 def profile():
-    return render_template("profile/organization.html")
+    return render_template("profile.html", active="profile")
 
 @pages.get("/writing")
 @login_required
