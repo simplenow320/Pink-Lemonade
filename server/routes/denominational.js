@@ -68,7 +68,12 @@ router.get('/grants',
       const { page, limit: paginationLimit, offset } = extractPaginationParams(req.query, parseInt(limit));
       const requestInfo = extractRequestInfo(req);
       
-      const latestResults = scheduledScraper.getLatestResults();
+      const latestResults = await scheduledScraper.getLatestResults({ 
+        limit: paginationLimit, 
+        offset, 
+        source, 
+        search_term: tag 
+      });
       
       if (!latestResults) {
         return res.status(404).json({
@@ -192,10 +197,9 @@ router.get('/history',
       const { limit = 10 } = req.query;
       const requestInfo = extractRequestInfo(req);
       
-      const history = scheduledScraper.getRunHistory();
-      const limitedHistory = history.slice(0, parseInt(limit));
+      const history = await scheduledScraper.getRunHistory(parseInt(limit));
       
-      const response = formatSuccessResponse(limitedHistory, {
+      const response = formatSuccessResponse(history, {
         metadata: {
           endpoint: 'denominational_history',
           totalRuns: history.length,

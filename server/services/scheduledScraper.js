@@ -7,6 +7,7 @@ import schedule from 'node-schedule';
 import { DenominationalScraper } from './denominationalScraper.js';
 import { createLogger } from '../utils/logger.js';
 import { CacheManager } from './cacheManager.js';
+import { databasePersistence } from './databasePersistence.js';
 import fs from 'fs/promises';
 import path from 'path';
 
@@ -175,9 +176,18 @@ export class ScheduledScraper {
       throw new Error('Scraping already in progress');
     }
 
+    const runId = `manual-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+
     try {
       this.isRunning = true;
       logger.info(`Starting manual scraping${sourceName ? ` for ${sourceName}` : ''}`);
+
+      // Create database run record
+      await databasePersistence.createScrapeRun(runId, {
+        type: 'manual',
+        sourceFilter: sourceName || 'all',
+        triggeredAt: new Date().toISOString()
+      });
 
       let results;
       if (sourceName) {
@@ -196,11 +206,84 @@ export class ScheduledScraper {
         results = await this.scraper.runScrapingCycle();
       }
 
-      // Update cache
+      // Process and store results in database
+      if (results && results.results && results.results.length > 0) {
+        const allGrants = [];
+        
+        // Extract all grants from all sources
+        results.results.forEach(sourceResult => {
+          if (sourceResult.opportunities && sourceResult.opportunities.length > 0) {
+            sourceResult.opportunities.forEach(opportunity => {
+              allGrants.push({
+                title: opportunity.title || 'Untitled Grant',
+                funder: opportunity.organization || sourceResult.source,
+                source_name: sourceResult.source,
+                source_url: sourceResult.url,
+                link: opportunity.link,
+                amount_min: opportunity.amount_min,
+                amount_max: opportunity.amount_max,
+                deadline: opportunity.deadline,
+                geography: opportunity.location || opportunity.geography,
+                eligibility: opportunity.eligibility,
+                description: opportunity.description,
+                requirements: opportunity.requirements,
+                contact_info: opportunity.contact || {},
+                ai_enhanced_data: opportunity.ai_enhanced || {},
+                external_id: `${sourceResult.source}-${opportunity.title}-${Date.now()}`
+              });
+            });
+          }
+        });
+
+        // Store grants in database
+        const { insertedCount, updatedCount } = await databasePersistence.storeScrapedGrants(allGrants, runId);
+        
+        // Update run record with final stats
+        await databasePersistence.updateScrapeRun(runId, {
+          status: 'completed',
+          sourcesProcessed: results.results.length,
+          successfulSources: results.results.filter(r => r.opportunities && r.opportunities.length > 0).length,
+          totalOpportunities: allGrants.length,
+          errors: results.errors || [],
+          completedAt: new Date()
+        });
+
+        logger.info(`Manual scrape completed: ${insertedCount} new, ${updatedCount} updated grants stored`);
+      } else {
+        // No results found
+        await databasePersistence.updateScrapeRun(runId, {
+          status: 'completed',
+          sourcesProcessed: 0,
+          successfulSources: 0,
+          totalOpportunities: 0,
+          errors: results.errors || [],
+          completedAt: new Date()
+        });
+      }
+
+      // Still cache for quick access
       this.cache.set('latest_denominational_scrape', results, 86400000);
 
       return results;
 
+    } catch (error) {
+      logger.error(`Manual scraping failed: ${error.message}`);
+      
+      // Update run record with error
+      try {
+        await databasePersistence.updateScrapeRun(runId, {
+          status: 'failed',
+          sourcesProcessed: 0,
+          successfulSources: 0,
+          totalOpportunities: 0,
+          errors: [{ message: error.message, timestamp: new Date().toISOString() }],
+          completedAt: new Date()
+        });
+      } catch (dbError) {
+        logger.error(`Failed to update failed run in database: ${dbError.message}`);
+      }
+      
+      throw error;
     } finally {
       this.isRunning = false;
     }
@@ -225,16 +308,43 @@ export class ScheduledScraper {
   }
 
   /**
-   * Get latest scraping results from cache
+   * Get latest scraping results from database (fallback to cache)
    */
-  getLatestResults() {
+  async getLatestResults(options = {}) {
+    try {
+      // Try to get from database first
+      const dbResults = await databasePersistence.getLatestGrants(options);
+      if (dbResults && dbResults.grants && dbResults.grants.length > 0) {
+        return {
+          results: dbResults.grants,
+          total: dbResults.total,
+          source: 'database',
+          ...options
+        };
+      }
+    } catch (error) {
+      logger.warn(`Failed to get results from database, falling back to cache: ${error.message}`);
+    }
+    
+    // Fallback to cache
     return this.cache.get('latest_denominational_scrape');
   }
 
   /**
-   * Get run history from cache
+   * Get run history from database (fallback to cache)
    */
-  getRunHistory() {
+  async getRunHistory(limit = 10) {
+    try {
+      // Try to get from database first
+      const dbHistory = await databasePersistence.getScrapeRunHistory(limit);
+      if (dbHistory && dbHistory.length > 0) {
+        return dbHistory;
+      }
+    } catch (error) {
+      logger.warn(`Failed to get run history from database, falling back to cache: ${error.message}`);
+    }
+    
+    // Fallback to cache and memory
     return this.cache.get('denominational_scrape_history') || this.runHistory;
   }
 
