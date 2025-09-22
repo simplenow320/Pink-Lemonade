@@ -74,8 +74,8 @@ def fetch_from_source(source):
         except:
             # Fallback profile
             org_profile = {
-                "name": "Nitrogen Network",
-                "mission": "Equip urban churches and communities to holistically flourish",
+                "name": "Your Organization",
+                "mission": "Your organization's mission",
                 "focus_areas": ["urban ministry", "community development", "faith-based initiatives"],
                 "keywords": ["urban", "church", "community", "faith", "ministry"]
             }
@@ -170,8 +170,8 @@ def sync_all_sources():
         except:
             # Fallback profile
             org_profile = {
-                "name": "Nitrogen Network",
-                "mission": "Equip urban churches and communities to holistically flourish",
+                "name": "Your Organization",
+                "mission": "Your organization's mission",
                 "focus_areas": ["urban ministry", "community development", "faith-based initiatives"],
                 "keywords": ["urban", "church", "community", "faith", "ministry"]
             }

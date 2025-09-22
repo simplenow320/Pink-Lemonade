@@ -226,7 +226,7 @@ Return JSON with: contact_info, deadlines, requirements, complexity_score (1-5)
             # Default organization context if not provided
             if not org_context:
                 org_context = {
-                    'org_name': 'Nitrogen Network',
+                    'org_name': 'Your Organization',
                     'org_mission': 'Urban ministry and community development',
                     'org_programs': 'After-school programs, community workshops, mentoring services',
                     'org_audience': 'At-risk youth and urban families',

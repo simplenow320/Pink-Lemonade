@@ -281,9 +281,9 @@ def export_profile():
         export_data = {
             'organization': org.to_dict(),
             'user': {
-                'first_name': 'John',
-                'last_name': 'Doe',
-                'email': 'john@nitrogennetwork.org',
+                'first_name': 'User',
+                'last_name': 'Name',
+                'email': 'user@example.org',
                 'phone': '(555) 123-4567',
                 'title': 'Grant Manager'
             },

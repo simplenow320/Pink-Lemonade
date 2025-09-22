@@ -16,12 +16,12 @@ def get_user_settings():
         user_data = {
             'first_name': 'John',
             'last_name': 'Doe', 
-            'email': 'john@nitrogennetwork.org',
+            'email': 'user@example.org',
             'phone': '(555) 123-4567',
             'title': 'Grant Manager',
-            'organization': 'Nitrogen Network',
+            'organization': 'Your Organization',
             'department': 'Development',
-            'bio': 'Experienced grant manager passionate about urban ministry',
+            'bio': 'Experienced grant manager',
             'notifications': {
                 'email_updates': True,
                 'grant_alerts': True,
