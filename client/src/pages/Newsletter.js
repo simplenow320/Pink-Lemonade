@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
+import { useOrganization } from '../hooks/useOrganization';
 
 const Newsletter = () => {
+  const { organization, loading: orgLoading, error: orgError } = useOrganization();
   const [loading, setLoading] = useState(false);
   const [generatedContent, setGeneratedContent] = useState('');
   const [editableContent, setEditableContent] = useState('');
@@ -116,6 +118,16 @@ const Newsletter = () => {
             <p className="text-xl text-gray-600">
               AI-powered newsletter content creation for stakeholder communication and engagement
             </p>
+            {organization && (
+              <div className="mt-4 p-3 bg-purple-50 border border-purple-200 rounded-md">
+                <p className="text-purple-800">
+                  <span className="font-medium">Creating newsletters for:</span> {organization.name || 'Your Organization'}
+                  {organization.mission && (
+                    <span className="text-sm ml-2 text-purple-600">- {organization.mission}</span>
+                  )}
+                </p>
+              </div>
+            )}
           </motion.div>
         </div>
 

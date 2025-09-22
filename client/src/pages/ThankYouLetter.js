@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
+import { useOrganization } from '../hooks/useOrganization';
 
 const ThankYouLetter = () => {
+  const { organization, loading: orgLoading, error: orgError } = useOrganization();
   const [loading, setLoading] = useState(false);
   const [generatedContent, setGeneratedContent] = useState('');
   const [editableContent, setEditableContent] = useState('');
@@ -80,6 +82,16 @@ const ThankYouLetter = () => {
             <p className="text-xl text-gray-600">
               AI-powered personalized thank you letters to show appreciation for your donors' generosity
             </p>
+            {organization && (
+              <div className="mt-4 p-3 bg-pink-50 border border-pink-200 rounded-md">
+                <p className="text-pink-800">
+                  <span className="font-medium">Creating letters for:</span> {organization.name || 'Your Organization'}
+                  {organization.mission && (
+                    <span className="text-sm ml-2 text-pink-600">- {organization.mission}</span>
+                  )}
+                </p>
+              </div>
+            )}
           </motion.div>
         </div>
 

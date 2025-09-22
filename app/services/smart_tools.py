@@ -901,7 +901,7 @@ class SmartToolsService:
             'program_outcomes': getattr(org, 'program_outcomes', '') or '',
             
             # Financial Information (Complete)
-            'fiscal_year_end': getattr(org, 'fiscal_year_end', None).strftime('%B %d') if getattr(org, 'fiscal_year_end', None) else '',
+            'fiscal_year_end': '',  # Fiscal year end not available in current org model
             'audit_status': getattr(org, 'audit_status', '') or '',
             'financial_transparency': getattr(org, 'financial_transparency', '') or '',
             'revenue_sources': getattr(org, 'revenue_sources', {}) or {},

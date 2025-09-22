@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
+import { useOrganization } from '../hooks/useOrganization';
 
 const SocialMedia = () => {
+  const { organization, loading: orgLoading, error: orgError } = useOrganization();
   const [loading, setLoading] = useState(false);
   const [generatedContent, setGeneratedContent] = useState('');
   const [editableContent, setEditableContent] = useState('');
@@ -58,7 +60,6 @@ const SocialMedia = () => {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          org_id: 1, // This should come from auth context in a real app
           platform: platform,
           topic: topic || 'General organizational update'
         }),
@@ -126,6 +127,16 @@ const SocialMedia = () => {
             <p className="text-xl text-gray-600">
               Create platform-optimized social media content for your organization
             </p>
+            {organization && (
+              <div className="mt-4 p-3 bg-cyan-50 border border-cyan-200 rounded-md">
+                <p className="text-cyan-800">
+                  <span className="font-medium">Creating content for:</span> {organization.name || 'Your Organization'}
+                  {organization.mission && (
+                    <span className="text-sm ml-2 text-cyan-600">- {organization.mission}</span>
+                  )}
+                </p>
+              </div>
+            )}
           </motion.div>
         </div>
 

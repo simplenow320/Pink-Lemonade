@@ -6,6 +6,7 @@ AI-powered tools for grant writing and impact reporting
 from flask import Blueprint, jsonify, request
 from app.services.smart_tools import SmartToolsService
 from app.models import Organization, Grant, db
+from app.api.auth import login_required, get_current_user
 import logging
 
 logger = logging.getLogger(__name__)
@@ -126,23 +127,41 @@ def generate_impact_report():
 # ============= QUICK TOOLS ENDPOINTS =============
 
 @smart_tools_bp.route('/thank-you/generate', methods=['POST'])
+@login_required
 def generate_thank_you():
     """Generate a personalized thank you letter"""
     try:
+        # Get current authenticated user
+        user = get_current_user()
+        if not user:
+            return jsonify({
+                'success': False,
+                'error': 'Authentication required'
+            }), 401
+        
+        # Get organization for current user
+        org = None
+        if user.org_id:
+            org = Organization.query.filter_by(id=user.org_id).first()
+        else:
+            # Fallback: find org created by this user
+            org = Organization.query.filter_by(created_by_user_id=user.id).first()
+        
+        if not org:
+            return jsonify({
+                'success': False,
+                'error': 'No organization found for user'
+            }), 400
+        
+        org_id = org.id
+        
         data = request.get_json() or {}
-        org_id = data.get('org_id')
         donor_info = {
             'name': data.get('donor_name', 'Valued Supporter'),
             'amount': data.get('donation_amount', 0),
             'purpose': data.get('donation_purpose', 'general support'),
             'is_recurring': data.get('is_recurring', False)
         }
-        
-        if not org_id:
-            return jsonify({
-                'success': False,
-                'error': 'org_id is required'
-            }), 400
         
         result = smart_tools.generate_thank_you_letter(org_id, donor_info)
         
@@ -156,19 +175,37 @@ def generate_thank_you():
         return jsonify({'success': False, 'error': str(e)}), 500
 
 @smart_tools_bp.route('/social/generate', methods=['POST'])
+@login_required
 def generate_social_post():
     """Generate platform-optimized social media content"""
     try:
-        data = request.get_json() or {}
-        org_id = data.get('org_id')
-        platform = data.get('platform', 'twitter')
-        topic = data.get('topic', 'impact story')
-        
-        if not org_id:
+        # Get current authenticated user
+        user = get_current_user()
+        if not user:
             return jsonify({
                 'success': False,
-                'error': 'org_id is required'
+                'error': 'Authentication required'
+            }), 401
+        
+        # Get organization for current user
+        org = None
+        if user.org_id:
+            org = Organization.query.filter_by(id=user.org_id).first()
+        else:
+            # Fallback: find org created by this user
+            org = Organization.query.filter_by(created_by_user_id=user.id).first()
+        
+        if not org:
+            return jsonify({
+                'success': False,
+                'error': 'No organization found for user'
             }), 400
+        
+        org_id = org.id
+        
+        data = request.get_json() or {}
+        platform = data.get('platform', 'twitter')
+        topic = data.get('topic', 'impact story')
         
         if platform not in ['twitter', 'facebook', 'instagram', 'linkedin']:
             return jsonify({
@@ -188,23 +225,41 @@ def generate_social_post():
         return jsonify({'success': False, 'error': str(e)}), 500
 
 @smart_tools_bp.route('/newsletter/generate', methods=['POST'])
+@login_required
 def generate_newsletter():
     """Generate comprehensive newsletter content with human-like writing"""
     try:
+        # Get current authenticated user
+        user = get_current_user()
+        if not user:
+            return jsonify({
+                'success': False,
+                'error': 'Authentication required'
+            }), 401
+        
+        # Get organization for current user
+        org = None
+        if user.org_id:
+            org = Organization.query.filter_by(id=user.org_id).first()
+        else:
+            # Fallback: find org created by this user
+            org = Organization.query.filter_by(created_by_user_id=user.id).first()
+        
+        if not org:
+            return jsonify({
+                'success': False,
+                'error': 'No organization found for user'
+            }), 400
+        
+        org_id = org.id
+        
         data = request.get_json() or {}
-        org_id = data.get('org_id')
         newsletter_details = {
             'theme': data.get('theme', 'Monthly Impact Update'),
             'month_year': data.get('month_year'),
             'focus_area': data.get('focus_area', 'general'),
             'target_audience': data.get('target_audience', 'donors and supporters')
         }
-        
-        if not org_id:
-            return jsonify({
-                'success': False,
-                'error': 'org_id is required'
-            }), 400
         
         result = smart_tools.generate_newsletter_content(org_id, newsletter_details)
         
