@@ -11,8 +11,49 @@ const logger = createLogger('RateLimiter');
  * Simple rate limiter for API calls
  */
 export class RateLimiter {
-  constructor() {
+  constructor(options = {}) {
     this.calls = new Map();
+    this.requestsPerMinute = options.requestsPerMinute || 10;
+    this.requestsPerHour = options.requestsPerHour || 200;
+  }
+
+  /**
+   * Wait for available slot based on rate limits
+   */
+  async waitForSlot() {
+    const now = Date.now();
+    const sourceName = 'default';
+    
+    if (!this.calls.has(sourceName)) {
+      this.calls.set(sourceName, []);
+    }
+
+    const sourceCalls = this.calls.get(sourceName);
+    
+    // Clean old calls (older than 1 hour)
+    const cutoffTime = now - (60 * 60 * 1000);
+    const recentCalls = sourceCalls.filter(callTime => callTime > cutoffTime);
+    this.calls.set(sourceName, recentCalls);
+    
+    // Check minute-based rate limit
+    const minuteAgo = now - (60 * 1000);
+    const recentMinuteCalls = recentCalls.filter(callTime => callTime > minuteAgo);
+    
+    if (recentMinuteCalls.length >= this.requestsPerMinute) {
+      const oldestRecentCall = Math.min(...recentMinuteCalls);
+      const waitTime = (oldestRecentCall + (60 * 1000)) - now;
+      if (waitTime > 0) {
+        logger.info(`Rate limit reached, waiting ${waitTime}ms`);
+        await new Promise(resolve => setTimeout(resolve, waitTime));
+      }
+    }
+    
+    // Record this request
+    recentCalls.push(now);
+    this.calls.set(sourceName, recentCalls);
+    
+    // Add minimum delay between requests (6 seconds for respectful scraping)
+    await new Promise(resolve => setTimeout(resolve, 6000));
   }
 
   /**
