@@ -6,7 +6,7 @@
 
 import { createLogger } from '../utils/logger.js';
 import { apiManager } from './apiManager.js';
-import AIEnhancedDenominationalService from './aiEnhancedDenominationalService.js';
+import { AIEnhancedDenominationalService } from './aiEnhancedDenominationalService.js';
 import { CacheManager } from './cacheManager.js';
 
 const logger = createLogger('IntegratedGrantSearch');

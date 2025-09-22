@@ -4,7 +4,7 @@
  */
 
 import express from 'express';
-import ScheduledScraper from '../services/scheduledScraper.js';
+import { ScheduledScraper } from '../services/scheduledScraper.js';
 import authenticationMiddleware from '../middleware/authentication.js';
 import rateLimitingMiddleware from '../middleware/rateLimiting.js';
 import validationMiddleware from '../middleware/validation.js';
@@ -27,7 +27,7 @@ scheduledScraper.initialize();
  * GET /api/denominational/status
  */
 router.get('/status',
-  rateLimitingMiddleware.standardRateLimit,
+  rateLimitingMiddleware.defaultRateLimit,
   authenticationMiddleware.optionalAuth,
   async (req, res) => {
     try {
@@ -150,7 +150,7 @@ router.get('/grants',
  * GET /api/denominational/sources
  */
 router.get('/sources',
-  rateLimitingMiddleware.standardRateLimit,
+  rateLimitingMiddleware.defaultRateLimit,
   authenticationMiddleware.optionalAuth,
   async (req, res) => {
     try {
@@ -185,7 +185,7 @@ router.get('/sources',
  * GET /api/denominational/history
  */
 router.get('/history',
-  rateLimitingMiddleware.standardRateLimit,
+  rateLimitingMiddleware.defaultRateLimit,
   authenticationMiddleware.optionalAuth,
   async (req, res) => {
     try {
@@ -224,7 +224,7 @@ router.get('/history',
  */
 router.post('/scrape',
   rateLimitingMiddleware.testRateLimit, // More restrictive for manual runs
-  authenticationMiddleware.requireAuth, // Require authentication for manual scraping
+  authenticationMiddleware.requireJwt, // Require authentication for manual scraping
   validationMiddleware.validateJsonPayload,
   async (req, res) => {
     try {

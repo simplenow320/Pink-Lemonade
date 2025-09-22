@@ -6,7 +6,7 @@
 
 import { createLogger } from '../utils/logger.js';
 import { CacheManager } from './cacheManager.js';
-import ScheduledScraper from './scheduledScraper.js';
+import { ScheduledScraper } from './scheduledScraper.js';
 
 const logger = createLogger('AIEnhancedDenominational');
 

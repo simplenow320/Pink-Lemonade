@@ -4,7 +4,7 @@
  */
 
 import schedule from 'node-schedule';
-import DenominationalScraper from './denominationalScraper.js';
+import { DenominationalScraper } from './denominationalScraper.js';
 import { createLogger } from '../utils/logger.js';
 import { CacheManager } from './cacheManager.js';
 import fs from 'fs/promises';
