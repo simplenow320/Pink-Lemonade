@@ -1,0 +1,20 @@
+Organization,Primary_Grants_URL,Additional_URLs,Notes
+John Templeton Foundation,https://www.templeton.org/grants,https://www.templeton.org/grants/apply-for-grant; https://www.templeton.org/grants/grant-calendar,"Grants hub, apply page, and grant calendar. Tracks cycles and Online Funding Inquiry windows."
+Templeton Religion Trust,https://templetonreligiontrust.org,,Monitor site for public funding opportunities and apply information when posted.
+Templeton World Charity Foundation,https://www.templetonworldcharity.org,,Track priorities and RFP/opportunity pages when open.
+"Lilly Endowment, Inc.",https://lillyendowment.org/grants/,https://lillyendowment.org/open-initiatives/; https://lillyendowment.org/for-grantseekers/guidelines/,Grantseekers page and open initiatives; guidelines for applicants.
+The Duke Endowment (Rural Church),https://dukeendowment.org/rural-church/grants,,Application guidance and deadlines for Rural Church; check other program pages as needed.
+ELCA (Evangelical Lutheran Church in America),https://www.elca.org/our-work/grants,https://www.elca.org/our-work/relief-and-development/elca-world-hunger/get-involved/domestic-hunger-grants; https://www.elca.org/our-work/grants/register-and-apply,Central grants hub; includes Domestic Hunger Grants and registration/apply details.
+Presbyterian Church (USA) – Mission Program Grants,https://www.presbyterianmission.org/ministries/1001/,https://www.presbyterianmission.org/sites/default/files/Seed-Grant-Application.doc; https://www.presbyterianmission.org/wp-content/uploads/Growth-Grant-Application.doc,Seed and Growth grants for New Worshiping Communities; application docs posted.
+The Episcopal Church,https://www.episcopalchurch.org/grants-and-scholarships/,https://www.episcopalchurch.org/grants-and-scholarships/new-episcopal-community-grants/; https://www.episcopalchurch.org/ministries/becoming-beloved-community/,Grants & scholarships hub; New Episcopal Communities; Becoming Beloved Community grants.
+United Methodist Church – Global Ministries (UMCOR),https://umcmission.org/work/humanitarian-relief/migration-refugees/mustard-seed-grants,,Mustard Seed Migration Grants and other Global Ministries opportunities.
+United Methodist Church – Discipleship Ministries,https://www.umcdiscipleship.org/about/grants-scholarships,,Grants and scholarships hub for UMC Discipleship Ministries.
+United Church of Christ,https://www.ucc.org/giving/ways-we-give/scholarships-grants/program-grants/,https://www.ucc.org/neighbors-in-need-grant-application-2/,Program grants hub; Neighbors in Need grant information.
+Christian Church (Disciples of Christ),https://disciples.org/resource/nba-mission-ministry-grants/,https://disciples.org/resource/disciples-women-endowment-fund/,NBA Mission & Ministry grants and Disciples Women Endowment Fund.
+Lutheran Church—Missouri Synod (LCMS),https://www.lcms.org/serve/grants/development,https://www.lcms.org/serve/grants/schiebel,National Development Grants and Schiebel Grant Program.
+Evangelical Covenant Church (ECC),https://covchurch.org/resource/ministry-development-grants/,https://covchurch.org/wp-content/uploads/2023/03/2.-Grant-guidelines-2023.pdf,Ministry Development Grants and guidelines; also LMDJ initiatives.
+Interfaith America,https://www.interfaithamerica.org/grants-leadership-awards/,,Grants and leadership awards; watch for open calls.
+Pillars Fund,https://www.pillarsfund.org/opportunities/,,Opportunities page for Muslim community-focused grants.
+USCCB – Catholic Campaign for Human Development (CCHD),https://www.usccb.org/committees/catholic-campaign-human-development,,National and local CCHD grants; monitor for RFP windows.
+Catholic Extension,https://www.catholicextension.org/grants/,,Grants overview and how to apply for U.S. mission dioceses.
+Conrad N. Hilton Foundation,https://www.hiltonfoundation.org/grants,,How to apply and initiative pages; includes Catholic Sisters initiative.

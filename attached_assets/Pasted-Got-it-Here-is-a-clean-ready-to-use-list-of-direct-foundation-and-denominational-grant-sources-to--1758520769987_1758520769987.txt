@@ -1,0 +1,224 @@
+Got it. Here is a clean, ready-to-use list of direct foundation and denominational grant sources to track. I included the official grant pages and short notes so you can plug them straight into your workflow. After the list you will find a single copy-paste REACTO prompt you can hand to a Replit agent to set up ethical checks, a three day refresh, and safe storage.
+
+Direct foundation and denominational sources
+
+John Templeton Foundation
+• Grants hub and how to apply. Includes calendar and Online Funding Inquiry portal.
+• Grants page:  ￼
+• Apply for a grant:  ￼
+• Grant calendar:  ￼
+• Funding areas overview:  ￼
+
+Templeton Religion Trust
+• Private funder focused on religion and spiritual life. Track its funding opportunities page.
+• Funding opportunities and apply info:  ￼
+
+Templeton World Charity Foundation
+• Runs time bound RFPs across core funding areas. Track priorities and RFP pages.
+• Foundation home and priorities:  ￼
+• FAQ on opportunities and how they publish calls:  ￼
+• Example open RFP guidance page to monitor:  ￼
+
+Lilly Endowment
+• Faith related open initiatives are posted on the Grantseekers page. Monitor initiatives that accept proposals.
+• Grantseekers page:  ￼
+
+The Duke Endowment
+• Rural Church and other program areas. Rural Church page lists how to apply and deadlines.
+• Rural Church grants:  ￼
+
+ELCA
+• ELCA World Hunger and Domestic Hunger Grants with public RFPs and dates.
+• Domestic Hunger Grants page:  ￼
+
+Presbyterian Church USA
+• Mission Program Grants for 1001 New Worshiping Communities. Seed and Growth grant application docs are public.
+• Seed Grant application doc:  ￼
+• Growth Grant application doc:  ￼
+
+The Episcopal Church
+• Central hub for grants and scholarships. Includes New Episcopal Community Grants and other competitive programs.
+• Grants and Scholarships hub:  ￼
+• New Episcopal Community Grants page:  ￼
+• Becoming Beloved Community Grants page:  ￼
+
+United Methodist Church
+• Global Ministries and UMCOR issue public calls such as Mustard Seed Migration Grants. Discipleship Ministries also posts grants.
+• Mustard Seed Migration Grant program page:  ￼
+• Press release with cycle timing and overview:  ￼
+• Discipleship Ministries Grants and Scholarships hub:  ￼
+• Racial Ethnic Local Church Concerns grants info:  ￼
+
+United Church of Christ
+• National program grants and Neighbors in Need grants.
+• Program Grants hub:  ￼
+• Neighbors in Need grant info:  ￼
+
+Christian Church Disciples of Christ
+• National Benevolent Association Mission and Ministry Grants and Disciples Women Endowment Fund.
+• NBA Mission and Ministry Grants page:  ￼
+• Disciples Women Endowment Fund page:  ￼
+
+LCMS Lutheran Church Missouri Synod
+• National Development Grants and special purpose Schiebel Grant. Annual windows with posted dates.
+• National Development Grants page:  ￼
+• Schiebel Grant page:  ￼
+
+Evangelical Covenant Church
+• Love Mercy Do Justice Community Development Ministry Grants and SPE grants for clergy.
+• Community Development Ministry Grants page:  ￼
+• LMDJ grant guidelines PDF:  ￼
+• Sustaining Pastoral Excellence overview:  ￼
+
+Interfaith America
+• Runs open grants and fellowships with RFPs posted on their site.
+• Grants and Leadership Awards hub:  ￼
+
+Pillars Fund
+• Muslim community focused funder. Public opportunities page lists open grants and programs.
+• Opportunities page:  ￼
+
+Catholic Campaign for Human Development USCCB
+• National and local CCHD grants. Track RFP windows on the official page.
+• CCHD grants page:  ￼
+
+Catholic Extension
+• National Catholic funder focused on mission dioceses in the United States. Tracks multiple grant programs with open guidance.
+• Grants overview and how to apply:  ￼
+
+Conrad N. Hilton Foundation
+• Occasional RFPs and detailed how to apply guidance. Includes Catholic Sisters initiative.
+• How to apply and funding approach:  ￼
+
+PCUSA scholarships and study grants
+• Posted guidelines and links to application platform. Useful for education category matching.
+• Presbyterian Study Grant guidelines:  ￼
+
+⸻
+
+One prompt you can paste into Replit Agent
+
+Use this exactly as written. It sets role, scope, schedule, guardrails, storage fields, and the source list. You do not need to add code.
+
+REACTO
+
+Role
+You are a data intake agent for our grant matching platform. Your job is to visit official foundation and denominational websites listed below and collect only public opportunity information into our database. Refresh every three days. Follow all ethics and legal rules.
+
+Example
+Example record fields you will save for each opportunity
+name of funder
+program title
+summary
+eligibility
+faith or denomination tags if stated by the funder
+geography
+funding amount or range
+deadline or rolling status
+official application URL
+official PDF link if any
+contact email or phone if publicly listed
+last seen date
+source page URL
+
+Application
+For each source below
+read only the official public pages listed
+do not submit forms
+do not log in
+do not collect any personal data
+respect robots.txt and Terms of Use
+rate limit requests to be polite
+skip pages that explicitly forbid automated access
+store new items and update existing ones by unique key
+unique key is source URL plus program title plus deadline if present
+never overwrite user profile data or any fields not listed above
+do not duplicate records that already exist from Grants.gov or Candid feeds
+produce a short run report at the end with counts and any skipped pages
+
+Context
+Run on a three day schedule for each source. If a site publishes a PDF list or a posted RFP page, record the document link and the citation URL. If a cycle is closed, keep the record and mark status closed with the last known deadline.
+
+Tone
+Professional, careful, and compliant. Avoid any action that could stress the host site.
+
+Output
+For each run
+store updated opportunity records in our opportunities table
+generate a CSV summary for the run and save it to our runs folder
+include a simple log of pages visited and reasons for any skipped pages
+
+Sources to track
+John Templeton Foundation
+Grants hub https://www.templeton.org/grants and Apply page https://www.templeton.org/grants/apply-for-grant  ￼
+
+Templeton Religion Trust
+Funding opportunities page https://templetonreligiontrust.org  section Grants or Apply when posted  ￼
+
+Templeton World Charity Foundation
+Priorities and RFPs https://www.templetonworldcharity.org  monitor priorities and any active opportunity pages  ￼
+
+Lilly Endowment
+Grantseekers and open initiatives https://lillyendowment.org/grants  watch for open calls  ￼
+
+The Duke Endowment
+Rural Church grants https://dukeendowment.org/rural-church/grants  and other program pages  ￼
+
+ELCA
+Domestic Hunger Grants https://www.elca.org/hunger/resources/grants  and related grant pages  ￼
+
+Presbyterian Church USA
+Mission Program Grants seed and growth grant documents
+Seed Grant  https://www.presbyterianmission.org/sites/default/files/Seed-Grant-Application.doc
+Growth Grant  https://www.presbyterianmission.org/wp-content/uploads/Growth-Grant-Application.doc  ￼
+
+The Episcopal Church
+Grants and Scholarships hub https://www.episcopalchurch.org/grants-and-scholarships/  plus specific grant pages such as New Episcopal Community Grants https://www.episcopalchurch.org/grants-and-scholarships/new-episcopal-community-grants/  ￼
+
+United Methodist Church
+UMCOR Mustard Seed Migration Grants https://umcmission.org/work/humanitarian-relief/migration-refugees/mustard-seed-grants  and related Global Ministries grant pages  ￼
+
+United Methodist Discipleship Ministries
+Grants and Scholarships hub https://www.umcdiscipleship.org/about/grants-scholarships  and current grant pages  ￼
+
+United Church of Christ
+Program Grants hub https://www.ucc.org/giving/ways-we-give/scholarships-grants/program-grants/
+Neighbors in Need grant info https://www.ucc.org/neighbors-in-need-grant-application-2/  ￼
+
+Christian Church Disciples of Christ
+NBA Mission and Ministry Grants https://disciples.org/resource/nba-mission-ministry-grants/
+Disciples Women Endowment Fund https://disciples.org/resource/disciples-women-endowment-fund/  ￼
+
+LCMS Lutheran Church Missouri Synod
+National Development Grants https://www.lcms.org/serve/grants/development
+Schiebel Grant Program https://www.lcms.org/serve/grants/schiebel  ￼
+
+Evangelical Covenant Church
+Community Development Ministry Grants https://covchurch.org/resource/ministry-development-grants/  and LMDJ grant guidelines https://covchurch.org/wp-content/uploads/2023/03/2.-Grant-guidelines-2023.pdf  ￼
+
+Interfaith America
+Grants and leadership awards hub https://www.interfaithamerica.org/grants-leadership-awards/  ￼
+
+Pillars Fund
+Opportunities page https://www.pillarsfund.org/opportunities/  ￼
+
+US Catholic Campaign for Human Development
+CCHD national and local grants page https://www.usccb.org/committees/catholic-campaign-human-development  Grants section  ￼
+
+Catholic Extension
+Grants overview and how to apply https://www.catholicextension.org/grants/  ￼
+
+Conrad N. Hilton Foundation
+How to apply and initiative pages  https://www.hiltonfoundation.org/grants  and the Grants section on the site  ￼
+
+Schedule
+Run every three days for each source. Stagger runs so we do not hit many sites in the same hour.
+
+Safeguards
+Follow robots.txt. Respect site Terms. Only collect public information about funding programs. Never collect personal information about individuals. Do not scrape behind a login. If any page blocks automated access, skip it and log it. Be gentle with request rates.
+
+End of prompt.
+
+⸻
+
+If you want, I can drop this list into a CSV or Google Sheet with columns for Name, Program URL, Notes, and Status.
