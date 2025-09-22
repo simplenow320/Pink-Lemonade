@@ -49,7 +49,7 @@ export class AIEnhancedDenominationalService {
       } = options;
       
       // Get latest denominational grant data
-      const latestResults = this.scheduledScraper.getLatestResults();
+      const latestResults = await this.scheduledScraper.getLatestResults();
       
       if (!latestResults) {
         logger.warn('No denominational grant data available for matching');
@@ -391,7 +391,7 @@ export class AIEnhancedDenominationalService {
    */
   async getEnhancedGrantData(grantId, organizationProfile) {
     try {
-      const latestResults = this.scheduledScraper.getLatestResults();
+      const latestResults = await this.scheduledScraper.getLatestResults();
       
       if (!latestResults) {
         throw new Error('No denominational grant data available');

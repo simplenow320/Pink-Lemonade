@@ -61,14 +61,77 @@ export class ScheduledScraper {
       return;
     }
 
+    const runId = `scheduled-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+
     try {
       this.isRunning = true;
       this.lastRun = new Date();
       logger.info('Starting scheduled denominational grants scraping cycle');
 
+      // Create database run record
+      await databasePersistence.createScrapeRun(runId, {
+        type: 'scheduled',
+        triggeredAt: new Date().toISOString()
+      });
+
       const startTime = Date.now();
       const results = await this.scraper.runScrapingCycle();
       const duration = Date.now() - startTime;
+
+      // Process and store results in database
+      if (results && results.results && results.results.length > 0) {
+        const allGrants = [];
+        
+        // Extract all grants from all sources
+        results.results.forEach(sourceResult => {
+          if (sourceResult.opportunities && sourceResult.opportunities.length > 0) {
+            sourceResult.opportunities.forEach(opportunity => {
+              allGrants.push({
+                title: opportunity.title || 'Untitled Grant',
+                funder: opportunity.organization || sourceResult.source,
+                source_name: sourceResult.source,
+                source_url: sourceResult.url,
+                link: opportunity.link,
+                amount_min: opportunity.amount_min,
+                amount_max: opportunity.amount_max,
+                deadline: opportunity.deadline,
+                geography: opportunity.location || opportunity.geography,
+                eligibility: opportunity.eligibility,
+                description: opportunity.description,
+                requirements: opportunity.requirements,
+                contact_info: opportunity.contact || {},
+                ai_enhanced_data: opportunity.ai_enhanced || {},
+                external_id: this.generateDeterministicId(sourceResult.source, opportunity.title, opportunity.link)
+              });
+            });
+          }
+        });
+
+        // Store grants in database
+        const { insertedCount, updatedCount } = await databasePersistence.storeScrapedGrants(allGrants, runId);
+        
+        // Update run record with final stats
+        await databasePersistence.updateScrapeRun(runId, {
+          status: 'completed',
+          sourcesProcessed: results.sourcesProcessed || results.results.length,
+          successfulSources: results.successfulSources || results.results.filter(r => r.opportunities && r.opportunities.length > 0).length,
+          totalOpportunities: results.totalOpportunities || allGrants.length,
+          errors: results.errors || [],
+          completedAt: new Date()
+        });
+
+        logger.info(`Scheduled scrape completed: ${insertedCount} new, ${updatedCount} updated grants stored in database`);
+      } else {
+        // No results found
+        await databasePersistence.updateScrapeRun(runId, {
+          status: 'completed',
+          sourcesProcessed: results?.results?.length || 0,
+          successfulSources: 0,
+          totalOpportunities: 0,
+          errors: results?.errors || [],
+          completedAt: new Date()
+        });
+      }
 
       // Store results in cache for API access
       this.cache.set('latest_denominational_scrape', results, 86400000); // 24 hours
@@ -99,6 +162,20 @@ export class ScheduledScraper {
 
     } catch (error) {
       logger.error(`Scheduled scraping failed: ${error.message}`);
+      
+      // Update run record with error in database
+      try {
+        await databasePersistence.updateScrapeRun(runId, {
+          status: 'failed',
+          sourcesProcessed: 0,
+          successfulSources: 0,
+          totalOpportunities: 0,
+          errors: [{ message: error.message, timestamp: new Date().toISOString() }],
+          completedAt: new Date()
+        });
+      } catch (dbError) {
+        logger.error(`Failed to update failed run in database: ${dbError.message}`);
+      }
       
       // Record failed run
       const failedRun = {
@@ -229,7 +306,7 @@ export class ScheduledScraper {
                 requirements: opportunity.requirements,
                 contact_info: opportunity.contact || {},
                 ai_enhanced_data: opportunity.ai_enhanced || {},
-                external_id: `${sourceResult.source}-${opportunity.title}-${Date.now()}`
+                external_id: this.generateDeterministicId(sourceResult.source, opportunity.title, opportunity.link)
               });
             });
           }
@@ -312,22 +389,52 @@ export class ScheduledScraper {
    */
   async getLatestResults(options = {}) {
     try {
-      // Try to get from database first
+      // Always try database first for consistency
       const dbResults = await databasePersistence.getLatestGrants(options);
+      
+      // Format results to match expected API structure
       if (dbResults && dbResults.grants && dbResults.grants.length > 0) {
-        return {
-          results: dbResults.grants,
-          total: dbResults.total,
+        // Transform database format to expected cache format for API compatibility
+        const formattedResults = {
+          sourcesProcessed: await this.getUniqueSourceCount(),
+          successfulSources: await this.getSuccessfulSourceCount(),
+          totalOpportunities: dbResults.total,
+          lastUpdate: new Date().toISOString(),
           source: 'database',
-          ...options
+          results: this.groupGrantsBySource(dbResults.grants),
+          pagination: {
+            total: dbResults.total,
+            limit: dbResults.limit,
+            offset: dbResults.offset
+          }
         };
+        
+        // Cache the formatted results for faster subsequent access
+        this.cache.set('latest_denominational_scrape', formattedResults, 300000); // 5 minutes
+        
+        return formattedResults;
       }
     } catch (error) {
       logger.warn(`Failed to get results from database, falling back to cache: ${error.message}`);
     }
     
-    // Fallback to cache
-    return this.cache.get('latest_denominational_scrape');
+    // Fallback to cache if database fails or has no results
+    const cachedResults = this.cache.get('latest_denominational_scrape');
+    if (cachedResults) {
+      cachedResults.source = 'cache';
+      return cachedResults;
+    }
+    
+    // Return empty results if neither database nor cache have data
+    return {
+      sourcesProcessed: 0,
+      successfulSources: 0,
+      totalOpportunities: 0,
+      lastUpdate: null,
+      source: 'none',
+      results: [],
+      pagination: { total: 0, limit: options.limit || 50, offset: options.offset || 0 }
+    };
   }
 
   /**
@@ -346,6 +453,77 @@ export class ScheduledScraper {
     
     // Fallback to cache and memory
     return this.cache.get('denominational_scrape_history') || this.runHistory;
+  }
+
+  /**
+   * Generate deterministic ID for grant deduplication
+   */
+  generateDeterministicId(source, title, link) {
+    // Create a deterministic ID based on source, title, and link
+    const crypto = require('crypto');
+    const key = `${source}||${title || ''}||${link || ''}`.toLowerCase().trim();
+    return crypto.createHash('md5').update(key).digest('hex');
+  }
+
+  /**
+   * Helper: Group database grants by source for API compatibility
+   */
+  groupGrantsBySource(grants) {
+    const sourceMap = {};
+    grants.forEach(grant => {
+      const sourceName = grant.source_name;
+      if (!sourceMap[sourceName]) {
+        sourceMap[sourceName] = {
+          source: sourceName,
+          status: 'success',
+          url: grant.source_url,
+          opportunities: []
+        };
+      }
+      
+      // Transform database format to expected opportunity format
+      sourceMap[sourceName].opportunities.push({
+        title: grant.title,
+        organization: grant.funder,
+        link: grant.link,
+        amount_min: parseFloat(grant.amount_min) || null,
+        amount_max: parseFloat(grant.amount_max) || null,
+        deadline: grant.deadline,
+        location: grant.geography,
+        geography: grant.geography,
+        eligibility: grant.eligibility,
+        description: grant.description,
+        requirements: grant.requirements,
+        contact: grant.contact_info,
+        ai_enhanced: grant.ai_enhanced_data
+      });
+    });
+    
+    return Object.values(sourceMap);
+  }
+
+  /**
+   * Helper: Get count of unique sources from database
+   */
+  async getUniqueSourceCount() {
+    try {
+      const status = await databasePersistence.getScrapingStatus();
+      return status.lastRun?.sources_processed || 0;
+    } catch (error) {
+      return 0;
+    }
+  }
+
+  /**
+   * Helper: Get count of successful sources from database
+   */
+  async getSuccessfulSourceCount() {
+    try {
+      const status = await databasePersistence.getScrapingStatus();
+      return status.lastRun?.successful_sources || 0;
+    } catch (error) {
+      return 0;
+    }
   }
 
   /**
