@@ -1230,3 +1230,77 @@ class ImpactIntake(db.Model):
             'payload': self.payload,
             'created_at': self.created_at.isoformat() if self.created_at else None
         }
+
+class Application(db.Model):
+    """Grant application drafts and submissions"""
+    __tablename__ = "applications"
+    
+    id = db.Column(db.Integer, primary_key=True)
+    grant_id = db.Column(db.Integer, db.ForeignKey("grants.id"), nullable=False)
+    org_id = db.Column(db.Integer, db.ForeignKey("organizations.id"), nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
+    
+    # Application metadata
+    title = db.Column(db.String(500))
+    status = db.Column(db.String(50), default='draft')  # draft, in_progress, submitted, awarded, declined
+    submission_date = db.Column(db.DateTime)
+    
+    # Content sections - stored as JSON for flexibility
+    sections_completed = db.Column(db.JSON, default=dict)  # Track which sections are complete
+    
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    
+    # Relationships
+    grant = db.relationship("Grant", backref="applications")
+    content_sections = db.relationship("ApplicationContent", backref="application", cascade="all, delete-orphan")
+    
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'grant_id': self.grant_id,
+            'org_id': self.org_id,
+            'user_id': self.user_id,
+            'title': self.title,
+            'status': self.status,
+            'submission_date': self.submission_date.isoformat() if self.submission_date else None,
+            'sections_completed': self.sections_completed or {},
+            'created_at': self.created_at.isoformat() if self.created_at else None,
+            'updated_at': self.updated_at.isoformat() if self.updated_at else None
+        }
+
+class ApplicationContent(db.Model):
+    """Content sections for grant applications"""
+    __tablename__ = "application_content"
+    
+    id = db.Column(db.Integer, primary_key=True)
+    application_id = db.Column(db.Integer, db.ForeignKey("applications.id"), nullable=False)
+    
+    # Section information
+    section = db.Column(db.String(100), nullable=False)  # need_statement, approach, budget_narrative, etc.
+    content = db.Column(db.Text, nullable=False)
+    
+    # Source tracking - which Smart Tool generated this
+    source_tool = db.Column(db.String(50))  # case_support, grant_pitch, impact_report, etc.
+    tool_usage_id = db.Column(db.String(100))  # For tracking back to generation session
+    
+    # Version control
+    version = db.Column(db.Integer, default=1)
+    is_current = db.Column(db.Boolean, default=True)
+    
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'application_id': self.application_id,
+            'section': self.section,
+            'content': self.content,
+            'source_tool': self.source_tool,
+            'tool_usage_id': self.tool_usage_id,
+            'version': self.version,
+            'is_current': self.is_current,
+            'created_at': self.created_at.isoformat() if self.created_at else None,
+            'updated_at': self.updated_at.isoformat() if self.updated_at else None
+        }

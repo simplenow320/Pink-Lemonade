@@ -4,10 +4,9 @@ Handles 8-stage grant pipeline operations
 """
 
 from flask import Blueprint, jsonify, request
-# from flask_login import login_required, current_user
-# Temporarily disabled login requirements
 from app.services.workflow_manager import WorkflowManager
-from app.models import Grant, Organization, db
+from app.api.auth import login_required, get_current_user
+from app.models import Grant, Organization, Application, ApplicationContent, db
 import logging
 
 logger = logging.getLogger(__name__)
@@ -16,11 +15,31 @@ workflow_bp = Blueprint('workflow', __name__, url_prefix='/api/workflow')
 workflow_manager = WorkflowManager()
 
 @workflow_bp.route('/pipeline/<int:org_id>', methods=['GET'])
-# @login_required
+@login_required
 def get_pipeline(org_id):
     """Get complete pipeline status for organization"""
     try:
+        # Get current authenticated user
+        current_user = get_current_user()
+        if not current_user:
+            return jsonify({'success': False, 'error': 'Authentication required'}), 401
+        
+        # Get user's organization
+        user_org = Organization.query.filter(
+            (Organization.user_id == current_user.id) | 
+            (Organization.created_by_user_id == current_user.id)
+        ).first()
+        
+        if not user_org:
+            return jsonify({
+                'success': False,
+                'error': 'Access denied: No organization associated with user'
+            }), 403
+        
         # Verify user has access to this org
+        if org_id != user_org.id:
+            return jsonify({'success': False, 'error': 'Access denied'}), 403
+        
         org = Organization.query.get(org_id)
         if not org:
             return jsonify({'success': False, 'error': 'Organization not found'}), 404
@@ -34,10 +53,15 @@ def get_pipeline(org_id):
         return jsonify({'success': False, 'error': str(e)}), 500
 
 @workflow_bp.route('/move-stage', methods=['POST'])
-# @login_required
+@login_required
 def move_grant_stage():
     """Move a grant to a new stage"""
     try:
+        # Get current authenticated user
+        current_user = get_current_user()
+        if not current_user:
+            return jsonify({'success': False, 'error': 'Authentication required'}), 401
+        
         data = request.get_json() or {}
         grant_id = data.get('grant_id')
         new_stage = data.get('stage')
@@ -48,6 +72,26 @@ def move_grant_stage():
                 'success': False,
                 'error': 'grant_id and stage are required'
             }), 400
+        
+        # Get user's organization
+        user_org = Organization.query.filter(
+            (Organization.user_id == current_user.id) | 
+            (Organization.created_by_user_id == current_user.id)
+        ).first()
+        
+        if not user_org:
+            return jsonify({
+                'success': False,
+                'error': 'Access denied: No organization associated with user'
+            }), 403
+        
+        # Verify grant exists and belongs to user's organization
+        grant = Grant.query.get(grant_id)
+        if not grant:
+            return jsonify({'success': False, 'error': 'Grant not found'}), 404
+        
+        if not grant.org_id or grant.org_id != user_org.id:
+            return jsonify({'success': False, 'error': 'Access denied'}), 403
         
         # Move grant to new stage
         result = workflow_manager.move_to_stage(grant_id, new_stage, notes)
@@ -62,10 +106,15 @@ def move_grant_stage():
         return jsonify({'success': False, 'error': str(e)}), 500
 
 @workflow_bp.route('/batch-move', methods=['POST'])
-# @login_required
+@login_required
 def batch_move_stages():
     """Move multiple grants to same stage"""
     try:
+        # Get current authenticated user
+        current_user = get_current_user()
+        if not current_user:
+            return jsonify({'success': False, 'error': 'Authentication required'}), 401
+        
         data = request.get_json() or {}
         grant_ids = data.get('grant_ids', [])
         new_stage = data.get('stage')
@@ -76,6 +125,27 @@ def batch_move_stages():
                 'error': 'grant_ids and stage are required'
             }), 400
         
+        # Get user's organization
+        user_org = Organization.query.filter(
+            (Organization.user_id == current_user.id) | 
+            (Organization.created_by_user_id == current_user.id)
+        ).first()
+        
+        if not user_org:
+            return jsonify({
+                'success': False,
+                'error': 'Access denied: No organization associated with user'
+            }), 403
+        
+        # Verify all grants exist and belong to user's organization
+        for grant_id in grant_ids:
+            grant = Grant.query.get(grant_id)
+            if not grant:
+                return jsonify({'success': False, 'error': f'Grant {grant_id} not found'}), 404
+            
+            if not grant.org_id or grant.org_id != user_org.id:
+                return jsonify({'success': False, 'error': 'Access denied'}), 403
+        
         result = workflow_manager.batch_move(grant_ids, new_stage)
         return jsonify(result)
         
@@ -84,10 +154,35 @@ def batch_move_stages():
         return jsonify({'success': False, 'error': str(e)}), 500
 
 @workflow_bp.route('/checklist/<int:grant_id>', methods=['GET'])
-# @login_required
+@login_required
 def get_checklist(grant_id):
     """Get checklist for grant's current stage"""
     try:
+        # Get current authenticated user
+        current_user = get_current_user()
+        if not current_user:
+            return jsonify({'success': False, 'error': 'Authentication required'}), 401
+        
+        # Get user's organization
+        user_org = Organization.query.filter(
+            (Organization.user_id == current_user.id) | 
+            (Organization.created_by_user_id == current_user.id)
+        ).first()
+        
+        if not user_org:
+            return jsonify({
+                'success': False,
+                'error': 'Access denied: No organization associated with user'
+            }), 403
+        
+        # Verify grant exists and belongs to user's organization
+        grant = Grant.query.get(grant_id)
+        if not grant:
+            return jsonify({'success': False, 'error': 'Grant not found'}), 404
+        
+        if not grant.org_id or grant.org_id != user_org.id:
+            return jsonify({'success': False, 'error': 'Access denied'}), 403
+        
         result = workflow_manager.get_stage_checklist(grant_id)
         
         if result['success']:
@@ -100,10 +195,15 @@ def get_checklist(grant_id):
         return jsonify({'success': False, 'error': str(e)}), 500
 
 @workflow_bp.route('/checklist/update', methods=['POST'])
-# @login_required
+@login_required
 def update_checklist():
     """Update a checklist item"""
     try:
+        # Get current authenticated user
+        current_user = get_current_user()
+        if not current_user:
+            return jsonify({'success': False, 'error': 'Authentication required'}), 401
+        
         data = request.get_json() or {}
         grant_id = data.get('grant_id')
         item_id = data.get('item_id')
@@ -114,6 +214,26 @@ def update_checklist():
                 'success': False,
                 'error': 'grant_id and item_id are required'
             }), 400
+        
+        # Get user's organization
+        user_org = Organization.query.filter(
+            (Organization.user_id == current_user.id) | 
+            (Organization.created_by_user_id == current_user.id)
+        ).first()
+        
+        if not user_org:
+            return jsonify({
+                'success': False,
+                'error': 'Access denied: No organization associated with user'
+            }), 403
+        
+        # Verify grant exists and belongs to user's organization
+        grant = Grant.query.get(grant_id)
+        if not grant:
+            return jsonify({'success': False, 'error': 'Grant not found'}), 404
+        
+        if not grant.org_id or grant.org_id != user_org.id:
+            return jsonify({'success': False, 'error': 'Access denied'}), 403
         
         result = workflow_manager.update_checklist_item(grant_id, item_id, completed)
         return jsonify(result)
@@ -150,7 +270,7 @@ def get_stages():
         return jsonify({'success': False, 'error': str(e)}), 500
 
 @workflow_bp.route('/automation-rules', methods=['GET'])
-# @login_required
+@login_required
 def get_automation_rules():
     """Get automation rules for each stage"""
     try:
@@ -173,13 +293,34 @@ def get_automation_rules():
         return jsonify({'success': False, 'error': str(e)}), 500
 
 @workflow_bp.route('/quick-actions/<int:grant_id>', methods=['GET'])
-# @login_required
+@login_required
 def get_quick_actions(grant_id):
     """Get available quick actions for a grant"""
     try:
+        # Get current authenticated user
+        current_user = get_current_user()
+        if not current_user:
+            return jsonify({'success': False, 'error': 'Authentication required'}), 401
+        
+        # Get user's organization
+        user_org = Organization.query.filter(
+            (Organization.user_id == current_user.id) | 
+            (Organization.created_by_user_id == current_user.id)
+        ).first()
+        
+        if not user_org:
+            return jsonify({
+                'success': False,
+                'error': 'Access denied: No organization associated with user'
+            }), 403
+        
+        # Verify grant exists and belongs to user's organization
         grant = Grant.query.get(grant_id)
         if not grant:
             return jsonify({'success': False, 'error': 'Grant not found'}), 404
+        
+        if not grant.org_id or grant.org_id != user_org.id:
+            return jsonify({'success': False, 'error': 'Access denied'}), 403
         
         current_stage = grant.application_stage or 'discovery'
         stage_info = WorkflowManager.STAGES.get(current_stage, {})
@@ -224,3 +365,139 @@ def get_quick_actions(grant_id):
     except Exception as e:
         logger.error(f"Error getting quick actions: {e}")
         return jsonify({'success': False, 'error': str(e)}), 500
+
+@workflow_bp.route('/applications/<int:grant_id>/content', methods=['POST'])
+@login_required
+def save_application_content(grant_id):
+    """Save Smart Tools content to grant application"""
+    try:
+        # Get current authenticated user
+        current_user = get_current_user()
+        if not current_user:
+            return jsonify({'success': False, 'error': 'Authentication required'}), 401
+        
+        data = request.get_json() or {}
+        section = data.get('section')
+        content = data.get('content')
+        source_tool = data.get('source_tool')
+        tool_usage_id = data.get('tool_usage_id')
+        
+        # Validate required fields
+        if not section or not content:
+            return jsonify({
+                'success': False,
+                'error': 'Section and content are required'
+            }), 400
+        
+        # Validate section name against allowed sections
+        VALID_SECTIONS = {
+            'need_statement', 'approach', 'budget_narrative', 'executive_summary',
+            'impact_measurement', 'organizational_capacity', 'sustainability',
+            'evaluation_plan', 'timeline', 'partnerships', 'risk_management',
+            'project_description', 'goals_objectives', 'methodology'
+        }
+        
+        if section not in VALID_SECTIONS:
+            return jsonify({
+                'success': False,
+                'error': 'Invalid section name'
+            }), 400
+        
+        # Verify grant exists
+        grant = Grant.query.get(grant_id)
+        if not grant:
+            return jsonify({'success': False, 'error': 'Resource not found'}), 404
+        
+        # Get user's organization
+        from app.models import Organization
+        user_org = Organization.query.filter(
+            (Organization.user_id == current_user.id) | 
+            (Organization.created_by_user_id == current_user.id)
+        ).first()
+        
+        if not user_org:
+            return jsonify({
+                'success': False,
+                'error': 'Access denied: No organization associated with user'
+            }), 403
+        
+        # Verify grant ownership - user's org must match grant's org
+        if not grant.org_id or grant.org_id != user_org.id:
+            return jsonify({
+                'success': False,
+                'error': 'Access denied'
+            }), 403
+        
+        # Find or create application
+        application = Application.query.filter_by(grant_id=grant_id).first()
+        if not application:
+            application = Application(
+                grant_id=grant_id,
+                org_id=user_org.id,
+                user_id=current_user.id,
+                title=f"Application for {grant.title}",
+                status='draft'
+            )
+            db.session.add(application)
+            db.session.flush()  # Get the application.id
+        
+        # Verify application ownership
+        if application.org_id != user_org.id:
+            return jsonify({
+                'success': False,
+                'error': 'Access denied'
+            }), 403
+        
+        # Check for existing content in this section
+        existing_content = ApplicationContent.query.filter_by(
+            application_id=application.id,
+            section=section,
+            is_current=True
+        ).first()
+        
+        # Calculate next version number without mutating existing content
+        next_version = 1
+        if existing_content:
+            next_version = existing_content.version + 1
+            # Mark existing content as not current
+            existing_content.is_current = False
+        
+        # Create new content entry
+        new_content = ApplicationContent(
+            application_id=application.id,
+            section=section,
+            content=content,
+            source_tool=source_tool,
+            tool_usage_id=tool_usage_id,
+            version=next_version,
+            is_current=True
+        )
+        db.session.add(new_content)
+        
+        # Update application sections_completed using proper dict assignment for JSON persistence
+        sections_completed = application.sections_completed or {}
+        sections_completed[section] = True
+        application.sections_completed = sections_completed
+        
+        # Update application status
+        if application.status == 'draft':
+            application.status = 'in_progress'
+        
+        db.session.commit()
+        
+        return jsonify({
+            'success': True,
+            'application_id': application.id,
+            'content_id': new_content.id,
+            'section': section,
+            'deep_link': f'/grants/{grant_id}/application',
+            'message': f'Content saved to {section} section successfully'
+        })
+        
+    except Exception as e:
+        db.session.rollback()
+        logger.error(f"Error saving application content for grant {grant_id}: {str(e)}")
+        return jsonify({
+            'success': False, 
+            'error': 'Failed to save application content'
+        }), 500
