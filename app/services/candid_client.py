@@ -123,21 +123,16 @@ class GrantsClient:
         import logging
         logger = logging.getLogger(__name__)
         
-        # Circuit breaker: disable Candid calls if DEMO_MODE, CANDID_ENABLED=false, or quota exhausted
-        import os
-        if os.environ.get('DEMO_MODE', 'false').lower() == 'true':
-            return {"results": [], "count": 0, "message": "Candid API disabled in demo mode"}
-        if os.environ.get('CANDID_ENABLED', 'true').lower() == 'false':
-            return {"results": [], "count": 0, "message": "Candid API disabled by CANDID_ENABLED=false"}
-        
         try:
+            
             headers = {
                 'Accept': 'application/json',
                 'Subscription-Key': self.api_key
             }
             
-            logger.debug(f"Making {method} request to: {url}")
-            logger.debug(f"Parameters: {params}")
+            logger.warning(f"CANDID DEBUG: Making {method} request to: {url}")
+            logger.warning(f"CANDID DEBUG: Parameters: {params}")
+            logger.warning(f"CANDID DEBUG: Headers: {headers}")
             
             if method == 'POST':
                 headers['Content-Type'] = 'application/json'
@@ -145,10 +140,19 @@ class GrantsClient:
             else:
                 response = requests.get(url, params=params, headers=headers, timeout=30)
             
-            logger.debug(f"Response status: {response.status_code}")
+            logger.warning(f"CANDID DEBUG: Response status: {response.status_code}")
+            logger.warning(f"CANDID DEBUG: Response headers: {response.headers}")
             
             if response.status_code == 200:
-                return response.json()
+                json_data = response.json()
+                logger.warning(f"CANDID DEBUG: Response data keys: {list(json_data.keys()) if isinstance(json_data, dict) else 'Not dict'}")
+                if isinstance(json_data, dict) and 'data' in json_data:
+                    data_section = json_data['data']
+                    if isinstance(data_section, dict) and 'rows' in data_section:
+                        logger.warning(f"CANDID DEBUG: Found {len(data_section['rows'])} grants in response")
+                    else:
+                        logger.warning(f"CANDID DEBUG: No 'rows' in data section. Data keys: {list(data_section.keys()) if isinstance(data_section, dict) else 'Not dict'}")
+                return json_data
             elif response.status_code == 404:
                 # 404 means no results found for the search parameters - not an error
                 # As per Candid docs: broaden search parameters if this occurs
@@ -199,10 +203,10 @@ class GrantsClient:
         
         url = f"{self.base_url}/transactions"  # Correct endpoint
         
-        # Check cache first
-        cached_result = self.cache.get('GET', url, params)
-        if cached_result is not None:
-            return cached_result
+        # Check cache first (temporarily disabled for debugging)
+        # cached_result = self.cache.get('GET', url, params)
+        # if cached_result is not None:
+        #     return cached_result
         
         # Make API request
         response_data = self._make_request(url, params, 'GET')
@@ -229,16 +233,21 @@ class GrantsClient:
                 transactions.append({
                     'funder_name': grant.get('funder_name', ''),
                     'recipient_name': grant.get('recip_name', ''),
-                    'amount': grant.get('amount', 0),
+                    'amount': grant.get('amount_usd', 0),  # Fixed field name
                     'grant_date': grant.get('year_issued', ''),
-                    'description': grant.get('description', ''),
+                    'description': grant.get('grant_description', ''),  # Fixed field name
                     'source': 'candid_api',
                     'funder_key': grant.get('funder_key', ''),
                     'recip_key': grant.get('recip_key', ''),
                     'funder_city': grant.get('funder_city', ''),
                     'funder_state': grant.get('funder_state', ''),
                     'recip_city': grant.get('recip_city', ''),
-                    'recip_state': grant.get('recip_state', '')
+                    'recip_state': grant.get('recip_state', ''),
+                    'funder_ein': grant.get('funder_ein', ''),
+                    'recipient_ein': grant.get('recip_ein', ''),
+                    'grant_subject': grant.get('grant_subject_tran', ''),
+                    'grant_population': grant.get('grant_population_tran', ''),
+                    'grant_strategy': grant.get('grant_strategy_tran', '')
                 })
         
         # Cache and return results

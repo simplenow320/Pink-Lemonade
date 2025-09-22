@@ -13,20 +13,29 @@ bp = Blueprint('candid', __name__, url_prefix='/api/candid')
 def search_grants():
     """Search Candid grants database using transactions endpoint"""
     try:
+        logger.warning(f"FLASK DEBUG: Starting grants search endpoint")
         client = get_grants_client()
+        logger.warning(f"FLASK DEBUG: Got client, API key available: {bool(client.api_key)}")
         
         query = request.args.get('q', '')
         location = request.args.get('location', type=int)  # Geoname ID
         page = int(request.args.get('page', 1))
         
+        logger.warning(f"FLASK DEBUG: Query: {query}, Location: {location}, Page: {page}")
+        
         if not query:
             return jsonify({"error": "Query parameter 'q' is required"}), 400
         
         # Use the transactions method with proper parameters
+        logger.warning(f"FLASK DEBUG: About to call client.transactions...")
         if location:
             result = client.transactions(query=query, location=location, page=page)
         else:
             result = client.transactions(query=query, page=page)
+        
+        logger.warning(f"FLASK DEBUG: Got result type: {type(result)}, length: {len(result) if hasattr(result, '__len__') else 'No length'}")
+        if result:
+            logger.warning(f"FLASK DEBUG: First grant keys: {list(result[0].keys()) if result else 'Empty'}")
         
         # Format response
         if result:
