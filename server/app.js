@@ -30,6 +30,7 @@ import rateLimitingMiddleware from './middleware/rateLimiting.js';
 import healthRoutes from './routes/health.js';
 import sourcesRoutes from './routes/sources.js';
 import grantsRoutes from './routes/grants.js';
+import denominationalRoutes from './routes/denominational.js';
 
 // Import response formatting utilities
 import {
@@ -165,6 +166,7 @@ app.use((req, res, next) => {
 app.use('/api/health', healthRoutes);
 app.use('/api/sources', sourcesRoutes);
 app.use('/api/grants', grantsRoutes);
+app.use('/api/denominational', denominationalRoutes);
 
 /**
  * Configuration endpoints for internal use
@@ -385,6 +387,3 @@ server.on('error', (error) => {
 });
 
 export default app;
-      const apiStatus = await apiManager.getApiStatus();
-      
-      // Get detailed source information
