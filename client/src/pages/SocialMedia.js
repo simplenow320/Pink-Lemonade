@@ -1,16 +1,22 @@
-import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { Link, useSearchParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useOrganization } from '../hooks/useOrganization';
+import { getGrant } from '../utils/api';
 
 const SocialMedia = () => {
   const { organization, loading: orgLoading, error: orgError } = useOrganization();
+  const [searchParams] = useSearchParams();
+  const grantId = searchParams.get('grantId');
   const [loading, setLoading] = useState(false);
   const [generatedContent, setGeneratedContent] = useState('');
   const [editableContent, setEditableContent] = useState('');
   const [error, setError] = useState('');
   const [platform, setPlatform] = useState('twitter');
   const [topic, setTopic] = useState('');
+  const [grant, setGrant] = useState(null);
+  const [grantLoading, setGrantLoading] = useState(false);
+  const [grantError, setGrantError] = useState('');
 
   const platforms = [
     {
@@ -49,6 +55,32 @@ const SocialMedia = () => {
 
   const selectedPlatform = platforms.find(p => p.id === platform);
 
+  // Fetch grant details when grantId is present
+  useEffect(() => {
+    if (grantId) {
+      const fetchGrantDetails = async () => {
+        try {
+          setGrantLoading(true);
+          setGrantError('');
+          const grantData = await getGrant(grantId);
+          setGrant(grantData.grant);
+          
+          // Pre-fill topic with grant-specific content
+          if (grantData.grant.title && grantData.grant.funder) {
+            setTopic(`Celebrating our grant award: ${grantData.grant.title} from ${grantData.grant.funder}`);
+          }
+        } catch (error) {
+          console.error('Error fetching grant details:', error);
+          setGrantError('Failed to load grant details');
+        } finally {
+          setGrantLoading(false);
+        }
+      };
+      
+      fetchGrantDetails();
+    }
+  }, [grantId]);
+
   const generateSocialPost = async () => {
     setLoading(true);
     setError('');
@@ -61,7 +93,8 @@ const SocialMedia = () => {
         },
         body: JSON.stringify({
           platform: platform,
-          topic: topic || 'General organizational update'
+          topic: topic || 'General organizational update',
+          grant_id: grantId || null
         }),
       });
 
@@ -127,6 +160,26 @@ const SocialMedia = () => {
             <p className="text-xl text-gray-600">
               Create platform-optimized social media content for your organization
             </p>
+            
+            {/* Grant Context Banner */}
+            {grant && (
+              <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-md">
+                <p className="text-blue-800">
+                  <span className="font-medium">Grant Context:</span> {grant.title}
+                </p>
+                <div className="text-sm text-blue-600 mt-1">
+                  <span>Funder: {grant.funder}</span>
+                  <span className="ml-4">Creating social posts to celebrate this grant</span>
+                </div>
+              </div>
+            )}
+            
+            {grantError && (
+              <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-md">
+                <p className="text-red-700">{grantError}</p>
+              </div>
+            )}
+            
             {organization && (
               <div className="mt-4 p-3 bg-cyan-50 border border-cyan-200 rounded-md">
                 <p className="text-cyan-800">

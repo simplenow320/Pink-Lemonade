@@ -1,10 +1,13 @@
-import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { Link, useSearchParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useOrganization } from '../hooks/useOrganization';
+import { getGrant } from '../utils/api';
 
 const Newsletter = () => {
   const { organization, loading: orgLoading, error: orgError } = useOrganization();
+  const [searchParams] = useSearchParams();
+  const grantId = searchParams.get('grantId');
   const [loading, setLoading] = useState(false);
   const [generatedContent, setGeneratedContent] = useState('');
   const [editableContent, setEditableContent] = useState('');
@@ -13,6 +16,34 @@ const Newsletter = () => {
   const [monthYear, setMonthYear] = useState('');
   const [focusArea, setFocusArea] = useState('');
   const [targetAudience, setTargetAudience] = useState('');
+  const [grant, setGrant] = useState(null);
+  const [grantLoading, setGrantLoading] = useState(false);
+  const [grantError, setGrantError] = useState('');
+
+  // Fetch grant details when grantId is present
+  useEffect(() => {
+    if (grantId) {
+      const fetchGrantDetails = async () => {
+        try {
+          setGrantLoading(true);
+          setGrantError('');
+          const grantData = await getGrant(grantId);
+          setGrant(grantData.grant);
+          
+          // Pre-fill form fields with grant-specific content
+          setTheme('Grant Announcement');
+          setFocusArea('Grant announcement and funding success');
+        } catch (error) {
+          console.error('Error fetching grant details:', error);
+          setGrantError('Failed to load grant details');
+        } finally {
+          setGrantLoading(false);
+        }
+      };
+      
+      fetchGrantDetails();
+    }
+  }, [grantId]);
 
   const generateNewsletter = async () => {
     setLoading(true);
@@ -28,7 +59,8 @@ const Newsletter = () => {
           theme: theme || 'Community Impact',
           month_year: monthYear || new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' }),
           focus_area: focusArea || 'General updates and achievements',
-          target_audience: targetAudience || 'General stakeholders'
+          target_audience: targetAudience || 'General stakeholders',
+          grant_id: grantId || null
         }),
       });
 
@@ -118,6 +150,26 @@ const Newsletter = () => {
             <p className="text-xl text-gray-600">
               AI-powered newsletter content creation for stakeholder communication and engagement
             </p>
+            
+            {/* Grant Context Banner */}
+            {grant && (
+              <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-md">
+                <p className="text-blue-800">
+                  <span className="font-medium">Grant Context:</span> {grant.title}
+                </p>
+                <div className="text-sm text-blue-600 mt-1">
+                  <span>Funder: {grant.funder}</span>
+                  <span className="ml-4">Creating newsletter to announce this grant</span>
+                </div>
+              </div>
+            )}
+            
+            {grantError && (
+              <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-md">
+                <p className="text-red-700">{grantError}</p>
+              </div>
+            )}
+            
             {organization && (
               <div className="mt-4 p-3 bg-purple-50 border border-purple-200 rounded-md">
                 <p className="text-purple-800">

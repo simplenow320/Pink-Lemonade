@@ -107,6 +107,17 @@ def generate_case():
         org_id = org.id
         
         data = request.get_json() or {}
+        grant_id = data.get('grant_id')
+        
+        # Validate grant ownership if grant_id is provided
+        if grant_id:
+            grant = Grant.query.filter_by(id=grant_id, org_id=org_id).first()
+            if not grant:
+                return jsonify({
+                    'success': False,
+                    'error': 'Grant not found or access denied'
+                }), 403
+        
         campaign_details = {
             'goal': data.get('campaign_goal', 100000),
             'purpose': data.get('campaign_purpose', 'general support'),
@@ -114,7 +125,7 @@ def generate_case():
             'target_donors': data.get('target_donors', 'major donors')
         }
         
-        result = smart_tools.generate_case_for_support(org_id, campaign_details)
+        result = smart_tools.generate_case_for_support(org_id, campaign_details, grant_id=grant_id)
         
         if result['success']:
             return jsonify(result)
@@ -229,6 +240,17 @@ def generate_thank_you():
         org_id = org.id
         
         data = request.get_json() or {}
+        grant_id = data.get('grant_id')
+        
+        # Validate grant ownership if grant_id is provided
+        if grant_id:
+            grant = Grant.query.filter_by(id=grant_id, org_id=org_id).first()
+            if not grant:
+                return jsonify({
+                    'success': False,
+                    'error': 'Grant not found or access denied'
+                }), 403
+        
         donor_info = {
             'name': data.get('donor_name', 'Valued Supporter'),
             'amount': data.get('donation_amount', 0),
@@ -236,7 +258,7 @@ def generate_thank_you():
             'is_recurring': data.get('is_recurring', False)
         }
         
-        result = smart_tools.generate_thank_you_letter(org_id, donor_info)
+        result = smart_tools.generate_thank_you_letter(org_id, donor_info, grant_id=grant_id)
         
         if result['success']:
             return jsonify(result)
@@ -277,8 +299,18 @@ def generate_social_post():
         org_id = org.id
         
         data = request.get_json() or {}
+        grant_id = data.get('grant_id')
         platform = data.get('platform', 'twitter')
         topic = data.get('topic', 'impact story')
+        
+        # Validate grant ownership if grant_id is provided
+        if grant_id:
+            grant = Grant.query.filter_by(id=grant_id, org_id=org_id).first()
+            if not grant:
+                return jsonify({
+                    'success': False,
+                    'error': 'Grant not found or access denied'
+                }), 403
         
         if platform not in ['twitter', 'facebook', 'instagram', 'linkedin']:
             return jsonify({
@@ -286,7 +318,7 @@ def generate_social_post():
                 'error': 'Invalid platform. Use: twitter, facebook, instagram, or linkedin'
             }), 400
         
-        result = smart_tools.generate_social_media_post(org_id, platform, topic)
+        result = smart_tools.generate_social_media_post(org_id, platform, topic, grant_id=grant_id)
         
         if result['success']:
             return jsonify(result)
@@ -327,6 +359,17 @@ def generate_newsletter():
         org_id = org.id
         
         data = request.get_json() or {}
+        grant_id = data.get('grant_id')
+        
+        # Validate grant ownership if grant_id is provided
+        if grant_id:
+            grant = Grant.query.filter_by(id=grant_id, org_id=org_id).first()
+            if not grant:
+                return jsonify({
+                    'success': False,
+                    'error': 'Grant not found or access denied'
+                }), 403
+        
         newsletter_details = {
             'theme': data.get('theme', 'Monthly Impact Update'),
             'month_year': data.get('month_year'),
@@ -334,7 +377,7 @@ def generate_newsletter():
             'target_audience': data.get('target_audience', 'donors and supporters')
         }
         
-        result = smart_tools.generate_newsletter_content(org_id, newsletter_details)
+        result = smart_tools.generate_newsletter_content(org_id, newsletter_details, grant_id=grant_id)
         
         if result['success']:
             return jsonify(result)

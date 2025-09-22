@@ -1,10 +1,13 @@
-import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { Link, useSearchParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useOrganization } from '../hooks/useOrganization';
+import { getGrant } from '../utils/api';
 
 const ThankYouLetter = () => {
   const { organization, loading: orgLoading, error: orgError } = useOrganization();
+  const [searchParams] = useSearchParams();
+  const grantId = searchParams.get('grantId');
   const [loading, setLoading] = useState(false);
   const [generatedContent, setGeneratedContent] = useState('');
   const [editableContent, setEditableContent] = useState('');
@@ -13,6 +16,35 @@ const ThankYouLetter = () => {
   const [donationAmount, setDonationAmount] = useState('');
   const [donationPurpose, setDonationPurpose] = useState('');
   const [isRecurring, setIsRecurring] = useState(false);
+  const [grant, setGrant] = useState(null);
+  const [grantLoading, setGrantLoading] = useState(false);
+  const [grantError, setGrantError] = useState('');
+
+  // Fetch grant details when grantId is present
+  useEffect(() => {
+    if (grantId) {
+      const fetchGrantDetails = async () => {
+        try {
+          setGrantLoading(true);
+          setGrantError('');
+          const grantData = await getGrant(grantId);
+          setGrant(grantData.grant);
+          
+          // Pre-fill donor name with funder name if available
+          if (grantData.grant.funder) {
+            setDonorName(grantData.grant.funder);
+          }
+        } catch (error) {
+          console.error('Error fetching grant details:', error);
+          setGrantError('Failed to load grant details');
+        } finally {
+          setGrantLoading(false);
+        }
+      };
+      
+      fetchGrantDetails();
+    }
+  }, [grantId]);
 
   const generateThankYouLetter = async () => {
     setLoading(true);
@@ -28,7 +60,8 @@ const ThankYouLetter = () => {
           donor_name: donorName || 'Valued Donor',
           donation_amount: donationAmount || 'Your generous donation',
           donation_purpose: donationPurpose || 'General operating support',
-          is_recurring: isRecurring
+          is_recurring: isRecurring,
+          grant_id: grantId || null
         }),
       });
 
@@ -82,6 +115,26 @@ const ThankYouLetter = () => {
             <p className="text-xl text-gray-600">
               AI-powered personalized thank you letters to show appreciation for your donors' generosity
             </p>
+            
+            {/* Grant Context Banner */}
+            {grant && (
+              <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-md">
+                <p className="text-blue-800">
+                  <span className="font-medium">Grant Context:</span> {grant.title}
+                </p>
+                <div className="text-sm text-blue-600 mt-1">
+                  <span>Funder: {grant.funder}</span>
+                  <span className="ml-4">Creating thank you letter for this grant award</span>
+                </div>
+              </div>
+            )}
+            
+            {grantError && (
+              <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-md">
+                <p className="text-red-700">{grantError}</p>
+              </div>
+            )}
+            
             {organization && (
               <div className="mt-4 p-3 bg-pink-50 border border-pink-200 rounded-md">
                 <p className="text-pink-800">

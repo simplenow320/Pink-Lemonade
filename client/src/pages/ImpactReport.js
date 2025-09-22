@@ -1,10 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useOrganization } from '../hooks/useOrganization';
+import { getGrant } from '../utils/api';
 
 const ImpactReport = () => {
   const { organization, loading: orgLoading, error: orgError } = useOrganization();
+  const [searchParams] = useSearchParams();
+  const grantId = searchParams.get('grantId');
   const [loading, setLoading] = useState(false);
   const [generatedContent, setGeneratedContent] = useState('');
   const [editableContent, setEditableContent] = useState('');
@@ -16,6 +19,9 @@ const ImpactReport = () => {
   const [metrics, setMetrics] = useState([
     { name: '', target: '', actual: '' }
   ]);
+  const [grant, setGrant] = useState(null);
+  const [grantLoading, setGrantLoading] = useState(false);
+  const [grantError, setGrantError] = useState('');
 
   const addMetric = () => {
     setMetrics([...metrics, { name: '', target: '', actual: '' }]);
@@ -30,6 +36,40 @@ const ImpactReport = () => {
     updated[index][field] = value;
     setMetrics(updated);
   };
+
+  // Fetch grant details when grantId is present
+  useEffect(() => {
+    if (grantId) {
+      const fetchGrantDetails = async () => {
+        try {
+          setGrantLoading(true);
+          setGrantError('');
+          const grantData = await getGrant(grantId);
+          setGrant(grantData.grant);
+          
+          // Pre-fill form fields from grant data - set report type to Grant Progress Report
+          setReportType('Grant Progress Report');
+          
+          // Add grant-specific metrics if available
+          if (grantData.grant.amount_max || grantData.grant.amount_min) {
+            const fundingAmount = grantData.grant.amount_max || grantData.grant.amount_min;
+            setMetrics(prevMetrics => [
+              ...prevMetrics.filter(m => m.name), // Keep existing metrics with names
+              { name: 'Grant Funding Secured', target: fundingAmount.toString(), actual: '' },
+              { name: 'Grant Milestones Completed', target: '100%', actual: '' }
+            ]);
+          }
+        } catch (error) {
+          console.error('Error fetching grant details:', error);
+          setGrantError('Failed to load grant details');
+        } finally {
+          setGrantLoading(false);
+        }
+      };
+      
+      fetchGrantDetails();
+    }
+  }, [grantId]);
 
   const generateImpactReport = async () => {
     setLoading(true);
@@ -54,7 +94,8 @@ const ImpactReport = () => {
             funding_secured: 250000,
             beneficiaries_served: 500,
             programs_delivered: 5
-          }
+          },
+          grant_id: grantId || null
         }),
       });
 
@@ -112,6 +153,38 @@ const ImpactReport = () => {
             <p className="text-xl text-gray-600">
               Generate comprehensive reports showing your programs' actual outcomes and community impact
             </p>
+            
+            {/* Grant Context Banner */}
+            {grant && (
+              <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-md">
+                <p className="text-blue-800">
+                  <span className="font-medium">Grant Context:</span> {grant.title}
+                </p>
+                <div className="text-sm text-blue-600 mt-1">
+                  <span>Funder: {grant.funder}</span>
+                  {(grant.amount_min || grant.amount_max) && (
+                    <span className="ml-4">
+                      Amount: {grant.amount_min && grant.amount_max 
+                        ? `$${grant.amount_min.toLocaleString()} - $${grant.amount_max.toLocaleString()}`
+                        : grant.amount_max 
+                          ? `Up to $${grant.amount_max.toLocaleString()}`
+                          : `$${grant.amount_min?.toLocaleString() || '0'}`
+                      }
+                    </span>
+                  )}
+                  {grant.deadline && (
+                    <span className="ml-4">Deadline: {new Date(grant.deadline).toLocaleDateString()}</span>
+                  )}
+                </div>
+              </div>
+            )}
+            
+            {grantError && (
+              <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-md">
+                <p className="text-red-700">{grantError}</p>
+              </div>
+            )}
+            
             {organization && (
               <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-md">
                 <p className="text-blue-800">

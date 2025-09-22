@@ -1,10 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useOrganization } from '../hooks/useOrganization';
+import { getGrant } from '../utils/api';
 
 const GrantPitch = () => {
   const { organization, loading: orgLoading, error: orgError } = useOrganization();
+  const [searchParams] = useSearchParams();
+  const grantId = searchParams.get('grantId');
   const [loading, setLoading] = useState(false);
   const [generatedContent, setGeneratedContent] = useState('');
   const [editableContent, setEditableContent] = useState('');
@@ -14,6 +17,43 @@ const GrantPitch = () => {
   const [fundingNeed, setFundingNeed] = useState('');
   const [fundingAmount, setFundingAmount] = useState('');
   const [pitchType, setPitchType] = useState('elevator');
+  const [grant, setGrant] = useState(null);
+  const [grantLoading, setGrantLoading] = useState(false);
+  const [grantError, setGrantError] = useState('');
+
+  // Fetch grant details when grantId is present
+  useEffect(() => {
+    if (grantId) {
+      const fetchGrantDetails = async () => {
+        try {
+          setGrantLoading(true);
+          setGrantError('');
+          const grantData = await getGrant(grantId);
+          setGrant(grantData.grant);
+          
+          // Pre-fill form fields from grant data
+          if (grantData.grant.funder) {
+            setFunderName(grantData.grant.funder);
+          }
+          if (grantData.grant.amount_min || grantData.grant.amount_max) {
+            const amountRange = grantData.grant.amount_min && grantData.grant.amount_max 
+              ? `$${grantData.grant.amount_min.toLocaleString()} - $${grantData.grant.amount_max.toLocaleString()}`
+              : grantData.grant.amount_max 
+                ? `Up to $${grantData.grant.amount_max.toLocaleString()}`
+                : `$${grantData.grant.amount_min?.toLocaleString() || '0'}`;
+            setFundingAmount(amountRange);
+          }
+        } catch (error) {
+          console.error('Error fetching grant details:', error);
+          setGrantError('Failed to load grant details');
+        } finally {
+          setGrantLoading(false);
+        }
+      };
+      
+      fetchGrantDetails();
+    }
+  }, [grantId]);
 
   // Auto-populate fields from organization data
   useEffect(() => {
@@ -42,7 +82,8 @@ const GrantPitch = () => {
           funder_name: funderName || 'Potential Funder',
           alignment: alignment || 'Mission alignment and shared values',
           funding_need: fundingNeed || 'General operating support',
-          funding_amount: fundingAmount || 'Not specified'
+          funding_amount: fundingAmount || 'Not specified',
+          grant_id: grantId || null
         }),
       });
 
@@ -100,6 +141,38 @@ const GrantPitch = () => {
             <p className="text-xl text-gray-600">
               AI-powered pitch generator for presentations, emails, and verbal delivery to funders
             </p>
+            
+            {/* Grant Context Banner */}
+            {grant && (
+              <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-md">
+                <p className="text-blue-800">
+                  <span className="font-medium">Grant Context:</span> {grant.title}
+                </p>
+                <div className="text-sm text-blue-600 mt-1">
+                  <span>Funder: {grant.funder}</span>
+                  {(grant.amount_min || grant.amount_max) && (
+                    <span className="ml-4">
+                      Amount: {grant.amount_min && grant.amount_max 
+                        ? `$${grant.amount_min.toLocaleString()} - $${grant.amount_max.toLocaleString()}`
+                        : grant.amount_max 
+                          ? `Up to $${grant.amount_max.toLocaleString()}`
+                          : `$${grant.amount_min?.toLocaleString() || '0'}`
+                      }
+                    </span>
+                  )}
+                  {grant.deadline && (
+                    <span className="ml-4">Deadline: {new Date(grant.deadline).toLocaleDateString()}</span>
+                  )}
+                </div>
+              </div>
+            )}
+            
+            {grantError && (
+              <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-md">
+                <p className="text-red-700">{grantError}</p>
+              </div>
+            )}
+            
             {organization && (
               <div className="mt-4 p-3 bg-green-50 border border-green-200 rounded-md">
                 <p className="text-green-800">
