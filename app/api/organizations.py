@@ -8,6 +8,38 @@ logger = logging.getLogger(__name__)
 
 bp = Blueprint('organizations', __name__, url_prefix='/api/organizations')
 
+@bp.route('/', methods=['GET'])
+def list_organizations():
+    """List all organizations (public endpoint for discovery)"""
+    try:
+        # Get all organizations
+        orgs = Organization.query.limit(100).all()
+        
+        organizations = []
+        for org in orgs:
+            organizations.append({
+                'id': org.id,
+                'name': org.name,
+                'mission': org.mission,
+                'focus_areas': org.primary_focus_areas or [],
+                'location': f"{org.primary_city}, {org.primary_state}" if org.primary_city else org.primary_state,
+                'website': org.website
+            })
+        
+        return jsonify({
+            'success': True,
+            'organizations': organizations,
+            'count': len(organizations)
+        })
+        
+    except Exception as e:
+        logger.error(f"Error listing organizations: {e}")
+        return jsonify({
+            'success': False,
+            'error': str(e),
+            'organizations': []
+        }), 500
+
 @bp.route('/profile', methods=['GET'])
 def get_organization_profile():
     """Get the organization profile for the current user"""

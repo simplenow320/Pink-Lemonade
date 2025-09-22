@@ -36,7 +36,7 @@ async function loadOpportunities() {
         let data;
         
         if (DATA_MODE === 'API') {
-            const response = await fetch('/api/discovery/latest');
+            const response = await fetch('/api/grants/');
             data = await response.json();
         } else {
             // Mock data fallback

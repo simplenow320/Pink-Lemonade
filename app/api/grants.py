@@ -78,11 +78,65 @@ def get_grants():
         # Execute query
         grants = query.limit(100).all()
         
+        # Also get denominational grants from direct SQL query
+        denominational_grants = []
+        try:
+            from sqlalchemy import text
+            # Build denominational grants query
+            denom_sql = "SELECT * FROM denominational_grants WHERE 1=1"
+            params = {}
+            
+            if search:
+                denom_sql += " AND (title ILIKE :search OR funder ILIKE :search OR eligibility ILIKE :search)"
+                params['search'] = f"%{search}%"
+            
+            if min_amount:
+                denom_sql += " AND amount_min >= :min_amount"
+                params['min_amount'] = min_amount
+            
+            if max_amount:
+                denom_sql += " AND amount_max <= :max_amount"
+                params['max_amount'] = max_amount
+                
+            if deadline_days:
+                denom_sql += " AND deadline <= :deadline"
+                params['deadline'] = datetime.now() + timedelta(days=deadline_days)
+                
+            denom_sql += " ORDER BY deadline ASC NULLS LAST LIMIT 100"
+            
+            result = db.session.execute(text(denom_sql), params)
+            for row in result:
+                denom_grant = {
+                    'id': f"denom_{row.id}",
+                    'title': row.title,
+                    'funder': row.funder,
+                    'amount_min': float(row.amount_min) if row.amount_min else None,
+                    'amount_max': float(row.amount_max) if row.amount_max else None,
+                    'deadline': row.deadline.isoformat() if row.deadline else None,
+                    'geography': row.geography,
+                    'eligibility': row.eligibility,
+                    'description': row.description,
+                    'requirements': row.requirements,
+                    'link': row.link,
+                    'source_name': row.source_name,
+                    'source_url': row.source_url,
+                    'created_at': row.created_at.isoformat() if row.created_at else None,
+                    'is_denominational': True
+                }
+                denominational_grants.append(denom_grant)
+        except Exception as e:
+            logger.warning(f"Could not fetch denominational grants: {e}")
+        
+        # Combine both grant lists
+        all_grants = [grant.to_dict() for grant in grants] + denominational_grants
+        
         # Format response
         response = {
             'success': True,
-            'grants': [grant.to_dict() for grant in grants],
-            'count': len(grants),
+            'grants': all_grants,
+            'count': len(all_grants),
+            'regular_grants_count': len(grants),
+            'denominational_grants_count': len(denominational_grants),
             'filters_applied': {
                 'focus_area': focus_area,
                 'min_amount': min_amount,
