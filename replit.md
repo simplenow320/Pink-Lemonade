@@ -11,7 +11,16 @@ Pink Lemonade is a **100% COMPLETE** AI-powered grant management platform for no
 
 **CANDID API INTEGRATION COMPLETE (Aug 20, 2025)**: Achieved 100% operational status for all Candid API endpoints with authentic data access. Fixed authentication (Subscription-Key header), corrected endpoint URLs (grants/v1/), and implemented proper parameter formatting. Successfully accessing 28+ million grants valued at $2+ trillion from 259,000+ foundations and 1.5+ million recipients. All 4 endpoints operational: Summary, Transactions, Funders, Recipients.
 
-**LATEST ENHANCEMENT (Aug 21, 2025)**: Implemented Complete Login-to-Platform User Flow with Smart Onboarding
+**LATEST ENHANCEMENT (Sep 22, 2025)**: Expanded Foundation Coverage with 52 New Sources
+- **Tech/AI Philanthropy**: Patrick J. McGovern Foundation, Schmidt Sciences AI2050, Ford Foundation Technology & Society, Mozilla Foundation, Omidyar Network
+- **Corporate Tech Grants**: AWS IMAGINE Grant, Google.org AI for Global Goals, Microsoft AI for Accessibility, IBM Sustainability Accelerator, NVIDIA Grants
+- **Regional Foundation Networks**: 
+  - **Michigan**: Grand Rapids (5 foundations), Detroit (9 foundations), Lansing (4 foundations)
+  - **Georgia**: Atlanta area (8 foundations)
+  - **North Carolina**: Charlotte region (6 foundations)
+- **Total Coverage**: 70 foundation sources (up from 18) providing comprehensive access to faith-based, tech philanthropy, and regional grant opportunities
+
+**PREVIOUS ENHANCEMENT (Aug 21, 2025)**: Implemented Complete Login-to-Platform User Flow with Smart Onboarding
 - **Authentication System**: Custom session-based auth without flask-login dependency (login, register, logout)
 - **3-Step Smart Onboarding**: Progressive profile building with time estimates (5-7 minutes total), live grant previews, and skip options
 - **Hybrid Dashboard Experience**: Guided discovery for new users, power dashboard for returning users
