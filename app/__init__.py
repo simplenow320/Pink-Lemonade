@@ -125,6 +125,7 @@ def create_app():
     
     # Register blueprints
     from app.pages import pages as pages_bp
+    from app.routes import bp as routes_bp  # Import routes blueprint
     from app.api.auth import bp as auth_bp, init_auth
     from app.api.analytics import analytics_bp
     from app.api.dashboard import dashboard_bp
@@ -144,6 +145,7 @@ def create_app():
     init_auth(flask_app)
     
     flask_app.register_blueprint(pages_bp)  # Register pages blueprint for page templates
+    flask_app.register_blueprint(routes_bp)  # Register routes blueprint for additional routes
     flask_app.register_blueprint(auth_bp)  # Register auth blueprint
     flask_app.register_blueprint(analytics_bp)
     flask_app.register_blueprint(dashboard_bp)

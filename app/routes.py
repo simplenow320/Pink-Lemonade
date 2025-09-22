@@ -85,6 +85,21 @@ def opportunities():
     """Render the opportunities page"""
     return render_template('opportunities.html', active='opportunities')
 
+@bp.route('/grants')
+def grants():
+    """Grants page - show all available grants"""
+    return render_template('grants.html', active='grants')
+
+@bp.route('/grants/discovery')
+def grants_discovery():
+    """Grant discovery page"""
+    return render_template('discovery.html', active='discovery')
+
+@bp.route('/discovery')
+def discovery():
+    """Discovery page"""
+    return render_template('discovery.html', active='discovery')
+
 @bp.route('/settings')
 def settings():
     """Settings page"""
