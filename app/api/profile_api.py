@@ -134,13 +134,8 @@ def upload_document():
         # Get organization
         org = Organization.query.first()
         if not org:
-            # Create default organization if none exists
-            org = Organization(
-                name='My Organization',
-                mission='',
-                created_at=datetime.now()
-            )
-            db.session.add(org)
+            # Don't create a default organization
+            return jsonify({'error': 'No organization found. Please create one first'}), 404
         
         # Add document to organization
         document = {

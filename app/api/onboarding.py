@@ -211,14 +211,10 @@ def apply_organization_data():
         if not org_id:
             return jsonify({"error": "org_id required"}), 400
         
-        # Get or create organization
+        # Get organization - don't create if not found
         org = Organization.query.get(org_id)
         if not org:
-            # Create new org if doesn't exist
-            org = Organization()
-            org.name = "New Organization"
-            org.user_id = session.get('user_id')  # Set the user_id from session
-            db.session.add(org)
+            return jsonify({"error": "Organization not found"}), 404
         
         applied_fields = []
         

@@ -67,17 +67,22 @@ def fetch_from_source(source):
         # Get organization profile for scoring
         org_id = data.get('org_id', 1)
         
-        # Load default profile from file
-        try:
-            with open('org_profile.json', 'r') as f:
-                org_profile = json.load(f)
-        except:
-            # Fallback profile
+        # Get organization profile from database if available
+        org = Organization.query.filter_by(id=org_id).first() if org_id else Organization.query.first()
+        if org:
             org_profile = {
-                "name": "Your Organization",
-                "mission": "Your organization's mission",
-                "focus_areas": ["urban ministry", "community development", "faith-based initiatives"],
-                "keywords": ["urban", "church", "community", "faith", "ministry"]
+                "name": org.name or "",
+                "mission": org.mission or "",
+                "focus_areas": org.focus_areas if hasattr(org, 'focus_areas') and org.focus_areas else [],
+                "keywords": org.keywords if hasattr(org, 'keywords') and org.keywords else []
+            }
+        else:
+            # Empty profile if no org exists
+            org_profile = {
+                "name": "",
+                "mission": "",
+                "focus_areas": [],
+                "keywords": []
             }
         
         # Fetch from specified source
@@ -163,17 +168,22 @@ def sync_all_sources():
         days_back = data.get('days_back', 30)
         org_id = data.get('org_id', 1)
         
-        # Load organization profile
-        try:
-            with open('org_profile.json', 'r') as f:
-                org_profile = json.load(f)
-        except:
-            # Fallback profile
+        # Get organization profile from database if available
+        org = Organization.query.filter_by(id=org_id).first() if org_id else Organization.query.first()
+        if org:
             org_profile = {
-                "name": "Your Organization",
-                "mission": "Your organization's mission",
-                "focus_areas": ["urban ministry", "community development", "faith-based initiatives"],
-                "keywords": ["urban", "church", "community", "faith", "ministry"]
+                "name": org.name or "",
+                "mission": org.mission or "",
+                "focus_areas": org.focus_areas if hasattr(org, 'focus_areas') and org.focus_areas else [],
+                "keywords": org.keywords if hasattr(org, 'keywords') and org.keywords else []
+            }
+        else:
+            # Empty profile if no org exists
+            org_profile = {
+                "name": "",
+                "mission": "",
+                "focus_areas": [],
+                "keywords": []
             }
         
         # Fetch from all sources

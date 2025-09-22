@@ -126,12 +126,10 @@ def test_watchlist_notification():
         # Get user's organization
         org_id = user.org_id if hasattr(user, 'org_id') else None
         if not org_id:
-            # Create default org if needed
+            # Don't create default org - user should have one from registration
             org = Organization.query.first()
             if not org:
-                org = Organization(name='Default Organization')
-                db.session.add(org)
-                db.session.commit()
+                return jsonify({'error': 'No organization found for user'}), 404
             org_id = org.id
         
         # Get real watchlist from database or create one

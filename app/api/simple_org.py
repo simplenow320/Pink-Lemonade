@@ -15,8 +15,23 @@ bp = Blueprint('simple_org', __name__, url_prefix='/api/profile')
 def get_organization():
     """Get organization profile - working version with extended data"""
     try:
-        # Get the basic org first
-        org = Organization.query.first()
+        # Get current user's organization
+        from flask import session
+        from app.models import User
+        
+        user_id = session.get('user_id')
+        if not user_id:
+            return jsonify({'error': 'Not authenticated'}), 401
+            
+        user = User.query.get(user_id)
+        if not user:
+            return jsonify({'error': 'User not found'}), 404
+            
+        # Get organization associated with the user
+        org = Organization.query.filter(
+            (Organization.user_id == user_id) | 
+            (Organization.created_by_user_id == user_id)
+        ).first()
         if not org:
             return jsonify({
                 'name': '',
@@ -57,8 +72,19 @@ def save_organization():
     try:
         data = request.json
         
-        # Get or create basic organization
-        org = Organization.query.first()
+        # Get current user's organization
+        from flask import session
+        from app.models import User
+        
+        user_id = session.get('user_id')
+        if not user_id:
+            return jsonify({'error': 'Not authenticated'}), 401
+            
+        # Get organization associated with the user
+        org = Organization.query.filter(
+            (Organization.user_id == user_id) | 
+            (Organization.created_by_user_id == user_id)
+        ).first()
         if not org:
             org = Organization(name=data.get('name', ''), mission=data.get('mission', ''))
             db.session.add(org)
