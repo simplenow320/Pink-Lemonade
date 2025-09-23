@@ -494,6 +494,48 @@ def create_app():
     def add_security_headers(response):
         return security.add_security_headers(response)
     
+    # Cache-busting configuration
+    import time
+    CACHE_VERSION = str(int(time.time()))  # Use timestamp as version
+    flask_app.config['CACHE_VERSION'] = CACHE_VERSION
+
+    # Cache-busting template function
+    @flask_app.template_global()
+    def static_versioned(filename):
+        """Generate cache-busted static URLs with version parameter"""
+        from flask import url_for, current_app
+        # Get current cache version dynamically 
+        current_version = current_app.config.get('CACHE_VERSION', CACHE_VERSION)
+        return url_for('static', filename=filename, v=current_version)
+    
+    # Cache headers for static assets
+    @flask_app.after_request
+    def add_cache_headers(response):
+        """Add appropriate cache headers for static assets"""
+        from flask import request
+        
+        # For static assets, set cache headers based on file type
+        if request.path.startswith('/static/'):
+            if any(request.path.endswith(ext) for ext in ['.css', '.js', '.png', '.jpg', '.jpeg', '.gif', '.ico', '.svg']):
+                # Cache static assets for 1 year, but allow cache busting
+                response.cache_control.max_age = 31536000  # 1 year
+                response.cache_control.public = True
+                # Add ETag for better caching
+                response.add_etag()
+            else:
+                # For other static files, shorter cache
+                response.cache_control.max_age = 3600  # 1 hour
+        
+        # For HTML pages, prevent caching to ensure users get updates
+        elif request.path.endswith('.html') or 'text/html' in response.content_type:
+            response.cache_control.no_cache = True
+            response.cache_control.no_store = True
+            response.cache_control.must_revalidate = True
+            response.headers['Pragma'] = 'no-cache'
+            response.headers['Expires'] = '0'
+        
+        return response
+
     # Add template context processor for global template variables
     @flask_app.context_processor
     def inject_globals():
@@ -503,7 +545,8 @@ def create_app():
             "env_mode": env_mode,
             "current_year": datetime.datetime.utcnow().year,
             "logo_url": os.getenv("APP_LOGO_URL"),
-            "active": None
+            "active": None,
+            "cache_version": CACHE_VERSION
         }
     
     # Add specific route for /reports to redirect to /smart-tools

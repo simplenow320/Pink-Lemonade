@@ -159,4 +159,51 @@ def public_intake(token):
     # Pass the token to the React app via template
     return render_template('public_intake.html', token=token, active=None)
 
+@bp.route('/clear-cache')
+def clear_cache():
+    """Cache clearing endpoint for production testing"""
+    from flask import request, redirect, url_for, current_app
+    import time
+    
+    # Update the cache version to force all static assets to refresh
+    new_cache_version = str(int(time.time()))
+    current_app.config['CACHE_VERSION'] = new_cache_version
+    
+    # Get the referring page or default to home
+    referer = request.args.get('referer') or request.referrer or '/'
+    
+    # Parse the referer to get the route name
+    from urllib.parse import urlparse
+    parsed = urlparse(referer)
+    redirect_path = parsed.path if parsed.path else '/'
+    
+    # Add cache-busting query parameters for immediate effect
+    cache_buster = f"_cb={new_cache_version}"
+    if '?' in redirect_path:
+        redirect_url = f"{redirect_path}&{cache_buster}"
+    else:
+        redirect_url = f"{redirect_path}?{cache_buster}"
+    
+    # Set headers to prevent this redirect from being cached
+    response = redirect(redirect_url)
+    response.cache_control.no_cache = True
+    response.cache_control.no_store = True
+    response.cache_control.must_revalidate = True
+    response.headers['Pragma'] = 'no-cache'
+    response.headers['Expires'] = '0'
+    
+    return response
+
+@bp.route('/cache-status')
+def cache_status():
+    """Show current cache version for debugging"""
+    from flask import jsonify, current_app
+    import time
+    return jsonify({
+        'cache_version': current_app.config.get('CACHE_VERSION', 'not-set'),
+        'timestamp': int(time.time()),
+        'cache_clearing_url': '/clear-cache',
+        'instructions': 'Visit /clear-cache to force cache refresh for all users'
+    })
+
 # Add other page routes as needed

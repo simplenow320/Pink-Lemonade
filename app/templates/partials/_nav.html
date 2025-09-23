@@ -2,7 +2,7 @@
 {% if request.endpoint == 'index' %}
 <nav class="nav-centered" role="navigation" aria-label="Primary">
   <a href="/" class="landing-logo-link">
-    <img src="{{ url_for('static', filename='logo.png') }}" alt="Pink Lemonade" class="logo-5x" />
+    <img src="{{ static_versioned('logo.png') }}" alt="Pink Lemonade" class="logo-5x" />
   </a>
 </nav>
 {% else %}
@@ -11,7 +11,7 @@
   <div class="nav-container">
     <!-- Logo -->
     <a href="/" class="nav-logo">
-      <img src="{{ url_for('static', filename='logo-no-bg.png') }}" alt="Pink Lemonade" class="logo-4x" />
+      <img src="{{ static_versioned('logo-no-bg.png') }}" alt="Pink Lemonade" class="logo-4x" />
     </a>
     
     <!-- Hamburger Button -->
@@ -29,7 +29,7 @@
   <div class="nav-menu" id="navMenu">
     <div class="nav-menu-header">
       <a href="/" class="menu-header-logo-link">
-        <img src="{{ url_for('static', filename='logo-no-bg.png') }}" alt="Pink Lemonade" class="logo-3x" />
+        <img src="{{ static_versioned('logo-no-bg.png') }}" alt="Pink Lemonade" class="logo-3x" />
       </a>
       <button class="close-btn" id="closeBtn" aria-label="Close navigation menu">
         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
