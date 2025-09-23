@@ -146,7 +146,7 @@ def create_app():
     
     flask_app.register_blueprint(pages_bp)  # Register pages blueprint for page templates
     flask_app.register_blueprint(routes_bp)  # Register routes blueprint for additional routes
-    flask_app.register_blueprint(auth_bp)  # Register auth blueprint
+    flask_app.register_blueprint(auth_bp, url_prefix='/api/auth')  # Register auth blueprint with proper prefix
     flask_app.register_blueprint(analytics_bp)
     flask_app.register_blueprint(dashboard_bp)
     
