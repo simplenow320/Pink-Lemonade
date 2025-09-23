@@ -4,6 +4,8 @@ import { motion } from 'framer-motion';
 import { useOrganization } from '../hooks/useOrganization';
 import { getGrant } from '../utils/api';
 import UseInApplicationModal from '../components/ui/UseInApplicationModal';
+import TemplateSelectionModal from '../components/ui/TemplateSelectionModal';
+import SaveTemplateModal from '../components/ui/SaveTemplateModal';
 
 const GrantPitch = () => {
   const { organization, loading: orgLoading, error: orgError } = useOrganization();
@@ -25,6 +27,14 @@ const GrantPitch = () => {
   // Use in Application modal state
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [successMessage, setSuccessMessage] = useState('');
+  
+  // Template functionality state
+  const [isTemplateModalOpen, setIsTemplateModalOpen] = useState(false);
+  const [isSaveTemplateModalOpen, setIsSaveTemplateModalOpen] = useState(false);
+  const [templateName, setTemplateName] = useState('');
+  const [templateDescription, setTemplateDescription] = useState('');
+  const [templateTags, setTemplateTags] = useState([]);
+  const [savingTemplate, setSavingTemplate] = useState(false);
 
   // Fetch grant details when grantId is present
   useEffect(() => {
@@ -141,6 +151,88 @@ const GrantPitch = () => {
     );
     // Clear success message after 10 seconds
     setTimeout(() => setSuccessMessage(''), 10000);
+  };
+
+  // Template handling functions
+  const handleTemplateSelect = (template) => {
+    if (template.parameters) {
+      // Prefill form with template parameters
+      setFunderName(template.parameters.funder_name || '');
+      setAlignment(template.parameters.alignment || '');
+      setFundingNeed(template.parameters.funding_need || '');
+      setFundingAmount(template.parameters.funding_amount || '');
+      setPitchType(template.parameters.pitch_type || 'elevator');
+    }
+    
+    alert(`Template "${template.name}" loaded successfully! Form has been prefilled with template parameters.`);
+  };
+
+  const handleSaveTemplate = async () => {
+    if (!templateName.trim()) {
+      alert('Please enter a template name');
+      return;
+    }
+
+    if (!editableContent) {
+      alert('No content available to save as template');
+      return;
+    }
+
+    if (!organization?.id) {
+      alert('Organization information is required to save templates');
+      return;
+    }
+
+    setSavingTemplate(true);
+
+    try {
+      const inputParameters = {
+        funder_name: funderName,
+        alignment,
+        funding_need: fundingNeed,
+        funding_amount: fundingAmount,
+        pitch_type: pitchType
+      };
+
+      const response = await fetch('/api/templates/from-smart-tools', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          tool_type: 'grant_pitch',
+          name: templateName,
+          description: templateDescription,
+          generated_content: editableContent,
+          input_parameters: inputParameters,
+          organization_id: organization.id,
+          tags: templateTags,
+          focus_areas: organization.focus_areas || [],
+          funder_types: [grant?.type || 'foundation'],
+          is_shared: false
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to save template');
+      }
+
+      if (data.success) {
+        setIsSaveTemplateModalOpen(false);
+        setTemplateName('');
+        setTemplateDescription('');
+        setTemplateTags([]);
+        alert('Template saved successfully!');
+      } else {
+        throw new Error(data.error || 'Failed to save template');
+      }
+    } catch (err) {
+      alert(`Error saving template: ${err.message}`);
+    } finally {
+      setSavingTemplate(false);
+    }
   };
 
   return (
@@ -286,13 +378,22 @@ const GrantPitch = () => {
                 </select>
               </div>
 
-              <button
-                onClick={generateGrantPitch}
-                disabled={loading}
-                className="w-full bg-green-600 text-white py-3 px-4 rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-              >
-                {loading ? 'Generating...' : 'Generate Grant Pitch'}
-              </button>
+              <div className="space-y-3">
+                <button
+                  onClick={() => setIsTemplateModalOpen(true)}
+                  className="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors"
+                >
+                  📂 Insert from Template
+                </button>
+                
+                <button
+                  onClick={generateGrantPitch}
+                  disabled={loading}
+                  className="w-full bg-green-600 text-white py-3 px-4 rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                >
+                  {loading ? 'Generating...' : 'Generate Grant Pitch'}
+                </button>
+              </div>
 
               {error && (
                 <div className="mt-4 p-4 bg-red-50 border border-red-200 rounded-md">
@@ -335,6 +436,12 @@ const GrantPitch = () => {
                     className="px-3 py-1 text-sm bg-green-100 text-green-700 rounded-md hover:bg-green-200 transition-colors"
                   >
                     Download
+                  </button>
+                  <button
+                    onClick={() => setIsSaveTemplateModalOpen(true)}
+                    className="px-3 py-1 text-sm bg-purple-100 text-purple-700 rounded-md hover:bg-purple-200 transition-colors"
+                  >
+                    💾 Save as Template
                   </button>
                   {grantId && (
                     <button
@@ -396,6 +503,28 @@ const GrantPitch = () => {
         sourceTool="grant_pitch"
         grantId={grantId}
         onSuccess={handleModalSuccess}
+      />
+
+      {/* Template Selection Modal */}
+      <TemplateSelectionModal
+        isOpen={isTemplateModalOpen}
+        onClose={() => setIsTemplateModalOpen(false)}
+        toolType="grant_pitch"
+        onTemplateSelect={handleTemplateSelect}
+      />
+
+      {/* Save Template Modal */}
+      <SaveTemplateModal
+        isOpen={isSaveTemplateModalOpen}
+        onClose={() => setIsSaveTemplateModalOpen(false)}
+        templateName={templateName}
+        setTemplateName={setTemplateName}
+        templateDescription={templateDescription}
+        setTemplateDescription={setTemplateDescription}
+        templateTags={templateTags}
+        setTemplateTags={setTemplateTags}
+        onSave={handleSaveTemplate}
+        saving={savingTemplate}
       />
     </div>
   );

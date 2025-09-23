@@ -4,6 +4,8 @@ import { motion } from 'framer-motion';
 import { useOrganization } from '../hooks/useOrganization';
 import { getGrant } from '../utils/api';
 import UseInApplicationModal from '../components/ui/UseInApplicationModal';
+import TemplateSelectionModal from '../components/ui/TemplateSelectionModal';
+import SaveTemplateModal from '../components/ui/SaveTemplateModal';
 
 const CaseSupport = () => {
   const { organization, loading: orgLoading, error: orgError } = useOrganization();
@@ -24,6 +26,14 @@ const CaseSupport = () => {
   // Use in Application modal state
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [successMessage, setSuccessMessage] = useState('');
+  
+  // Template functionality state
+  const [isTemplateModalOpen, setIsTemplateModalOpen] = useState(false);
+  const [isSaveTemplateModalOpen, setIsSaveTemplateModalOpen] = useState(false);
+  const [templateName, setTemplateName] = useState('');
+  const [templateDescription, setTemplateDescription] = useState('');
+  const [templateTags, setTemplateTags] = useState([]);
+  const [savingTemplate, setSavingTemplate] = useState(false);
 
   // Fetch grant details when grantId is present
   useEffect(() => {
@@ -133,6 +143,86 @@ const CaseSupport = () => {
     );
     // Clear success message after 10 seconds
     setTimeout(() => setSuccessMessage(''), 10000);
+  };
+
+  // Template handling functions
+  const handleTemplateSelect = (template) => {
+    if (template.parameters) {
+      // Prefill form with template parameters
+      setCampaignGoal(template.parameters.campaign_goal || '');
+      setCampaignPurpose(template.parameters.campaign_purpose || '');
+      setTimeline(template.parameters.timeline || '12 months');
+      setTargetDonors(template.parameters.target_donors || 'foundations and individual donors');
+    }
+    
+    alert(`Template "${template.name}" loaded successfully! Form has been prefilled with template parameters.`);
+  };
+
+  const handleSaveTemplate = async () => {
+    if (!templateName.trim()) {
+      alert('Please enter a template name');
+      return;
+    }
+
+    if (!editableContent) {
+      alert('No content available to save as template');
+      return;
+    }
+
+    if (!organization?.id) {
+      alert('Organization information is required to save templates');
+      return;
+    }
+
+    setSavingTemplate(true);
+
+    try {
+      const inputParameters = {
+        campaign_goal: campaignGoal,
+        campaign_purpose: campaignPurpose,
+        timeline,
+        target_donors: targetDonors
+      };
+
+      const response = await fetch('/api/templates/from-smart-tools', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          tool_type: 'case_support',
+          name: templateName,
+          description: templateDescription,
+          generated_content: editableContent,
+          input_parameters: inputParameters,
+          organization_id: organization.id,
+          tags: templateTags,
+          focus_areas: organization.focus_areas || [],
+          funder_types: [grant?.type || 'foundation'],
+          is_shared: false
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to save template');
+      }
+
+      if (data.success) {
+        setIsSaveTemplateModalOpen(false);
+        setTemplateName('');
+        setTemplateDescription('');
+        setTemplateTags([]);
+        alert('Template saved successfully!');
+      } else {
+        throw new Error(data.error || 'Failed to save template');
+      }
+    } catch (err) {
+      alert(`Error saving template: ${err.message}`);
+    } finally {
+      setSavingTemplate(false);
+    }
   };
 
   return (

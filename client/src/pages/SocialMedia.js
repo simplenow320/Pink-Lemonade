@@ -3,6 +3,8 @@ import { Link, useSearchParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useOrganization } from '../hooks/useOrganization';
 import { getGrant } from '../utils/api';
+import TemplateSelectionModal from '../components/ui/TemplateSelectionModal';
+import SaveTemplateModal from '../components/ui/SaveTemplateModal';
 
 const SocialMedia = () => {
   const { organization, loading: orgLoading, error: orgError } = useOrganization();
@@ -17,6 +19,14 @@ const SocialMedia = () => {
   const [grant, setGrant] = useState(null);
   const [grantLoading, setGrantLoading] = useState(false);
   const [grantError, setGrantError] = useState('');
+  
+  // Template functionality state
+  const [isTemplateModalOpen, setIsTemplateModalOpen] = useState(false);
+  const [isSaveTemplateModalOpen, setIsSaveTemplateModalOpen] = useState(false);
+  const [templateName, setTemplateName] = useState('');
+  const [templateDescription, setTemplateDescription] = useState('');
+  const [templateTags, setTemplateTags] = useState([]);
+  const [savingTemplate, setSavingTemplate] = useState(false);
 
   const platforms = [
     {
@@ -130,6 +140,82 @@ const SocialMedia = () => {
   const copyToClipboard = () => {
     navigator.clipboard.writeText(editableContent);
     alert('Content copied to clipboard!');
+  };
+
+  // Template handling functions
+  const handleTemplateSelect = (template) => {
+    if (template.parameters) {
+      // Prefill form with template parameters
+      setPlatform(template.parameters.platform || 'twitter');
+      setTopic(template.parameters.topic || '');
+    }
+    
+    alert(`Template "${template.name}" loaded successfully! Form has been prefilled with template parameters.`);
+  };
+
+  const handleSaveTemplate = async () => {
+    if (!templateName.trim()) {
+      alert('Please enter a template name');
+      return;
+    }
+
+    if (!editableContent) {
+      alert('No content available to save as template');
+      return;
+    }
+
+    if (!organization?.id) {
+      alert('Organization information is required to save templates');
+      return;
+    }
+
+    setSavingTemplate(true);
+
+    try {
+      const inputParameters = {
+        platform,
+        topic
+      };
+
+      const response = await fetch('/api/templates/from-smart-tools', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          tool_type: 'social_media',
+          name: templateName,
+          description: templateDescription,
+          generated_content: editableContent,
+          input_parameters: inputParameters,
+          organization_id: organization.id,
+          tags: templateTags,
+          focus_areas: organization.focus_areas || [],
+          funder_types: [grant?.type || 'foundation'],
+          is_shared: false
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to save template');
+      }
+
+      if (data.success) {
+        setIsSaveTemplateModalOpen(false);
+        setTemplateName('');
+        setTemplateDescription('');
+        setTemplateTags([]);
+        alert('Template saved successfully!');
+      } else {
+        throw new Error(data.error || 'Failed to save template');
+      }
+    } catch (err) {
+      alert(`Error saving template: ${err.message}`);
+    } finally {
+      setSavingTemplate(false);
+    }
   };
 
   const getCharacterCount = () => {

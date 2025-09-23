@@ -6,21 +6,73 @@ Endpoints for template management and document generation
 from flask import Blueprint, request, jsonify
 from app.services.template_service import TemplateService
 from app.models_templates import TemplateCategory
+from app.api.auth import login_required, get_current_user
+from app.models import Organization
 from app import db
-
-# Mock current_user for now
-class MockUser:
-    id = 1
-    is_authenticated = True
-
-current_user = MockUser()
-
-# Mock login_required decorator
-def login_required(f):
-    return f
 
 templates_bp = Blueprint('templates', __name__, url_prefix='/api/templates')
 template_service = TemplateService()
+
+def validate_organization_access(organization_id, user=None):
+    """
+    Validate that the current user has access to the specified organization.
+    Returns the user's organization if valid, raises ValueError if not.
+    """
+    if user is None:
+        user = get_current_user()
+    
+    if not user:
+        raise ValueError("Authentication required")
+    
+    # Admin users can access any organization
+    if hasattr(user, 'role') and user.role == 'admin':
+        org = Organization.query.get(organization_id)
+        if not org:
+            raise ValueError("Organization not found")
+        return org
+    
+    # Regular users can only access their own organization
+    # Check both user.org_id and organizations they created
+    user_orgs = []
+    
+    if hasattr(user, 'org_id') and user.org_id:
+        user_orgs.append(user.org_id)
+    
+    # Also check organizations created by this user
+    created_orgs = Organization.query.filter_by(created_by_user_id=user.id).all()
+    for org in created_orgs:
+        user_orgs.append(org.id)
+    
+    if organization_id not in user_orgs:
+        raise ValueError("Access denied - user does not belong to this organization")
+    
+    org = Organization.query.get(organization_id)
+    if not org:
+        raise ValueError("Organization not found")
+    
+    return org
+
+def get_user_organization_id(user=None):
+    """
+    Get the organization ID for the current user.
+    Returns the primary organization ID for the user.
+    """
+    if user is None:
+        user = get_current_user()
+    
+    if not user:
+        return None
+    
+    # First check if user has an org_id set
+    if hasattr(user, 'org_id') and user.org_id:
+        return user.org_id
+    
+    # Otherwise, find organization created by this user
+    org = Organization.query.filter_by(created_by_user_id=user.id).first()
+    if org:
+        return org.id
+    
+    return None
 
 @templates_bp.route('/status', methods=['GET'])
 def get_status():
@@ -91,14 +143,24 @@ def generate_document():
     if not data.get('template_id'):
         return jsonify({'error': 'Template ID required'}), 400
     
-    if not data.get('organization_id'):
-        return jsonify({'error': 'Organization ID required'}), 400
-    
     try:
+        # Get current user and validate authentication
+        user = get_current_user()
+        if not user:
+            return jsonify({'error': 'Authentication required'}), 401
+        
+        # Get user's organization ID from server-side (never trust client)
+        organization_id = get_user_organization_id(user)
+        if not organization_id:
+            return jsonify({'error': 'No organization associated with user'}), 403
+        
+        # Validate organization access (additional security check)
+        validate_organization_access(organization_id, user)
+        
         document = template_service.generate_document(
             template_id=data['template_id'],
-            user_id=current_user.id,
-            organization_id=data['organization_id'],
+            user_id=user.id,
+            organization_id=organization_id,
             grant_id=data.get('grant_id'),
             custom_data=data.get('custom_data')
         )
@@ -108,6 +170,8 @@ def generate_document():
             'document': document,
             'message': 'Document generated successfully'
         })
+    except ValueError as e:
+        return jsonify({'error': str(e)}), 403
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
@@ -116,10 +180,24 @@ def generate_document():
 def get_document(document_id):
     """Get a specific document"""
     try:
-        document = template_service.get_document(document_id)
+        # Get current user and validate authentication
+        user = get_current_user()
+        if not user:
+            return jsonify({'error': 'Authentication required'}), 401
+        
+        # Get user's organization ID from server-side (never trust client)
+        organization_id = get_user_organization_id(user)
+        if not organization_id:
+            return jsonify({'error': 'No organization associated with user'}), 403
+        
+        # Validate organization access (additional security check)
+        validate_organization_access(organization_id, user)
+        
+        # Get document with organization validation
+        document = template_service.get_document(document_id, user_id=user.id, organization_id=organization_id)
         return jsonify(document)
     except ValueError as e:
-        return jsonify({'error': str(e)}), 404
+        return jsonify({'error': str(e)}), 403
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
@@ -130,10 +208,24 @@ def update_document(document_id):
     data = request.json
     
     try:
+        # Get current user and validate authentication
+        user = get_current_user()
+        if not user:
+            return jsonify({'error': 'Authentication required'}), 401
+        
+        # Get user's organization ID from server-side (never trust client)
+        organization_id = get_user_organization_id(user)
+        if not organization_id:
+            return jsonify({'error': 'No organization associated with user'}), 403
+        
+        # Validate organization access (additional security check)
+        validate_organization_access(organization_id, user)
+            
         document = template_service.update_document(
             document_id=document_id,
             updates=data,
-            user_id=current_user.id
+            user_id=user.id,
+            organization_id=organization_id
         )
         
         return jsonify({
@@ -142,7 +234,7 @@ def update_document(document_id):
             'message': 'Document updated successfully'
         })
     except ValueError as e:
-        return jsonify({'error': str(e)}), 404
+        return jsonify({'error': str(e)}), 403
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
@@ -153,8 +245,13 @@ def list_user_documents():
     status = request.args.get('status')
     
     try:
+        # Get current user and validate authentication
+        user = get_current_user()
+        if not user:
+            return jsonify({'error': 'Authentication required'}), 401
+            
         documents = template_service.get_user_documents(
-            user_id=current_user.id,
+            user_id=user.id,
             status=status
         )
         
@@ -169,13 +266,22 @@ def list_user_documents():
 @login_required
 def get_library():
     """Get content library for organization"""
-    organization_id = request.args.get('organization_id', type=int)
     content_type = request.args.get('content_type')
     
-    if not organization_id:
-        return jsonify({'error': 'Organization ID required'}), 400
-    
     try:
+        # Get current user and validate authentication
+        user = get_current_user()
+        if not user:
+            return jsonify({'error': 'Authentication required'}), 401
+        
+        # Get user's organization ID from server-side (never trust client)
+        organization_id = get_user_organization_id(user)
+        if not organization_id:
+            return jsonify({'error': 'No organization associated with user'}), 403
+        
+        # Validate organization access (additional security check)
+        validate_organization_access(organization_id, user)
+        
         library = template_service.get_library_content(
             organization_id=organization_id,
             content_type=content_type
@@ -185,6 +291,8 @@ def get_library():
             'library': library,
             'total': len(library)
         })
+    except ValueError as e:
+        return jsonify({'error': str(e)}), 403
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
@@ -194,14 +302,27 @@ def add_to_library():
     """Add content to library"""
     data = request.json
     
-    required_fields = ['organization_id', 'title', 'content_type', 'content']
+    required_fields = ['title', 'content_type', 'content']
     for field in required_fields:
         if not data.get(field):
             return jsonify({'error': f'{field} required'}), 400
     
     try:
+        # Get current user and validate authentication
+        user = get_current_user()
+        if not user:
+            return jsonify({'error': 'Authentication required'}), 401
+        
+        # Get user's organization ID from server-side (never trust client)
+        organization_id = get_user_organization_id(user)
+        if not organization_id:
+            return jsonify({'error': 'No organization associated with user'}), 403
+        
+        # Validate organization access (additional security check)
+        validate_organization_access(organization_id, user)
+        
         item = template_service.add_content_to_library(
-            organization_id=data['organization_id'],
+            organization_id=organization_id,
             title=data['title'],
             content_type=data['content_type'],
             content=data['content'],
@@ -213,6 +334,8 @@ def add_to_library():
             'item': item,
             'message': 'Content added to library'
         })
+    except ValueError as e:
+        return jsonify({'error': str(e)}), 403
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
@@ -247,7 +370,21 @@ def export_document(document_id):
     format = request.json.get('format', 'pdf')
     
     try:
-        document = template_service.get_document(document_id)
+        # Get current user and validate authentication
+        user = get_current_user()
+        if not user:
+            return jsonify({'error': 'Authentication required'}), 401
+        
+        # Get user's organization ID from server-side (never trust client)
+        organization_id = get_user_organization_id(user)
+        if not organization_id:
+            return jsonify({'error': 'No organization associated with user'}), 403
+        
+        # Validate organization access (additional security check)
+        validate_organization_access(organization_id, user)
+        
+        # Get document with organization validation
+        document = template_service.get_document(document_id, user_id=user.id, organization_id=organization_id)
         
         # Placeholder for export functionality
         return jsonify({
@@ -255,6 +392,8 @@ def export_document(document_id):
             'message': f'Document exported as {format.upper()}',
             'download_url': f'/api/templates/download/{document_id}.{format}'
         })
+    except ValueError as e:
+        return jsonify({'error': str(e)}), 403
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
@@ -301,3 +440,148 @@ def demo_templates():
             }
         }
     })
+
+# ============= SMART TOOLS TEMPLATE ENDPOINTS =============
+
+@templates_bp.route('/from-smart-tools', methods=['POST'])
+@login_required
+def save_smart_tools_template():
+    """Save Smart Tools generated content as a template"""
+    data = request.json
+    
+    required_fields = ['tool_type', 'name', 'generated_content', 'input_parameters']
+    for field in required_fields:
+        if not data.get(field):
+            return jsonify({'error': f'{field} required'}), 400
+    
+    try:
+        # Get current user and validate authentication
+        user = get_current_user()
+        if not user:
+            return jsonify({'error': 'Authentication required'}), 401
+        
+        # Get user's organization ID from server-side (never trust client)
+        organization_id = get_user_organization_id(user)
+        if not organization_id:
+            return jsonify({'error': 'No organization associated with user'}), 403
+        
+        # Validate organization access (additional security check)
+        validate_organization_access(organization_id, user)
+        
+        template = template_service.save_smart_tools_template(
+            tool_type=data['tool_type'],
+            name=data['name'],
+            description=data.get('description', ''),
+            generated_content=data['generated_content'],
+            input_parameters=data['input_parameters'],
+            organization_id=organization_id,
+            user_id=user.id,
+            tags=data.get('tags', []),
+            focus_areas=data.get('focus_areas', []),
+            funder_types=data.get('funder_types', []),
+            is_shared=data.get('is_shared', False)
+        )
+        
+        return jsonify({
+            'success': True,
+            'template': template,
+            'message': 'Template saved successfully'
+        })
+    except ValueError as e:
+        return jsonify({'error': str(e)}), 403
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@templates_bp.route('/smart-tools', methods=['GET'])
+@login_required
+def get_smart_tools_templates():
+    """Get templates filtered for Smart Tools"""
+    tool_type = request.args.get('tool_type')
+    tags = request.args.getlist('tags')
+    focus_areas = request.args.getlist('focus_areas')
+    funder_types = request.args.getlist('funder_types')
+    
+    try:
+        # Get current user and validate authentication
+        user = get_current_user()
+        if not user:
+            return jsonify({'error': 'Authentication required'}), 401
+        
+        # Get user's organization ID from server-side (never trust client)
+        organization_id = get_user_organization_id(user)
+        if not organization_id:
+            return jsonify({'error': 'No organization associated with user'}), 403
+        
+        # Validate organization access (additional security check)
+        validate_organization_access(organization_id, user)
+        
+        templates = template_service.get_smart_tools_templates(
+            organization_id=organization_id,
+            tool_type=tool_type,
+            tags=tags,
+            focus_areas=focus_areas,
+            funder_types=funder_types
+        )
+        
+        return jsonify({
+            'templates': templates,
+            'total': len(templates)
+        })
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@templates_bp.route('/smart-tools/<int:template_id>/parameters', methods=['GET'])
+@login_required
+def get_template_parameters(template_id):
+    """Get input parameters from a template for prefilling Smart Tools forms"""
+    try:
+        parameters = template_service.get_template_parameters(template_id)
+        
+        return jsonify({
+            'success': True,
+            'parameters': parameters['input_parameters'],
+            'tool_type': parameters['tool_type'],
+            'template_name': parameters['name'],
+            'description': parameters['description']
+        })
+    except ValueError as e:
+        return jsonify({'error': str(e)}), 404
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@templates_bp.route('/smart-tools/<int:template_id>', methods=['DELETE'])
+@login_required
+def delete_smart_tools_template(template_id):
+    """Delete a Smart Tools template"""
+    try:
+        # Get current user and validate authentication
+        user = get_current_user()
+        if not user:
+            return jsonify({'error': 'Authentication required'}), 401
+            
+        template_service.delete_smart_tools_template(template_id, user.id)
+        
+        return jsonify({
+            'success': True,
+            'message': 'Template deleted successfully'
+        })
+    except ValueError as e:
+        return jsonify({'error': str(e)}), 404
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@templates_bp.route('/smart-tools/<int:template_id>/use', methods=['POST'])
+@login_required
+def use_smart_tools_template(template_id):
+    """Mark template as used and update usage statistics"""
+    try:
+        template_service.mark_template_used(template_id)
+        
+        return jsonify({
+            'success': True,
+            'message': 'Template usage recorded'
+        })
+    except ValueError as e:
+        return jsonify({'error': str(e)}), 404
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500

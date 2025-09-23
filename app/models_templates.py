@@ -28,12 +28,25 @@ class SmartTemplate(db.Model):
     category_id = db.Column(db.Integer, db.ForeignKey('template_categories.id'))
     name = db.Column(db.String(200), nullable=False)
     description = db.Column(db.Text)
-    template_type = db.Column(db.String(50))  # 'grant_proposal', 'loi', 'budget', 'impact_statement', etc.
+    template_type = db.Column(db.String(50))  # 'grant_pitch', 'case_support', 'impact_report', 'thank_you', 'social_media', 'newsletter'
     
     # Template content and structure
     structure = db.Column(JSON)  # Sections, fields, requirements
     default_content = db.Column(JSON)  # Pre-filled content blocks
     ai_prompts = db.Column(JSON)  # AI generation prompts for each section
+    
+    # Smart Tools specific fields
+    tool_type = db.Column(db.String(50))  # 'grant_pitch', 'case_support', 'impact_report', etc.
+    input_parameters = db.Column(JSON)  # Parameters used to generate content
+    tags = db.Column(JSON)  # Tags for categorization: ['education', 'foundation', 'community']
+    focus_areas = db.Column(JSON)  # Focus areas: ['health', 'education', 'environment']
+    funder_types = db.Column(JSON)  # Funder types: ['foundation', 'government', 'corporate']
+    generated_content = db.Column(db.Text)  # The actual generated content
+    
+    # Organization access control
+    organization_id = db.Column(db.Integer, db.ForeignKey('organizations.id'))
+    created_by_user_id = db.Column(db.Integer, db.ForeignKey('users.id'))
+    is_shared = db.Column(db.Boolean, default=False)  # Whether template can be shared across organizations
     
     # Metadata
     typical_length = db.Column(db.String(50))  # '2-3 pages', '500 words', etc.
@@ -44,6 +57,7 @@ class SmartTemplate(db.Model):
     times_used = db.Column(db.Integer, default=0)
     success_rate = db.Column(db.Float, default=0.0)
     avg_rating = db.Column(db.Float, default=0.0)
+    last_used_at = db.Column(db.DateTime, nullable=True)
     
     # System fields
     is_active = db.Column(db.Boolean, default=True)
