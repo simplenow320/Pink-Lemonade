@@ -8,8 +8,40 @@ from app.models import User, Organization, UserProgress
 from app.services.auth_manager import AuthManager
 from datetime import datetime
 import json
+from sqlalchemy.exc import IntegrityError
 
 onboarding_bp = Blueprint('onboarding', __name__, url_prefix='/onboarding')
+
+def safe_int_conversion(value, field_name=None):
+    """
+    Safely convert form values to integers or None.
+    Handles empty strings, None values, and invalid formats.
+    
+    Args:
+        value: The value to convert (string, int, or None)
+        field_name: Optional field name for better error messages
+    
+    Returns:
+        int, None, or raises ValueError with friendly message
+    """
+    if value is None or value == '':
+        return None
+    
+    # If already an integer, return it
+    if isinstance(value, int):
+        return value
+    
+    # Try to convert string to integer
+    if isinstance(value, str):
+        value = value.strip()
+        if value == '':
+            return None
+        
+        try:
+            return int(value)
+        except ValueError:
+            field_display = field_name or 'field'
+            raise ValueError(f"Please enter a valid number for {field_display} (or leave it blank)")
 
 @onboarding_bp.route('/welcome')
 @AuthManager.require_auth
@@ -43,41 +75,65 @@ def step1():
 @AuthManager.require_auth
 def save_step1():
     """Save step 1 data and proceed or skip"""
-    user = AuthManager.get_current_user()
-    if not user:
-        flash('Please log in to continue.', 'warning')
-        return redirect('/login')
-    org = Organization.query.filter_by(user_id=user.id).first()
-    
-    if not org:
-        org = Organization()
-        org.user_id = user.id
-        org.created_by_user_id = user.id
-        db.session.add(org)
-    
-    # Update basic info
-    org.name = request.form.get('org_name', '')
-    org.type = request.form.get('org_type', '')
-    org.city = request.form.get('city', '')
-    org.state = request.form.get('state', '')
-    org.ein = request.form.get('ein', '')
-    org.website = request.form.get('website', '')
-    org.year_established = request.form.get('year_established')
-    
-    # Calculate profile completeness for step 1 (33%)
-    org.profile_completeness = calculate_profile_completeness(org, step=1)
-    
-    # Update user progress
-    update_user_progress(user.id, 'step1_complete', xp_earned=100)
-    
-    db.session.commit()
-    
-    if request.form.get('skip') == 'true':
-        flash('Profile saved! You can complete it anytime from Settings.', 'info')
-        return redirect('/dashboard')
-    
-    flash('Great start! Let\'s continue with your mission.', 'success')
-    return redirect(url_for('onboarding_flow.step2'))
+    try:
+        user = AuthManager.get_current_user()
+        if not user:
+            flash('Please log in to continue.', 'warning')
+            return redirect('/login')
+        
+        org = Organization.query.filter_by(user_id=user.id).first()
+        
+        if not org:
+            org = Organization()
+            org.user_id = user.id
+            org.created_by_user_id = user.id
+            db.session.add(org)
+        
+        # Update basic info
+        org.name = request.form.get('org_name', '')
+        org.type = request.form.get('org_type', '')
+        org.city = request.form.get('city', '')
+        org.state = request.form.get('state', '')
+        org.ein = request.form.get('ein', '')
+        org.website = request.form.get('website', '')
+        
+        # Safely convert year_established to integer or None
+        try:
+            org.year_established = safe_int_conversion(
+                request.form.get('year_established'),
+                'year established'
+            )
+        except ValueError as e:
+            flash(str(e), 'error')
+            return redirect(url_for('onboarding.step1'))
+        
+        # Calculate profile completeness for step 1 (33%)
+        org.profile_completeness = calculate_profile_completeness(org, step=1)
+        
+        # Update user progress
+        update_user_progress(user.id, 'step1_complete', xp_earned=100)
+        
+        db.session.commit()
+        
+        if request.form.get('skip') == 'true':
+            flash('Profile saved! You can complete it anytime from Settings.', 'info')
+            return redirect('/dashboard')
+        
+        flash('Great start! Let\'s continue with your mission.', 'success')
+        return redirect(url_for('onboarding.step2'))
+        
+    except IntegrityError as e:
+        db.session.rollback()
+        # Check for unique constraint violations
+        if 'organizations_name_key' in str(e) or 'unique' in str(e).lower() and 'name' in str(e).lower():
+            flash('That organization name is already taken. Please choose a different name.', 'error')
+        else:
+            flash('There was an issue saving your information. Please check your entries and try again.', 'error')
+        return redirect(url_for('onboarding.step1'))
+    except Exception as e:
+        db.session.rollback()
+        flash('There was an issue saving your information. Please check your entries and try again.', 'error')
+        return redirect(url_for('onboarding.step1'))
 
 @onboarding_bp.route('/step2')
 @AuthManager.require_auth
@@ -90,7 +146,7 @@ def step2():
     org = Organization.query.filter_by(user_id=user.id).first()
     
     if not org:
-        return redirect(url_for('onboarding_flow.step1'))
+        return redirect(url_for('onboarding.step1'))
     
     return render_template('onboarding/step2_mission.html', user=user, org=org)
 
@@ -105,7 +161,7 @@ def save_step2():
     org = Organization.query.filter_by(user_id=user.id).first()
     
     if not org:
-        return redirect(url_for('onboarding_flow.step1'))
+        return redirect(url_for('onboarding.step1'))
     
     # Update mission and programs
     org.mission_statement = request.form.get('mission_statement', '')
@@ -130,7 +186,7 @@ def save_step2():
         return redirect('/dashboard')
     
     flash('Excellent! One more step to go.', 'success')
-    return redirect(url_for('onboarding_flow.step3'))
+    return redirect(url_for('onboarding.step3'))
 
 @onboarding_bp.route('/step3')
 @AuthManager.require_auth
@@ -143,7 +199,7 @@ def step3():
     org = Organization.query.filter_by(user_id=user.id).first()
     
     if not org:
-        return redirect(url_for('onboarding_flow.step1'))
+        return redirect(url_for('onboarding.step1'))
     
     return render_template('onboarding/step3_capacity.html', user=user, org=org)
 
@@ -151,36 +207,60 @@ def step3():
 @AuthManager.require_auth
 def save_step3():
     """Save step 3 data and complete onboarding"""
-    user = AuthManager.get_current_user()
-    if not user:
-        flash('Please log in to continue.', 'warning')
-        return redirect('/login')
-    org = Organization.query.filter_by(user_id=user.id).first()
-    
-    if not org:
-        return redirect(url_for('onboarding_flow.step1'))
-    
-    # Update capacity info
-    org.annual_budget = request.form.get('annual_budget', '')
-    org.staff_count = request.form.get('staff_count', 0)
-    org.board_members = request.form.get('board_members', 0)
-    org.previous_grants = request.form.get('previous_grants', '')
-    org.grant_experience = request.form.get('grant_experience', '')
-    
-    # Calculate final profile completeness (100%)
-    org.profile_completeness = calculate_profile_completeness(org, step=3)
-    
-    # Mark onboarding complete
-    session['onboarding_complete'] = True
-    
-    # Update user progress
-    progress = update_user_progress(user.id, 'step3_complete', xp_earned=200)
-    progress.onboarding_complete = True
-    
-    # Achievement for completing onboarding
-    update_user_progress(user.id, 'onboarding_champion', xp_earned=500)
-    
-    db.session.commit()
+    try:
+        user = AuthManager.get_current_user()
+        if not user:
+            flash('Please log in to continue.', 'warning')
+            return redirect('/login')
+        
+        org = Organization.query.filter_by(user_id=user.id).first()
+        
+        if not org:
+            return redirect(url_for('onboarding.step1'))
+        
+        # Update capacity info
+        org.annual_budget = request.form.get('annual_budget', '')
+        
+        # Safely convert numeric fields to integers or None
+        try:
+            org.staff_count = safe_int_conversion(
+                request.form.get('staff_count'),
+                'staff count'
+            )
+            org.board_members = safe_int_conversion(
+                request.form.get('board_members'),
+                'board size'
+            )
+        except ValueError as e:
+            flash(str(e), 'error')
+            return redirect(url_for('onboarding.step3'))
+        
+        org.previous_grants = request.form.get('previous_grants', '')
+        org.grant_experience = request.form.get('grant_experience', '')
+        
+        # Calculate final profile completeness (100%)
+        org.profile_completeness = calculate_profile_completeness(org, step=3)
+        
+        # Mark onboarding complete
+        session['onboarding_complete'] = True
+        
+        # Update user progress
+        progress = update_user_progress(user.id, 'step3_complete', xp_earned=200)
+        progress.onboarding_complete = True
+        
+        # Achievement for completing onboarding
+        update_user_progress(user.id, 'onboarding_champion', xp_earned=500)
+        
+        db.session.commit()
+        
+    except IntegrityError as e:
+        db.session.rollback()
+        flash('There was an issue saving your information. Please check your entries and try again.', 'error')
+        return redirect(url_for('onboarding.step3'))
+    except Exception as e:
+        db.session.rollback()
+        flash('There was an issue saving your information. Please check your entries and try again.', 'error')
+        return redirect(url_for('onboarding.step3'))
     
     # Trigger immediate grant discovery for the new organization
     try:

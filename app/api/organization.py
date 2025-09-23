@@ -6,10 +6,42 @@ from app.services.ai_service import AIService
 from app.api.auth import login_required, get_current_user
 import logging
 from datetime import datetime
+from sqlalchemy.exc import IntegrityError
 
 logger = logging.getLogger(__name__)
 bp = Blueprint('organization', __name__)
 ai_service = AIService()
+
+def safe_int_conversion(value, field_name=None):
+    """
+    Safely convert form values to integers or None.
+    Handles empty strings, None values, and invalid formats.
+    
+    Args:
+        value: The value to convert (string, int, or None)
+        field_name: Optional field name for better error messages
+    
+    Returns:
+        int, None, or raises ValueError with friendly message
+    """
+    if value is None or value == '':
+        return None
+    
+    # If already an integer, return it
+    if isinstance(value, int):
+        return value
+    
+    # Try to convert string to integer
+    if isinstance(value, str):
+        value = value.strip()
+        if value == '':
+            return None
+        
+        try:
+            return int(value)
+        except ValueError:
+            field_display = field_name or 'field'
+            raise ValueError(f"Please enter a valid number for {field_display} (or leave it blank)")
 
 @bp.route('/onboarding', methods=['POST'])
 @login_required
@@ -41,7 +73,16 @@ def update_onboarding():
             org.legal_name = data.get('legal_name')
             org.ein = data.get('ein')
             org.org_type = data.get('org_type')
-            org.year_founded = data.get('year_founded')
+            
+            # Safely convert year_founded to integer or None
+            try:
+                org.year_founded = safe_int_conversion(
+                    data.get('year_founded'),
+                    'year founded'
+                )
+            except ValueError as e:
+                return jsonify({'error': str(e)}), 400
+            
             org.website = data.get('website')
             org.mission = data.get('mission')
             org.vision = data.get('vision')
@@ -72,8 +113,20 @@ def update_onboarding():
         elif step == 3:  # Organizational Capacity
             org.annual_budget_range = data.get('annual_budget_range')
             org.staff_size = data.get('staff_size')
-            org.volunteer_count = data.get('volunteer_count')
-            org.board_size = data.get('board_size')
+            
+            # Safely convert numeric fields to integers or None
+            try:
+                # volunteer_count is stored as a string range in the model
+                org.volunteer_count = data.get('volunteer_count')
+                
+                # board_size is an integer field
+                org.board_size = safe_int_conversion(
+                    data.get('board_size'),
+                    'board size'
+                )
+            except ValueError as e:
+                return jsonify({'error': str(e)}), 400
+            
             org.people_served_annually = data.get('people_served_annually')
             org.key_achievements = data.get('key_achievements')
             
@@ -123,10 +176,18 @@ def update_onboarding():
             'org_id': org.id
         })
         
+    except IntegrityError as e:
+        db.session.rollback()
+        logger.error(f"Database integrity error during onboarding: {e}")
+        # Check for unique constraint violations
+        if 'unique' in str(e).lower() and 'name' in str(e).lower():
+            return jsonify({'error': 'That organization name is already taken. Please choose a different name.'}), 400
+        else:
+            return jsonify({'error': 'There was an issue saving your information. Please check your entries and try again.'}), 400
     except Exception as e:
         logger.error(f"Onboarding update error: {e}")
         db.session.rollback()
-        return jsonify({'error': str(e)}), 500
+        return jsonify({'error': 'There was an issue saving your information. Please check your entries and try again.'}), 500
 
 @bp.route('/profile', methods=['GET'])
 @login_required
@@ -168,12 +229,12 @@ def update_profile():
         
         # Update all provided fields
         updateable_fields = [
-            'legal_name', 'ein', 'org_type', 'year_founded', 'website',
+            'legal_name', 'ein', 'org_type', 'website',
             'mission', 'vision', 'values', 'primary_focus_areas',
             'secondary_focus_areas', 'programs_services', 'target_demographics',
             'age_groups_served', 'service_area_type', 'primary_city',
             'primary_state', 'primary_zip', 'annual_budget_range',
-            'staff_size', 'volunteer_count', 'board_size', 'people_served_annually',
+            'staff_size', 'volunteer_count', 'people_served_annually',
             'key_achievements', 'previous_funders', 'typical_grant_size',
             'grant_success_rate', 'preferred_grant_types', 'grant_writing_capacity',
             'faith_based', 'minority_led', 'woman_led', 'veteran_led',
@@ -181,9 +242,21 @@ def update_profile():
             'funding_priorities', 'exclusions'
         ]
         
+        # Integer fields that need special handling
+        integer_fields = ['year_founded', 'board_size']
+        
         for field in updateable_fields:
             if data and field in data:
                 setattr(org, field, data[field])
+        
+        # Handle integer fields separately with proper conversion
+        try:
+            for field in integer_fields:
+                if data and field in data:
+                    value = safe_int_conversion(data[field], field.replace('_', ' '))
+                    setattr(org, field, value)
+        except ValueError as e:
+            return jsonify({'error': str(e)}), 400
         
         # Recalculate completeness
         org.calculate_completeness()
@@ -204,10 +277,17 @@ def update_profile():
             'organization': org.to_dict()
         })
         
+    except IntegrityError as e:
+        db.session.rollback()
+        logger.error(f"Database integrity error during profile update: {e}")
+        if 'unique' in str(e).lower():
+            return jsonify({'error': 'That value is already in use. Please choose a different one.'}), 400
+        else:
+            return jsonify({'error': 'There was an issue saving your information. Please check your entries and try again.'}), 400
     except Exception as e:
         logger.error(f"Profile update error: {e}")
         db.session.rollback()
-        return jsonify({'error': str(e)}), 500
+        return jsonify({'error': 'There was an issue updating your profile. Please check your entries and try again.'}), 500
 
 @bp.route('/ai-context', methods=['GET'])
 @login_required  
