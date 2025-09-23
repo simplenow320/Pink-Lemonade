@@ -129,28 +129,15 @@ def register():
 def login():
     """Log in a user using the AuthService"""
     try:
-        # DEBUG: Log all incoming request data
-        print(f"🔍 LOGIN REQUEST DEBUG:")
-        print(f"  - Content-Type: {request.content_type}")
-        print(f"  - Raw data: {request.data}")
-        print(f"  - Form data: {request.form}")
-        print(f"  - JSON data: {request.get_json()}")
-        print(f"  - Headers: {dict(request.headers)}")
-        
         data = request.get_json()
         
         if not data:
-            print("❌ NO JSON DATA RECEIVED")
-            return jsonify({'error': 'No JSON data received'}), 400
+            return jsonify({'error': 'No data received'}), 400
         
         # Get credentials
         email = data.get('email', '').strip().lower()
         password = data.get('password', '')
         remember = data.get('remember', False)
-        
-        print(f"  - Email: '{email}'")
-        print(f"  - Password length: {len(password) if password else 0}")
-        print(f"  - Remember: {remember}")
         
         if not email or not password:
             return jsonify({'error': 'Email and password are required'}), 400
