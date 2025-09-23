@@ -3,6 +3,7 @@ import { Link, useSearchParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useOrganization } from '../hooks/useOrganization';
 import { getGrant } from '../utils/api';
+import UseInApplicationModal from '../components/ui/UseInApplicationModal';
 import TemplateSelectionModal from '../components/ui/TemplateSelectionModal';
 import SaveTemplateModal from '../components/ui/SaveTemplateModal';
 
@@ -19,6 +20,10 @@ const SocialMedia = () => {
   const [grant, setGrant] = useState(null);
   const [grantLoading, setGrantLoading] = useState(false);
   const [grantError, setGrantError] = useState('');
+  
+  // Use in Application modal state
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [successMessage, setSuccessMessage] = useState('');
   
   // Template functionality state
   const [isTemplateModalOpen, setIsTemplateModalOpen] = useState(false);
@@ -140,6 +145,23 @@ const SocialMedia = () => {
   const copyToClipboard = () => {
     navigator.clipboard.writeText(editableContent);
     alert('Content copied to clipboard!');
+  };
+
+  const handleUseInApplication = () => {
+    if (!grantId) {
+      alert('Grant ID is required to save content to application');
+      return;
+    }
+    setIsModalOpen(true);
+  };
+
+  const handleModalSuccess = (data) => {
+    setSuccessMessage(
+      `Content saved successfully! ` +
+      `<a href="${data.deep_link}" class="underline text-blue-600 hover:text-blue-800">View Application</a>`
+    );
+    // Clear success message after 10 seconds
+    setTimeout(() => setSuccessMessage(''), 10000);
   };
 
   // Template handling functions
@@ -398,6 +420,14 @@ const SocialMedia = () => {
                   >
                     Download
                   </button>
+                  {grantId && (
+                    <button
+                      onClick={handleUseInApplication}
+                      className="px-3 py-1 text-sm bg-blue-100 text-blue-700 rounded-md hover:bg-blue-200 transition-colors"
+                    >
+                      Use in Application
+                    </button>
+                  )}
                 </div>
               )}
             </div>
@@ -472,7 +502,31 @@ const SocialMedia = () => {
             )}
           </motion.div>
         </div>
+
+        {/* Success Message */}
+        {successMessage && (
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="mt-6 p-4 bg-green-50 border border-green-200 rounded-md"
+          >
+            <div 
+              className="text-green-800"
+              dangerouslySetInnerHTML={{ __html: successMessage }}
+            />
+          </motion.div>
+        )}
       </div>
+
+      {/* Use in Application Modal */}
+      <UseInApplicationModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        content={editableContent}
+        sourceTool="social_media"
+        grantId={grantId}
+        onSuccess={handleModalSuccess}
+      />
     </div>
   );
 };
