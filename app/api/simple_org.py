@@ -86,7 +86,9 @@ def save_organization():
             (Organization.created_by_user_id == user_id)
         ).first()
         if not org:
-            org = Organization(name=data.get('name', ''), mission=data.get('mission', ''))
+            # Never save empty strings for name - use None instead to avoid unique constraint issues
+            org_name = data.get('name', '').strip()
+            org = Organization(name=org_name if org_name else None, mission=data.get('mission', ''))
             db.session.add(org)
             db.session.flush()  # Get the ID
         else:
@@ -101,7 +103,9 @@ def save_organization():
             db.session.add(profile)
         
         # Update profile fields
-        profile.name = data.get('name', '')
+        # Never save empty strings for name - use None instead to avoid unique constraint issues
+        profile_name = data.get('name', '').strip()
+        profile.name = profile_name if profile_name else None
         profile.mission = data.get('mission', '')
         profile.location = data.get('location', '')
         profile.website = data.get('website', '')

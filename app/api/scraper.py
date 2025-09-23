@@ -29,7 +29,9 @@ def add_source():
         
         # Create source object
         new_source = ScraperSource()
-        new_source.name = data.get('name', '')
+        # Never save empty strings for name - use None instead to avoid unique constraint issues
+        source_name = data.get('name', '').strip()
+        new_source.name = source_name if source_name else None
         new_source.url = data.get('url', '')
         new_source.location = data.get('location')
         new_source.phone = data.get('phone')

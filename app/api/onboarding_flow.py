@@ -90,7 +90,9 @@ def save_step1():
             db.session.add(org)
         
         # Update basic info
-        org.name = request.form.get('org_name', '')
+        org_name = request.form.get('org_name', '').strip()
+        # Never save empty strings for name - use None instead to avoid unique constraint issues
+        org.name = org_name if org_name else None
         org.type = request.form.get('org_type', '')
         org.city = request.form.get('city', '')
         org.state = request.form.get('state', '')

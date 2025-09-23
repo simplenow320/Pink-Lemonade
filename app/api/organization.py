@@ -64,7 +64,9 @@ def update_onboarding():
         if not org:
             # Create new organization
             org = Organization()
-            org.name = user.org_name or data.get('legal_name', '')
+            # Never save empty strings for name - use None instead to avoid unique constraint issues
+            org_name = user.org_name or data.get('legal_name', '')
+            org.name = org_name.strip() if org_name else None
             org.created_by_user_id = user.id
             db.session.add(org)
         
