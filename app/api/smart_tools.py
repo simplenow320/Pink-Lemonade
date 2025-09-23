@@ -5,7 +5,7 @@ AI-powered tools for grant writing and impact reporting
 
 from flask import Blueprint, jsonify, request
 from app.services.smart_tools import SmartToolsService
-from app.models import Organization, Grant, db
+from app.models import Organization, Grant, ToolUsage, db
 from app.api.auth import login_required, get_current_user
 import logging
 
@@ -67,6 +67,30 @@ def generate_pitch():
         result = smart_tools.generate_grant_pitch(org_id, grant_id, pitch_type)
         
         if result['success']:
+            # Create ToolUsage record for tracking
+            try:
+                tool_usage = ToolUsage(
+                    org_id=org_id,
+                    user_id=user.id,
+                    grant_id=grant_id,
+                    tool='pitch',
+                    params_json={
+                        'pitch_type': pitch_type,
+                        'grant_id': grant_id
+                    },
+                    output_ref=result.get('content', '')[:500],  # Store first 500 chars as reference
+                    status='generated'
+                )
+                db.session.add(tool_usage)
+                db.session.commit()
+                
+                # Add usage_id to result for future reference
+                result['tool_usage_id'] = tool_usage.id
+                
+            except Exception as e:
+                logger.warning(f"Failed to create ToolUsage record for pitch: {e}")
+                # Don't fail the request if tracking fails
+            
             return jsonify(result)
         else:
             return jsonify(result), 500
@@ -128,6 +152,30 @@ def generate_case():
         result = smart_tools.generate_case_for_support(org_id, campaign_details, grant_id=grant_id)
         
         if result['success']:
+            # Create ToolUsage record for tracking
+            try:
+                tool_usage = ToolUsage(
+                    org_id=org_id,
+                    user_id=user.id,
+                    grant_id=grant_id,
+                    tool='case',
+                    params_json={
+                        'campaign_details': campaign_details,
+                        'grant_id': grant_id
+                    },
+                    output_ref=result.get('content', '')[:500],  # Store first 500 chars as reference
+                    status='generated'
+                )
+                db.session.add(tool_usage)
+                db.session.commit()
+                
+                # Add usage_id to result for future reference
+                result['tool_usage_id'] = tool_usage.id
+                
+            except Exception as e:
+                logger.warning(f"Failed to create ToolUsage record for case: {e}")
+                # Don't fail the request if tracking fails
+            
             return jsonify(result)
         else:
             return jsonify(result), 500
@@ -200,6 +248,31 @@ def generate_impact_report():
         )
         
         if result['success']:
+            # Create ToolUsage record for tracking
+            try:
+                tool_usage = ToolUsage(
+                    org_id=org_id,
+                    user_id=user.id,
+                    grant_id=grant_id,
+                    tool='impact',
+                    params_json={
+                        'report_period': report_period,
+                        'metrics_data': metrics_data,
+                        'grant_id': grant_id
+                    },
+                    output_ref=result.get('content', '')[:500],  # Store first 500 chars as reference
+                    status='generated'
+                )
+                db.session.add(tool_usage)
+                db.session.commit()
+                
+                # Add usage_id to result for future reference
+                result['tool_usage_id'] = tool_usage.id
+                
+            except Exception as e:
+                logger.warning(f"Failed to create ToolUsage record for impact: {e}")
+                # Don't fail the request if tracking fails
+            
             return jsonify(result)
         else:
             return jsonify(result), 500
@@ -261,6 +334,30 @@ def generate_thank_you():
         result = smart_tools.generate_thank_you_letter(org_id, donor_info, grant_id=grant_id)
         
         if result['success']:
+            # Create ToolUsage record for tracking
+            try:
+                tool_usage = ToolUsage(
+                    org_id=org_id,
+                    user_id=user.id,
+                    grant_id=grant_id,
+                    tool='thank_you',
+                    params_json={
+                        'donor_info': donor_info,
+                        'grant_id': grant_id
+                    },
+                    output_ref=result.get('content', '')[:500],  # Store first 500 chars as reference
+                    status='generated'
+                )
+                db.session.add(tool_usage)
+                db.session.commit()
+                
+                # Add usage_id to result for future reference
+                result['tool_usage_id'] = tool_usage.id
+                
+            except Exception as e:
+                logger.warning(f"Failed to create ToolUsage record for thank_you: {e}")
+                # Don't fail the request if tracking fails
+            
             return jsonify(result)
         else:
             return jsonify(result), 500
@@ -321,6 +418,31 @@ def generate_social_post():
         result = smart_tools.generate_social_media_post(org_id, platform, topic, grant_id=grant_id)
         
         if result['success']:
+            # Create ToolUsage record for tracking
+            try:
+                tool_usage = ToolUsage(
+                    org_id=org_id,
+                    user_id=user.id,
+                    grant_id=grant_id,
+                    tool='social',
+                    params_json={
+                        'platform': platform,
+                        'topic': topic,
+                        'grant_id': grant_id
+                    },
+                    output_ref=result.get('content', '')[:500],  # Store first 500 chars as reference
+                    status='generated'
+                )
+                db.session.add(tool_usage)
+                db.session.commit()
+                
+                # Add usage_id to result for future reference
+                result['tool_usage_id'] = tool_usage.id
+                
+            except Exception as e:
+                logger.warning(f"Failed to create ToolUsage record for social: {e}")
+                # Don't fail the request if tracking fails
+            
             return jsonify(result)
         else:
             return jsonify(result), 500
@@ -380,6 +502,30 @@ def generate_newsletter():
         result = smart_tools.generate_newsletter_content(org_id, newsletter_details, grant_id=grant_id)
         
         if result['success']:
+            # Create ToolUsage record for tracking
+            try:
+                tool_usage = ToolUsage(
+                    org_id=org_id,
+                    user_id=user.id,
+                    grant_id=grant_id,
+                    tool='newsletter',
+                    params_json={
+                        'newsletter_details': newsletter_details,
+                        'grant_id': grant_id
+                    },
+                    output_ref=result.get('content', '')[:500],  # Store first 500 chars as reference
+                    status='generated'
+                )
+                db.session.add(tool_usage)
+                db.session.commit()
+                
+                # Add usage_id to result for future reference
+                result['tool_usage_id'] = tool_usage.id
+                
+            except Exception as e:
+                logger.warning(f"Failed to create ToolUsage record for newsletter: {e}")
+                # Don't fail the request if tracking fails
+            
             return jsonify(result)
         else:
             return jsonify(result), 500

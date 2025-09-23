@@ -1304,3 +1304,43 @@ class ApplicationContent(db.Model):
             'created_at': self.created_at.isoformat() if self.created_at else None,
             'updated_at': self.updated_at.isoformat() if self.updated_at else None
         }
+
+class ToolUsage(db.Model):
+    """Track Smart Tools usage for grant success analytics"""
+    __tablename__ = "tool_usage"
+    
+    id = db.Column(db.Integer, primary_key=True)
+    org_id = db.Column(db.Integer, db.ForeignKey("organizations.id"), nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
+    grant_id = db.Column(db.Integer, db.ForeignKey("grants.id"), nullable=True)  # Nullable for general tools
+    
+    # Tool information
+    tool = db.Column(db.String(50), nullable=False)  # 'pitch', 'case', 'impact', 'thank_you', 'social', 'newsletter'
+    params_json = db.Column(db.JSON)  # Tool parameters used for generation
+    output_ref = db.Column(db.Text)  # Reference to generated content or file
+    
+    # Status tracking for pipeline analytics
+    status = db.Column(db.String(50), default='generated')  # 'generated', 'applied', 'submitted', 'awarded'
+    
+    # Metadata
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    
+    # Relationships
+    organization = db.relationship("Organization", backref="tool_usage_records")
+    user = db.relationship("User", backref="tool_usage_records")
+    grant = db.relationship("Grant", backref="tool_usage_records")
+    
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'org_id': self.org_id,
+            'user_id': self.user_id,
+            'grant_id': self.grant_id,
+            'tool': self.tool,
+            'params_json': self.params_json or {},
+            'output_ref': self.output_ref,
+            'status': self.status,
+            'created_at': self.created_at.isoformat() if self.created_at else None,
+            'updated_at': self.updated_at.isoformat() if self.updated_at else None
+        }

@@ -6,7 +6,7 @@ Handles 8-stage grant pipeline operations
 from flask import Blueprint, jsonify, request
 from app.services.workflow_manager import WorkflowManager
 from app.api.auth import login_required, get_current_user
-from app.models import Grant, Organization, Application, ApplicationContent, db
+from app.models import Grant, Organization, Application, ApplicationContent, ToolUsage, db
 import logging
 
 logger = logging.getLogger(__name__)
@@ -483,6 +483,35 @@ def save_application_content(grant_id):
         if application.status == 'draft':
             application.status = 'in_progress'
         
+        # Update ToolUsage status if this content came from a Smart Tool
+        if tool_usage_id:
+            try:
+                # SECURITY FIX: Add ownership validation when updating ToolUsage records
+                # Load and validate ToolUsage ownership
+                tool_usage = ToolUsage.query.filter_by(
+                    id=tool_usage_id,
+                    org_id=user_org.id,
+                    grant_id=grant_id
+                ).first()
+                
+                if not tool_usage:
+                    logger.warning(f"ToolUsage {tool_usage_id} not found or access denied for org {user_org.id}, grant {grant_id}")
+                    return jsonify({
+                        'success': False, 
+                        'error': 'Tool usage not found or access denied'
+                    }), 403
+                
+                # Only update if status is still 'generated' to prevent race conditions
+                if tool_usage.status == 'generated':
+                    tool_usage.status = 'applied'
+                    logger.info(f"Updated ToolUsage {tool_usage_id} status to 'applied' for org {user_org.id}")
+            except Exception as e:
+                logger.error(f"Error validating ToolUsage ownership for {tool_usage_id}: {e}")
+                return jsonify({
+                    'success': False, 
+                    'error': 'Failed to validate tool usage ownership'
+                }), 500
+        
         db.session.commit()
         
         return jsonify({
@@ -501,3 +530,102 @@ def save_application_content(grant_id):
             'success': False, 
             'error': 'Failed to save application content'
         }), 500
+
+@workflow_bp.route('/grants/<int:grant_id>/tool-usage', methods=['GET'])
+@login_required
+def get_grant_tool_usage(grant_id):
+    """Get Smart Tools usage for a specific grant"""
+    try:
+        # Get current authenticated user
+        current_user = get_current_user()
+        if not current_user:
+            return jsonify({'success': False, 'error': 'Authentication required'}), 401
+        
+        # Verify grant exists
+        grant = Grant.query.get(grant_id)
+        if not grant:
+            return jsonify({'success': False, 'error': 'Grant not found'}), 404
+        
+        # Get user's organization
+        user_org = Organization.query.filter(
+            (Organization.user_id == current_user.id) | 
+            (Organization.created_by_user_id == current_user.id)
+        ).first()
+        
+        if not user_org:
+            return jsonify({
+                'success': False,
+                'error': 'Access denied: No organization associated with user'
+            }), 403
+        
+        # Verify grant ownership - user's org must match grant's org
+        if not grant.org_id or grant.org_id != user_org.id:
+            return jsonify({
+                'success': False,
+                'error': 'Access denied'
+            }), 403
+        
+        # Fetch all tool usage records for this grant
+        from app.models import User
+        tool_usage_records = db.session.query(ToolUsage, User).join(
+            User, ToolUsage.user_id == User.id
+        ).filter(
+            ToolUsage.grant_id == grant_id
+        ).order_by(ToolUsage.created_at.desc()).all()
+        
+        # Format the results
+        tools_used = []
+        for tool_usage, user in tool_usage_records:
+            tool_data = tool_usage.to_dict()
+            tool_data['user_name'] = f"{user.first_name or ''} {user.last_name or ''}".strip() or user.email
+            tool_data['user_email'] = user.email
+            
+            # Add tool display information
+            tool_names = {
+                'pitch': 'Grant Pitch',
+                'case': 'Case for Support',
+                'impact': 'Impact Report',
+                'thank_you': 'Thank You Letter',
+                'social': 'Social Media Post',
+                'newsletter': 'Newsletter Content'
+            }
+            tool_data['tool_display_name'] = tool_names.get(tool_usage.tool, tool_usage.tool.title())
+            
+            # Add status display information
+            status_colors = {
+                'generated': 'blue',
+                'applied': 'green',
+                'submitted': 'purple',
+                'awarded': 'gold'
+            }
+            tool_data['status_color'] = status_colors.get(tool_usage.status, 'gray')
+            
+            tools_used.append(tool_data)
+        
+        # Get usage summary
+        total_tools = len(tools_used)
+        tools_by_type = {}
+        tools_by_status = {}
+        
+        for tool in tools_used:
+            tool_type = tool['tool']
+            status = tool['status']
+            
+            tools_by_type[tool_type] = tools_by_type.get(tool_type, 0) + 1
+            tools_by_status[status] = tools_by_status.get(status, 0) + 1
+        
+        return jsonify({
+            'success': True,
+            'grant_id': grant_id,
+            'grant_title': grant.title,
+            'tools_used': tools_used,
+            'summary': {
+                'total_tools': total_tools,
+                'by_type': tools_by_type,
+                'by_status': tools_by_status
+            }
+        })
+        
+    except Exception as e:
+        logger.error(f"Error getting tool usage for grant {grant_id}: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
