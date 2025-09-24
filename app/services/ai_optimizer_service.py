@@ -185,9 +185,16 @@ Quality check: Ensure no placeholder text, all statistics are realistic, and ton
                 max_retries=1
             )
             
+            # Ensure json is mentioned in prompt when using json_object format
+            if context.get("json_output"):
+                json_prompt = f"{prompt}\n\nPlease provide your response in json format."
+                messages = [{"role": "system", "content": "You are an AI assistant. Always respond in json format when requested."}, {"role": "user", "content": json_prompt}]
+            else:
+                messages = [{"role": "user", "content": prompt}]
+            
             response = client_with_timeout.chat.completions.create(
                 model=model.value,
-                messages=[{"role": "user", "content": prompt}],
+                messages=messages,
                 temperature=context.get("temperature", 0.7),
                 max_tokens=context.get("max_tokens", 2000),
                 response_format={"type": "json_object"} if context.get("json_output") else {"type": "text"}

@@ -8,27 +8,80 @@ import json
 import logging
 import time
 from typing import Dict, List, Optional, Tuple, Any
-from datetime import datetime
+from datetime import datetime, timedelta
 import openai
 from openai import OpenAI
 from app.services.ai_optimizer_service import ai_optimizer, TaskComplexity
 from app.services.mock_ai_service import MockAIService
+import threading
 
 logger = logging.getLogger(__name__)
 
+class CircuitBreaker:
+    """Circuit breaker pattern to prevent cascading failures"""
+    
+    def __init__(self, failure_threshold: int = 5, timeout: int = 60, reset_timeout: int = 30):
+        self.failure_threshold = failure_threshold
+        self.timeout = timeout
+        self.reset_timeout = reset_timeout
+        self.failure_count = 0
+        self.last_failure_time = None
+        self.state = 'CLOSED'  # CLOSED, OPEN, HALF_OPEN
+        self.lock = threading.Lock()
+        
+    def call(self, func, *args, **kwargs):
+        """Call function through circuit breaker"""
+        with self.lock:
+            if self.state == 'OPEN':
+                if self._should_attempt_reset():
+                    self.state = 'HALF_OPEN'
+                    logger.info("Circuit breaker attempting reset")
+                else:
+                    logger.warning("Circuit breaker is OPEN - rejecting call")
+                    return None
+            
+            try:
+                result = func(*args, **kwargs)
+                self._on_success()
+                return result
+            except Exception as e:
+                self._on_failure()
+                raise e
+                
+    def _should_attempt_reset(self) -> bool:
+        """Check if enough time has passed to attempt reset"""
+        return (self.last_failure_time and 
+                datetime.utcnow() - self.last_failure_time > timedelta(seconds=self.reset_timeout))
+    
+    def _on_success(self):
+        """Handle successful call"""
+        self.failure_count = 0
+        self.state = 'CLOSED'
+        
+    def _on_failure(self):
+        """Handle failed call"""
+        self.failure_count += 1
+        self.last_failure_time = datetime.utcnow()
+        if self.failure_count >= self.failure_threshold:
+            self.state = 'OPEN'
+            logger.warning(f"Circuit breaker OPENED after {self.failure_count} failures")
+
 class AIService:
-    """Central AI service for grant-related AI operations with intelligent model routing"""
+    """Central AI service for grant-related AI operations with intelligent model routing and circuit breaker"""
     
     def __init__(self):
-        """Initialize AI service with API key from environment and optimizer"""
+        """Initialize AI service with API key from environment, optimizer, and circuit breaker"""
         self.api_key = os.environ.get("OPENAI_API_KEY")
         self.client = None
         self.model = "gpt-4o"  # Default model, optimizer will override
-        self.max_retries = 3
-        self.retry_delay = 2  # seconds
+        self.max_retries = 2  # Reduced from 3 to speed up failures
+        self.retry_delay = 1  # Reduced from 2 seconds to speed up retries
         self.optimizer = ai_optimizer  # Use intelligent model routing
         self.use_mock = os.environ.get("USE_MOCK_AI", "false").lower() == "true"
         self.mock_service = MockAIService()
+        self.circuit_breaker = CircuitBreaker(failure_threshold=3, timeout=30, reset_timeout=15)
+        self.request_timeout = 5  # Maximum 5 seconds per request
+        self.prompt_reduction_enabled = True
         
         if self.use_mock:
             logger.info("AI Service using MOCK responses (USE_MOCK_AI=true)")
@@ -59,27 +112,31 @@ class AIService:
             "json_output": response_format and response_format.get("type") == "json_object"
         }
         
-        # Use optimizer with timeout wrapper to prevent hangs
-        import concurrent.futures
-        import threading
-        
-        def run_with_timeout():
-            return self.optimizer.optimize_request(
-                task_type=task_type,
-                prompt=prompt,
-                context=context
-            )
-        
+        # Use optimizer with direct execution - NO THREADING to prevent worker issues
         try:
-            with concurrent.futures.ThreadPoolExecutor() as executor:
-                future = executor.submit(run_with_timeout)
-                result = future.result(timeout=8)  # 8-second timeout
-        except concurrent.futures.TimeoutError:
-            logger.warning("OpenAI API timeout - skipping AI scoring")
-            return None
+            import signal
+            def timeout_handler(signum, frame):
+                raise TimeoutError(f"AI request timeout after {self.request_timeout}s")
+            
+            # Set timeout using signal (safer than threading)
+            signal.signal(signal.SIGALRM, timeout_handler)
+            signal.alarm(self.request_timeout)
+            
+            try:
+                result = self.optimizer.optimize_request(
+                    task_type=task_type,
+                    prompt=prompt,
+                    context=context
+                )
+            finally:
+                signal.alarm(0)  # Cancel timeout
+                
+        except TimeoutError:
+            logger.warning(f"OpenAI API timeout after {self.request_timeout}s - using fallback response")
+            return self._get_timeout_fallback_response()
         except Exception as e:
-            logger.warning(f"OpenAI API error - skipping AI scoring: {e}")
-            return None
+            logger.warning(f"OpenAI API error - using fallback response: {e}")
+            return self._get_error_fallback_response()
         
         if result.get("success"):
             logger.info(f"AI request successful: {result.get('explanation')}")
@@ -110,14 +167,73 @@ class AIService:
                 except Exception as e:
                     logger.error(f"OpenAI API error (attempt {attempt + 1}): {e}")
                     if attempt < self.max_retries - 1:
-                        time.sleep(self.retry_delay * (attempt + 1))
+                        time.sleep(self.retry_delay)
                     else:
-                        return None
+                        return self._get_error_fallback_response()
         
         return None
     
+    def _get_timeout_fallback_response(self) -> Dict:
+        """Get fallback response for timeout scenarios"""
+        return {
+            "match_score": 3,  # Neutral score
+            "match_percentage": 60,
+            "verdict": "Timeout - Unable to analyze",
+            "recommendation": "AI analysis timed out. Manual review recommended.",
+            "key_alignments": ["Timeout occurred during analysis"],
+            "potential_challenges": ["AI service temporarily unavailable"],
+            "next_steps": ["Review grant manually", "Retry analysis later"],
+            "application_tips": "Consider manual evaluation due to system timeout",
+            "system_status": "timeout_fallback"
+        }
+    
+    def _get_error_fallback_response(self) -> Dict:
+        """Get fallback response for error scenarios"""
+        return {
+            "match_score": 2,  # Low score due to error
+            "match_percentage": 40,
+            "verdict": "Error - Analysis failed",
+            "recommendation": "AI analysis failed. Manual review required.",
+            "key_alignments": ["System error occurred"],
+            "potential_challenges": ["AI service error"],
+            "next_steps": ["Manual grant review required", "Check system status"],
+            "application_tips": "Manual evaluation required due to system error",
+            "system_status": "error_fallback"
+        }
+    
+    def _reduce_prompt_intelligently(self, prompt: str, reduction_factor: float = 0.5) -> str:
+        """Reduce prompt size intelligently for faster processing"""
+        if not self.prompt_reduction_enabled or len(prompt) < 1000:
+            return prompt
+        
+        logger.info(f"Reducing prompt size from {len(prompt)} characters")
+        
+        # Split prompt into sections
+        lines = prompt.split('\n')
+        
+        # Keep essential sections, reduce detailed sections
+        reduced_lines = []
+        skip_until_next_section = False
+        
+        for line in lines:
+            # Always keep section headers and essential info
+            if any(keyword in line.upper() for keyword in ['===', 'ORGANIZATION:', 'GRANT:', 'ANALYZE', 'REQUIRED:']):
+                reduced_lines.append(line)
+                skip_until_next_section = False
+            elif skip_until_next_section:
+                continue
+            elif len(line) > 200:  # Reduce very long lines
+                reduced_lines.append(line[:200] + "...")
+                skip_until_next_section = True
+            else:
+                reduced_lines.append(line)
+        
+        reduced_prompt = '\n'.join(reduced_lines)
+        logger.info(f"Reduced prompt to {len(reduced_prompt)} characters ({reduction_factor:.1%} reduction)")
+        return reduced_prompt
+    
     def generate_json_response(self, prompt: str, max_tokens: int = 2000) -> Optional[Dict]:
-        """Generate a JSON response from a prompt"""
+        """Generate a JSON response from a prompt with circuit breaker protection"""
         # Use mock if enabled or no client available
         if self.use_mock or not self.client:
             logger.info("Using mock AI response")
@@ -138,17 +254,35 @@ class AIService:
                     "data": {"status": "operational", "mock": True}
                 }
         
+        # Apply intelligent prompt reduction if prompt is too long
+        original_length = len(prompt)
+        if original_length > 2000:  # Reduce prompts over 2000 chars
+            prompt = self._reduce_prompt_intelligently(prompt, 0.6)
+            logger.info(f"Prompt reduced from {original_length} to {len(prompt)} characters for performance")
+        
         messages = [
-            {"role": "system", "content": "You are an expert grant analyst. Always respond with valid JSON."},
-            {"role": "user", "content": prompt}
+            {"role": "system", "content": "You are an expert grant analyst. Always respond with valid json format."},
+            {"role": "user", "content": f"{prompt}\n\nPlease provide your response in json format."}
         ]
         
-        result = self._make_request(
-            messages=messages,
-            response_format={"type": "json_object"},
-            max_tokens=max_tokens
-        )
-        return result if result else {}
+        def _make_ai_request():
+            return self._make_request(
+                messages=messages,
+                response_format={"type": "json_object"},
+                max_tokens=max_tokens
+            )
+        
+        # Use circuit breaker for resilience
+        try:
+            result = self.circuit_breaker.call(_make_ai_request)
+            if result:
+                return result
+            else:
+                logger.warning("Circuit breaker returned None - using timeout fallback")
+                return self._get_timeout_fallback_response()
+        except Exception as e:
+            logger.error(f"Circuit breaker caught exception: {e}")
+            return self._get_error_fallback_response()
     
     def match_grant(self, org_profile: Dict, grant: Dict, funder_profile: Optional[Dict] = None) -> Tuple[Optional[int], Optional[str]]:
         """

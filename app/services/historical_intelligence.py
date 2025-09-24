@@ -18,35 +18,46 @@ logger = logging.getLogger(__name__)
 def circuit_breaker(timeout_seconds: int = 3, fallback_value: Any = None):
     """
     Decorator that implements circuit breaker pattern with timeout
-    If function takes longer than timeout_seconds, returns fallback_value immediately
+    FIXED: No longer uses threading to avoid Flask context issues
     """
     def decorator(func: Callable) -> Callable:
         @wraps(func)
         def wrapper(*args, **kwargs):
-            result_container = {}
-            exception_container = {}
+            import signal
+            import time
             
-            def target():
-                try:
-                    result_container['result'] = func(*args, **kwargs)
-                except Exception as e:
-                    exception_container['error'] = e
-                    
-            thread = threading.Thread(target=target)
-            thread.daemon = True
-            thread.start()
-            thread.join(timeout=timeout_seconds)
+            def timeout_handler(signum, frame):
+                raise TimeoutError(f"Function {func.__name__} timed out after {timeout_seconds}s")
             
-            if thread.is_alive():
-                # Function is still running - return fallback immediately
+            start_time = time.time()
+            try:
+                # Use signal-based timeout instead of threading to preserve Flask context
+                signal.signal(signal.SIGALRM, timeout_handler)
+                signal.alarm(timeout_seconds)
+                
+                # Ensure Flask context is preserved
+                from flask import current_app
+                if current_app:
+                    with current_app.app_context():
+                        result = func(*args, **kwargs)
+                else:
+                    result = func(*args, **kwargs)
+                
+                elapsed = time.time() - start_time
+                if elapsed > timeout_seconds * 0.8:  # Warn if close to timeout
+                    logger.warning(f"Function {func.__name__} took {elapsed:.2f}s (close to {timeout_seconds}s timeout)")
+                
+                return result
+                
+            except TimeoutError as e:
                 logger.warning(f"Function {func.__name__} timed out after {timeout_seconds}s, returning fallback")
                 return fallback_value
-                
-            if 'error' in exception_container:
-                logger.error(f"Function {func.__name__} failed: {exception_container['error']}")
+            except Exception as e:
+                logger.error(f"Function {func.__name__} failed: {e}")
                 return fallback_value
+            finally:
+                signal.alarm(0)  # Cancel alarm
                 
-            return result_container.get('result', fallback_value)
         return wrapper
     return decorator
 

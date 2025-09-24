@@ -3,20 +3,99 @@ AI-Powered Grant Matching API Endpoints
 Using REACTO structure for all AI operations
 """
 
-from flask import Blueprint, jsonify, request
+from flask import Blueprint, jsonify, request, current_app, copy_current_request_context
 from app.services.ai_grant_matcher import AIGrantMatcher
 from app.services.historical_intelligence import get_intelligence_service
 from app.models import Grant, Organization, db
 import logging
 from datetime import datetime
+import time
+import concurrent.futures
+from functools import wraps
 
 logger = logging.getLogger(__name__)
 
 ai_grants_bp = Blueprint('ai_grants', __name__)
 
+def run_with_flask_context(func, *args, **kwargs):
+    """Run a function with Flask application context for ThreadPoolExecutor operations"""
+    # Simplified approach: always use app context for threaded operations
+    # This avoids complex request context copying issues while maintaining database access
+    from flask import current_app
+    app = current_app._get_current_object()  # Get the actual app instance
+    
+    with app.app_context():
+        return func(*args, **kwargs)
+
+def request_timeout_protection(max_seconds=6):
+    """Decorator to ensure entire request never exceeds max_seconds with HARD timeout"""
+    def decorator(func):
+        @wraps(func)
+        def wrapper(*args, **kwargs):
+            import signal
+            import threading
+            
+            def timeout_handler(signum, frame):
+                logger.error(f"HARD TIMEOUT - Request killed after {max_seconds}s to prevent worker timeout")
+                raise TimeoutError(f"Request timeout after {max_seconds} seconds")
+            
+            start_time = time.time()
+            try:
+                # Set up hard timeout using signal (only works on main thread)
+                if threading.current_thread() is threading.main_thread():
+                    signal.signal(signal.SIGALRM, timeout_handler)
+                    signal.alarm(max_seconds)
+                
+                # Ensure Flask context is available
+                from flask import current_app
+                if not current_app:
+                    logger.error("No Flask application context available")
+                    return jsonify({
+                        'success': False,
+                        'error': 'Application context error',
+                        'emergency_response': True
+                    }), 500
+                
+                # Execute with Flask context preserved
+                with current_app.app_context():
+                    result = func(*args, **kwargs)
+                
+                total_time = time.time() - start_time
+                logger.info(f"Request completed in {total_time:.2f}s (limit: {max_seconds}s)")
+                
+                return result
+                
+            except TimeoutError as e:
+                total_time = time.time() - start_time
+                logger.error(f"HARD TIMEOUT - Request killed after {total_time:.2f}s: {str(e)}")
+                return jsonify({
+                    'success': False,
+                    'error': 'Request timeout - terminated to prevent worker timeout',
+                    'emergency_response': True,
+                    'system_status': 'hard_timeout'
+                }), 504
+            except Exception as e:
+                total_time = time.time() - start_time
+                logger.error(f"Request error after {total_time:.2f}s: {str(e)}")
+                return jsonify({
+                    'success': False,
+                    'error': 'Internal server error',
+                    'emergency_response': True,
+                    'system_status': 'request_error'
+                }), 500
+            finally:
+                # Cancel alarm if it was set
+                if threading.current_thread() is threading.main_thread():
+                    signal.alarm(0)
+                    
+        return wrapper
+    return decorator
+
 @ai_grants_bp.route('/match/<int:org_id>', methods=['GET', 'POST'])
+@request_timeout_protection(max_seconds=6)  # CRITICAL: 6-second max for entire request
 def get_ai_matched_grants(org_id):
-    """Get AI-matched grants for an organization using REACTO"""
+    """Get AI-matched grants for an organization using REACTO with strict timeout protection"""
+    request_start = time.time()
     try:
         # Initialize AI matcher
         matcher = AIGrantMatcher()
@@ -52,8 +131,9 @@ def get_ai_matched_grants(org_id):
         else:
             org_context = org.to_ai_context()
         
-        # Get all grants
-        grants = Grant.query.limit(20).all()
+        # Get grants for matching with smart limit for performance (<6 second requirement)
+        # Restore full grant matching breadth - allow multiple grants while maintaining performance
+        grants = Grant.query.limit(50).all()  # Process up to 50 grants with per-grant timeouts
         
         # Score each grant and gather historical intelligence
         matched_grants = []
@@ -75,8 +155,31 @@ def get_ai_matched_grants(org_id):
                     grant_data=grant.to_dict()
                 )
                 
-                # Get AI response
-                response = matcher.ai_service.generate_json_response(prompt)
+                # Get AI response with Flask context protection (CRITICAL FIX)
+                response = None
+                start_time = time.time()
+                try:
+                    # Ensure we're in Flask app context for AI service
+                    from flask import current_app
+                    with current_app.app_context():
+                        response = matcher.ai_service.generate_json_response(prompt)
+                    ai_time = time.time() - start_time
+                    logger.info(f"AI processing completed in {ai_time:.2f}s for grant {grant.id}")
+                except Exception as e:
+                    ai_time = time.time() - start_time
+                    logger.warning(f"AI processing FAILED after {ai_time:.2f}s for grant {grant.id}: {str(e)} - using fallback")
+                    # Use immediate error fallback
+                    response = {
+                        "match_score": 2,
+                        "match_percentage": 40,
+                        "verdict": "Error - Analysis failed",
+                        "recommendation": "AI analysis failed. Manual review required.",
+                        "key_alignments": ["System error occurred"],
+                        "potential_challenges": ["AI service error"],
+                        "next_steps": ["Manual review required", "Check system status"],
+                        "application_tips": "Manual evaluation required due to system error",
+                        "system_status": "api_error_fallback"
+                    }
                 
                 if response and 'match_score' in response:
                     grant_dict = grant.to_dict()
@@ -100,17 +203,22 @@ def get_ai_matched_grants(org_id):
                         'message': 'No funder information available'
                     }
                     
-                    # Fast intelligence gathering with automatic timeouts and fallbacks
+                    # Fast intelligence gathering with simplified approach (CRITICAL FIX)
                     if grant.funder and grant.funder.strip():
                         try:
                             intelligence_metadata['intelligence_requests'] += 1
                             current_year = datetime.now().year
+                            intelligence_start = time.time()
                             
-                            # Call fast intelligence service (max 2-3 seconds total)
-                            patterns = intelligence_service.analyze_funder_patterns(grant.funder, current_year)
-                            
-                            # Generate quick insights (max 1 second)
-                            insights = intelligence_service.generate_intelligence_insights(patterns, org_context)
+                            # Direct intelligence calls with Flask context preserved - simplified approach
+                            try:
+                                patterns = intelligence_service.analyze_funder_patterns(grant.funder, current_year)
+                                insights = intelligence_service.generate_intelligence_insights(patterns, org_context)
+                            except Exception as intel_error:
+                                intel_time = time.time() - intelligence_start
+                                logger.warning(f"Intelligence service failed after {intel_time:.2f}s for {grant.funder}: {str(intel_error)}")
+                                patterns = {'intelligence_available': False, 'total_awards': 0}
+                                insights = {'match_likelihood': 0, 'timing_recommendation': 'Service unavailable', 'strategic_actions': [], 'success_indicators': [], 'intelligence_summary': 'Service error'}
                             
                             # Populate with real data from service responses
                             if patterns.get('intelligence_available', False) or patterns.get('total_awards', 0) > 0:
