@@ -80,11 +80,21 @@ def run_all_connectors_for_org(org_id: int, query: Optional[str] = None) -> int:
         # explicit query overrides city terms
         cities = [query]
 
-    # For now: Grants.gov connector (federal). You can add more connectors below.
+    # Multiple data sources: Grants.gov, Federal Register, USAspending
     for term in cities or ["nonprofit"]:
         try:
+            # 1. Grants.gov (fixed API)
             records = fetch_from_grants_gov(search_term=term, limit=GRANTSGOV_PAGE_SIZE)
             total += upsert_many(records, org_id=org_id)
+            
+            # 2. Federal Register
+            federal_records = fetch_from_federal_register(search_term=term, limit=25)
+            total += upsert_many(federal_records, org_id=org_id)
+            
+            # 3. USAspending
+            usa_records = fetch_from_usaspending(search_term=term, limit=25)
+            total += upsert_many(usa_records, org_id=org_id)
+            
         except Exception:
             log.exception("run_all_connectors_for_org: connector failed for org_id=%s term=%s", org_id, term)
 
@@ -107,61 +117,107 @@ def run_all_connectors_for_org(org_id: int, query: Optional[str] = None) -> int:
 # ------------------------------
 def fetch_from_grants_gov(search_term: str, limit: int = 50, offset: int = 0) -> List[Dict[str, Any]]:
     """
-    Minimal Grants.gov search. Returns a list of normalized grant dicts for upsert.
-    Docs: https://www.grants.gov/api/api-guide (search2 endpoint pattern)
-
-    We request open opportunities where eligibility includes nonprofits if possible.
+    Fixed Grants.gov search using working GSA Search API client.
     """
-
-
-    # Build basic payload for search2
-    payload = {
-        "startRecordNum": offset + 1,
-        "keyword": search_term,
-        "oppStatuses": "forecasted|posted",  # broaden a bit; adjust as you like
-        "rows": min(max(1, limit), 100)
-    }
-
-    headers = {"User-Agent": USER_AGENT, "Content-Type": "application/json"}
-
     try:
-        resp = requests.post(GRANTSGOV_BASE, json=payload, headers=headers, timeout=HTTP_TIMEOUT)
-        resp.raise_for_status()
-        data = resp.json() or {}
-
-        opportunities = data.get("oppHits", []) or data.get("opportunities", []) or []
+        # Use the working GrantsGovClient instead of broken direct API calls
+        from app.services.grants_gov_client import get_grants_gov_client
+        
+        client = get_grants_gov_client()
+        payload = {
+            "keywords": [search_term],
+            "limit": min(max(1, limit), 100),
+            "offset": offset
+        }
+        
+        opportunities = client.search_opportunities(payload)
         results: List[Dict[str, Any]] = []
 
         for item in opportunities:
-            # Grants.gov responses vary slightly by endpoint version, we guard with .get()
-            title = item.get("title") or item.get("oppTitle") or "Untitled Opportunity"
-            cfda = item.get("cfdaList") or item.get("cfdaNumbers") or []
-            opp_number = item.get("number") or item.get("oppNumber") or ""
-            agency = item.get("agency") or item.get("agencyCode") or item.get("agencyName") or "Unknown Agency"
-            close_date_str = item.get("closeDate") or item.get("closeDateStr") or item.get("postedDate") or None
-            link = item.get("url") or item.get("oppLink") or f"https://www.grants.gov/search-results-detail/{opp_number}"
-
             results.append(normalize_grant_record({
-                "title": title,
-                "funder": agency,
-                "link": link,
-                "deadline": close_date_str,
-                "amount_min": None,
-                "amount_max": None,
-                "geography": "US",
-                "eligibility": f"Eligibility per Grants.gov; CFDA: {', '.join(cfda) if isinstance(cfda, list) else cfda}",
+                "title": item.get("title", "Untitled Opportunity"),
+                "funder": item.get("funder", "Unknown Agency"),
+                "link": item.get("link", ""),
+                "deadline": item.get("deadline"),
+                "amount_min": item.get("amount_min"),
+                "amount_max": item.get("amount_max"),
+                "geography": item.get("geography", "US"),
+                "eligibility": item.get("eligibility", ""),
                 "source_name": "Grants.gov",
                 "source_url": "https://www.grants.gov"
             }))
 
-        log.info("fetch_from_grants_gov: term=%s fetched=%s", search_term, len(results))
+        log.info("fetch_from_grants_gov: term=%s fetched=%s grants (FIXED API)", search_term, len(results))
         return results
 
-    except requests.HTTPError as e:
-        log.warning("Grants.gov HTTP error: %s | payload=%s | text=%s", e, payload, getattr(e.response, "text", ""))
+    except Exception as e:
+        log.error("fetch_from_grants_gov: error with working client for term=%s: %s", search_term, e)
         return []
-    except Exception:
-        log.exception("fetch_from_grants_gov: unexpected error for term=%s", search_term)
+
+
+def fetch_from_federal_register(search_term: str, limit: int = 25) -> List[Dict[str, Any]]:
+    """
+    Fetch grant notices from Federal Register API
+    """
+    try:
+        from app.services.federal_register_client import FederalRegisterClient
+        
+        client = FederalRegisterClient()
+        notices = client.search_grant_notices(keywords=search_term, days_back=60)
+        
+        results: List[Dict[str, Any]] = []
+        for notice in notices[:limit]:
+            results.append(normalize_grant_record({
+                "title": notice.get("title", ""),
+                "funder": notice.get("funder", "Federal Register"),
+                "link": notice.get("link", ""),
+                "deadline": notice.get("deadline"),
+                "amount_min": None,
+                "amount_max": None,
+                "geography": "US",
+                "eligibility": notice.get("eligibility", ""),
+                "source_name": "Federal Register",
+                "source_url": "https://federalregister.gov"
+            }))
+        
+        log.info("fetch_from_federal_register: term=%s fetched=%s grants", search_term, len(results))
+        return results
+        
+    except Exception as e:
+        log.error("fetch_from_federal_register: error for term=%s: %s", search_term, e)
+        return []
+
+
+def fetch_from_usaspending(search_term: str, limit: int = 25) -> List[Dict[str, Any]]:
+    """
+    Fetch grant awards from USAspending API
+    """
+    try:
+        from app.services.usaspending_client import get_usaspending_client
+        
+        client = get_usaspending_client()
+        awards = client.search_assistance_listings(keywords=search_term)
+        
+        results: List[Dict[str, Any]] = []
+        for award in awards[:limit]:
+            results.append(normalize_grant_record({
+                "title": award.get("title", ""),
+                "funder": award.get("funder", "USAspending"),
+                "link": award.get("link", ""),
+                "deadline": award.get("deadline"),
+                "amount_min": award.get("amount_min"),
+                "amount_max": award.get("amount_max"),
+                "geography": award.get("geography", "US"),
+                "eligibility": award.get("eligibility", ""),
+                "source_name": "USAspending",
+                "source_url": "https://usaspending.gov"
+            }))
+        
+        log.info("fetch_from_usaspending: term=%s fetched=%s grants", search_term, len(results))
+        return results
+        
+    except Exception as e:
+        log.error("fetch_from_usaspending: error for term=%s: %s", search_term, e)
         return []
 
 # ------------------------------

@@ -83,10 +83,12 @@ API_SOURCES = {
     
     'candid': {
         'name': 'Candid (formerly Foundation Center)',
-        'enabled': False,  # Placeholder for paid API
+        'enabled': False,  # Will be auto-enabled if credentials found
         'base_url': 'https://api.candid.org/v1',
-        'api_key': os.environ.get('CANDID_API_KEY'),
+        'api_key_env': 'CANDID_ESSENTIALS_KEY',
+        'api_key': None,
         'credential_required': True,
+        'credential_fallbacks': ['CANDID_GRANTS_KEYS', 'CANDID_NEWS_KEYS', 'CANDID_API_KEY'],
         'rate_limit': {
             'calls': 5000,
             'period': 86400
