@@ -168,8 +168,11 @@ def login():
             # Check if organization profile is complete
             if not org:
                 redirect_url = '/onboarding/welcome'
-            elif hasattr(org, 'profile_completeness') and org.profile_completeness < 80:
+            elif hasattr(org, 'profile_completeness') and org.profile_completeness < 60:
                 redirect_url = '/onboarding/welcome'
+            elif hasattr(org, 'onboarding_completed_at') and org.onboarding_completed_at:
+                # User has completed onboarding flow, go to dashboard
+                redirect_url = '/dashboard'
             else:
                 redirect_url = '/dashboard'
             
