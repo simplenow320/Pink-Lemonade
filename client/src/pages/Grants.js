@@ -365,6 +365,128 @@ const Grants = () => {
   );
 };
 
+// Intelligence Insights Component
+const IntelligenceInsights = ({ intelligence }) => {
+  const [showInsights, setShowInsights] = useState(false);
+  
+  if (!intelligence?.intelligence_available) {
+    return null;
+  }
+
+  const formatAmount = (amount) => {
+    if (!amount || amount === 0) return 'Variable';
+    return `$${amount.toLocaleString()}`;
+  };
+
+  const getConfidenceColor = (score) => {
+    if (score >= 0.7) return 'text-green-600';
+    if (score >= 0.4) return 'text-yellow-600';
+    return 'text-gray-600';
+  };
+
+  const getConfidenceText = (score) => {
+    if (score >= 0.7) return 'High';
+    if (score >= 0.4) return 'Medium';
+    return 'Limited';
+  };
+
+  return (
+    <div className="mt-3 border-t border-gray-100 pt-3">
+      <button
+        onClick={(e) => {
+          e.stopPropagation();
+          setShowInsights(!showInsights);
+        }}
+        className="flex items-center text-sm font-medium text-purple-600 hover:text-purple-700 transition-colors"
+      >
+        <span className="mr-1">🧠</span>
+        Funding Intelligence
+        <span className="ml-1">{showInsights ? '▲' : '▼'}</span>
+      </button>
+      
+      {showInsights && (
+        <div className="mt-2 p-3 bg-gradient-to-r from-purple-50 to-blue-50 rounded-lg border border-purple-100">
+          <div className="space-y-2">
+            {/* Historical Context */}
+            {intelligence.total_awards > 0 && (
+              <div className="flex items-start">
+                <span className="text-xs font-medium text-purple-700 mr-2">📊</span>
+                <span className="text-xs text-gray-700">
+                  Funder awarded {intelligence.total_awards} similar grants in past 3 years
+                  {intelligence.average_amount > 0 && ` (avg: ${formatAmount(intelligence.average_amount)})`}
+                </span>
+              </div>
+            )}
+
+            {/* Timing Insights */}
+            {intelligence.timing_recommendation && (
+              <div className="flex items-start">
+                <span className="text-xs font-medium text-blue-700 mr-2">⏰</span>
+                <span className="text-xs text-gray-700">
+                  {intelligence.timing_recommendation}
+                </span>
+              </div>
+            )}
+
+            {/* Success Indicators */}
+            {intelligence.success_indicators && intelligence.success_indicators.length > 0 && (
+              <div className="flex items-start">
+                <span className="text-xs font-medium text-green-700 mr-2">✅</span>
+                <span className="text-xs text-gray-700">
+                  {intelligence.success_indicators[0]}
+                </span>
+              </div>
+            )}
+
+            {/* Match Likelihood */}
+            {intelligence.match_likelihood > 0 && (
+              <div className="flex items-start">
+                <span className="text-xs font-medium text-orange-700 mr-2">🎯</span>
+                <span className="text-xs text-gray-700">
+                  {intelligence.match_likelihood}% alignment with your organization profile
+                </span>
+              </div>
+            )}
+
+            {/* Strategic Actions */}
+            {intelligence.strategic_actions && intelligence.strategic_actions.length > 0 && (
+              <div className="flex items-start">
+                <span className="text-xs font-medium text-indigo-700 mr-2">💡</span>
+                <span className="text-xs text-gray-700">
+                  {intelligence.strategic_actions[0]}
+                </span>
+              </div>
+            )}
+
+            {/* Confidence & Freshness */}
+            <div className="flex justify-between items-center pt-2 border-t border-gray-200">
+              <span className="text-xs text-gray-500">
+                Confidence: <span className={`font-medium ${getConfidenceColor(intelligence.confidence_score)}`}>
+                  {getConfidenceText(intelligence.confidence_score)}
+                </span>
+              </span>
+              {intelligence.generated_at && (
+                <span className="text-xs text-gray-500">
+                  Updated: {new Date(intelligence.generated_at).toLocaleDateString()}
+                </span>
+              )}
+            </div>
+
+            {/* Intelligence Summary */}
+            {intelligence.intelligence_summary && (
+              <div className="pt-2 border-t border-gray-200">
+                <span className="text-xs text-gray-600 italic">
+                  {intelligence.intelligence_summary}
+                </span>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
 // Grant Card Component with Sources toggle
 const GrantCard = ({ grant, onFederalClick }) => {
   const [showSources, setShowSources] = useState(false);
@@ -438,6 +560,9 @@ const GrantCard = ({ grant, onFederalClick }) => {
           {grant.sourceNotes.window && <><strong>Window:</strong> {grant.sourceNotes.window}</>}
         </div>
       )}
+      
+      {/* Intelligence Insights */}
+      <IntelligenceInsights intelligence={grant.historical_intelligence} />
       
       <div className="flex gap-3 mt-2">
         <Link 

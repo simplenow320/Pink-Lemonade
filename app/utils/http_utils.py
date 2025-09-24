@@ -112,7 +112,7 @@ def with_retry(
     return decorator
 
 @with_retry()
-def fetch_url(url: str, headers: Optional[Dict[str, str]] = None, timeout: int = 30) -> requests.Response:
+def fetch_url(url: str, headers: Optional[Dict[str, str]] = None, timeout: int = 5) -> requests.Response:
     """
     Fetch a URL with automatic retries and rate limiting
     

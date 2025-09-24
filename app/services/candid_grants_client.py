@@ -21,7 +21,7 @@ class CandidGrantsClient:
         self.primary_key = os.environ.get('CANDID_GRANTS_KEYS')
         if not self.primary_key:
             logger.warning("CANDID_GRANTS_KEYS not set - Candid Grants API disabled")
-        self.timeout = 30
+        self.timeout = 5  # Reduced from 30 to 5 seconds to prevent worker timeouts
         
     def get_summary(self) -> Dict:
         """

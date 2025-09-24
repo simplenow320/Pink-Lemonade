@@ -5,8 +5,10 @@ Using REACTO structure for all AI operations
 
 from flask import Blueprint, jsonify, request
 from app.services.ai_grant_matcher import AIGrantMatcher
+from app.services.historical_intelligence import get_intelligence_service
 from app.models import Grant, Organization, db
 import logging
+from datetime import datetime
 
 logger = logging.getLogger(__name__)
 
@@ -18,6 +20,10 @@ def get_ai_matched_grants(org_id):
     try:
         # Initialize AI matcher
         matcher = AIGrantMatcher()
+        
+        # Use fast intelligence service with built-in resilience
+        intelligence_service = get_intelligence_service()
+        logger.info("Using fast historical intelligence service with caching and timeouts")
         
         # Check if organization exists
         org = Organization.query.get(org_id)
@@ -49,8 +55,15 @@ def get_ai_matched_grants(org_id):
         # Get all grants
         grants = Grant.query.limit(20).all()
         
-        # Score each grant
+        # Score each grant and gather historical intelligence
         matched_grants = []
+        intelligence_metadata = {
+            'intelligence_requests': 0,
+            'intelligence_successes': 0,
+            'intelligence_failures': 0,
+            'intelligence_available_count': 0
+        }
+        
         for grant in grants:
             try:
                 # Generate REACTO prompt and get match
@@ -77,6 +90,67 @@ def get_ai_matched_grants(org_id):
                         'next_steps': response.get('next_steps', []),
                         'application_tips': response.get('application_tips', '')
                     })
+                    
+                    # Add historical intelligence (safe implementation)
+                    historical_intelligence = {
+                        'analysis_period': '',
+                        'generated_at': '',
+                        'confidence_score': 0.0,
+                        'intelligence_available': False,
+                        'message': 'No funder information available'
+                    }
+                    
+                    # Fast intelligence gathering with automatic timeouts and fallbacks
+                    if grant.funder and grant.funder.strip():
+                        try:
+                            intelligence_metadata['intelligence_requests'] += 1
+                            current_year = datetime.now().year
+                            
+                            # Call fast intelligence service (max 2-3 seconds total)
+                            patterns = intelligence_service.analyze_funder_patterns(grant.funder, current_year)
+                            
+                            # Generate quick insights (max 1 second)
+                            insights = intelligence_service.generate_intelligence_insights(patterns, org_context)
+                            
+                            # Populate with real data from service responses
+                            if patterns.get('intelligence_available', False) or patterns.get('total_awards', 0) > 0:
+                                historical_intelligence = {
+                                    'analysis_period': patterns.get('analysis_period', f"{current_year-3}-{current_year}"),
+                                    'generated_at': datetime.utcnow().isoformat() + 'Z',
+                                    'confidence_score': patterns.get('confidence_score', 0.0),
+                                    'intelligence_available': True,
+                                    'total_awards': patterns.get('total_awards', 0),
+                                    'average_amount': patterns.get('average_amount', 0),
+                                    'typical_recipients': patterns.get('typical_recipients', []),
+                                    'geographic_patterns': patterns.get('geographic_patterns', []),
+                                    'award_timing': patterns.get('award_timing', []),
+                                    'focus_areas': patterns.get('focus_areas', []),
+                                    'match_likelihood': insights.get('match_likelihood', 0),
+                                    'timing_recommendation': insights.get('timing_recommendation', ''),
+                                    'strategic_actions': insights.get('strategic_actions', []),
+                                    'success_indicators': insights.get('success_indicators', []),
+                                    'intelligence_summary': insights.get('intelligence_summary', ''),
+                                    'message': f"Historical analysis complete for {grant.funder}"
+                                }
+                                intelligence_metadata['intelligence_available_count'] += 1
+                            else:
+                                # No historical data found, but service responded
+                                historical_intelligence = {
+                                    'analysis_period': f"{current_year-3}-{current_year}",
+                                    'generated_at': datetime.utcnow().isoformat() + 'Z',
+                                    'confidence_score': 0.0,
+                                    'intelligence_available': False,
+                                    'message': f"No historical data found for funder '{grant.funder}' in past 3 years"
+                                }
+                            
+                            intelligence_metadata['intelligence_successes'] += 1
+                            
+                        except Exception as e:
+                            intelligence_metadata['intelligence_failures'] += 1
+                            logger.warning(f"Historical intelligence gathering failed for funder '{grant.funder}': {str(e)}")
+                            historical_intelligence['message'] = 'Intelligence system temporarily unavailable'
+                    
+                    grant_dict['historical_intelligence'] = historical_intelligence
                     matched_grants.append(grant_dict)
             except Exception as e:
                 logger.error(f"Error matching grant {grant.id}: {str(e)}")
@@ -93,7 +167,14 @@ def get_ai_matched_grants(org_id):
             'success': True,
             'organization': org_context.get('name', 'Organization'),
             'total_grants': len(matched_grants),
-            'matched_grants': matched_grants[:10]  # Top 10 matches
+            'matched_grants': matched_grants[:10],  # Top 10 matches
+            'intelligence_metadata': {
+                'intelligence_requests': intelligence_metadata.get('intelligence_requests', 0),
+                'intelligence_successes': intelligence_metadata.get('intelligence_successes', 0), 
+                'intelligence_failures': intelligence_metadata.get('intelligence_failures', 0),
+                'intelligence_available_count': intelligence_metadata.get('intelligence_available_count', 0),
+                'system_status': 'operational' if intelligence_service else 'disabled'
+            }
         })
         
     except Exception as e:
