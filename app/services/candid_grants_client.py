@@ -21,7 +21,7 @@ class CandidGrantsClient:
         self.primary_key = os.environ.get('CANDID_GRANTS_KEYS')
         if not self.primary_key:
             logger.warning("CANDID_GRANTS_KEYS not set - Candid Grants API disabled")
-        self.timeout = 5  # Reduced from 30 to 5 seconds to prevent worker timeouts
+        self.timeout = 30  # Increased timeout for large grant responses
         
     def get_summary(self) -> Dict:
         """
@@ -61,134 +61,90 @@ class CandidGrantsClient:
                      year: Optional[int] = None,
                      limit: int = 25) -> List[Dict]:
         """
-        Search for grants using Candid Grants API
-        NOTE: Search endpoint requires additional permissions.
-        For now, return top foundations based on summary data.
+        Search for grants using Candid Grants API /transactions endpoint
         
         Returns:
-            List of grant opportunities from major foundations
+            List of real grants from Candid's 29.2 million grant database
         """
-        # Since search endpoints require special permissions,
-        # we'll use the summary data and return top foundations
-        summary = self.get_summary()
-        
-        if not summary:
+        if not self.primary_key:
+            logger.warning("No Candid API key configured")
             return []
             
-        # Return REAL foundations from the 259,000+ in Candid database
-        # This shows actual grant-making foundations, not just 3 hardcoded ones
-        top_foundations = [
-            {
-                'source': 'candid_grants',
-                'source_type': 'Foundation',
-                'source_name': f'Candid: {summary.get("number_of_foundations", 0):,} Foundations',
-                'title': 'Gates Foundation - Global Health & Development',
-                'funder': 'Bill & Melinda Gates Foundation',
-                'description': f'From {summary.get("number_of_grants", 0):,} grants worth ${summary.get("value_of_grants", 0)/1e9:.0f}B total',
-                'amount_min': 100000,
-                'amount_max': 10000000,
-                'geography': 'Global',
-                'website': 'https://www.gatesfoundation.org/grants'
-            },
-            {
-                'source': 'candid_grants',
-                'source_type': 'Foundation',
-                'source_name': f'Candid: {summary.get("number_of_grants", 0):,} Grants',
-                'title': 'Ford Foundation - Social Justice & Equity',
-                'funder': 'Ford Foundation',
-                'description': 'Building movements for social change worldwide',
-                'amount_min': 50000,
-                'amount_max': 5000000,
-                'geography': 'National',
-                'website': 'https://www.fordfoundation.org/grants'
-            },
-            {
-                'source': 'candid_grants',
-                'source_type': 'Foundation',
-                'source_name': 'Candid Database',
-                'title': 'MacArthur Foundation - Creative & Effective Institutions',
-                'funder': 'John D. and Catherine T. MacArthur Foundation',
-                'description': 'Building a more just, verdant, and peaceful world',
-                'amount_min': 25000,
-                'amount_max': 2000000,
-                'geography': 'National',
-                'website': 'https://www.macfound.org'
-            },
-            {
-                'source': 'candid_grants',
-                'source_type': 'Foundation',
-                'source_name': 'Candid Database',
-                'title': 'Robert Wood Johnson Foundation - Health Equity',
-                'funder': 'Robert Wood Johnson Foundation',
-                'description': 'Building a Culture of Health for all',
-                'amount_min': 10000,
-                'amount_max': 1000000,
-                'geography': 'National',
-                'website': 'https://www.rwjf.org'
-            },
-            {
-                'source': 'candid_grants',
-                'source_type': 'Foundation',
-                'source_name': 'Candid Database',
-                'title': 'Andrew W. Mellon Foundation - Arts & Culture',
-                'funder': 'Andrew W. Mellon Foundation',
-                'description': 'Supporting excellence in the arts and humanities',
-                'amount_min': 50000,
-                'amount_max': 3000000,
-                'geography': 'National',
-                'website': 'https://mellon.org'
+        try:
+            # Build query parameters - use simpler params that actually work
+            params = {}
+            if year:
+                params['year'] = str(year)
+            # Note: Other filters can be applied client-side after fetching
+                
+            # Call the transactions endpoint
+            url = f"{self.BASE_URL}/transactions"
+            if params:
+                url += '?' + urllib.parse.urlencode(params)
+                
+            headers = {
+                'Subscription-Key': self.primary_key,
+                'Accept': 'application/json'
             }
-        ]
-        
-        # Filter by state if provided
-        if state and state.upper() == 'MI':
-            # Return Michigan-specific foundations
-            top_foundations = [
-                {
-                    'source': 'candid_grants',
-                    'source_type': 'Foundation',
-                    'source_name': f'Candid: Michigan Foundations',
-                    'title': 'Kresge Foundation - Opportunity for Detroit',
-                    'funder': 'The Kresge Foundation',
-                    'description': 'Expanding opportunities in America\'s cities',
-                    'amount_min': 100000,
-                    'amount_max': 5000000,
-                    'geography': 'Detroit, Michigan',
-                    'website': 'https://kresge.org'
-                },
-                {
-                    'source': 'candid_grants',
-                    'source_type': 'Foundation',
-                    'source_name': 'Candid Database',
-                    'title': 'W.K. Kellogg Foundation - Children & Families',
-                    'funder': 'W.K. Kellogg Foundation',
-                    'description': 'Creating conditions for vulnerable children to thrive',
-                    'amount_min': 50000,
-                    'amount_max': 2000000,
-                    'geography': 'Michigan',
-                    'website': 'https://www.wkkf.org'
-                },
-                {
-                    'source': 'candid_grants',
-                    'source_type': 'Foundation',
-                    'source_name': 'Candid Database',
-                    'title': 'Charles Stewart Mott Foundation - Flint & Michigan',
-                    'funder': 'Charles Stewart Mott Foundation',
-                    'description': 'Supporting efforts that promote a just, equitable society',
-                    'amount_min': 25000,
-                    'amount_max': 500000,
-                    'geography': 'Flint, Michigan',
-                    'website': 'https://www.mott.org'
-                }
-            ]
-        
-        # Filter based on keyword if provided
-        if keyword:
-            keyword_lower = keyword.lower()
-            filtered = [f for f in top_foundations if keyword_lower in f.get('title', '').lower() or keyword_lower in f.get('description', '').lower()]
-            return filtered[:limit] if filtered else top_foundations[:limit]
             
-        return top_foundations[:limit]
+            req = urllib.request.Request(url, headers=headers)
+            
+            with urllib.request.urlopen(req, timeout=self.timeout) as response:
+                data = json.loads(response.read().decode('utf-8'))
+                
+                grants = []
+                # Parse the real response structure: data.rows contains grants
+                if 'data' in data and 'rows' in data['data']:
+                    for grant_row in data['data']['rows']:
+                        normalized = self._normalize_grant(grant_row)
+                        if normalized:
+                            # Apply client-side filters
+                            # State filter
+                            if state and state.upper() not in normalized.get('geography', '').upper():
+                                continue
+                            # Funder filter
+                            if funder_name and funder_name.lower() not in normalized.get('funder', '').lower():
+                                continue
+                            # Recipient filter  
+                            if recipient_name and recipient_name.lower() not in normalized.get('recipient', '').lower():
+                                continue
+                            # Amount filters
+                            grant_amount = normalized.get('amount', 0)
+                            if min_amount and grant_amount < min_amount:
+                                continue
+                            if max_amount and grant_amount > max_amount:
+                                continue
+                            # Keyword filter
+                            if keyword:
+                                keyword_lower = keyword.lower()
+                                # Check if keyword appears in description, funder, or recipient
+                                if not (keyword_lower in normalized.get('description', '').lower() or
+                                        keyword_lower in normalized.get('funder', '').lower() or
+                                        keyword_lower in normalized.get('recipient', '').lower() or
+                                        keyword_lower in normalized.get('title', '').lower()):
+                                    continue
+                            
+                            grants.append(normalized)
+                            # Stop when we have enough grants
+                            if len(grants) >= limit:
+                                break
+                                
+                    logger.info(f"Candid API: Retrieved {len(grants)} real grants from transactions endpoint")
+                else:
+                    logger.warning(f"Unexpected response structure from Candid API: {data.get('meta', {})}")
+                    
+                return grants
+                
+        except urllib.error.HTTPError as e:
+            error_body = e.read().decode('utf-8') if e.fp else 'No error body'
+            if e.code == 429:
+                logger.warning(f"Candid API rate limit exceeded. Try again later.")
+            else:
+                logger.error(f"Candid API HTTP error {e.code}: {error_body}")
+            return []
+        except Exception as e:
+            logger.error(f"Candid search error: {e}")
+            return []
     
     def get_funders(self, state: str = "", limit: int = 25) -> List[Dict]:
         """
@@ -247,25 +203,131 @@ class CandidGrantsClient:
             logger.error(f"Candid funders error: {e}")
             return []
     
-    def _normalize_grant(self, grant: Dict) -> Optional[Dict]:
-        """Normalize grant data to standard format"""
+    def get_transactions(self, 
+                        year: Optional[int] = None,
+                        state: str = "",
+                        page: int = 1,
+                        page_size: int = 100) -> Dict:
+        """
+        Get grant transactions from Candid API
+        
+        Args:
+            year: Year filter (e.g., 2024)
+            state: State code filter
+            page: Page number for pagination
+            page_size: Number of results per page (max 100)
+            
+        Returns:
+            Dict with grants data and pagination info
+        """
+        if not self.primary_key:
+            logger.warning("No Candid API key configured")
+            return {'grants': [], 'total': 0, 'page': page}
+            
         try:
+            # Build query parameters - use only params that work
+            params = {}
+            if year:
+                params['year'] = str(year)
+            # Note: page and state params may need different names or client-side filtering
+                
+            # Call the transactions endpoint  
+            url = f"{self.BASE_URL}/transactions"
+            if params:
+                url += '?' + urllib.parse.urlencode(params)
+                
+            headers = {
+                'Subscription-Key': self.primary_key,
+                'Accept': 'application/json'
+            }
+            
+            req = urllib.request.Request(url, headers=headers)
+            
+            with urllib.request.urlopen(req, timeout=self.timeout) as response:
+                data = json.loads(response.read().decode('utf-8'))
+                
+                grants = []
+                total = 0
+                
+                # Parse the real response structure
+                if 'data' in data:
+                    total = data['data'].get('total_count', 0)
+                    rows = data['data'].get('rows', [])
+                    
+                    for grant_row in rows:
+                        normalized = self._normalize_grant(grant_row)
+                        if normalized:
+                            grants.append(normalized)
+                            
+                    logger.info(f"Candid API: Retrieved page {page} with {len(grants)} grants (total: {total:,})")
+                    
+                return {
+                    'grants': grants,
+                    'total': total,
+                    'page': page,
+                    'page_size': page_size,
+                    'has_more': len(grants) == page_size
+                }
+                
+        except urllib.error.HTTPError as e:
+            error_body = e.read().decode('utf-8') if e.fp else 'No error body'
+            if e.code == 429:
+                logger.warning(f"Candid API rate limit exceeded. Try again later.")
+            else:
+                logger.error(f"Candid API HTTP error {e.code}: {error_body}")
+            return {'grants': [], 'total': 0, 'page': page}
+        except Exception as e:
+            logger.error(f"Candid transactions error: {e}")
+            return {'grants': [], 'total': 0, 'page': page}
+    
+    def _normalize_grant(self, grant: Dict) -> Optional[Dict]:
+        """Normalize grant data from actual Candid API fields to standard format"""
+        try:
+            # Map actual Candid field names to our standard format
+            amount_usd = grant.get('amount_usd', 0)
+            
+            # Build a meaningful title from grant description or create one
+            grant_desc = grant.get('grant_description', '')
+            funder_name = grant.get('funder_name', 'Unknown Foundation')
+            recip_name = grant.get('recip_name', 'Unknown Recipient')
+            
+            if grant_desc:
+                title = f"{funder_name}: {grant_desc[:100]}"
+            else:
+                title = f"{funder_name} grant to {recip_name}"
+                
+            # Build geography string from city/state
+            geography_parts = []
+            if grant.get('recip_city'):
+                geography_parts.append(grant.get('recip_city'))
+            if grant.get('recip_state'):
+                geography_parts.append(grant.get('recip_state'))
+            geography = ', '.join(geography_parts) if geography_parts else 'Not specified'
+            
             return {
                 'source': 'candid_grants',
                 'source_type': 'Foundation',
-                'source_name': 'Candid Grants Database',
-                'title': grant.get('description', f"Grant from {grant.get('funder_name', 'Foundation')}"),
-                'funder': grant.get('funder_name', ''),
-                'recipient': grant.get('recipient_name', ''),
-                'amount': grant.get('amount', ''),
-                'year': grant.get('year', ''),
-                'grant_id': grant.get('grant_id', ''),
+                'source_name': 'Candid Grants Database (29.2M grants)',
+                'title': title,
+                'funder': funder_name,
+                'recipient': recip_name,
+                'amount_min': amount_usd,
+                'amount_max': amount_usd,
+                'amount': amount_usd,
+                'year': grant.get('year_issued', grant.get('year', '')),
+                'grant_id': grant.get('grant_id', grant.get('id', '')),
                 'funder_ein': grant.get('funder_ein', ''),
-                'recipient_ein': grant.get('recipient_ein', ''),
-                'location': f"{grant.get('recipient_city', '')}, {grant.get('recipient_state', '')}",
+                'recipient_ein': grant.get('recip_ein', ''),
+                'geography': geography,
+                'location': geography,
                 'grant_type': grant.get('grant_type', 'Foundation Grant'),
-                'description': grant.get('description', ''),
-                'focus_area': grant.get('subject', '')
+                'description': grant_desc or f"Grant from {funder_name} to {recip_name}",
+                'focus_area': grant.get('subject', grant.get('focus_area', '')),
+                'website': grant.get('funder_website', ''),
+                # Additional Candid fields that might be useful
+                'support_type': grant.get('support_type', ''),
+                'activity_type': grant.get('activity_type', ''),
+                'population_served': grant.get('population_served', '')
             }
         except Exception as e:
             logger.error(f"Error normalizing grant: {e}")
