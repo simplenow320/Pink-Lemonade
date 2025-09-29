@@ -366,30 +366,30 @@ class Organization(db.Model):
         }
     
     def to_ai_context(self):
-        """Generate comprehensive context for AI matching"""
+        """Generate comprehensive context for AI matching with null safety"""
         return {
-            'name': self.name,
-            'mission': self.mission,
-            'vision': self.vision,
+            'name': self.name or 'Unknown Organization',
+            'mission': self.mission or 'No mission statement provided',
+            'vision': self.vision or '',
             'focus_areas': (self.primary_focus_areas or []) + (self.secondary_focus_areas or []),
-            'keywords': self.keywords or [],
-            'geographic_focus': f"{self.service_area_type} - {self.primary_city}, {self.primary_state}",
-            'target_population': ', '.join(self.target_demographics or []),
-            'annual_budget': self.annual_budget_range,
-            'staff_capacity': self.staff_size,
+            'keywords': self.keywords if self.keywords else [],
+            'geographic_focus': f"{self.service_area_type or 'local'} - {self.primary_city or 'N/A'}, {self.primary_state or 'N/A'}",
+            'target_population': ', '.join(self.target_demographics or ['General population']) if self.target_demographics else 'General population',
+            'annual_budget': self.annual_budget_range or 'Not specified',
+            'staff_capacity': self.staff_size or 'Not specified',
             'grant_experience': {
                 'previous_funders': self.previous_funders or [],
-                'typical_size': self.typical_grant_size,
-                'success_rate': self.grant_success_rate
+                'typical_size': self.typical_grant_size or 'Variable',
+                'success_rate': self.grant_success_rate or 0
             },
             'unique_factors': {
-                'faith_based': self.faith_based,
-                'minority_led': self.minority_led,
-                'woman_led': self.woman_led,
-                'unique_capabilities': self.unique_capabilities
+                'faith_based': self.faith_based if self.faith_based is not None else False,
+                'minority_led': self.minority_led if self.minority_led is not None else False,
+                'woman_led': self.woman_led if self.woman_led is not None else False,
+                'unique_capabilities': self.unique_capabilities or ''
             },
-            'current_needs': self.funding_priorities,
-            'exclusions': self.exclusions or []
+            'current_needs': self.funding_priorities or 'General operating support',
+            'exclusions': getattr(self, 'exclusions', [])
         }
 
 class Module(db.Model):

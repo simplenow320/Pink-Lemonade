@@ -44,12 +44,11 @@ class AIGrantMatcher:
                 # Discovery mode: Score only specific grants that were just discovered
                 logger.info(f"AI scoring {len(grant_ids)} discovered grants for org {org_id}")
                 grants = Grant.query.filter(Grant.id.in_(grant_ids)).all()
-                # Filter by organization if grants were discovered for this org
-                grants = [g for g in grants if g.org_id == org_id]
+                # Don't filter by org_id - grants don't belong to organizations
             else:
                 # Legacy mode: Score recent grants (fallback for other uses)
                 logger.info(f"AI scoring recent grants for org {org_id} (legacy mode)")
-                grants = Grant.query.filter_by(org_id=org_id).order_by(Grant.created_at.desc()).limit(limit * 2).all()
+                grants = Grant.query.order_by(Grant.created_at.desc()).limit(limit * 2).all()
             
             # Filter by deadline if available
             if any(grant.deadline for grant in grants):

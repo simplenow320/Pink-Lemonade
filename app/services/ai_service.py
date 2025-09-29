@@ -80,7 +80,7 @@ class AIService:
         self.use_mock = os.environ.get("USE_MOCK_AI", "false").lower() == "true"
         self.mock_service = MockAIService()
         self.circuit_breaker = CircuitBreaker(failure_threshold=3, timeout=30, reset_timeout=15)
-        self.request_timeout = 5  # Maximum 5 seconds per request
+        self.request_timeout = 15  # Maximum 15 seconds per request for complex matching
         self.prompt_reduction_enabled = True
         
         if self.use_mock:
@@ -112,28 +112,14 @@ class AIService:
             "json_output": response_format and response_format.get("type") == "json_object"
         }
         
-        # Use optimizer with direct execution - NO THREADING to prevent worker issues
+        # Use optimizer with direct execution - avoid signal-based timeouts in gunicorn workers
         try:
-            import signal
-            def timeout_handler(signum, frame):
-                raise TimeoutError(f"AI request timeout after {self.request_timeout}s")
-            
-            # Set timeout using signal (safer than threading)
-            signal.signal(signal.SIGALRM, timeout_handler)
-            signal.alarm(self.request_timeout)
-            
-            try:
-                result = self.optimizer.optimize_request(
-                    task_type=task_type,
-                    prompt=prompt,
-                    context=context
-                )
-            finally:
-                signal.alarm(0)  # Cancel timeout
-                
-        except TimeoutError:
-            logger.warning(f"OpenAI API timeout after {self.request_timeout}s - using fallback response")
-            return self._get_timeout_fallback_response()
+            # Direct call without signal-based timeout (incompatible with gunicorn)
+            result = self.optimizer.optimize_request(
+                task_type=task_type,
+                prompt=prompt,
+                context=context
+            )
         except Exception as e:
             logger.warning(f"OpenAI API error - using fallback response: {e}")
             return self._get_error_fallback_response()
