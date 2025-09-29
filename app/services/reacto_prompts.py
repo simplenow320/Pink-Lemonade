@@ -10,81 +10,44 @@ class ReactoPrompts:
     def grant_matching_prompt(org_context: dict, grant_data: dict) -> str:
         """Generate REACTO-structured prompt for grant matching"""
         return f"""
-# R - ROLE
-You are an expert grant matching specialist with 20 years of experience evaluating nonprofit-grant alignment. Your expertise includes understanding mission compatibility, geographic requirements, funding priorities, and organizational capacity. You provide precise, actionable scoring that helps nonprofits prioritize their grant applications.
+You are a grant matching expert. Score this grant match (1-5).
 
-# E - EXAMPLE
-Perfect Match (5/5): A youth education nonprofit in Chicago applying for a Chicago Community Trust grant specifically for after-school STEM programs matches exactly on location (Chicago), focus area (youth education), program type (STEM), and has the required 501(c)(3) status and $500K annual budget.
+# MATCH CRITERIA
+1. Mission alignment: Does org mission match grant purpose?
+2. Geographic fit: Does org location match grant requirements?
+3. Focus area match: Do they share at least one focus area?
+4. Eligibility: Does org meet basic requirements?
 
-Good Match (4/5): An arts nonprofit applying for NEA funding has strong mission alignment and meets eligibility, but serves a regional area when the grant prefers national reach.
+# ORG
+• Mission: {org_context.get('mission', '')[:100]}
+• Areas: {', '.join(org_context.get('focus_areas', [])[:3])}
+• Location: {org_context.get('geographic_focus', '')}
+• Budget: {org_context.get('annual_budget', '')}
 
-Moderate Match (3/5): A health nonprofit applying for an education grant has some overlap in serving youth but primary mission doesn't align with grant's core purpose.
+# GRANT
+• Title: {grant_data.get('title', '')[:80]}
+• Funder: {grant_data.get('funder', '')}
+• Amount: ${grant_data.get('amount_max', 0):,.0f}
+• Geography: {grant_data.get('geography', '')}
+• Description: {grant_data.get('description', '')[:150]}
 
-# A - APPLICATION
-Step 1: Compare the organization's mission statement with the grant's stated purpose
-Step 2: Verify geographic eligibility (city, state, national, international)
-Step 3: Check focus area alignment (must match at least one primary area)
-Step 4: Assess organizational capacity against grant requirements
-Step 5: Evaluate past funding history and funder preferences
-Step 6: Consider application complexity vs organizational resources
-Step 7: Calculate final score based on weighted factors
+# SCORING
+• 5: Perfect match (all criteria align)
+• 4: Strong match (3/4 criteria align)
+• 3: Moderate (2/4 criteria align)
+• 2: Weak (1/4 criteria align)
+• 1: No match
 
-Guardrails:
-- Never score above 3/5 if geographic requirements don't match
-- Reduce score by 1 if budget requirements exceed org capacity by >50%
-- Add bonus point for previous successful grants from same funder
-- Maximum score of 2/5 if no focus area alignment
-
-# C - CONTEXT
-Organization Profile:
-- Name: {org_context.get('name', 'Unknown Organization')}
-- Mission: {org_context.get('mission', 'No mission provided')}
-- Focus Areas: {', '.join(org_context.get('focus_areas', ['General']))}
-- Geographic Service Area: {org_context.get('geographic_focus', 'Not specified')}
-- Annual Budget: {org_context.get('annual_budget', 'Unknown')}
-- Staff Capacity: {org_context.get('staff_capacity', 'Unknown')}
-- Target Population: {org_context.get('target_population', 'General public')}
-- Previous Funders: {', '.join(org_context.get('grant_experience', {}).get('previous_funders', ['None listed'])[:5])}
-
-Grant Opportunity:
-- Title: {grant_data.get('title', 'Untitled Grant')}
-- Funder: {grant_data.get('funder', 'Unknown Funder')}
-- Amount Range: ${grant_data.get('amount_min', 0) or 0:,.0f} - ${grant_data.get('amount_max', 0) or 0:,.0f}
-- Geographic Requirements: {grant_data.get('geography', 'Not specified')}
-- Eligibility: {grant_data.get('eligibility', 'Not specified')}
-- Deadline: {grant_data.get('deadline', 'No deadline')}
-- Description: {grant_data.get('description', 'No description')[:500]}
-
-# T - TONE
-Professional, analytical, and constructive. Use clear, confident language that nonprofit professionals can immediately understand and act upon. Be encouraging for strong matches, realistic about challenges, and always provide actionable next steps. Avoid jargon and overly technical terms.
-
-# O - OUTPUT
-Provide a structured JSON response with:
+# OUTPUT JSON
 {{
-    "match_score": [1-5 integer],
-    "match_percentage": [20-100, calculated as score * 20],
-    "verdict": ["Excellent Match", "Strong Match", "Moderate Match", "Weak Match", or "Not Recommended"],
-    "key_alignments": [
-        "List 3-5 specific ways the organization aligns with this grant"
-    ],
-    "potential_challenges": [
-        "List 2-3 potential challenges or gaps to address"
-    ],
-    "recommendation": "One paragraph (2-3 sentences) executive summary of why they should or shouldn't apply",
-    "next_steps": [
-        "Specific action item 1",
-        "Specific action item 2",
-        "Specific action item 3"
-    ],
-    "application_tips": "One specific tip for strengthening their application based on the analysis"
+    "match_score": [1-5],
+    "match_percentage": [score * 20],
+    "verdict": ["Excellent"/"Strong"/"Moderate"/"Weak"/"No Match"],
+    "recommendation": "[One sentence: apply or skip]",
+    "key_alignment": "[Main reason for score]"
 }}
 
-Test the output by ensuring:
-- Score is an integer between 1-5
-- All arrays contain at least 2 items
-- Recommendation is actionable, not generic
-- Next steps are specific to this grant, not general advice
-"""
+Respond ONLY with valid JSON."""
 
     @staticmethod
     def narrative_generation_prompt(org_context: dict, grant_data: dict, section: str) -> str:

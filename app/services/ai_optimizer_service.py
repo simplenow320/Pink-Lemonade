@@ -21,8 +21,8 @@ class TaskComplexity(Enum):
 
 class ModelType(Enum):
     """Available AI models with cost ratios"""
-    TURBO_35 = "gpt-3.5-turbo"  # ~$0.0015 per 1K tokens (fast, cheap)
-    GPT_4O = "gpt-4o"            # ~$0.01 per 1K tokens (smart, expensive)
+    TURBO_35 = "gpt-3.5-turbo-1106"  # Use faster 1106 version ~$0.0015 per 1K tokens (fast, cheap)
+    GPT_4O = "gpt-4o"                  # ~$0.01 per 1K tokens (smart, expensive)
 
 class AIOptimizerService:
     """
@@ -40,12 +40,13 @@ class AIOptimizerService:
             
         # Task complexity mapping - determines which model to use
         self.task_routing = {
-            # SIMPLE TASKS (GPT-3.5-turbo) - 60% of requests
+            # SIMPLE TASKS (GPT-3.5-turbo-1106) - 60% of requests
             "summarize_grant": TaskComplexity.SIMPLE,
             "extract_keywords": TaskComplexity.SIMPLE,
             "classify_grant_type": TaskComplexity.SIMPLE,
             "basic_matching": TaskComplexity.SIMPLE,
             "format_text": TaskComplexity.SIMPLE,
+            "grant_matching": TaskComplexity.SIMPLE,  # Speed up grant matching
             
             # MODERATE TASKS (GPT-3.5-turbo with structure) - 20% of requests
             "generate_outline": TaskComplexity.MODERATE,
@@ -108,7 +109,7 @@ class AIOptimizerService:
         if complexity in [TaskComplexity.SIMPLE, TaskComplexity.MODERATE]:
             return (
                 ModelType.TURBO_35,
-                f"Using GPT-3.5-turbo for {complexity.value} task (60% cost savings)"
+                f"Using GPT-3.5-turbo-1106 for {complexity.value} task (fastest, 60% cost savings)"
             )
         else:
             return (
@@ -195,8 +196,10 @@ Quality check: Ensure no placeholder text, all statistics are realistic, and ton
             response = client_with_timeout.chat.completions.create(
                 model=model.value,
                 messages=messages,
-                temperature=context.get("temperature", 0.7),
-                max_tokens=context.get("max_tokens", 2000),
+                temperature=context.get("temperature", 0),  # Default to deterministic
+                max_tokens=context.get("max_tokens", 200),  # Default to 200 for speed
+                stream=False,  # Explicit no streaming for speed
+                top_p=context.get("top_p", 1),  # Faster generation
                 response_format={"type": "json_object"} if context.get("json_output") else {"type": "text"}
             )
             
@@ -209,7 +212,7 @@ Quality check: Ensure no placeholder text, all statistics are realistic, and ton
                 
                 # Estimate cost (rough calculation)
                 if model == ModelType.TURBO_35:
-                    cost = usage.total_tokens * 0.0000015  # ~$0.0015 per 1K tokens
+                    cost = usage.total_tokens * 0.0000010  # GPT-3.5-turbo-1106 is cheaper
                 else:
                     cost = usage.total_tokens * 0.00001  # ~$0.01 per 1K tokens
                     
@@ -320,7 +323,7 @@ Quality check: Ensure no placeholder text, all statistics are realistic, and ton
         turbo_ratio = turbo_calls / (turbo_calls + gpt4_calls) if (turbo_calls + gpt4_calls) > 0 else 0
         
         if turbo_ratio > 0.7:
-            return "Excellent optimization! Over 70% of tasks using cost-effective GPT-3.5-turbo."
+            return "Excellent optimization! Over 70% of tasks using ultra-fast GPT-3.5-turbo-1106."
         elif turbo_ratio > 0.5:
             return "Good balance. Consider reviewing complex tasks for potential downgrade."
         else:

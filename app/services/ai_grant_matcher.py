@@ -68,8 +68,12 @@ class AIGrantMatcher:
                         grant_data=grant.to_dict()
                     )
                     
-                    # Get AI match analysis
-                    response = self.ai_service.generate_json_response(prompt)
+                    # Get AI match analysis with context for fallback
+                    context = {
+                        'org_profile': org_context,
+                        'grant_data': grant.to_dict()
+                    }
+                    response = self.ai_service.generate_json_response(prompt, context=context)
                     
                     if response and 'match_score' in response:
                         # Add match data to grant
@@ -79,10 +83,7 @@ class AIGrantMatcher:
                             'match_percentage': response.get('match_percentage', response['match_score'] * 20),
                             'match_verdict': response.get('verdict', 'Not Evaluated'),
                             'match_reason': response.get('recommendation', ''),
-                            'key_alignments': response.get('key_alignments', []),
-                            'potential_challenges': response.get('potential_challenges', []),
-                            'next_steps': response.get('next_steps', []),
-                            'application_tips': response.get('application_tips', '')
+                            'key_alignment': response.get('key_alignment', '')
                         })
                         
                         # Update grant in database
@@ -90,9 +91,7 @@ class AIGrantMatcher:
                         grant.match_reason = response.get('recommendation', '')
                         grant.ai_summary = json.dumps({
                             'verdict': response.get('verdict'),
-                            'alignments': response.get('key_alignments'),
-                            'challenges': response.get('potential_challenges'),
-                            'tips': response.get('application_tips')
+                            'alignment': response.get('key_alignment', '')
                         })
                         grant.last_intelligence_update = datetime.utcnow()
                         
@@ -145,12 +144,19 @@ class AIGrantMatcher:
                 return {'error': 'Grant or organization not found'}
             
             # Generate comprehensive analysis
+            org_context = org.to_ai_context()
+            grant_data = grant.to_dict()
             prompt = self.prompts.grant_matching_prompt(
-                org_context=org.to_ai_context(),
-                grant_data=grant.to_dict()
+                org_context=org_context,
+                grant_data=grant_data
             )
             
-            response = self.ai_service.generate_json_response(prompt)
+            # Pass context for fallback support
+            context = {
+                'org_profile': org_context,
+                'grant_data': grant_data
+            }
+            response = self.ai_service.generate_json_response(prompt, context=context)
             
             if response:
                 # Extract grant intelligence
@@ -274,12 +280,19 @@ class AIGrantMatcher:
             for grant in grants:
                 try:
                     # Quick scoring without full analysis
+                    org_context = org.to_ai_context()
+                    grant_data = grant.to_dict()
                     prompt = self.prompts.grant_matching_prompt(
-                        org_context=org.to_ai_context(),
-                        grant_data=grant.to_dict()
+                        org_context=org_context,
+                        grant_data=grant_data
                     )
                     
-                    response = self.ai_service.generate_json_response(prompt)
+                    # Pass context for fallback support
+                    context = {
+                        'org_profile': org_context,
+                        'grant_data': grant_data
+                    }
+                    response = self.ai_service.generate_json_response(prompt, context=context)
                     
                     if response and 'match_score' in response:
                         grant.match_score = response['match_score']

@@ -173,12 +173,8 @@ def get_ai_matched_grants(org_id):
                         "match_score": 2,
                         "match_percentage": 40,
                         "verdict": "Error - Analysis failed",
-                        "recommendation": "AI analysis failed. Manual review required.",
-                        "key_alignments": ["System error occurred"],
-                        "potential_challenges": ["AI service error"],
-                        "next_steps": ["Manual review required", "Check system status"],
-                        "application_tips": "Manual evaluation required due to system error",
-                        "system_status": "api_error_fallback"
+                        "recommendation": "Manual review required.",
+                        "key_alignment": "System error - manual review needed"
                     }
                 
                 if response and 'match_score' in response:
@@ -188,10 +184,7 @@ def get_ai_matched_grants(org_id):
                         'match_percentage': response.get('match_percentage', response['match_score'] * 20),
                         'match_verdict': response.get('verdict', 'Not Evaluated'),
                         'match_reason': response.get('recommendation', ''),
-                        'key_alignments': response.get('key_alignments', []),
-                        'potential_challenges': response.get('potential_challenges', []),
-                        'next_steps': response.get('next_steps', []),
-                        'application_tips': response.get('application_tips', '')
+                        'key_alignment': response.get('key_alignment', '')
                     })
                     
                     # Add historical intelligence (safe implementation)
