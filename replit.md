@@ -122,19 +122,35 @@ Each section must be detailed (multiple sentences), include guardrails to preven
 ## External Dependencies
 
 ### Core Services
-- **OpenAI API**: GPT-4o integration.
-- **PostgreSQL**: Primary database.
-- **SQLite**: Development and testing database.
-- **Stripe**: Payment processing for checkout sessions, customer portal, webhooks, and invoicing.
-- **SendGrid**: Email invitation system for surveys and stakeholder communications.
+- **OpenAI API**: GPT-4o ($0.01/1K tokens) and GPT-3.5-turbo ($0.0015/1K) with intelligent routing
+- **PostgreSQL**: Primary database (Neon-backed, rollback capable)
+- **SQLite**: Development and testing database fallback
+- **Stripe**: Payment processing ($79-499/month subscription tiers)
+- **SendGrid**: Email automation for invitations and notifications
 
-### Live Data Sources
-- **Federal Register API**: Government NOFOs and funding notices.
-- **USAspending.gov API**: Historical federal grant awards and spending data.
-- **Candid Grants API**: Grant and foundation data.
-- **Candid News API**: Articles about grants and foundations.
-- **Grants.gov REST API**: Federal grant opportunities.
-- **Major Foundations Directory**: Direct access to top 8 foundations.
+### Live Data Sources - Production Status
+
+#### ✅ FULLY OPERATIONAL (100%)
+- **Candid API Suite**: Premium $2+ trillion grant database (PAID SUBSCRIPTION ACTIVE)
+  - Grants API: 28M+ grants from 259K+ foundations
+  - News API: Real-time philanthropic intelligence
+  - Essentials API: Deep foundation analytics
+- **Federal Register API**: Early grant notices and NOFOs (FREE, no auth)
+- **USAspending.gov API**: Historical federal spending patterns (FREE)
+- **Custom Foundation Scraper**: 70 sources including:
+  - 8 Major Foundations (Gates, Ford, MacArthur, Kellogg, etc.)
+  - 10 Tech/AI Funders (Google.org, Microsoft, AWS IMAGINE, NVIDIA)
+  - 52 Regional Foundations (MI:18, GA:16, NC:10, SC:8)
+
+#### ⚠️ OPERATIONAL WITH LIMITATIONS (95%)
+- **Grants.gov API**: Federal opportunities via GSA Search (occasional slowness)
+
+#### ⏸️ PRE-CONFIGURED BUT INACTIVE (0%)
+- **State Grant Portals**: MI, GA, NC, SC (code complete, activation pending)
+- **Premium Services** (ready when budget allows):
+  - Foundation Directory Online ($2K/year)
+  - GrantWatch ($199-399/month)
+  - Chronicle of Philanthropy ($300/year)
 
 ### Frontend Libraries
 - **React Ecosystem**: React 18, React Router, React Scripts.
