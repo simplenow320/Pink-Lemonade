@@ -133,6 +133,7 @@ function App() {
       </div>
     );
   }
+  
 
   // Modern app layout with authentication routes
   return (
