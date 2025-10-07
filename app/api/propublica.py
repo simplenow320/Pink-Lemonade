@@ -173,17 +173,16 @@ def sync_nonprofit(ein):
                 nonprofit.assets = latest_filing.get('totassetsend', nonprofit.assets)
         else:
             # Create new record
-            nonprofit = Organization(
-                ein=ein,
-                name=org_data.get('name'),
-                city=org_data.get('city'),
-                state=org_data.get('state'),
-                zip_code=org_data.get('zipcode'),
-                address=org_data.get('address'),
-                website=org_data.get('website'),
-                annual_revenue=latest_filing.get('totrevenue') if latest_filing else None,
-                assets=latest_filing.get('totassetsend') if latest_filing else None
-            )
+            nonprofit = Organization()
+            nonprofit.ein = ein
+            nonprofit.name = org_data.get('name')
+            nonprofit.city = org_data.get('city')
+            nonprofit.state = org_data.get('state')
+            nonprofit.zip_code = org_data.get('zipcode')
+            nonprofit.address = org_data.get('address')
+            nonprofit.website = org_data.get('website')
+            if latest_filing:
+                nonprofit.annual_revenue = latest_filing.get('totrevenue')
             db.session.add(nonprofit)
 
         # Commit changes

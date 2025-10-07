@@ -3,7 +3,11 @@ HTTP Helper Classes for API Key Rotation and Caching
 """
 import os
 import time
+import requests
+import logging
 from typing import Dict, Any, Optional, Tuple, Union
+
+logger = logging.getLogger(__name__)
 
 
 class RotatingKeyPool:
@@ -104,3 +108,75 @@ class SimpleCache:
             del self._cache[key]
         
         return len(expired_keys)
+
+
+def make_request_with_retry(
+    method: str,
+    url: str,
+    headers: Optional[Dict[str, str]] = None,
+    params: Optional[Dict[str, Any]] = None,
+    json: Optional[Dict[str, Any]] = None,
+    data: Optional[Any] = None,
+    timeout: int = 30,
+    max_retries: int = 3,
+    backoff_factor: float = 1.0
+) -> requests.Response:
+    """
+    Make HTTP request with automatic retry on failure.
+    
+    Args:
+        method: HTTP method ('GET', 'POST', etc.)
+        url: Full API URL
+        headers: Optional headers dict
+        params: Optional query parameters
+        json: Optional JSON body for POST/PUT
+        data: Optional form data
+        timeout: Request timeout in seconds
+        max_retries: Maximum number of retry attempts
+        backoff_factor: Multiplier for exponential backoff
+        
+    Returns:
+        requests.Response object
+        
+    Raises:
+        requests.RequestException: If all retries fail
+    """
+    retry_codes = [429, 500, 502, 503, 504]
+    
+    for attempt in range(max_retries + 1):
+        try:
+            response = requests.request(
+                method=method.upper(),
+                url=url,
+                headers=headers,
+                params=params,
+                json=json,
+                data=data,
+                timeout=timeout
+            )
+            
+            # If successful or non-retryable error, return
+            if response.status_code < 400 or response.status_code not in retry_codes:
+                return response
+            
+            # If this was the last attempt, return the response anyway
+            if attempt == max_retries:
+                logger.warning(f"Max retries ({max_retries}) reached for {method} {url}")
+                return response
+            
+            # Calculate wait time with exponential backoff
+            wait_time = backoff_factor * (2 ** attempt)
+            logger.info(f"Retrying {method} {url} in {wait_time}s (attempt {attempt + 1}/{max_retries}, status: {response.status_code})")
+            time.sleep(wait_time)
+            
+        except requests.exceptions.RequestException as e:
+            if attempt == max_retries:
+                logger.error(f"Request failed after {max_retries} retries: {method} {url} - {str(e)}")
+                raise e
+            
+            wait_time = backoff_factor * (2 ** attempt)
+            logger.info(f"Request exception, retrying {method} {url} in {wait_time}s: {str(e)}")
+            time.sleep(wait_time)
+    
+    # Should never reach here, but just in case
+    raise requests.RequestException(f"Failed to complete request after {max_retries} attempts")

@@ -193,15 +193,13 @@ def sync_funding_notices():
                         agency_str = ', '.join(agencies) if agencies else ''
 
                         # Create new grant opportunity
-                        grant = Grant(
-                            title=item.get('title', '')[:255],
-                            description=item.get('abstract', ''),
-                            agency=agency_str,
-                            source='federalregister',
-                            source_id=document_number,
-                            post_date=publication_date,
-                            url=item.get('html_url')
-                        )
+                        grant = Grant()
+                        grant.title = item.get('title', '')[:255]
+                        grant.description = item.get('abstract', '')
+                        grant.funder = agency_str
+                        grant.source_name = 'federalregister'
+                        grant.source_id = document_number
+                        grant.link = item.get('html_url')
                         db.session.add(grant)
                         count += 1
 
