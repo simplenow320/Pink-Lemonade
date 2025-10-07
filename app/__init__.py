@@ -483,6 +483,37 @@ def create_app():
     # Register Credential Status Management endpoints
     from app.api.credential_status import credential_status_bp
     flask_app.register_blueprint(credential_status_bp)
+
+    # Register external data source blueprints
+    try:
+        from app.api.federalregister import federalregister_bp
+        flask_app.register_blueprint(federalregister_bp)
+    except ImportError as e:
+        print(f"Federal Register blueprint not available: {e}")
+
+    try:
+        from app.api.sam import sam_bp
+        flask_app.register_blueprint(sam_bp)
+    except ImportError as e:
+        print(f"SAM.gov blueprint not available: {e}")
+
+    try:
+        from app.api.usaspending import usaspending_bp
+        flask_app.register_blueprint(usaspending_bp)
+    except ImportError as e:
+        print(f"USAspending blueprint not available: {e}")
+
+    try:
+        from app.api.propublica import propublica_bp
+        flask_app.register_blueprint(propublica_bp)
+    except ImportError as e:
+        print(f"ProPublica blueprint not available: {e}")
+
+    try:
+        from app.api.socrata import socrata_bp
+        flask_app.register_blueprint(socrata_bp)
+    except ImportError as e:
+        print(f"Socrata blueprint not available: {e}")
     
     # Initialize monitoring
     from app.services.monitoring_service import init_monitoring
