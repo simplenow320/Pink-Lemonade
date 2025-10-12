@@ -5,11 +5,13 @@ Serves real grant data with filtering and matching
 
 from flask import Blueprint, request, jsonify
 from datetime import datetime, timedelta
+from sqlalchemy import text
 from app import db
-from app.models import Grant, Organization
+from app.models import Grant, Organization, LovedGrant
 from app.services.grant_fetcher import GrantFetcher
 from app.services.ai_service import AIService
 from app.services.cache_service import CacheService
+from app.services.auth_manager import AuthManager
 import logging
 
 logger = logging.getLogger(__name__)
@@ -25,7 +27,7 @@ def health_check():
     """Health check endpoint for monitoring"""
     try:
         # Test database connection
-        db.session.execute('SELECT 1')
+        db.session.execute(text('SELECT 1'))
 
         return jsonify({
             'status': 'healthy',
@@ -226,11 +228,9 @@ def get_grant_detail(grant_id):
 
 @bp.route('/<int:grant_id>/save', methods=['POST'])
 def save_grant(grant_id):
-    """Save/bookmark a grant to user's dashboard"""
+    """Save/bookmark a grant to user's dashboard using LovedGrant join table"""
     try:
-        from app.services.auth_service import get_current_user
-        
-        user = get_current_user()
+        user = AuthManager.get_current_user()
         if not user:
             return jsonify({'error': 'Authentication required'}), 401
         
@@ -239,12 +239,32 @@ def save_grant(grant_id):
         if not grant:
             return jsonify({'error': 'Grant not found'}), 404
         
-        # Update grant to associate with user/organization
-        if hasattr(user, 'org_id') and user.org_id:
-            grant.org_id = user.org_id
-        grant.user_id = user.id
-        grant.status = 'saved'
+        # Check if already saved by this user (duplicate prevention)
+        existing_save = db.session.query(LovedGrant).filter_by(
+            user_id=user.id,
+            grant_id=grant_id
+        ).first()
         
+        if existing_save:
+            return jsonify({
+                'success': True,
+                'message': 'Grant already saved',
+                'grant': {
+                    'id': grant.id,
+                    'title': grant.title,
+                    'funder': grant.funder,
+                    'saved_at': existing_save.loved_at.isoformat() if existing_save.loved_at else None
+                }
+            }), 200
+        
+        # Create new LovedGrant entry (multi-tenant safe)
+        loved_grant = LovedGrant()
+        loved_grant.user_id = user.id
+        loved_grant.grant_id = grant_id
+        loved_grant.status = 'interested'
+        loved_grant.loved_at = datetime.utcnow()
+        
+        db.session.add(loved_grant)
         db.session.commit()
         
         return jsonify({
@@ -254,7 +274,7 @@ def save_grant(grant_id):
                 'id': grant.id,
                 'title': grant.title,
                 'funder': grant.funder,
-                'status': grant.status
+                'saved_at': loved_grant.loved_at.isoformat()
             }
         })
         
@@ -262,6 +282,77 @@ def save_grant(grant_id):
         logger.error(f"Error saving grant: {e}")
         db.session.rollback()
         return jsonify({'error': 'Failed to save grant'}), 500
+
+@bp.route('/<int:grant_id>/unsave', methods=['DELETE', 'POST'])
+def unsave_grant(grant_id):
+    """Remove grant from user's saved list using LovedGrant join table"""
+    try:
+        user = AuthManager.get_current_user()
+        if not user:
+            return jsonify({'error': 'Authentication required'}), 401
+        
+        # Find the LovedGrant entry for this user and grant
+        loved_grant = db.session.query(LovedGrant).filter_by(
+            user_id=user.id,
+            grant_id=grant_id
+        ).first()
+        
+        if not loved_grant:
+            return jsonify({'error': 'Saved grant not found'}), 404
+        
+        # Delete the LovedGrant entry (multi-tenant safe)
+        db.session.delete(loved_grant)
+        db.session.commit()
+        
+        return jsonify({
+            'success': True,
+            'message': 'Grant removed from saved list'
+        })
+        
+    except Exception as e:
+        logger.error(f"Error unsaving grant: {e}")
+        db.session.rollback()
+        return jsonify({'error': 'Failed to unsave grant'}), 500
+
+@bp.route('/saved', methods=['GET'])
+def get_saved_grants():
+    """Get all grants saved by current user using LovedGrant join table"""
+    try:
+        user = AuthManager.get_current_user()
+        if not user:
+            return jsonify({'error': 'Authentication required'}), 401
+        
+        # Query LovedGrant entries for this user, join with Grant table
+        saved_entries = db.session.query(LovedGrant, Grant).join(
+            Grant, LovedGrant.grant_id == Grant.id
+        ).filter(
+            LovedGrant.user_id == user.id
+        ).order_by(LovedGrant.loved_at.desc()).all()
+        
+        grants_list = [{
+            'id': grant.id,
+            'title': grant.title,
+            'funder': grant.funder,
+            'deadline': grant.deadline.isoformat() if grant.deadline else None,
+            'amount_min': float(grant.amount_min) if grant.amount_min else None,
+            'amount_max': float(grant.amount_max) if grant.amount_max else None,
+            'eligibility': grant.eligibility,
+            'source_name': grant.source_name,
+            'saved_at': loved.loved_at.isoformat() if loved.loved_at else None,
+            'saved_status': loved.status,
+            'notes': loved.notes,
+            'progress_percentage': loved.progress_percentage
+        } for loved, grant in saved_entries]
+        
+        return jsonify({
+            'success': True,
+            'count': len(grants_list),
+            'grants': grants_list
+        })
+        
+    except Exception as e:
+        logger.error(f"Error fetching saved grants: {e}")
+        return jsonify({'error': 'Failed to fetch saved grants'}), 500
 
 @bp.route('/fetch', methods=['POST'])
 def fetch_new_grants():
