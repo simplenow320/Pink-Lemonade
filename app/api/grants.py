@@ -19,6 +19,26 @@ grant_fetcher = GrantFetcher()
 ai_service = AIService()
 cache_service = CacheService()
 
+# Insert after line 22:
+@bp.route('/health', methods=['GET'])
+def health_check():
+    """Health check endpoint for monitoring"""
+    try:
+        # Test database connection
+        db.session.execute('SELECT 1')
+
+        return jsonify({
+            'status': 'healthy',
+            'database': 'connected',
+            'timestamp': datetime.utcnow().isoformat()
+        })
+    except Exception as e:
+        return jsonify({
+            'status': 'unhealthy',
+            'error': str(e),
+            'timestamp': datetime.utcnow().isoformat()
+        }), 503
+        
 @bp.route('/', methods=['GET'])
 def get_grants():
     """Get all active grants with optional filtering"""
