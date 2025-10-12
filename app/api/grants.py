@@ -204,6 +204,45 @@ def get_grant_detail(grant_id):
             'error': str(e)
         }), 500
 
+@bp.route('/<int:grant_id>/save', methods=['POST'])
+def save_grant(grant_id):
+    """Save/bookmark a grant to user's dashboard"""
+    try:
+        from app.services.auth_service import get_current_user
+        
+        user = get_current_user()
+        if not user:
+            return jsonify({'error': 'Authentication required'}), 401
+        
+        # Get the grant
+        grant = db.session.query(Grant).get(grant_id)
+        if not grant:
+            return jsonify({'error': 'Grant not found'}), 404
+        
+        # Update grant to associate with user/organization
+        if hasattr(user, 'org_id') and user.org_id:
+            grant.org_id = user.org_id
+        grant.user_id = user.id
+        grant.status = 'saved'
+        
+        db.session.commit()
+        
+        return jsonify({
+            'success': True,
+            'message': 'Grant saved successfully',
+            'grant': {
+                'id': grant.id,
+                'title': grant.title,
+                'funder': grant.funder,
+                'status': grant.status
+            }
+        })
+        
+    except Exception as e:
+        logger.error(f"Error saving grant: {e}")
+        db.session.rollback()
+        return jsonify({'error': 'Failed to save grant'}), 500
+
 @bp.route('/fetch', methods=['POST'])
 def fetch_new_grants():
     """Fetch new grants from external sources"""

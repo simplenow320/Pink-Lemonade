@@ -7,7 +7,7 @@ import os
 import json
 import logging
 import requests
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, date
 from typing import Dict, List, Optional
 from app import db
 from app.models import Grant, Organization, ScraperSource
@@ -212,7 +212,7 @@ class GrantFetcher:
             logger.error(f"Error parsing USAspending grant: {e}")
             return None
     
-    def fetch_candid_grants(self, limit: int = 30, state: str = None) -> List[Dict]:
+    def fetch_candid_grants(self, limit: int = 30, state: Optional[str] = None) -> List[Dict]:
         """Fetch grants from Candid API using transactions endpoint"""
         if not self.candid_client:
             return []
@@ -253,24 +253,39 @@ class GrantFetcher:
         return grants[:limit]
     
     def parse_candid_grant(self, result: Dict) -> Optional[Dict]:
-        """Parse Candid grant transaction into standard format"""
+        """Parse Candid grant transaction into standard format - NULL SAFE"""
         try:
-            # Parse the transaction data from Candid API
+            # Safely extract funder name
+            funder = result.get('funder_name')
+            if not funder and result.get('funder'):
+                # Handle case where funder is a dict or object
+                funder_obj = result.get('funder')
+                if isinstance(funder_obj, dict):
+                    funder = funder_obj.get('name', 'Private Foundation')
+                else:
+                    funder = str(funder_obj)
+            if not funder:
+                funder = 'Private Foundation'
+            
+            # Safely extract description/title with fallback
+            title = result.get('description') or result.get('title') or 'Foundation Grant'
+            
             return {
-                'title': result.get('description', result.get('title', 'Foundation Grant')),
+                'title': title,
                 'description': result.get('description', ''),
-                'funder_name': result.get('funder_name', result.get('funder', 'Private Foundation')),
-                'amount': result.get('amount', result.get('amount_awarded', 0)),
-                'deadline': result.get('deadline', result.get('grant_date')),
+                'funder_name': funder,
+                'amount': result.get('amount') or result.get('amount_awarded') or 0,
+                'deadline': result.get('deadline') or result.get('grant_date'),
                 'source_name': 'Candid',
-                'source_url': result.get('url', result.get('link', '')),
-                'eligibility': result.get('eligibility_description', result.get('recipient_name', '')),
-                'focus_area': result.get('focus_area', result.get('description', 'General'))[:100],
+                'source_url': result.get('url') or result.get('link') or '',
+                'eligibility': result.get('eligibility_description') or result.get('recipient_name') or '',
+                'focus_area': (result.get('focus_area') or result.get('description') or 'General')[:100],
                 'match_score': None,
                 'status': 'active'
             }
         except Exception as e:
             logger.error(f"Error parsing Candid grant: {e}")
+            logger.debug(f"Problematic result data: {result}")
             return None
     
     def extract_amount_from_text(self, text: str) -> Optional[float]:
@@ -336,6 +351,63 @@ class GrantFetcher:
                 return category
         
         return 'General'
+    def extract_deadline_from_text(self, text: str) -> Optional[str]:
+        """Extract deadline dates from grant description text using AI or regex"""
+        import re
+        from datetime import datetime
+
+        if not text:
+            return None
+
+        # Pattern 1: Month Day, Year (e.g., "December 31, 2025")
+        pattern1 = r'(January|February|March|April|May|June|July|August|September|October|November|December)\s+\d{1,2},?\s+\d{4}'
+
+        # Pattern 2: MM/DD/YYYY or MM-DD-YYYY
+        pattern2 = r'\d{1,2}[/-]\d{1,2}[/-]\d{4}'
+
+        # Pattern 3: "due by" or "deadline" followed by date
+        deadline_keywords = r'(?:deadline|due by|submit by|closing date|application due)[\s:]+([^\n\.]{1,50})'
+
+        patterns = [pattern1, pattern2, deadline_keywords]
+
+        for pattern in patterns:
+            matches = re.findall(pattern, text, re.IGNORECASE)
+            if matches:
+                # Return first match, cleaned
+                date_str = matches[0].strip() if isinstance(matches[0], str) else matches[0][0].strip()
+                return date_str[:50]  # Limit length
+
+        return None
+    
+    def parse_flexible_date(self, date_str: Optional[str]) -> Optional[date]:
+        """Parse date with multiple format support"""
+        if not date_str:
+            return None
+        
+        date_str = str(date_str).strip()
+        
+        # Try different date formats
+        formats = [
+            '%Y-%m-%d',           # 2025-10-12
+            '%Y/%m/%d',           # 2025/10/12
+            '%m/%d/%Y',           # 10/12/2025
+            '%Y-%m-%dT%H:%M:%S',  # ISO format with time
+            '%Y'                  # Year only (2003)
+        ]
+        
+        for fmt in formats:
+            try:
+                dt = datetime.strptime(date_str, fmt)
+                # If year-only, use December 31st of that year
+                if fmt == '%Y':
+                    return date(dt.year, 12, 31)
+                return dt.date()
+            except ValueError:
+                continue
+        
+        # If all formats fail, log and return None
+        logger.warning(f"Could not parse date: {date_str}")
+        return None
     
     def store_grants(self, grants: List[Dict]) -> int:
         """Store grants in database"""
@@ -353,19 +425,19 @@ class GrantFetcher:
                     amount = grant_data.get('amount')
                     deadline_str = grant_data.get('deadline')
                     
-                    grant = Grant(
-                        title=grant_data['title'],
-                        funder=grant_data['funder_name'],
-                        amount_min=amount if amount else None,
-                        amount_max=amount if amount else None,
-                        deadline=datetime.strptime(deadline_str, '%Y-%m-%d').date() if deadline_str else None,
-                        source_name=grant_data.get('source_name'),
-                        source_url=grant_data.get('source_url'),
-                        eligibility=grant_data.get('eligibility'),
-                        geography=grant_data.get('geography', 'National'),
-                        status='active',
-                        created_at=datetime.utcnow()
-                    )
+                    # Create grant object
+                    grant = Grant()
+                    grant.title = grant_data['title']
+                    grant.funder = grant_data['funder_name']
+                    grant.amount_min = amount if amount else None
+                    grant.amount_max = amount if amount else None
+                    grant.deadline = self.parse_flexible_date(deadline_str)
+                    grant.source_name = grant_data.get('source_name')
+                    grant.source_url = grant_data.get('source_url')
+                    grant.eligibility = grant_data.get('eligibility')
+                    grant.geography = grant_data.get('geography', 'National')
+                    grant.status = 'active'
+                    grant.created_at = datetime.utcnow()
                     
                     db.session.add(grant)
                     stored += 1
@@ -382,7 +454,7 @@ class GrantFetcher:
         
         return stored
     
-    def calculate_match_scores(self, org_id: int = None):
+    def calculate_match_scores(self, org_id: Optional[int] = None):
         """Calculate match scores for all grants"""
         try:
             grants = db.session.query(Grant).filter_by(status='active').all()
@@ -396,7 +468,7 @@ class GrantFetcher:
                             grant.to_dict()
                         )
                         grant.match_score = score
-                        grant.match_explanation = explanation
+                        grant.match_reason = explanation
             
             db.session.commit()
             logger.info(f"Calculated match scores for {len(grants)} grants")
