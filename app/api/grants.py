@@ -229,39 +229,6 @@ def get_grant_detail(grant_id):
             'error': 'Internal server error',
             'message': str(e)
         }), 500
-        
-        # Get organization if user is logged in
-        org_id = request.args.get('org_id', type=int)
-        
-        grant_dict = grant.to_dict()
-        
-        # Calculate match score if organization provided
-        if org_id and ai_service.is_enabled():
-            org = db.session.query(Organization).get(org_id)
-            if org:
-                score, explanation = ai_service.match_grant(
-                    org.to_dict(),
-                    grant_dict
-                )
-                grant_dict['match_score'] = score
-                grant_dict['match_explanation'] = explanation
-        
-        # Check if already applied
-        if org_id:
-            # TODO: Implement application tracking
-            grant_dict['application_status'] = None
-        
-        return jsonify({
-            'success': True,
-            'grant': grant_dict
-        })
-        
-    except Exception as e:
-        logger.error(f"Error fetching grant detail: {e}")
-        return jsonify({
-            'success': False,
-            'error': str(e)
-        }), 500
 
 @bp.route('/<int:grant_id>/save', methods=['POST'])
 def save_grant(grant_id):
