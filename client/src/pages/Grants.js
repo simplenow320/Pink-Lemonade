@@ -565,12 +565,18 @@ const GrantCard = ({ grant, onFederalClick }) => {
       <IntelligenceInsights intelligence={grant.historical_intelligence} />
       
       <div className="flex gap-3 mt-2">
-        <Link 
-          to={`/grant/${grant.id}`}
-          className="text-sm text-pink-600 hover:text-pink-700"
-        >
-          Analyze Grant →
-        </Link>
+        {grant.id && grant.id > 0 ? (
+          <Link 
+            to={`/grant/${grant.id}`}
+            className="text-sm text-pink-600 hover:text-pink-700"
+          >
+            Analyze Grant →
+          </Link>
+        ) : (
+          <span className="text-sm text-gray-400 cursor-not-allowed">
+            Analyze Grant →
+          </span>
+        )}
         {grant.link && (
           <a 
             href={grant.link} 
