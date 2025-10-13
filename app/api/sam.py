@@ -201,9 +201,10 @@ def sync_opportunities():
             for item in data.get('opportunitiesData', []):
                 # Check if opportunity already exists
                 notice_id = item.get('noticeId')
+                grant_url = f"https://sam.gov/opp/{notice_id}/view"
                 existing = Grant.query.filter_by(
-                    source='sam.gov',
-                    source_id=notice_id
+                    source_name='SAM.gov',
+                    link=grant_url
                 ).first()
 
                 if not existing:
@@ -217,14 +218,14 @@ def sync_opportunities():
 
                     # Create new grant opportunity record
                     grant = Grant()
-                    grant.title = item.get('title')
-                    grant.description = item.get('description') or ''
-                    grant.funder = item.get('department') or item.get('office')
-                    grant.source_name = 'sam.gov'
-                    grant.source_id = notice_id
+                    grant.title = item.get('title') or 'Federal Opportunity'
+                    grant.ai_summary = item.get('description') or ''
+                    grant.funder = item.get('department') or item.get('office') or 'Federal Agency'
+                    grant.source_name = 'SAM.gov'
+                    grant.source_url = grant_url
                     grant.deadline = close_date
                     grant.amount_max = item.get('awardCeiling')
-                    grant.link = f"https://sam.gov/opp/{notice_id}/view"
+                    grant.link = grant_url
                     db.session.add(grant)
                     count += 1
 

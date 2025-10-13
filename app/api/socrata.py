@@ -4,6 +4,7 @@ from app import db
 from app.services.http_helpers import make_request_with_retry
 from functools import lru_cache
 from datetime import datetime
+from typing import Dict
 import os
 
 socrata_bp = Blueprint('socrata', __name__, url_prefix='/api/socrata')
@@ -62,7 +63,7 @@ def get_local_grants(portal):
     # Build API request
     api_url = f"https://{portal}/resource/{dataset_id}.json"
 
-    params = {
+    params: Dict[str, any] = {
         '$limit': limit,
         '$offset': offset
     }
@@ -236,7 +237,7 @@ def sync_local_grants(portal):
     # Build API request
     api_url = f"https://{portal}/resource/{dataset_id}.json"
 
-    params = {
+    params: Dict[str, any] = {
         '$limit': limit
     }
 
@@ -267,12 +268,13 @@ def sync_local_grants(portal):
             source_id = f"{portal}_{dataset_id}_{item.get('id', hash(str(item)))}"
 
             # Check if grant already exists
+            grant_link = item.get('website', item.get('url', item.get('link', '')))
             existing = Grant.query.filter_by(
-                source=f"socrata.{portal}",
-                source_id=source_id
+                source_name=f"Socrata.{portal}",
+                link=grant_link
             ).first()
 
-            if not existing:
+            if not existing and grant_link:
                 # Extract and normalize fields
                 title = item.get('title', item.get('name', item.get('grant_title', 'Untitled Grant')))
                 description = item.get('description', item.get('summary', item.get('grant_description', '')))
@@ -324,17 +326,15 @@ def sync_local_grants(portal):
                         pass
 
                 # Create grant opportunity
-                grant = Grant(
-                    title=title[:255],  # Truncate to fit column
-                    description=description,
-                    agency=agency[:255] if agency else None,  # Truncate to fit column
-                    amount=amount,
-                    source=f"socrata.{portal}",
-                    source_id=source_id,
-                    post_date=open_date,
-                    close_date=close_date,
-                    url=item.get('website', item.get('url', item.get('link', '')))
-                )
+                grant = Grant()
+                grant.title = title[:255] if title else 'Untitled Grant'
+                grant.ai_summary = description[:500] if description else ''
+                grant.funder = agency[:255] if agency else 'Local Agency'
+                grant.amount_max = amount
+                grant.source_name = f"Socrata.{portal}"
+                grant.deadline = close_date.date() if close_date else None
+                grant.link = grant_link
+                grant.source_url = f"https://{portal}/resource/{dataset_id}.json"
 
                 db.session.add(grant)
                 count += 1
