@@ -186,12 +186,49 @@ def get_grant_detail(grant_id):
     """Get detailed information about a specific grant"""
     try:
         grant = db.session.query(Grant).get(grant_id)
-        
+
         if not grant:
             return jsonify({
                 'success': False,
-                'error': 'Grant not found'
+                'error': 'Grant not found',
+                'message': f'Grant with ID {grant_id} does not exist or has been removed.',
+                'grant_id': grant_id,
+                'suggestion': 'Browse available grants',
+                'action': {
+                    'type': 'redirect',
+                    'url': '/grants',
+                    'label': 'View All Grants'
+                }
             }), 404
+
+        # Get organization if user is logged in
+        org_id = request.args.get('org_id', type=int)
+
+        grant_dict = grant.to_dict()
+
+        # Calculate match score if organization provided
+        if org_id and ai_service.is_enabled():
+            org = db.session.query(Organization).get(org_id)
+            if org:
+                score, explanation = ai_service.match_grant(
+                    org.to_dict(),
+                    grant_dict
+                )
+                grant_dict['match_score'] = score
+                grant_dict['match_explanation'] = explanation
+
+        return jsonify({
+            'success': True,
+            'grant': grant_dict
+        })
+
+    except Exception as e:
+        logger.error(f"Error fetching grant detail: {e}")
+        return jsonify({
+            'success': False,
+            'error': 'Internal server error',
+            'message': str(e)
+        }), 500
         
         # Get organization if user is logged in
         org_id = request.args.get('org_id', type=int)
