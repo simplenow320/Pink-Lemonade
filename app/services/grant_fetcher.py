@@ -108,6 +108,17 @@ class GrantFetcher:
                 logger.error(f"SAM.gov fetch failed: {e}")
                 self.stats['errors'] += 1
         
+        # Fetch from Socrata portals (experimental - mostly historical data)
+        try:
+            socrata_grants = self.fetch_socrata_grants(limit=30)
+            if socrata_grants:
+                grants.extend(socrata_grants)
+                self.stats['socrata'] = len(socrata_grants)
+                logger.info(f"Fetched {len(socrata_grants)} from Socrata portals")
+        except Exception as e:
+            logger.error(f"Socrata fetch failed: {e}")
+            self.stats['errors'] += 1
+        
         self.stats['total_fetched'] = len(grants)
         
         # Store grants in database
