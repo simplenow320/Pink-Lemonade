@@ -4,7 +4,7 @@ from app import db
 from app.services.http_helpers import make_request_with_retry
 from functools import lru_cache
 from datetime import datetime
-from typing import Dict
+from typing import Dict, Any
 import os
 
 socrata_bp = Blueprint('socrata', __name__, url_prefix='/api/socrata')
@@ -63,7 +63,7 @@ def get_local_grants(portal):
     # Build API request
     api_url = f"https://{portal}/resource/{dataset_id}.json"
 
-    params: Dict[str, any] = {
+    params: Dict[str, Any] = {
         '$limit': limit,
         '$offset': offset
     }
@@ -237,7 +237,7 @@ def sync_local_grants(portal):
     # Build API request
     api_url = f"https://{portal}/resource/{dataset_id}.json"
 
-    params: Dict[str, any] = {
+    params: Dict[str, Any] = {
         '$limit': limit
     }
 

@@ -97,6 +97,17 @@ class GrantFetcher:
             logger.error(f"Federal agencies fetch failed: {e}")
             self.stats['errors'] += 1
         
+        # Fetch from SAM.gov (if API key available)
+        if os.environ.get('SAM_GOV_API_KEY'):
+            try:
+                sam_grants = self.fetch_sam_gov_grants(limit=50)
+                grants.extend(sam_grants)
+                self.stats['sam_gov'] = len(sam_grants)
+                logger.info(f"Fetched {len(sam_grants)} from SAM.gov")
+            except Exception as e:
+                logger.error(f"SAM.gov fetch failed: {e}")
+                self.stats['errors'] += 1
+        
         self.stats['total_fetched'] = len(grants)
         
         # Store grants in database
@@ -494,6 +505,68 @@ class GrantFetcher:
             db.session.rollback()
         
         return stored
+    
+    def fetch_sam_gov_grants(self, limit: int = 50) -> List[Dict]:
+        """Fetch grant opportunities from SAM.gov"""
+        grants = []
+        
+        api_key = os.environ.get('SAM_GOV_API_KEY', '').strip()
+        if not api_key:
+            logger.warning("SAM_GOV_API_KEY not configured")
+            return grants
+        
+        api_url = "https://api.sam.gov/opportunities/v2/search"
+        
+        # Calculate date range (last 30 days)
+        posted_from = (datetime.now() - timedelta(days=30)).strftime('%m/%d/%Y')
+        
+        params = {
+            'limit': min(limit, 100),
+            'offset': 0,
+            'postedFrom': posted_from,
+            'opportunityStatus': 'active',
+            'ptype': 'g'  # Filter for grants
+        }
+        
+        headers = {
+            'X-Api-Key': api_key,
+            'Content-Type': 'application/json'
+        }
+        
+        try:
+            response = requests.get(api_url, headers=headers, params=params, timeout=30)
+            response.raise_for_status()
+            data = response.json()
+            
+            for item in data.get('opportunitiesData', []):
+                try:
+                    # Parse dates
+                    close_date = None
+                    if item.get('responseDeadLine'):
+                        try:
+                            close_date = datetime.strptime(item['responseDeadLine'], '%Y/%m/%d').date()
+                        except ValueError:
+                            pass
+                    
+                    grant_data = {
+                        'title': item.get('title', 'Federal Opportunity'),
+                        'funder': item.get('department') or item.get('office', 'Federal Agency'),
+                        'amount': item.get('awardCeiling'),
+                        'deadline': close_date.isoformat() if close_date else None,
+                        'source_name': 'SAM.gov',
+                        'source_url': f"https://sam.gov/opp/{item.get('noticeId')}/view",
+                        'eligibility': item.get('description', '')[:500] if item.get('description') else '',
+                        'geography': 'National'
+                    }
+                    grants.append(grant_data)
+                except Exception as e:
+                    logger.error(f"Error parsing SAM.gov grant: {e}")
+                    continue
+            
+        except Exception as e:
+            logger.error(f"SAM.gov API error: {e}")
+        
+        return grants
     
     def calculate_match_scores(self, org_id: Optional[int] = None):
         """Calculate match scores for all grants"""
