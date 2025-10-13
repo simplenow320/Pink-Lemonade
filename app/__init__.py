@@ -112,20 +112,46 @@ def create_app():
         _initialize_database_if_needed()
         
     # Initialize scheduler for automated grant fetching (daily at 3 AM)
-    if os.environ.get('DEMO_MODE', 'false').lower() != 'true':
-        try:
-            from app.services.scheduler_service import SchedulerService
-            import logging
-            logging.getLogger('app.services.scheduler_service').setLevel(logging.INFO)
-            scheduler = SchedulerService()
-            scheduler.start()
-            print("✅ SCHEDULER: Automated grant fetching enabled - daily at 3 AM UTC")
-            flask_app.logger.info("✅ Automated grant fetching enabled - daily at 3 AM UTC")
-        except Exception as e:
-            print(f"❌ SCHEDULER ERROR: {e}")
-            flask_app.logger.warning(f"Scheduler initialization failed: {e}")
-    else:
-        flask_app.logger.info("DEMO_MODE enabled - automated grant fetching disabled")
+    # Note: With gunicorn, this must run in each worker process, not the master
+    # Store scheduler instance on flask_app to persist across requests
+    flask_app._scheduler = None
+    
+    def start_scheduler():
+        # Use Flask app config instead of os.environ to avoid environment variable issues
+        demo_mode = flask_app.config.get('DEMO_MODE', False)
+        flask_app.logger.warning(f"🔍 DEMO_MODE check from config: {demo_mode}")
+        if not demo_mode:
+            flask_app.logger.warning("🔍 DEMO_MODE is NOT 'true', starting scheduler...")
+            try:
+                from app.services.scheduler_service import SchedulerService
+                import logging
+                logging.getLogger('app.services.scheduler_service').setLevel(logging.INFO)
+                flask_app.logger.warning("🟢 Creating SchedulerService instance...")
+                scheduler = SchedulerService()
+                flask_app.logger.warning(f"🟢 Scheduler instance created: {scheduler}")
+                flask_app.logger.warning("🟢 Calling scheduler.start()...")
+                scheduler.start()
+                flask_app.logger.warning("🟢 scheduler.start() returned")
+                # Store on flask_app so it persists
+                flask_app._scheduler = scheduler
+                flask_app.logger.warning(f"⏱️  Scheduler started, running={scheduler.running}, next_run={scheduler.next_run}")
+                flask_app.logger.warning("✅ SCHEDULER: Automated grant fetching enabled - daily at 3 AM UTC")
+            except Exception as e:
+                import traceback
+                error_msg = f"❌ SCHEDULER ERROR: {e}\n{traceback.format_exc()}"
+                print(error_msg, file=sys.stderr, flush=True)
+                flask_app.logger.warning(error_msg)
+        else:
+            flask_app.logger.info("DEMO_MODE enabled - automated grant fetching disabled")
+    
+    # Start scheduler after first request (ensures it runs in worker process)
+    @flask_app.before_request
+    def init_scheduler():
+        if not hasattr(flask_app, '_scheduler_started'):
+            flask_app._scheduler_started = True
+            flask_app.logger.warning("🚀 INITIALIZING SCHEDULER IN WORKER PROCESS")
+            start_scheduler()
+            flask_app.logger.warning("✅ SCHEDULER INITIALIZED")
     
     # Register blueprints
     from app.pages import pages as pages_bp

@@ -59,30 +59,42 @@ class SchedulerService:
     
     def start(self):
         """Start the scheduler"""
+        import sys
+        print("🔵 SCHEDULER: start() called", file=sys.stderr, flush=True)
+        
         if self.running:
-            print("⚠️ SCHEDULER: Already running")
+            print("⚠️ SCHEDULER: Already running", file=sys.stderr, flush=True)
             logger.warning("Scheduler already running")
             return
             
         # Schedule daily fetch at 3 AM UTC
+        print("🔵 SCHEDULER: Creating schedule job", file=sys.stderr, flush=True)
         schedule.every().day.at("03:00").do(self.fetch_grants_job)
+        print("🔵 SCHEDULER: Schedule job created", file=sys.stderr, flush=True)
         
         # Calculate next run
         jobs = schedule.get_jobs()
+        print(f"🔵 SCHEDULER: Found {len(jobs)} jobs", file=sys.stderr, flush=True)
         if jobs:
             self.next_run = jobs[0].next_run
+            print(f"🔵 SCHEDULER: next_run = {self.next_run}", file=sys.stderr, flush=True)
             if self.next_run:
-                print(f"📅 SCHEDULER: Next automated fetch at {self.next_run.strftime('%Y-%m-%d %H:%M UTC')}")
+                msg = f"📅 SCHEDULER: Next automated fetch at {self.next_run.strftime('%Y-%m-%d %H:%M UTC')}"
+                print(msg, file=sys.stderr, flush=True)
+                logger.warning(msg)
         
-        print("✅ SCHEDULER: Daily grant fetching scheduled at 3:00 AM UTC")
-        logger.info("Scheduled grant fetching at 3:00 AM UTC daily")
+        msg = "✅ SCHEDULER: Daily grant fetching scheduled at 3:00 AM UTC"
+        print(msg, file=sys.stderr, flush=True)
+        logger.warning(msg)
         
         # Start scheduler in background thread
+        print("🔵 SCHEDULER: Starting background thread", file=sys.stderr, flush=True)
         self.running = True
         self.thread = threading.Thread(target=self.run_scheduler, daemon=True)
         self.thread.start()
+        print(f"🔵 SCHEDULER: Thread started, running={self.running}, thread.is_alive()={self.thread.is_alive()}", file=sys.stderr, flush=True)
         
-        print("✅ SCHEDULER: Service started successfully")
+        print("✅ SCHEDULER: Service started successfully", file=sys.stderr, flush=True)
         logger.info("Scheduler service started successfully")
     
     def stop(self):
