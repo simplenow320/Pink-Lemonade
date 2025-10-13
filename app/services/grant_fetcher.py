@@ -443,10 +443,13 @@ class GrantFetcher:
                 # Enrich grant data before storing
                 grant_data = enrichment_service.enrich_grant(grant_data)
                 
+                # Normalize funder field name
+                funder = grant_data.get('funder_name') or grant_data.get('funder', 'Unknown Funder')
+                
                 # Check if grant already exists
                 existing = db.session.query(Grant).filter_by(
                     title=grant_data['title'],
-                    funder=grant_data['funder_name']
+                    funder=funder
                 ).first()
                 
                 if existing:
@@ -463,7 +466,7 @@ class GrantFetcher:
                 
                 grant = Grant()
                 grant.title = grant_data['title']
-                grant.funder = grant_data['funder_name']
+                grant.funder = funder
                 grant.amount_min = amount if amount else None
                 grant.amount_max = amount if amount else None
                 grant.deadline = self.parse_flexible_date(deadline_str)
