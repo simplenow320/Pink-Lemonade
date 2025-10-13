@@ -175,9 +175,12 @@ class GrantsGovClient:
                 "source": "grants_gov",
                 "source_type": "Federal",
                 "source_name": "Grants.gov Search",
+                "funder_name": "Federal Government",  # Add default funder
+                "funder": "Federal Government",
                 "opp_number": opp_number,
                 "title": result.get("title", ""),
                 "description": result.get("snippet", ""),
+                "source_url": url,
                 "link": url,
                 "published_date": result.get("publication_date", ""),
                 "raw": result

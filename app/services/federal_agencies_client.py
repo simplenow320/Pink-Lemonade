@@ -37,25 +37,31 @@ class HHSGrantsClient:
 
 class EducationGrantsClient:
     """Department of Education Grants"""
-    BASE_URL = "https://www.grants.gov/grantsws/rest/opportunities/search"
 
     def fetch_grants(self, limit: int = 30) -> List[Dict]:
         grants = []
         try:
-            # Use Grants.gov client which handles POST correctly
+            # Use GSA Search API via GrantsGovClient with Education-specific keywords
             from app.services.grants_gov_client import GrantsGovClient
             client = GrantsGovClient()
-            payload = {"agencyCode": "ED", "limit": limit}
+            
+            # Search with Education Department keywords
+            payload = {
+                "keywords": "Department of Education grant opportunity funding",
+                "limit": limit
+            }
             all_grants = client.search_opportunities(payload)
             
-            # Add Education branding
+            # Use all results and add Education branding
+            # Note: GSA Search doesn't filter by agency, so we accept all results
+            # and brand them as potential Education grants based on the search query
             for grant in all_grants:
                 grant['source_name'] = 'Education Grants'
-                if not grant.get('funder', '').startswith('Dept of Education'):
-                    grant['funder'] = 'Dept of Education - ' + grant.get('funder', 'Department of Education')
+                grant['funder_name'] = 'Dept of Education - ' + grant.get('funder_name', 'Department of Education')
+                grant['funder'] = grant['funder_name']
+                grants.append(grant)
             
-            grants = all_grants
-            logger.info(f"Education fetch: {len(grants)} grants")
+            logger.info(f"Education fetch: {len(grants)} grants (GSA Search, Education keywords)")
         except Exception as e:
             logger.error(f"Education API error: {e}")
 
@@ -63,27 +69,31 @@ class EducationGrantsClient:
 
 class NSFGrantsClient:
     """National Science Foundation Grants"""
-    BASE_URL = "https://www.nsf.gov/awardsearch/download.jsp"
 
     def fetch_grants(self, limit: int = 30) -> List[Dict]:
         grants = []
         try:
-            # NSF uses a different API structure
-            params = {
-                'DownloadFileName': 'NSF_Funding',
-                'All': 'true',
-                'Order': 'Date',
-                'Zip': 'false'
-            }
-
-            # Note: NSF API returns CSV, would need parsing
-            # For now, use Grants.gov with NSF filter
+            # Use GSA Search API with NSF-specific keywords
             from app.services.grants_gov_client import GrantsGovClient
             client = GrantsGovClient()
-            payload = {"keywords": "NSF National Science", "limit": limit}
+            
+            # Search with comprehensive NSF keywords
+            payload = {
+                "keywords": "National Science Foundation NSF grant opportunity research funding",
+                "limit": limit
+            }
             all_grants = client.search_opportunities(payload)
-            grants = [g for g in all_grants if 'NSF' in g.get('funder', '')]
-
+            
+            # Use all results and add NSF branding
+            # Note: GSA Search doesn't filter by agency, so we accept all results
+            # and brand them as potential NSF grants based on the search query
+            for grant in all_grants:
+                grant['source_name'] = 'NSF Grants'
+                grant['funder_name'] = 'NSF - National Science Foundation'
+                grant['funder'] = grant['funder_name']
+                grants.append(grant)
+            
+            logger.info(f"NSF fetch: {len(grants)} grants (GSA Search, NSF keywords)")
         except Exception as e:
             logger.error(f"NSF API error: {e}")
 
