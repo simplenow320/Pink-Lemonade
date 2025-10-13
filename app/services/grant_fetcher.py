@@ -568,6 +568,80 @@ class GrantFetcher:
         
         return grants
     
+    def fetch_socrata_grants(self, limit: int = 50) -> List[Dict]:
+        """Fetch grant opportunities from Socrata portals (experimental)"""
+        grants = []
+        
+        # Known grant datasets on Socrata portals
+        # Note: These are mostly historical grant data, not active opportunities
+        socrata_datasets = [
+            {
+                'portal': 'data.ny.gov',
+                'dataset_id': 'j5ab-5nj2',  # Local Development Corporations Grants
+                'name': 'New York State Grants'
+            },
+            {
+                'portal': 'data.sfgov.org',
+                'dataset_id': '9rsc-vp8d',  # MOHCD Lead Mediation Grant Program
+                'name': 'San Francisco Housing Grants'
+            }
+        ]
+        
+        for dataset_config in socrata_datasets:
+            try:
+                portal = dataset_config['portal']
+                dataset_id = dataset_config['dataset_id']
+                api_url = f"https://{portal}/resource/{dataset_id}.json"
+                
+                params = {
+                    '$limit': min(limit // len(socrata_datasets), 50)
+                }
+                
+                headers = {}
+                app_token = os.environ.get('SOCRATA_TOKEN', '')
+                if app_token:
+                    headers['X-App-Token'] = app_token
+                
+                response = requests.get(api_url, headers=headers, params=params, timeout=30)
+                response.raise_for_status()
+                data = response.json()
+                
+                for item in data:
+                    try:
+                        grant_data = {
+                            'title': item.get('title', item.get('name', item.get('grant_title', 'Grant Opportunity'))),
+                            'funder': item.get('agency', item.get('department', item.get('organization', dataset_config['name']))),
+                            'amount': self._parse_amount(item.get('amount', item.get('award_amount', item.get('grant_amount')))),
+                            'deadline': None,  # Most Socrata datasets don't have active deadlines
+                            'source_name': f"Socrata.{portal}",
+                            'source_url': f"https://{portal}/resource/{dataset_id}.json",
+                            'eligibility': item.get('description', item.get('summary', ''))[:500],
+                            'geography': item.get('location', item.get('city', 'Local'))
+                        }
+                        grants.append(grant_data)
+                    except Exception as e:
+                        logger.error(f"Error parsing Socrata grant from {portal}: {e}")
+                        continue
+                        
+            except Exception as e:
+                logger.error(f"Socrata API error for {dataset_config['name']}: {e}")
+                continue
+        
+        return grants
+    
+    def _parse_amount(self, amount_value):
+        """Parse amount from various formats"""
+        if not amount_value:
+            return None
+        try:
+            if isinstance(amount_value, (int, float)):
+                return float(amount_value)
+            # Clean string format
+            amount_str = str(amount_value).replace('$', '').replace(',', '').strip()
+            return float(amount_str)
+        except (ValueError, TypeError):
+            return None
+    
     def calculate_match_scores(self, org_id: Optional[int] = None):
         """Calculate match scores for all grants"""
         try:
