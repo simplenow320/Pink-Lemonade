@@ -115,10 +115,14 @@ def create_app():
     if os.environ.get('DEMO_MODE', 'false').lower() != 'true':
         try:
             from app.services.scheduler_service import SchedulerService
+            import logging
+            logging.getLogger('app.services.scheduler_service').setLevel(logging.INFO)
             scheduler = SchedulerService()
             scheduler.start()
+            print("✅ SCHEDULER: Automated grant fetching enabled - daily at 3 AM UTC")
             flask_app.logger.info("✅ Automated grant fetching enabled - daily at 3 AM UTC")
         except Exception as e:
+            print(f"❌ SCHEDULER ERROR: {e}")
             flask_app.logger.warning(f"Scheduler initialization failed: {e}")
     else:
         flask_app.logger.info("DEMO_MODE enabled - automated grant fetching disabled")

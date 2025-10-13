@@ -16,26 +16,20 @@ class HHSGrantsClient:
     def fetch_grants(self, limit: int = 30) -> List[Dict]:
         grants = []
         try:
-            params = {
-                'oppNum': '',
-                'cfda': '',
-                'oppStatus': 'forecasted|posted',
-                'agencyCode': 'HHS',
-                'rows': limit
-            }
-
-            response = requests.get(self.BASE_URL, params=params, timeout=20)
-            if response.status_code == 200:
-                data = response.json()
-                for opp in data.get('opportunitiesList', []):
-                    grants.append({
-                        'title': opp.get('opportunityTitle'),
-                        'funder': 'HHS - ' + opp.get('agencyName', 'Unknown'),
-                        'description': opp.get('description', ''),
-                        'deadline': opp.get('closeDate'),
-                        'source_name': 'HHS Grants',
-                        'source_url': f"https://www.grants.gov/web/grants/view-opportunity.html?oppId={opp.get('opportunityId')}"
-                    })
+            # Use Grants.gov client which handles POST correctly
+            from app.services.grants_gov_client import GrantsGovClient
+            client = GrantsGovClient()
+            payload = {"agencyCode": "HHS", "limit": limit}
+            all_grants = client.search_opportunities(payload)
+            
+            # Add HHS branding
+            for grant in all_grants:
+                grant['source_name'] = 'HHS Grants'
+                if not grant.get('funder', '').startswith('HHS'):
+                    grant['funder'] = 'HHS - ' + grant.get('funder', 'Health & Human Services')
+            
+            grants = all_grants
+            logger.info(f"HHS fetch: {len(grants)} grants")
         except Exception as e:
             logger.error(f"HHS API error: {e}")
 
@@ -48,24 +42,20 @@ class EducationGrantsClient:
     def fetch_grants(self, limit: int = 30) -> List[Dict]:
         grants = []
         try:
-            params = {
-                'oppStatus': 'forecasted|posted',
-                'agencyCode': 'ED',
-                'rows': limit
-            }
-
-            response = requests.get(self.BASE_URL, params=params, timeout=20)
-            if response.status_code == 200:
-                data = response.json()
-                for opp in data.get('opportunitiesList', []):
-                    grants.append({
-                        'title': opp.get('opportunityTitle'),
-                        'funder': 'Dept of Education - ' + opp.get('agencyName', ''),
-                        'description': opp.get('description', ''),
-                        'deadline': opp.get('closeDate'),
-                        'source_name': 'Education Grants',
-                        'source_url': f"https://www.grants.gov/web/grants/view-opportunity.html?oppId={opp.get('opportunityId')}"
-                    })
+            # Use Grants.gov client which handles POST correctly
+            from app.services.grants_gov_client import GrantsGovClient
+            client = GrantsGovClient()
+            payload = {"agencyCode": "ED", "limit": limit}
+            all_grants = client.search_opportunities(payload)
+            
+            # Add Education branding
+            for grant in all_grants:
+                grant['source_name'] = 'Education Grants'
+                if not grant.get('funder', '').startswith('Dept of Education'):
+                    grant['funder'] = 'Dept of Education - ' + grant.get('funder', 'Department of Education')
+            
+            grants = all_grants
+            logger.info(f"Education fetch: {len(grants)} grants")
         except Exception as e:
             logger.error(f"Education API error: {e}")
 
