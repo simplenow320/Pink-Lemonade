@@ -150,31 +150,3 @@ def generate_comprehensive_grant_analysis(grant_data, org_data):
             "message": "Please try again later or review grant details manually"
         }
 
-@bp.route('/api/grants/<int:grant_id>', methods=['GET'])
-def get_grant_detail(grant_id):
-    """Get detailed information about a specific grant"""
-    try:
-        grant = Grant.query.get(grant_id)
-        if not grant:
-            return jsonify({'error': 'Grant not found'}), 404
-        
-        return jsonify({
-            'success': True,
-            'grant': {
-                'id': grant.id,
-                'title': grant.title,
-                'funder': grant.funder,
-                'deadline': grant.deadline.isoformat() if grant.deadline else None,
-                'amount_min': grant.amount_min,
-                'amount_max': grant.amount_max,
-                'description': grant.ai_summary or grant.eligibility or '',
-                'link': grant.link,
-                'source': grant.source_name,
-                'status': grant.status,
-                'geography': grant.geography,
-                'created_at': grant.created_at.isoformat() if grant.created_at else None
-            }
-        })
-    except Exception as e:
-        logger.error(f"Error fetching grant {grant_id}: {e}")
-        return jsonify({'error': str(e)}), 500
