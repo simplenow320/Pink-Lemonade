@@ -16,6 +16,8 @@ from app.services.usaspending_client import USAspendingClient
 from app.services.candid_client import GrantsClient
 from app.services.geoname_mapping import get_geoname_id, STATE_GEONAME_IDS
 from app.services.ai_service import AIService
+from app.services.data_enrichment import DataEnrichmentService
+from app.services.federal_agencies_client import HHSGrantsClient, EducationGrantsClient, NSFGrantsClient
 
 logger = logging.getLogger(__name__)
 
@@ -72,6 +74,28 @@ class GrantFetcher:
             except Exception as e:
                 logger.error(f"Candid fetch failed: {e}")
                 self.stats['errors'] += 1
+        
+        # Fetch from Federal Agencies (HHS, Education, NSF)
+        try:
+            hhs_client = HHSGrantsClient()
+            hhs_grants = hhs_client.fetch_grants(limit=20)
+            grants.extend(hhs_grants)
+            self.stats['hhs'] = len(hhs_grants)
+            
+            ed_client = EducationGrantsClient()
+            ed_grants = ed_client.fetch_grants(limit=20)
+            grants.extend(ed_grants)
+            self.stats['education'] = len(ed_grants)
+            
+            nsf_client = NSFGrantsClient()
+            nsf_grants = nsf_client.fetch_grants(limit=20)
+            grants.extend(nsf_grants)
+            self.stats['nsf'] = len(nsf_grants)
+            
+            logger.info(f"Federal agencies: HHS={len(hhs_grants)}, ED={len(ed_grants)}, NSF={len(nsf_grants)}")
+        except Exception as e:
+            logger.error(f"Federal agencies fetch failed: {e}")
+            self.stats['errors'] += 1
         
         self.stats['total_fetched'] = len(grants)
         
@@ -410,44 +434,58 @@ class GrantFetcher:
         return None
     
     def store_grants(self, grants: List[Dict]) -> int:
-        """Store grants in database"""
+        """Store grants in database with data enrichment"""
         stored = 0
+        enrichment_service = DataEnrichmentService()
         
         for grant_data in grants:
             try:
+                # Enrich grant data before storing
+                grant_data = enrichment_service.enrich_grant(grant_data)
+                
                 # Check if grant already exists
                 existing = db.session.query(Grant).filter_by(
                     title=grant_data['title'],
                     funder=grant_data['funder_name']
                 ).first()
                 
-                if not existing:
-                    amount = grant_data.get('amount')
-                    deadline_str = grant_data.get('deadline')
-                    
-                    # Create grant object
-                    grant = Grant()
-                    grant.title = grant_data['title']
-                    grant.funder = grant_data['funder_name']
-                    grant.amount_min = amount if amount else None
-                    grant.amount_max = amount if amount else None
-                    grant.deadline = self.parse_flexible_date(deadline_str)
-                    grant.source_name = grant_data.get('source_name')
-                    grant.source_url = grant_data.get('source_url')
-                    grant.eligibility = grant_data.get('eligibility')
-                    grant.geography = grant_data.get('geography', 'National')
-                    grant.status = 'active'
-                    grant.created_at = datetime.utcnow()
-                    
-                    db.session.add(grant)
-                    stored += 1
+                if existing:
+                    # Update quality score if better
+                    if grant_data.get('quality_score', 0) > (existing.quality_score or 0):
+                        existing.quality_score = grant_data['quality_score']
+                        existing.contact_email = grant_data.get('contact_email') or existing.contact_email
+                        existing.contact_phone = grant_data.get('contact_phone') or existing.contact_phone
+                    continue
+                
+                # Create new grant object
+                amount = grant_data.get('amount')
+                deadline_str = grant_data.get('deadline')
+                
+                grant = Grant()
+                grant.title = grant_data['title']
+                grant.funder = grant_data['funder_name']
+                grant.amount_min = amount if amount else None
+                grant.amount_max = amount if amount else None
+                grant.deadline = self.parse_flexible_date(deadline_str)
+                grant.source_name = grant_data.get('source_name')
+                grant.source_url = grant_data.get('source_url')
+                grant.eligibility = grant_data.get('eligibility')
+                grant.geography = grant_data.get('geography', 'National')
+                grant.status = 'active'
+                grant.quality_score = grant_data.get('quality_score', 0)
+                grant.contact_email = grant_data.get('contact_email')
+                grant.contact_phone = grant_data.get('contact_phone')
+                grant.created_at = datetime.utcnow()
+                
+                db.session.add(grant)
+                stored += 1
             except Exception as e:
                 logger.error(f"Error storing grant: {e}")
                 db.session.rollback()
         
         try:
             db.session.commit()
-            logger.info(f"Stored {stored} new grants in database")
+            logger.info(f"Stored {stored} new grants with enrichment (avg quality: {sum([g.get('quality_score', 0) for g in grants]) / len(grants) if grants else 0:.1f})")
         except Exception as e:
             logger.error(f"Error committing grants: {e}")
             db.session.rollback()

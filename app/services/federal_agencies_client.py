@@ -90,7 +90,8 @@ class NSFGrantsClient:
             # For now, use Grants.gov with NSF filter
             from app.services.grants_gov_client import GrantsGovClient
             client = GrantsGovClient()
-            all_grants = client.search_grants(keywords="NSF National Science", limit=limit)
+            payload = {"keywords": "NSF National Science", "limit": limit}
+            all_grants = client.search_opportunities(payload)
             grants = [g for g in all_grants if 'NSF' in g.get('funder', '')]
 
         except Exception as e:

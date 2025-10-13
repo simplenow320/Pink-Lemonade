@@ -594,6 +594,9 @@ class Grant(db.Model):
     grant_amount = db.Column(db.Integer)
     submission_deadline = db.Column(db.DateTime)
     
+    # Data Quality
+    quality_score = db.Column(db.Integer, default=0)  # Data quality 0-100
+    
     def to_dict(self):
         return {
             'id': self.id,
