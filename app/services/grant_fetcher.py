@@ -528,19 +528,20 @@ class GrantFetcher:
         
         api_url = "https://api.sam.gov/opportunities/v2/search"
         
-        # Calculate date range (last 30 days)
+        # Calculate date range (last 30 days to today) - SAM.gov requires BOTH dates in MM/DD/YYYY format
         posted_from = (datetime.now() - timedelta(days=30)).strftime('%m/%d/%Y')
+        posted_to = datetime.now().strftime('%m/%d/%Y')
         
         params = {
-            'limit': min(limit, 100),
-            'offset': 0,
+            'api_key': api_key,
             'postedFrom': posted_from,
-            'opportunityStatus': 'active',
-            'ptype': 'g'  # Filter for grants
+            'postedTo': posted_to,
+            'ptype': 'o,p,k',  # Solicitation, Presolicitation, Combined Synopsis/Solicitation
+            'limit': min(limit, 100),
+            'offset': 0
         }
         
         headers = {
-            'X-Api-Key': api_key,
             'Content-Type': 'application/json'
         }
         
