@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import GrantNotFound from '../components/GrantNotFound';
 
 const GrantDetail = () => {
   const { id } = useParams();
@@ -12,6 +13,7 @@ const GrantDetail = () => {
   const [analyzing, setAnalyzing] = useState(false);
   const [loadingTools, setLoadingTools] = useState(false);
   const [error, setError] = useState(null);
+  const [notFound, setNotFound] = useState(false);
 
   useEffect(() => {
     fetchGrantDetails();
@@ -21,14 +23,34 @@ const GrantDetail = () => {
   const fetchGrantDetails = async () => {
     try {
       setLoading(true);
-      const response = await axios.get(`/api/grants/${id}`);
-      setGrant(response.data.grant);
+      setError(null);
+      setNotFound(false);
       
-      // Automatically fetch analysis
-      fetchAnalysis();
+      // Validate grant ID is a number
+      if (isNaN(id) || id <= 0) {
+        setNotFound(true);
+        setLoading(false);
+        return;
+      }
+
+      const response = await axios.get(`/api/grants/${id}`);
+      
+      if (response.data.success) {
+        setGrant(response.data.grant);
+        // Automatically fetch analysis
+        fetchAnalysis();
+      } else {
+        setNotFound(true);
+      }
     } catch (err) {
-      setError('Failed to load grant details');
       console.error('Error fetching grant:', err);
+      
+      // Handle 404 specifically
+      if (err.response?.status === 404) {
+        setNotFound(true);
+      } else {
+        setError(err.response?.data?.message || 'Failed to load grant details');
+      }
     } finally {
       setLoading(false);
     }
@@ -97,6 +119,11 @@ const GrantDetail = () => {
     return 'text-red-600';
   };
 
+  // Show not found component
+  if (notFound) {
+    return <GrantNotFound />;
+  }
+
   if (loading) {
     return (
       <div className="p-6">
@@ -110,19 +137,28 @@ const GrantDetail = () => {
     );
   }
 
-  if (error || !grant) {
+  if (error) {
     return (
       <div className="p-6">
         <div className="bg-white shadow rounded-lg p-8">
           <div className="text-center">
-            <p className="text-red-600 mb-4">{error || 'Grant not found'}</p>
-            <Link to="/grants" className="text-pink-600 hover:text-pink-700">
+            <div className="mb-4">
+              <svg className="mx-auto h-12 w-12 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+              </svg>
+            </div>
+            <p className="text-red-600 mb-4">{error}</p>
+            <Link to="/grants" className="text-pink-600 hover:text-pink-700 font-semibold">
               ← Back to Grants
             </Link>
           </div>
         </div>
       </div>
     );
+  }
+
+  if (!grant) {
+    return <GrantNotFound />;
   }
 
   return (
