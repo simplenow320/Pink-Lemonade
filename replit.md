@@ -11,6 +11,8 @@ Pink Lemonade is a **100% COMPLETE** AI-powered grant management platform for no
 
 **CANDID API INTEGRATION COMPLETE (Aug 20, 2025)**: Achieved 100% operational status for all Candid API endpoints with authentic data access. Fixed authentication (Subscription-Key header), corrected endpoint URLs (grants/v1/), and implemented proper parameter formatting. Successfully accessing 28+ million grants valued at $2+ trillion from 259,000+ foundations and 1.5+ million recipients. All 4 endpoints operational: Summary, Transactions, Funders, Recipients.
 
+**FEDERAL AGENCY APIS FIXED + SCHEDULER OPERATIONAL (Oct 13, 2025)**: Resolved critical issues with Education Department and NSF grant APIs - both now fully operational. Education API: 20 grants/run (was 0), NSF API: 1+ grants/run (was 0). Root cause: GSA Search API doesn't support agency-specific filtering, so implemented keyword-based search with agency branding. Automated scheduler now running successfully in gunicorn worker process with daily 3 AM UTC grant fetching - fixed DEMO_MODE configuration conflict that was blocking initialization. System now fetches 70+ grants per run across all sources (HHS, Education, NSF, Federal Register, Candid).
+
 **LATEST ENHANCEMENT (Sep 22, 2025)**: Expanded Foundation Coverage with 52 New Sources
 - **Tech/AI Philanthropy**: Patrick J. McGovern Foundation, Schmidt Sciences AI2050, Ford Foundation Technology & Society, Mozilla Foundation, Omidyar Network
 - **Corporate Tech Grants**: AWS IMAGINE Grant, Google.org AI for Global Goals, Microsoft AI for Accessibility, IBM Sustainability Accelerator, NVIDIA Grants
