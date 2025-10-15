@@ -49,6 +49,15 @@ const ThankYouLetter = () => {
           if (grantData.grant.funder) {
             setDonorName(grantData.grant.funder);
           }
+          // Pre-fill amount if available
+          if (grantData.grant.amount_max || grantData.grant.amount_min) {
+            const amount = grantData.grant.amount_max || grantData.grant.amount_min;
+            setDonationAmount(`$${amount.toLocaleString()}`);
+          }
+          // Pre-fill purpose based on grant title
+          if (grantData.grant.title && !donationPurpose) {
+            setDonationPurpose(`Support through ${grantData.grant.title}`);
+          }
         } catch (error) {
           console.error('Error fetching grant details:', error);
           setGrantError('Failed to load grant details');
@@ -60,6 +69,41 @@ const ThankYouLetter = () => {
       fetchGrantDetails();
     }
   }, [grantId]);
+
+  // Auto-populate fields from organization data
+  useEffect(() => {
+    if (organization && !grantId) {
+      // Auto-fill donation purpose based on focus areas and mission
+      if (!donationPurpose) {
+        if (organization.primary_focus_areas?.length > 0) {
+          const focusAreasText = organization.primary_focus_areas.slice(0, 2).join(' and ').toLowerCase();
+          setDonationPurpose(`Supporting our ${focusAreasText} programs`);
+        } else if (organization.mission) {
+          setDonationPurpose(`Supporting our mission: ${organization.mission.substring(0, 100)}...`);
+        }
+      }
+      
+      // Pre-set common donation amounts based on budget
+      if (!donationAmount && organization.annual_budget_range) {
+        const budgetRange = organization.annual_budget_range;
+        if (budgetRange.includes('-')) {
+          const amounts = budgetRange.match(/\d+/g);
+          if (amounts && amounts.length >= 2) {
+            // Suggest 0.5% of midpoint as a typical major gift
+            const midpoint = (parseInt(amounts[0]) + parseInt(amounts[1])) / 2;
+            const suggestedAmount = Math.round(midpoint * 0.005 / 100) * 100; // Round to nearest 100
+            setDonationAmount(`$${suggestedAmount.toLocaleString()}`);
+          }
+        }
+      }
+      
+      // Auto-add context about impact if we have beneficiary data
+      if (!donorName && organization.people_served_annually) {
+        // Just a placeholder to show impact context is available
+        // The actual donor name would be filled by the user
+      }
+    }
+  }, [organization, grantId]);
 
   const generateThankYouLetter = async () => {
     setLoading(true);

@@ -68,12 +68,69 @@ const CaseSupport = () => {
 
   // Auto-populate fields from organization data
   useEffect(() => {
-    if (organization && !campaignPurpose && !grantId) {
-      if (organization.mission) {
+    if (organization && !grantId) {
+      // Auto-fill campaign purpose from mission if not already set
+      if (!campaignPurpose && organization.mission) {
         setCampaignPurpose(`Support our mission: ${organization.mission}`);
       }
+      
+      // Auto-fill campaign goal based on annual budget range if not already set
+      if (!campaignGoal && organization.annual_budget_range) {
+        // Extract amount from budget range string (e.g., "$100,000-$500,000" -> "250000")
+        const budgetRange = organization.annual_budget_range;
+        if (budgetRange.includes('-')) {
+          const amounts = budgetRange.match(/\d+/g);
+          if (amounts && amounts.length >= 2) {
+            // Use 20% of the midpoint as a reasonable campaign goal
+            const midpoint = (parseInt(amounts[0]) + parseInt(amounts[1])) / 2;
+            setCampaignGoal(Math.round(midpoint * 0.2).toString());
+          }
+        } else if (budgetRange.includes('Over')) {
+          const amount = budgetRange.match(/\d+/g)?.[0];
+          if (amount) {
+            // Use 10% of the minimum for "Over" ranges
+            setCampaignGoal(Math.round(parseInt(amount) * 0.1).toString());
+          }
+        } else if (budgetRange.includes('Under')) {
+          const amount = budgetRange.match(/\d+/g)?.[0];
+          if (amount) {
+            // Use 20% of the maximum for "Under" ranges
+            setCampaignGoal(Math.round(parseInt(amount) * 0.2).toString());
+          }
+        }
+      }
+      
+      // Auto-fill target donors based on demographics and focus areas
+      if (!targetDonors || targetDonors === 'foundations and individual donors') {
+        const donors = [];
+        
+        // Add foundation focus if they have established programs
+        if (organization.primary_focus_areas?.length > 0) {
+          const focusAreasText = organization.primary_focus_areas.slice(0, 2).join(' and ').toLowerCase();
+          donors.push(`foundations focused on ${focusAreasText}`);
+        }
+        
+        // Add demographic-specific funders if applicable
+        if (organization.target_demographics?.length > 0) {
+          const demographics = organization.target_demographics.slice(0, 2).join(' and ').toLowerCase();
+          donors.push(`funders supporting ${demographics} communities`);
+        }
+        
+        // Add geographic funders
+        if (organization.primary_city && organization.primary_state) {
+          donors.push(`local ${organization.primary_city}, ${organization.primary_state} philanthropists`);
+        }
+        
+        // Always include individual donors
+        donors.push('individual major donors');
+        
+        if (donors.length > 1) {
+          // Only update if we have more than just "individual major donors"
+          setTargetDonors(donors.join(', '));
+        }
+      }
     }
-  }, [organization, campaignPurpose, grantId]);
+  }, [organization, grantId]);
 
   const generateCaseSupport = async () => {
     setLoading(true);

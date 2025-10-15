@@ -96,6 +96,51 @@ const SocialMedia = () => {
     }
   }, [grantId]);
 
+  // Auto-populate fields from organization data
+  useEffect(() => {
+    if (organization && !grantId && !topic) {
+      // Build a default topic from organization data
+      let defaultTopic = '';
+      
+      // Use organization mission as base description
+      if (organization.mission) {
+        defaultTopic = `${organization.mission}`;
+      }
+      
+      // Add hashtags from focus areas
+      if (organization.primary_focus_areas?.length > 0) {
+        const hashtags = organization.primary_focus_areas
+          .slice(0, 3)
+          .map(area => `#${area.replace(/\s+/g, '').replace(/&/g, 'And').replace(/'/g, '')}`)
+          .join(' ');
+        defaultTopic = defaultTopic ? `${defaultTopic}\n\n${hashtags}` : hashtags;
+      }
+      
+      // Add location tags from service area
+      if (organization.primary_city && organization.primary_state) {
+        const locationTags = `#${organization.primary_city.replace(/\s+/g, '')} #${organization.primary_state.replace(/\s+/g, '')}`;
+        defaultTopic = defaultTopic ? `${defaultTopic} ${locationTags}` : locationTags;
+      }
+      
+      // Add service area type hashtag
+      if (organization.service_area_type) {
+        const serviceTag = organization.service_area_type === 'local' ? '#LocalImpact' :
+                           organization.service_area_type === 'regional' ? '#RegionalImpact' :
+                           organization.service_area_type === 'statewide' ? '#StatewideImpact' :
+                           organization.service_area_type === 'national' ? '#NationalImpact' :
+                           organization.service_area_type === 'international' ? '#GlobalImpact' : '';
+        if (serviceTag) {
+          defaultTopic = defaultTopic ? `${defaultTopic} ${serviceTag}` : serviceTag;
+        }
+      }
+      
+      // Add nonprofit hashtags
+      defaultTopic = defaultTopic ? `${defaultTopic} #NonProfit #CommunityImpact` : '#NonProfit #CommunityImpact';
+      
+      setTopic(defaultTopic);
+    }
+  }, [organization, grantId]);
+
   const generateSocialPost = async () => {
     setLoading(true);
     setError('');
