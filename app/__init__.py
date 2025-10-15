@@ -167,6 +167,7 @@ def create_app():
     from app.api.writing import bp as writing_bp
     from app.api.exports import bp as exports_bp
     from app.api.profile import bp as profile_bp
+    from app.api.profile_api import bp as profile_docs_bp  # <-- rename the file/module
     from app.api.simple_org import bp as simple_org_bp
     from app.api.user_settings import bp as user_settings_bp
     from app.api.grants import bp as grants_bp
@@ -194,6 +195,7 @@ def create_app():
     flask_app.register_blueprint(writing_bp, url_prefix='/api/writing')
     flask_app.register_blueprint(exports_bp, url_prefix='/api/exports')
     flask_app.register_blueprint(profile_bp)
+    flask_app.register_blueprint(profile_docs_bp)
     flask_app.register_blueprint(simple_org_bp)
     flask_app.register_blueprint(user_settings_bp)
     flask_app.register_blueprint(grants_bp, url_prefix='/api/grants')
