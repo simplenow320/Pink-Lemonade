@@ -1,0 +1,493 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pink Lemonade Smart Tools - Data Flow Architecture</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: linear-gradient(to br, #fce4ec, #ffffff);
+        }
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #e91e63;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .flow-section {
+            margin-bottom: 40px;
+        }
+        h2 {
+            color: #ad1457;
+            border-bottom: 2px solid #f8bbd0;
+            padding-bottom: 10px;
+        }
+        .flow-diagram {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin: 20px 0;
+            flex-wrap: wrap;
+        }
+        .flow-column {
+            flex: 1;
+            min-width: 200px;
+            margin: 10px;
+        }
+        .box {
+            background: #f8bbd0;
+            border-radius: 10px;
+            padding: 15px;
+            margin: 10px 0;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+        }
+        .box-title {
+            font-weight: bold;
+            color: #880e4f;
+            margin-bottom: 8px;
+        }
+        .box-content {
+            font-size: 14px;
+            color: #4a4a4a;
+        }
+        .arrow {
+            text-align: center;
+            font-size: 24px;
+            color: #e91e63;
+            margin: 10px 0;
+        }
+        .tool-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin: 20px 0;
+        }
+        .tool-card {
+            background: white;
+            border: 2px solid #f8bbd0;
+            border-radius: 10px;
+            padding: 20px;
+            transition: transform 0.3s;
+        }
+        .tool-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 5px 20px rgba(233,30,99,0.2);
+        }
+        .tool-icon {
+            font-size: 32px;
+            margin-bottom: 10px;
+        }
+        .tool-name {
+            font-size: 18px;
+            font-weight: bold;
+            color: #ad1457;
+            margin-bottom: 10px;
+        }
+        .tool-flow {
+            background: #fce4ec;
+            border-radius: 5px;
+            padding: 10px;
+            margin: 10px 0;
+            font-size: 13px;
+        }
+        .status {
+            display: inline-block;
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+        .status.operational {
+            background: #c8e6c9;
+            color: #2e7d32;
+        }
+        .data-flow {
+            display: flex;
+            align-items: center;
+            justify-content: space-around;
+            background: #fce4ec;
+            border-radius: 10px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        .data-node {
+            text-align: center;
+            padding: 10px;
+        }
+        .data-node-title {
+            font-weight: bold;
+            color: #880e4f;
+            margin-bottom: 5px;
+        }
+        ul {
+            text-align: left;
+            margin: 10px 0;
+            padding-left: 20px;
+        }
+        li {
+            margin: 5px 0;
+            color: #4a4a4a;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🌸 Pink Lemonade Smart Tools - Complete Data Flow Architecture</h1>
+        
+        <div class="flow-section">
+            <h2>System Overview: How Data Flows Through Smart Tools</h2>
+            <div class="data-flow">
+                <div class="data-node">
+                    <div class="data-node-title">📊 Data Sources</div>
+                    <ul>
+                        <li>Organization Profile (51 fields)</li>
+                        <li>Grant Database</li>
+                        <li>Impact Intake Data</li>
+                        <li>Analytics Metrics</li>
+                    </ul>
+                </div>
+                <div class="arrow">→</div>
+                <div class="data-node">
+                    <div class="data-node-title">🔧 Processing</div>
+                    <ul>
+                        <li>useOrganization Hook</li>
+                        <li>Auto-fill Fields</li>
+                        <li>API Authentication</li>
+                        <li>Context Building</li>
+                    </ul>
+                </div>
+                <div class="arrow">→</div>
+                <div class="data-node">
+                    <div class="data-node-title">🤖 AI Generation</div>
+                    <ul>
+                        <li>GPT-3.5 (Simple)</li>
+                        <li>GPT-4 (Complex)</li>
+                        <li>REACTO Prompts</li>
+                        <li>Context-Aware</li>
+                    </ul>
+                </div>
+                <div class="arrow">→</div>
+                <div class="data-node">
+                    <div class="data-node-title">📄 Output</div>
+                    <ul>
+                        <li>Generated Content</li>
+                        <li>Templates</li>
+                        <li>Downloads</li>
+                        <li>Saved to Database</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <div class="flow-section">
+            <h2>All 7 Smart Tools - Individual Data Flows</h2>
+            <div class="tool-grid">
+                <!-- Tool 1: Grant Pitch -->
+                <div class="tool-card">
+                    <div class="tool-icon">🎯</div>
+                    <div class="tool-name">1. Grant Pitch Generator</div>
+                    <span class="status operational">✓ Operational</span>
+                    <div class="tool-flow">
+                        <strong>Auto-fills from Profile:</strong><br>
+                        • Alignment ← mission<br>
+                        • Funding Need ← focus_areas<br><br>
+                        <strong>User Inputs:</strong><br>
+                        • Pitch type (elevator/executive/detailed)<br>
+                        • Funder name<br>
+                        • Funding amount<br><br>
+                        <strong>AI Generates:</strong><br>
+                        • 30-second elevator pitch<br>
+                        • 2-3 paragraph executive pitch<br>
+                        • Full detailed pitch<br><br>
+                        <strong>API:</strong> /api/smart-tools/pitch/generate
+                    </div>
+                </div>
+
+                <!-- Tool 2: Case Support -->
+                <div class="tool-card">
+                    <div class="tool-icon">📋</div>
+                    <div class="tool-name">2. Case for Support Builder</div>
+                    <span class="status operational">✓ Operational</span>
+                    <div class="tool-flow">
+                        <strong>Auto-fills from Profile:</strong><br>
+                        • Campaign Purpose ← mission<br>
+                        • Goal ← 20% of budget midpoint<br>
+                        • Target Donors ← focus_areas + location<br><br>
+                        <strong>User Inputs:</strong><br>
+                        • Campaign details<br>
+                        • Timeline<br>
+                        • Specific goals<br><br>
+                        <strong>AI Generates:</strong><br>
+                        • Need statement<br>
+                        • Solution approach<br>
+                        • Impact projection<br>
+                        • Call to action<br><br>
+                        <strong>API:</strong> /api/smart-tools/case/generate
+                    </div>
+                </div>
+
+                <!-- Tool 3: Impact Report -->
+                <div class="tool-card">
+                    <div class="tool-icon">📊</div>
+                    <div class="tool-name">3. Impact Report Creator</div>
+                    <span class="status operational">✓ Operational</span>
+                    <div class="tool-flow">
+                        <strong>Auto-fills from Profile:</strong><br>
+                        • Beneficiaries ← demographics_served<br>
+                        • Programs ← focus_areas<br><br>
+                        <strong>Pulls from Database:</strong><br>
+                        • Participant stories<br>
+                        • Grant outcomes<br>
+                        • Performance metrics<br><br>
+                        <strong>AI Generates:</strong><br>
+                        • Executive summary<br>
+                        • Program outcomes<br>
+                        • Testimonials<br>
+                        • QR code for feedback<br><br>
+                        <strong>API:</strong> /api/smart-tools/impact/generate
+                    </div>
+                </div>
+
+                <!-- Tool 4: Thank You Letter -->
+                <div class="tool-card">
+                    <div class="tool-icon">💝</div>
+                    <div class="tool-name">4. Thank You Letter Writer</div>
+                    <span class="status operational">✓ Operational</span>
+                    <div class="tool-flow">
+                        <strong>Auto-fills from Profile:</strong><br>
+                        • Purpose ← primary_focus_areas<br>
+                        • Amount ← 0.5% of budget<br><br>
+                        <strong>User Inputs:</strong><br>
+                        • Donor name<br>
+                        • Donation details<br>
+                        • Personal notes<br><br>
+                        <strong>AI Generates:</strong><br>
+                        • Personalized greeting<br>
+                        • Impact acknowledgment<br>
+                        • Specific use of funds<br>
+                        • Future vision<br><br>
+                        <strong>API:</strong> /api/smart-tools/thank-you/generate
+                    </div>
+                </div>
+
+                <!-- Tool 5: Social Media -->
+                <div class="tool-card">
+                    <div class="tool-icon">📱</div>
+                    <div class="tool-name">5. Social Media Creator</div>
+                    <span class="status operational">✓ Operational</span>
+                    <div class="tool-flow">
+                        <strong>Auto-fills from Profile:</strong><br>
+                        • Topic ← mission<br>
+                        • Hashtags ← #focus_areas #location<br>
+                        • Location tags ← city, state<br><br>
+                        <strong>User Selects:</strong><br>
+                        • Platform (Twitter/FB/IG/LinkedIn)<br>
+                        • Content topic<br><br>
+                        <strong>AI Generates:</strong><br>
+                        • Platform-optimized post<br>
+                        • Character count<br>
+                        • Best posting time<br>
+                        • Engagement tips<br><br>
+                        <strong>API:</strong> /api/smart-tools/social/generate
+                    </div>
+                </div>
+
+                <!-- Tool 6: Newsletter -->
+                <div class="tool-card">
+                    <div class="tool-icon">📰</div>
+                    <div class="tool-name">6. Newsletter Generator</div>
+                    <span class="status operational">✓ Operational</span>
+                    <div class="tool-flow">
+                        <strong>Auto-fills from Profile:</strong><br>
+                        • Theme ← recent activities<br>
+                        • Focus ← primary_focus_areas<br><br>
+                        <strong>Pulls from Database:</strong><br>
+                        • Recent grants<br>
+                        • Impact stories<br>
+                        • Upcoming events<br><br>
+                        <strong>AI Generates:</strong><br>
+                        • Executive message<br>
+                        • Program updates<br>
+                        • Success stories<br>
+                        • Call to action<br><br>
+                        <strong>API:</strong> /api/smart-tools/newsletter/generate
+                    </div>
+                </div>
+
+                <!-- Tool 7: Grant Application -->
+                <div class="tool-card">
+                    <div class="tool-icon">📝</div>
+                    <div class="tool-name">7. Grant Application Builder</div>
+                    <span class="status operational">✓ Operational</span>
+                    <div class="tool-flow">
+                        <strong>Auto-fills Completely:</strong><br>
+                        • Organization Background section<br>
+                        • All 51 profile fields utilized<br><br>
+                        <strong>User Can Generate:</strong><br>
+                        • Individual sections<br>
+                        • All 9 sections at once<br><br>
+                        <strong>AI Creates 9 Sections:</strong><br>
+                        1. Executive Summary<br>
+                        2. Organization Background<br>
+                        3. Need Statement<br>
+                        4. Project Description<br>
+                        5. Goals & Objectives<br>
+                        6. Evaluation Plan<br>
+                        7. Budget Narrative<br>
+                        8. Sustainability Plan<br>
+                        9. Appendix<br><br>
+                        <strong>API:</strong> /api/smart-tools/application/generate
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="flow-section">
+            <h2>Technical Architecture</h2>
+            <div class="flow-diagram">
+                <div class="flow-column">
+                    <div class="box">
+                        <div class="box-title">Frontend Components</div>
+                        <div class="box-content">
+                            • React Pages (7 tools)<br>
+                            • useOrganization Hook<br>
+                            • Auto-fill Logic<br>
+                            • Template Modals<br>
+                            • Download Functions
+                        </div>
+                    </div>
+                </div>
+                <div class="flow-column">
+                    <div class="box">
+                        <div class="box-title">API Layer</div>
+                        <div class="box-content">
+                            • Flask Blueprint<br>
+                            • @login_required decorator<br>
+                            • Organization resolution<br>
+                            • Request validation<br>
+                            • Response formatting
+                        </div>
+                    </div>
+                </div>
+                <div class="flow-column">
+                    <div class="box">
+                        <div class="box-title">Service Layer</div>
+                        <div class="box-content">
+                            • SmartToolsService class<br>
+                            • _build_comprehensive_org_context<br>
+                            • Tool-specific methods<br>
+                            • Database queries<br>
+                            • AI prompt generation
+                        </div>
+                    </div>
+                </div>
+                <div class="flow-column">
+                    <div class="box">
+                        <div class="box-title">AI Integration</div>
+                        <div class="box-content">
+                            • OpenAI API<br>
+                            • REACTO prompt framework<br>
+                            • GPT-3.5 for simple tasks<br>
+                            • GPT-4 for complex content<br>
+                            • Cost optimization
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="flow-section">
+            <h2>Data Sources Used by Smart Tools</h2>
+            <div class="flow-diagram">
+                <div class="flow-column">
+                    <div class="box">
+                        <div class="box-title">Organization Profile (51 Fields)</div>
+                        <div class="box-content">
+                            <strong>Required (7):</strong><br>
+                            • name<br>
+                            • mission<br>
+                            • org_type<br>
+                            • primary_focus_areas<br>
+                            • service_area_type<br>
+                            • annual_budget_range<br>
+                            • staff_size<br><br>
+                            <strong>Optional (44):</strong><br>
+                            • description<br>
+                            • history<br>
+                            • programs_description<br>
+                            • demographics_served<br>
+                            • primary_city/state<br>
+                            • And 39 more...
+                        </div>
+                    </div>
+                </div>
+                <div class="flow-column">
+                    <div class="box">
+                        <div class="box-title">Grant Database</div>
+                        <div class="box-content">
+                            • Historical applications<br>
+                            • Awarded grants<br>
+                            • Funder relationships<br>
+                            • Success rates<br>
+                            • Funding amounts<br>
+                            • Grant statuses<br>
+                            • Deadlines
+                        </div>
+                    </div>
+                </div>
+                <div class="flow-column">
+                    <div class="box">
+                        <div class="box-title">Impact Intake</div>
+                        <div class="box-content">
+                            • Participant stories<br>
+                            • Testimonials<br>
+                            • Program outcomes<br>
+                            • Demographics data<br>
+                            • Success metrics<br>
+                            • Feedback responses
+                        </div>
+                    </div>
+                </div>
+                <div class="flow-column">
+                    <div class="box">
+                        <div class="box-title">Analytics</div>
+                        <div class="box-content">
+                            • Performance metrics<br>
+                            • Success rates<br>
+                            • Total funding<br>
+                            • Program effectiveness<br>
+                            • Monthly trends<br>
+                            • Comparative analysis
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="flow-section">
+            <h2>System Status</h2>
+            <div style="text-align: center; padding: 20px; background: #c8e6c9; border-radius: 10px; margin: 20px 0;">
+                <h3 style="color: #2e7d32;">✅ All 7 Smart Tools are 100% Operational</h3>
+                <p style="color: #1b5e20;">
+                    • All API endpoints responding correctly<br>
+                    • Authentication system working<br>
+                    • Organization data flowing properly<br>
+                    • AI generation functional<br>
+                    • Auto-filling implemented across all tools<br>
+                    • Templates and downloads working
+                </p>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

@@ -693,6 +693,15 @@ def get_available_tools():
                 'icon': '📧',
                 'categories': ['communication', 'stewardship'],
                 'time_to_generate': '15-25 seconds'
+            },
+            {
+                'id': 'grant_application',
+                'name': 'Grant Application Builder',
+                'description': 'Build complete grant applications with 9 sections',
+                'endpoint': '/api/smart-tools/application/generate',
+                'icon': '📝',
+                'categories': ['fundraising', 'applications'],
+                'time_to_generate': '20-30 seconds per section'
             }
         ]
         
