@@ -422,17 +422,19 @@
         }
 
         async function loadUserProfile() {
+            console.log('Loading user profile...')
             try {
-                const response = await fetch('/api/profile/user');
+                const response = await fetch('/api/profile/get');
                 if (response.ok) {
                     const data = await response.json();
-                    document.getElementById('first_name').value = data.first_name || '';
-                    document.getElementById('last_name').value = data.last_name || '';
-                    document.getElementById('email').value = data.email || '';
-                    document.getElementById('phone').value = data.phone || '';
-                    document.getElementById('title').value = data.title || '';
+                    document.getElementById('first_name').value = data.profile.first_name || '';
+                    document.getElementById('last_name').value = data.profile.last_name || '';
+                    document.getElementById('email').value = data.profile.email || '';
+                    document.getElementById('phone').value = data.profile.phone || '';
+                    document.getElementById('title').value = data.profile.title || '';
                 }
             } catch (error) {
+                console.log('Loading user profile...', error)
                 // Error logged: 'Error loading user profile:', error
             }
         }
@@ -466,7 +468,7 @@
             };
 
             try {
-                const response = await fetch('/api/profile/user', {
+                const response = await fetch('/api/profile/update', {
                     method: 'POST',
                     headers: {'Content-Type': 'application/json'},
                     body: JSON.stringify(userData)
