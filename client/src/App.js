@@ -34,6 +34,7 @@ const ThankYouLetter = lazy(() => import('./pages/ThankYouLetter'));
 const ImpactReport = lazy(() => import('./pages/ImpactReport'));
 const SocialMedia = lazy(() => import('./pages/SocialMedia'));
 const Newsletter = lazy(() => import('./pages/Newsletter'));
+const GrantApplicationBuilder = lazy(() => import('./pages/GrantApplicationBuilder'));
 const Templates = lazy(() => import('./pages/Templates'));
 const Governance = lazy(() => import('./pages/Governance'));
 
@@ -365,6 +366,14 @@ function App() {
                     element={
                       <ErrorBoundary>
                         <Newsletter />
+                      </ErrorBoundary>
+                    }
+                  />
+                  <Route
+                    path="/grant-application"
+                    element={
+                      <ErrorBoundary>
+                        <GrantApplicationBuilder />
                       </ErrorBoundary>
                     }
                   />

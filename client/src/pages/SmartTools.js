@@ -129,6 +129,18 @@ const SmartTools = () => {
       phase: 'practical',
       category: 'content'
     },
+    {
+      id: 'grant-application',
+      name: 'Grant Application Builder',
+      description: 'Build complete grant applications with AI assistance and organization data pre-filling',
+      icon: '📝',
+      color: 'from-indigo-500 to-indigo-600',
+      features: ['9 application sections', 'AI content generation', 'Organization data auto-fill', 'Template saving'],
+      endpoint: '/api/smart-tools/application/generate',
+      route: '/grant-application',
+      phase: 'practical',
+      category: 'content'
+    },
     
     // Comprehensive Reporting System
     {
