@@ -534,6 +534,105 @@ def generate_newsletter():
         logger.error(f"Error generating newsletter: {e}")
         return jsonify({'success': False, 'error': str(e)}), 500
 
+# ============= GRANT APPLICATION BUILDER ENDPOINTS =============
+
+@smart_tools_bp.route('/application/generate', methods=['POST'])
+@login_required
+def generate_application_section():
+    """Generate a specific section of a grant application"""
+    try:
+        # Get current authenticated user
+        user = get_current_user()
+        if not user:
+            return jsonify({
+                'success': False,
+                'error': 'Authentication required'
+            }), 401
+        
+        # Get organization for current user
+        org = None
+        if user.org_id:
+            org = Organization.query.filter_by(id=user.org_id).first()
+        else:
+            # Fallback: find org created by this user
+            org = Organization.query.filter_by(created_by_user_id=user.id).first()
+        
+        if not org:
+            return jsonify({
+                'success': False,
+                'error': 'No organization found for user'
+            }), 400
+        
+        org_id = org.id
+        
+        data = request.get_json() or {}
+        section_type = data.get('section_type')
+        grant_title = data.get('grant_title', '')
+        funder_name = data.get('funder_name', '')
+        request_amount = data.get('request_amount', '')
+        existing_sections = data.get('existing_sections', {})
+        
+        # Validate section type
+        valid_sections = [
+            'executiveSummary', 'organizationBackground', 'needStatement',
+            'projectDescription', 'goalsObjectives', 'evaluationPlan',
+            'budgetNarrative', 'sustainabilityPlan', 'appendix'
+        ]
+        
+        if section_type not in valid_sections:
+            return jsonify({
+                'success': False,
+                'error': f'Invalid section_type. Use one of: {", ".join(valid_sections)}'
+            }), 400
+        
+        # Generate the section using SmartToolsService
+        result = smart_tools.generate_application_section(
+            org_id=org_id,
+            section_type=section_type,
+            grant_details={
+                'title': grant_title,
+                'funder': funder_name,
+                'amount': request_amount
+            },
+            existing_sections=existing_sections
+        )
+        
+        if result['success']:
+            # Create ToolUsage record for tracking
+            try:
+                tool_usage = ToolUsage(
+                    org_id=org_id,
+                    user_id=user.id,
+                    tool='grant_application',
+                    params_json={
+                        'section_type': section_type,
+                        'grant_details': {
+                            'title': grant_title,
+                            'funder': funder_name,
+                            'amount': request_amount
+                        }
+                    },
+                    output_ref=result.get('content', '')[:500],  # Store first 500 chars as reference
+                    status='generated'
+                )
+                db.session.add(tool_usage)
+                db.session.commit()
+                
+                # Add usage_id to result for future reference
+                result['tool_usage_id'] = tool_usage.id
+                
+            except Exception as e:
+                logger.warning(f"Failed to create ToolUsage record for grant application: {e}")
+                # Don't fail the request if tracking fails
+            
+            return jsonify(result)
+        else:
+            return jsonify(result), 500
+            
+    except Exception as e:
+        logger.error(f"Error generating application section: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
 # ============= TOOL INFORMATION ENDPOINTS =============
 
 @smart_tools_bp.route('/tools', methods=['GET'])

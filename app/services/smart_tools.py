@@ -789,6 +789,165 @@ class SmartToolsService:
             logger.error(f"Error generating social post: {e}")
             return {'success': False, 'error': str(e)}
     
+    def generate_application_section(self, org_id: int, section_type: str, grant_details: Dict, existing_sections: Dict = None) -> Dict:
+        """Generate a specific section of a grant application"""
+        try:
+            # Get organization
+            org = Organization.query.get(org_id)
+            if not org:
+                return {'success': False, 'error': 'Organization not found'}
+            
+            org_context = self._build_comprehensive_org_context(org)
+            existing_sections = existing_sections or {}
+            
+            # Section-specific prompts
+            section_prompts = {
+                'executiveSummary': f"""
+                Create a compelling executive summary for a grant application.
+                Organization: {org_context['name']}
+                Mission: {org_context['mission']}
+                Grant: {grant_details.get('title', 'Grant Application')}
+                Funder: {grant_details.get('funder', 'Funder')}
+                Request Amount: {grant_details.get('amount', 'Not specified')}
+                
+                Write a 2-3 paragraph executive summary that:
+                1. Opens with a strong statement about the need and your solution
+                2. Highlights your unique qualifications and track record
+                3. Clearly states the funding request and expected impact
+                4. Closes with vision for transformation this grant will enable
+                """,
+                
+                'needStatement': f"""
+                Write a compelling need statement for this grant application.
+                Organization Focus: {org_context['focus_areas']}
+                Service Area: {org_context['geography']}
+                Demographics: {org_context.get('demographics_served', 'Community members')}
+                
+                Create a need statement that:
+                1. Opens with compelling statistics or stories about the problem
+                2. Provides local and national context for the issue
+                3. Identifies gaps in current services or solutions
+                4. Explains why this problem must be addressed now
+                5. Connects the need to your organization's expertise
+                """,
+                
+                'projectDescription': f"""
+                Describe the project/program for this grant application.
+                Organization: {org_context['name']}
+                Programs: {org_context.get('programs_description', 'Programs and services')}
+                Request Amount: {grant_details.get('amount', 'Not specified')}
+                
+                Write a detailed project description that includes:
+                1. Overview of the proposed project or program
+                2. Key activities and interventions
+                3. Timeline and implementation phases
+                4. Target population and recruitment strategy
+                5. Partnerships and collaborations
+                6. How this builds on existing work
+                """,
+                
+                'goalsObjectives': f"""
+                Define clear goals and objectives for this grant application.
+                Organization Mission: {org_context['mission']}
+                Focus Areas: {org_context['focus_areas']}
+                
+                Create SMART goals and objectives that:
+                1. Include 2-3 high-level goals aligned with the grant purpose
+                2. List 4-6 specific, measurable objectives under each goal
+                3. Include quantifiable targets and timeframes
+                4. Align with funder priorities
+                5. Connect to broader organizational strategy
+                """,
+                
+                'evaluationPlan': f"""
+                Design an evaluation plan for this grant project.
+                Project Focus: {existing_sections.get('projectDescription', 'Project activities')}
+                
+                Create an evaluation plan that includes:
+                1. Evaluation approach (process and outcome evaluation)
+                2. Key evaluation questions
+                3. Data collection methods and tools
+                4. Timeline for data collection and reporting
+                5. How results will be used for improvement
+                6. Plans for sharing findings with stakeholders
+                """,
+                
+                'budgetNarrative': f"""
+                Write a budget narrative for this grant application.
+                Request Amount: {grant_details.get('amount', 'Not specified')}
+                Organization Size: {org_context.get('staff_size', 'Organization')}
+                
+                Create a budget narrative that:
+                1. Provides overview of how funds will be used
+                2. Justifies major budget categories (personnel, programs, operations)
+                3. Explains cost-effectiveness and efficiency
+                4. Describes any matching funds or in-kind contributions
+                5. Shows responsible fiscal management
+                """,
+                
+                'sustainabilityPlan': f"""
+                Develop a sustainability plan for this grant project.
+                Organization: {org_context['name']}
+                Previous Funders: {', '.join(org_context.get('previous_funders', ['Various sources'])[:5])}
+                
+                Write a sustainability plan that:
+                1. Describes how the project will continue after grant funding ends
+                2. Identifies diverse funding sources being pursued
+                3. Explains capacity building and infrastructure development
+                4. Shows community buy-in and support
+                5. Presents realistic timeline for self-sufficiency
+                """,
+                
+                'organizationBackground': f"""
+                {org_context.get('description', '')}
+                
+                History: {org_context.get('history', '')}
+                Programs: {org_context.get('programs_description', '')}
+                Impact: {org_context.get('impact_summary', '')}
+                """,
+                
+                'appendix': f"""
+                Create an appendix section listing supporting documents for this grant application.
+                
+                List the following standard attachments:
+                1. IRS 501(c)(3) determination letter
+                2. Most recent audited financial statements
+                3. Current year organizational budget
+                4. Board of directors list with affiliations
+                5. Organizational chart
+                6. Annual report or impact report
+                7. Letters of support from community partners
+                8. Media coverage or recognition
+                9. Program evaluation reports
+                10. Staff resumes for key personnel
+                """
+            }
+            
+            prompt = section_prompts.get(section_type, 'Generate content for grant application section')
+            
+            # Add context from other sections if available
+            if existing_sections:
+                context_text = "\n\nContext from other sections:\n"
+                for key, content in existing_sections.items():
+                    if content and key != section_type:
+                        context_text += f"{key}: {content[:200]}...\n"
+                prompt += context_text
+            
+            response = self.ai_service.generate_content(prompt)
+            
+            if response:
+                return {
+                    'success': True,
+                    'content': response,
+                    'section_type': section_type
+                }
+            
+            return {'success': False, 'error': 'Failed to generate section content'}
+            
+        except Exception as e:
+            logger.error(f"Error generating application section: {e}")
+            return {'success': False, 'error': str(e)}
+    
     # ============= HELPER METHODS =============
     
     def _build_comprehensive_org_context(self, org: Organization) -> Dict:
