@@ -1,0 +1,104 @@
+Perfect. Here’s your Replit-ready step-by-step prompt — designed exactly for how you want the AI agent to behave. It keeps things simple, clean, and free of tech-speak or coding opinions. It focuses purely on function, flow, and usability so you can get a clear, honest assessment.
+
+⸻
+
+🧠 Replit Agent Prompt: Pink Lemonade Smart Tools System Review
+
+Goal:
+Examine and clearly explain what we currently have for the Pink Lemonade Smart Tools, what’s missing, and what must happen for it to fully function and look like the intended design.
+
+⸻
+
+🔍 Step 1: System Audit
+	1.	Review all Smart Tools code and pages inside the app.
+	2.	Explain in simple terms what’s working, what’s broken, and what’s incomplete.
+	3.	Check how data from onboarding and organization profiles flows into each tool.
+	4.	Identify what’s needed to make the system operate smoothly from start to finish.
+
+Output:
+
+A plain summary of what’s functional, what’s not, and what needs to be built or connected next.
+
+⸻
+
+⚙️ Step 2: Review and Simplify Each Smart Tool
+
+For each Smart Tool listed below:
+	1.	Explain what the page currently does (if anything).
+	2.	Explain what’s missing or needs to change.
+	3.	Describe in plain English how the tool should work for the user — step by step.
+	4.	Recommend how to make the page simple and clear, including:
+	•	A short intro at the top describing what it does
+	•	3–4 clear steps to complete the task
+	•	A button or simple path to generate or save results
+
+⸻
+
+🧩 Step 3: Tool-by-Tool Review
+
+1. Grant Pitch Generator
+	•	Should pull info from onboarding and selected grant.
+	•	Generates a short, clear pitch (60s–5min).
+	•	User flow: select grant → auto-fill info → generate → review → edit or download.
+
+2. Case for Support Builder
+	•	Uses organization + grant info.
+	•	Builds a complete “why us” case with mission, problem, solution, and impact.
+	•	User flow: select grant → fill or auto-fill → generate → edit → export.
+
+3. Impact Report Creator
+	•	Dual system:
+	•	Admin side: create or manage reports.
+	•	User side: staff, board, or participants can enter feedback.
+	•	Must allow:
+	1.	Selecting an existing or manual-entry grant.
+	2.	Adding outcomes, budget data, and impact stories.
+	3.	Viewing, editing, and downloading reports anytime.
+
+4. Thank You Letter Writer
+	•	Generates personalized letters using donor and grant info.
+	•	Flow: input donor name, amount, and purpose → AI generates → edit or send.
+
+5. Social Media Creator
+	•	Creates ready-to-post content (FB, IG, LinkedIn, Twitter).
+	•	Flow: enter program or event → generate post → view suggested hashtags → export.
+
+6. Newsletter Creator
+	•	Produces newsletters using impact stories and updates.
+	•	Flow: select stories or programs → generate → preview → download or email.
+
+7. Grant Application Builder (New Tool)
+	•	Auto-creates a grant template with required sections.
+	•	Pre-fills data from the organization profile.
+	•	User fills in budget and specifics → save or download.
+
+⸻
+
+🧭 Step 4: Onboarding & Data Flow
+	•	Verify that the onboarding and organization profile sections feed all Smart Tools automatically.
+	•	Confirm that AI pulls this data before asking the user to type anything.
+	•	All generated documents and reports should be saved, editable, and downloadable.
+
+⸻
+
+🎨 Step 5: Design & Navigation Cleanup
+	•	Simplify the Smart Tools main page so all tools are clearly listed.
+	•	Each tool should:
+	•	Have a brief “What it does” description at the top.
+	•	Show 3–4 easy steps to complete.
+	•	Open directly from the list with no confusion.
+	•	Keep layout clean, mobile-friendly, and consistent across all tools.
+
+⸻
+
+📋 Step 6: Deliverables
+
+At the end of the review, provide:
+	1.	A plain summary of what’s working and what’s not.
+	2.	A clear list of what needs to be done to make every tool work correctly.
+	3.	A simple explanation for how each tool should function from the user’s view.
+	4.	A clean action plan Replit can follow to make the full Smart Tools suite operational and easy to use.
+
+⸻
+
+Would you like me to format this version so it reads like a Replit Agent instruction file (so you can paste it in the project root or as /replit-agent-task.md)? It would make the whole review process structured and reusable.
