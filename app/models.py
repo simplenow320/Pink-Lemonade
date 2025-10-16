@@ -195,6 +195,46 @@ class UserInvite(db.Model):
             'created_at': self.created_at.isoformat() if self.created_at else None
         }
 
+class UserSession(db.Model):
+    __tablename__ = "user_sessions"
+
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
+    session_token = db.Column(db.String(255), unique=True, nullable=False)
+
+    # Device information
+    ip_address = db.Column(db.String(45))
+    user_agent = db.Column(db.String(500))
+    device_type = db.Column(db.String(50))  # mobile, desktop, tablet
+    browser = db.Column(db.String(100))
+    os = db.Column(db.String(100))
+
+    # Location (optional - requires GeoIP service)
+    country = db.Column(db.String(100))
+    city = db.Column(db.String(100))
+
+    # Session tracking
+    is_current = db.Column(db.Boolean, default=False)
+    last_activity = db.Column(db.DateTime, default=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    expires_at = db.Column(db.DateTime)
+
+    # Relationships
+    user = db.relationship('User', backref='sessions')
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'device_type': self.device_type,
+            'browser': self.browser,
+            'os': self.os,
+            'ip_address': self.ip_address,
+            'location': f"{self.city}, {self.country}" if self.city else self.country,
+            'last_activity': self.last_activity.isoformat() if self.last_activity else None,
+            'created_at': self.created_at.isoformat() if self.created_at else None,
+            'is_current': self.is_current
+        }
+
 class Organization(db.Model):
     __tablename__ = "organizations"
     id = db.Column(db.Integer, primary_key=True)
