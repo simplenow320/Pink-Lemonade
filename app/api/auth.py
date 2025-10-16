@@ -5,7 +5,7 @@ Handles user registration, login, logout, and password reset functionality.
 """
 
 from flask import Blueprint, request, jsonify, session, render_template, redirect, url_for, flash
-from werkzeug.security import generate_password_hash
+from werkzeug.security import generate_password_hash, check_password_hash
 from functools import wraps
 from app import db
 from app.models import User, UserInvite
@@ -13,6 +13,11 @@ from datetime import datetime, timedelta
 import secrets
 import re
 import logging
+import pyotp
+import qrcode
+import io
+import base64
+from user_agents import parse
 
 logger = logging.getLogger(__name__)
 
@@ -150,12 +155,53 @@ def login():
         )
 
         if result['success']:
+            user = User.query.get(result['user']['id'])
+            
+            # Check if 2FA is enabled
+            if user and user.two_factor_enabled:
+                # Store user ID temporarily for 2FA verification
+                session['pending_2fa_user_id'] = user.id
+                return jsonify({
+                    'requires_2fa': True,
+                    'message': 'Please enter your 2FA code'
+                }), 200
+            
             # Set session (session regeneration happens automatically with session.clear())
             session['user_id'] = result['user']['id']
             session['user_email'] = result['user']['email']
             session['is_authenticated'] = True
             session['login_time'] = datetime.utcnow().isoformat()
             session.permanent = remember
+            
+            # Track session with device information
+            from app.models import UserSession
+            
+            ua_string = request.headers.get('User-Agent', '')
+            user_agent = parse(ua_string)
+            
+            session_token = secrets.token_urlsafe(32)
+            user_session = UserSession(
+                user_id=result['user']['id'],
+                session_token=session_token,
+                ip_address=request.remote_addr,
+                user_agent=ua_string,
+                device_type=user_agent.device.family if user_agent.device.family != 'Other' else 'desktop',
+                browser=f"{user_agent.browser.family} {user_agent.browser.version_string}",
+                os=f"{user_agent.os.family} {user_agent.os.version_string}",
+                is_current=True,
+                expires_at=datetime.utcnow() + timedelta(days=30 if remember else 1)
+            )
+            
+            # Mark all other sessions as not current
+            UserSession.query.filter_by(user_id=result['user']['id']).update({'is_current': False})
+            
+            db.session.add(user_session)
+            db.session.commit()
+            
+            # Store session ID
+            session['session_id'] = session_token
+            
+            logger.info(f"Session created for user {result['user']['email']} from {request.remote_addr}")
             
             # Check if user needs onboarding
             from app.models import Organization
@@ -388,3 +434,316 @@ def check_session():
         return jsonify({
             'authenticated': False
         }), 200
+
+
+# ==================== SESSION MANAGEMENT ====================
+
+@bp.route('/sessions', methods=['GET'])
+def get_sessions():
+    """Get all active sessions for current user"""
+    try:
+        if 'user_id' not in session:
+            return jsonify({'error': 'Not authenticated'}), 401
+        
+        from app.models import UserSession
+        
+        current_session_id = session.get('session_id')
+        sessions = UserSession.query.filter_by(
+            user_id=session['user_id']
+        ).filter(
+            UserSession.expires_at > datetime.utcnow()
+        ).all()
+        
+        # Mark current session
+        session_list = []
+        for s in sessions:
+            s_dict = s.to_dict()
+            s_dict['is_current'] = (s.session_token == current_session_id)
+            session_list.append(s_dict)
+        
+        return jsonify({
+            'sessions': session_list
+        }), 200
+        
+    except Exception as e:
+        logger.error(f"Error fetching sessions: {e}")
+        return jsonify({'error': 'Failed to fetch sessions'}), 500
+
+
+@bp.route('/sessions/<int:session_id>', methods=['DELETE'])
+def revoke_session(session_id):
+    """Revoke a specific session"""
+    try:
+        if 'user_id' not in session:
+            return jsonify({'error': 'Not authenticated'}), 401
+        
+        from app.models import UserSession
+        
+        user_session = UserSession.query.filter_by(
+            id=session_id,
+            user_id=session['user_id']
+        ).first()
+        
+        if not user_session:
+            return jsonify({'error': 'Session not found'}), 404
+        
+        # Prevent revoking current session
+        if user_session.session_token == session.get('session_id'):
+            return jsonify({'error': 'Cannot revoke current session'}), 400
+        
+        db.session.delete(user_session)
+        db.session.commit()
+        
+        logger.info(f"Session {session_id} revoked by user {session['user_id']}")
+        
+        return jsonify({'message': 'Session revoked successfully'}), 200
+        
+    except Exception as e:
+        logger.error(f"Error revoking session: {e}")
+        db.session.rollback()
+        return jsonify({'error': 'Failed to revoke session'}), 500
+
+
+@bp.route('/sessions/all', methods=['DELETE'])
+def revoke_all_sessions():
+    """Revoke all other sessions except current"""
+    try:
+        if 'user_id' not in session:
+            return jsonify({'error': 'Not authenticated'}), 401
+        
+        from app.models import UserSession
+        
+        current_session_id = session.get('session_id')
+        
+        # Delete all sessions except current
+        deleted = UserSession.query.filter(
+            UserSession.user_id == session['user_id'],
+            UserSession.session_token != current_session_id
+        ).delete()
+        
+        db.session.commit()
+        
+        logger.info(f"Revoked {deleted} sessions for user {session['user_id']}")
+        
+        return jsonify({
+            'message': f'Successfully revoked {deleted} session(s)',
+            'count': deleted
+        }), 200
+        
+    except Exception as e:
+        logger.error(f"Error revoking all sessions: {e}")
+        db.session.rollback()
+        return jsonify({'error': 'Failed to revoke sessions'}), 500
+
+# ==================== TWO-FACTOR AUTHENTICATION ====================
+
+@bp.route('/2fa/setup', methods=['POST'])
+def setup_2fa():
+    """Generate TOTP secret and QR code for 2FA setup"""
+    try:
+        if 'user_id' not in session:
+            return jsonify({'error': 'Not authenticated'}), 401
+        
+        import pyotp
+        import qrcode
+        import io
+        import base64
+        
+        user = User.query.get(session['user_id'])
+        if not user:
+            return jsonify({'error': 'User not found'}), 404
+        
+        # Generate TOTP secret
+        totp_secret = pyotp.random_base32()
+        
+        # Store temporarily (not enabled yet)
+        user.totp_secret = totp_secret
+        db.session.commit()
+        
+        # Generate QR code
+        totp_uri = pyotp.totp.TOTP(totp_secret).provisioning_uri(
+            name=user.email,
+            issuer_name='GrantFlow'
+        )
+        
+        # Create QR code image
+        qr = qrcode.QRCode(version=1, box_size=10, border=5)
+        qr.add_data(totp_uri)
+        qr.make(fit=True)
+        
+        img = qr.make_image(fill_color="black", back_color="white")
+        
+        # Convert to base64
+        buffer = io.BytesIO()
+        img.save(buffer, format='PNG')
+        buffer.seek(0)
+        qr_code_base64 = base64.b64encode(buffer.getvalue()).decode()
+        
+        logger.info(f"2FA setup initiated for user {user.email}")
+        
+        return jsonify({
+            'secret': totp_secret,
+            'qr_code': f'data:image/png;base64,{qr_code_base64}',
+            'totp_uri': totp_uri
+        }), 200
+        
+    except Exception as e:
+        logger.error(f"Error setting up 2FA: {e}")
+        db.session.rollback()
+        return jsonify({'error': 'Failed to setup 2FA'}), 500
+
+
+@bp.route('/2fa/enable', methods=['POST'])
+def enable_2fa():
+    """Verify TOTP code and enable 2FA"""
+    try:
+        if 'user_id' not in session:
+            return jsonify({'error': 'Not authenticated'}), 401
+        
+        import pyotp
+        
+        data = request.get_json() or {}
+        code = data.get('code')
+        
+        if not code:
+            return jsonify({'error': 'Verification code required'}), 400
+        
+        user = User.query.get(session['user_id'])
+        if not user or not user.totp_secret:
+            return jsonify({'error': 'No 2FA setup found'}), 400
+        
+        # Verify TOTP code
+        totp = pyotp.TOTP(user.totp_secret)
+        if not totp.verify(code, valid_window=1):
+            return jsonify({'error': 'Invalid verification code'}), 400
+        
+        # Generate backup codes
+        backup_codes = [secrets.token_hex(4) for _ in range(10)]
+        hashed_backup_codes = [generate_password_hash(code) for code in backup_codes]
+        
+        # Enable 2FA
+        user.two_factor_enabled = True
+        user.backup_codes = hashed_backup_codes
+        user.two_factor_verified_at = datetime.utcnow()
+        db.session.commit()
+        
+        logger.info(f"2FA enabled for user {user.email}")
+        
+        return jsonify({
+            'message': '2FA enabled successfully',
+            'backup_codes': backup_codes
+        }), 200
+        
+    except Exception as e:
+        logger.error(f"Error enabling 2FA: {e}")
+        db.session.rollback()
+        return jsonify({'error': 'Failed to enable 2FA'}), 500
+
+
+@bp.route('/2fa/verify', methods=['POST'])
+def verify_2fa():
+    """Verify 2FA code during login"""
+    try:
+        import pyotp
+        from werkzeug.security import check_password_hash
+        
+        data = request.get_json() or {}
+        code = data.get('code')
+        user_id = session.get('pending_2fa_user_id')
+        
+        if not code:
+            return jsonify({'error': 'Verification code required'}), 400
+        
+        if not user_id:
+            return jsonify({'error': 'No pending 2FA verification'}), 400
+        
+        user = User.query.get(user_id)
+        if not user or not user.two_factor_enabled:
+            return jsonify({'error': 'Invalid 2FA state'}), 400
+        
+        # Check if it's a TOTP code
+        totp = pyotp.TOTP(user.totp_secret)
+        if totp.verify(code, valid_window=1):
+            # Complete login
+            session['user_id'] = user.id
+            session['user_email'] = user.email
+            session.pop('pending_2fa_user_id', None)
+            
+            logger.info(f"2FA verification successful for user {user.email}")
+            
+            return jsonify({
+                'message': '2FA verification successful',
+                'redirect': '/dashboard'
+            }), 200
+        
+        # Check if it's a backup code
+        for hashed_code in (user.backup_codes or []):
+            if check_password_hash(hashed_code, code):
+                # Remove used backup code
+                user.backup_codes.remove(hashed_code)
+                db.session.commit()
+                
+                # Complete login
+                session['user_id'] = user.id
+                session['user_email'] = user.email
+                session.pop('pending_2fa_user_id', None)
+                
+                logger.info(f"2FA backup code used for user {user.email}")
+                
+                return jsonify({
+                    'message': '2FA verification successful (backup code used)',
+                    'redirect': '/dashboard'
+                }), 200
+        
+        return jsonify({'error': 'Invalid verification code'}), 400
+        
+    except Exception as e:
+        logger.error(f"Error verifying 2FA: {e}")
+        return jsonify({'error': 'Failed to verify 2FA'}), 500
+
+
+@bp.route('/2fa/disable', methods=['POST'])
+def disable_2fa():
+    """Disable 2FA for user"""
+    try:
+        if 'user_id' not in session:
+            return jsonify({'error': 'Not authenticated'}), 401
+        
+        import pyotp
+        
+        data = request.get_json() or {}
+        password = data.get('password')
+        code = data.get('code')
+        
+        if not password or not code:
+            return jsonify({'error': 'Password and verification code required'}), 400
+        
+        user = User.query.get(session['user_id'])
+        if not user:
+            return jsonify({'error': 'User not found'}), 404
+        
+        # Verify password
+        if not check_password_hash(user.password_hash, password):
+            return jsonify({'error': 'Invalid password'}), 401
+        
+        # Verify TOTP code
+        if user.two_factor_enabled and user.totp_secret:
+            totp = pyotp.TOTP(user.totp_secret)
+            if not totp.verify(code, valid_window=1):
+                return jsonify({'error': 'Invalid verification code'}), 400
+        
+        # Disable 2FA
+        user.two_factor_enabled = False
+        user.totp_secret = None
+        user.backup_codes = None
+        user.two_factor_verified_at = None
+        db.session.commit()
+        
+        logger.info(f"2FA disabled for user {user.email}")
+        
+        return jsonify({'message': '2FA disabled successfully'}), 200
+        
+    except Exception as e:
+        logger.error(f"Error disabling 2FA: {e}")
+        db.session.rollback()
+        return jsonify({'error': 'Failed to disable 2FA'}), 500

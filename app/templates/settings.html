@@ -305,6 +305,145 @@
         .tab-content.active {
             display: block;
         }
+
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            animation: fadeIn 0.3s ease-out;
+        }
+
+        .modal {
+            background: var(--white);
+            border-radius: 0.75rem;
+            max-width: 600px;
+            width: 90%;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+        }
+
+        .modal-header {
+            padding: 1.5rem;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: var(--black);
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: var(--grey);
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 0.25rem;
+            transition: background 0.2s;
+        }
+
+        .modal-close:hover {
+            background: var(--grey-light);
+        }
+
+        .modal-body {
+            padding: 1.5rem;
+        }
+
+        .modal-footer {
+            padding: 1rem 1.5rem;
+            border-top: 1px solid var(--border);
+            display: flex;
+            justify-content: flex-end;
+            gap: 0.75rem;
+        }
+
+        .session-item {
+            padding: 1rem;
+            border: 1px solid var(--border);
+            border-radius: 0.5rem;
+            margin-bottom: 0.75rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .session-info {
+            flex: 1;
+        }
+
+        .session-current {
+            background: #ECFDF5;
+            border-color: #10B981;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 0.25rem 0.5rem;
+            border-radius: 0.25rem;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .badge-success {
+            background: #10B981;
+            color: white;
+        }
+
+        .device-icon {
+            font-size: 1.5rem;
+            margin-right: 1rem;
+        }
+
+        .qr-code-container {
+            text-align: center;
+            padding: 1.5rem;
+            background: var(--grey-light);
+            border-radius: 0.5rem;
+            margin: 1rem 0;
+        }
+
+        .backup-codes {
+            background: var(--grey-light);
+            padding: 1rem;
+            border-radius: 0.5rem;
+            font-family: monospace;
+            margin: 1rem 0;
+        }
+
+        .backup-code {
+            padding: 0.5rem;
+            margin: 0.25rem 0;
+            background: white;
+            border-radius: 0.25rem;
+            text-align: center;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+            to {
+                opacity: 1;
+            }
+        }
     </style>
 </head>
 <body>
@@ -490,14 +629,14 @@
                                 <p class="font-medium">Two-Factor Authentication</p>
                                 <p class="text-sm text-gray-600">Add an extra layer of security</p>
                             </div>
-                            <button class="btn-secondary">Enable</button>
+                            <button id="toggle-2fa-btn" class="btn-secondary">Enable</button>
                         </div>
                         <div class="flex justify-between items-center">
                             <div>
                                 <p class="font-medium">Login Sessions</p>
                                 <p class="text-sm text-gray-600">Manage your active sessions</p>
                             </div>
-                            <button class="btn-secondary">View Sessions</button>
+                            <button id="view-sessions-btn" class="btn-secondary">View Sessions</button>
                         </div>
                     </div>
                 </div>
@@ -685,6 +824,16 @@
                 e.preventDefault();
                 await savePreferences();
             });
+
+            // View Sessions button
+            document.getElementById('view-sessions-btn').addEventListener('click', async () => {
+                await viewSessions();
+            });
+
+            // 2FA Toggle button
+            document.getElementById('toggle-2fa-btn').addEventListener('click', async () => {
+                await toggle2FA();
+            });
         }
 
         async function loadUserSettings() {
@@ -810,6 +959,339 @@
                 console.error('Error changing password:', error);
                 showNotification('Error changing password', 'error');
             }
+        }
+
+        async function viewSessions() {
+            try {
+                const response = await fetch('/api/auth/sessions');
+                if (!response.ok) {
+                    showNotification('Failed to fetch sessions', 'error');
+                    return;
+                }
+
+                const sessions = await response.json();
+                
+                const modalContent = `
+                    <div class="modal-overlay" id="sessions-modal">
+                        <div class="modal">
+                            <div class="modal-header">
+                                <h3 class="modal-title">Login Sessions</h3>
+                                <button class="modal-close" onclick="closeModal('sessions-modal')">&times;</button>
+                            </div>
+                            <div class="modal-body">
+                                ${sessions.map(session => `
+                                    <div class="session-item ${session.current ? 'session-current' : ''}">
+                                        <div style="display: flex; align-items: center; flex: 1;">
+                                            <span class="device-icon">${getDeviceIcon(session.device_type)}</span>
+                                            <div class="session-info">
+                                                <div style="font-weight: 600; margin-bottom: 0.25rem;">
+                                                    ${session.browser || 'Unknown Browser'} on ${session.os || 'Unknown OS'}
+                                                    ${session.current ? '<span class="badge badge-success ml-2">Current</span>' : ''}
+                                                </div>
+                                                <div style="font-size: 0.875rem; color: var(--grey);">
+                                                    IP: ${session.ip_address || 'Unknown'} • Last active: ${formatTimestamp(session.last_activity)}
+                                                </div>
+                                            </div>
+                                        </div>
+                                        ${!session.current ? `
+                                            <button class="btn-danger" onclick="revokeSession('${session.id}')">Revoke</button>
+                                        ` : ''}
+                                    </div>
+                                `).join('')}
+                            </div>
+                            <div class="modal-footer">
+                                <button class="btn-danger" onclick="revokeAllOtherSessions()">Revoke All Other Sessions</button>
+                                <button class="btn-secondary" onclick="closeModal('sessions-modal')">Close</button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                
+                document.body.insertAdjacentHTML('beforeend', modalContent);
+            } catch (error) {
+                console.error('Error fetching sessions:', error);
+                showNotification('Error loading sessions', 'error');
+            }
+        }
+
+        async function revokeSession(sessionId) {
+            if (!confirm('Are you sure you want to revoke this session?')) return;
+
+            try {
+                const response = await fetch(`/api/auth/sessions/${sessionId}`, {
+                    method: 'DELETE'
+                });
+
+                if (response.ok) {
+                    showNotification('Session revoked successfully', 'success');
+                    closeModal('sessions-modal');
+                    await viewSessions();
+                } else {
+                    const error = await response.json();
+                    showNotification(error.error || 'Failed to revoke session', 'error');
+                }
+            } catch (error) {
+                console.error('Error revoking session:', error);
+                showNotification('Error revoking session', 'error');
+            }
+        }
+
+        async function revokeAllOtherSessions() {
+            if (!confirm('Are you sure you want to revoke all other sessions? You will remain logged in on this device.')) return;
+
+            try {
+                const response = await fetch('/api/auth/sessions/all', {
+                    method: 'DELETE'
+                });
+
+                if (response.ok) {
+                    showNotification('All other sessions revoked successfully', 'success');
+                    closeModal('sessions-modal');
+                    await viewSessions();
+                } else {
+                    const error = await response.json();
+                    showNotification(error.error || 'Failed to revoke sessions', 'error');
+                }
+            } catch (error) {
+                console.error('Error revoking sessions:', error);
+                showNotification('Error revoking sessions', 'error');
+            }
+        }
+
+        async function toggle2FA() {
+            try {
+                const response = await fetch('/api/auth/2fa/status');
+                const data = await response.json();
+                
+                if (data.enabled) {
+                    await disable2FA();
+                } else {
+                    await setup2FA();
+                }
+            } catch (error) {
+                console.error('Error checking 2FA status:', error);
+                await setup2FA();
+            }
+        }
+
+        async function setup2FA() {
+            try {
+                const response = await fetch('/api/auth/2fa/setup', {
+                    method: 'POST'
+                });
+
+                if (!response.ok) {
+                    showNotification('Failed to setup 2FA', 'error');
+                    return;
+                }
+
+                const data = await response.json();
+                
+                const modalContent = `
+                    <div class="modal-overlay" id="2fa-setup-modal">
+                        <div class="modal">
+                            <div class="modal-header">
+                                <h3 class="modal-title">Enable Two-Factor Authentication</h3>
+                                <button class="modal-close" onclick="closeModal('2fa-setup-modal')">&times;</button>
+                            </div>
+                            <div class="modal-body">
+                                <p class="mb-4 text-gray-600">Scan this QR code with your authenticator app (Google Authenticator, Authy, etc.)</p>
+                                
+                                <div class="qr-code-container">
+                                    <img src="${data.qr_code}" alt="2FA QR Code" style="max-width: 200px; margin: 0 auto;">
+                                </div>
+                                
+                                <div class="mb-4">
+                                    <p class="text-sm text-gray-600 mb-2">Or enter this key manually:</p>
+                                    <div style="background: var(--grey-light); padding: 0.75rem; border-radius: 0.375rem; font-family: monospace; text-align: center; font-size: 0.875rem;">
+                                        ${data.secret}
+                                    </div>
+                                </div>
+                                
+                                <div class="mb-4">
+                                    <label class="form-label">Enter verification code to confirm:</label>
+                                    <input type="text" id="2fa-verify-code" class="form-input" placeholder="000000" maxlength="6" pattern="[0-9]{6}">
+                                </div>
+                            </div>
+                            <div class="modal-footer">
+                                <button class="btn-secondary" onclick="closeModal('2fa-setup-modal')">Cancel</button>
+                                <button class="btn-primary" onclick="verify2FASetup()">Verify & Enable</button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                
+                document.body.insertAdjacentHTML('beforeend', modalContent);
+            } catch (error) {
+                console.error('Error setting up 2FA:', error);
+                showNotification('Error setting up 2FA', 'error');
+            }
+        }
+
+        async function verify2FASetup() {
+            const code = document.getElementById('2fa-verify-code').value;
+            
+            if (!code || code.length !== 6) {
+                showNotification('Please enter a valid 6-digit code', 'error');
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/auth/2fa/enable', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ code })
+                });
+
+                if (!response.ok) {
+                    const error = await response.json();
+                    showNotification(error.error || 'Invalid verification code', 'error');
+                    return;
+                }
+
+                const data = await response.json();
+                closeModal('2fa-setup-modal');
+                
+                const backupModalContent = `
+                    <div class="modal-overlay" id="2fa-backup-modal">
+                        <div class="modal">
+                            <div class="modal-header">
+                                <h3 class="modal-title">Save Your Backup Codes</h3>
+                                <button class="modal-close" onclick="closeModal('2fa-backup-modal'); location.reload();">&times;</button>
+                            </div>
+                            <div class="modal-body">
+                                <p class="mb-4 text-gray-600" style="color: #DC2626; font-weight: 600;">⚠️ Save these backup codes now. You won't be able to see them again!</p>
+                                <p class="mb-4 text-sm text-gray-600">Use these codes to access your account if you lose your authenticator device.</p>
+                                
+                                <div class="backup-codes">
+                                    ${data.backup_codes.map(code => `
+                                        <div class="backup-code">${code}</div>
+                                    `).join('')}
+                                </div>
+                                
+                                <button class="btn-secondary w-full mt-4" onclick="copyBackupCodes('${data.backup_codes.join('\\n')}')">
+                                    📋 Copy All Codes
+                                </button>
+                            </div>
+                            <div class="modal-footer">
+                                <button class="btn-primary" onclick="closeModal('2fa-backup-modal'); location.reload();">I've Saved My Codes</button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                
+                document.body.insertAdjacentHTML('beforeend', backupModalContent);
+                showNotification('Two-Factor Authentication enabled successfully!', 'success');
+                
+                document.getElementById('toggle-2fa-btn').textContent = 'Disable';
+                document.getElementById('toggle-2fa-btn').classList.remove('btn-secondary');
+                document.getElementById('toggle-2fa-btn').classList.add('btn-danger');
+            } catch (error) {
+                console.error('Error verifying 2FA:', error);
+                showNotification('Error enabling 2FA', 'error');
+            }
+        }
+
+        async function disable2FA() {
+            const modalContent = `
+                <div class="modal-overlay" id="2fa-disable-modal">
+                    <div class="modal">
+                        <div class="modal-header">
+                            <h3 class="modal-title">Disable Two-Factor Authentication</h3>
+                            <button class="modal-close" onclick="closeModal('2fa-disable-modal')">&times;</button>
+                        </div>
+                        <div class="modal-body">
+                            <p class="mb-4 text-gray-600">To disable 2FA, please enter your password and current authentication code:</p>
+                            
+                            <div class="mb-4">
+                                <label class="form-label">Password:</label>
+                                <input type="password" id="2fa-disable-password" class="form-input" required>
+                            </div>
+                            
+                            <div class="mb-4">
+                                <label class="form-label">Current 2FA Code:</label>
+                                <input type="text" id="2fa-disable-code" class="form-input" placeholder="000000" maxlength="6" pattern="[0-9]{6}" required>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button class="btn-secondary" onclick="closeModal('2fa-disable-modal')">Cancel</button>
+                            <button class="btn-danger" onclick="confirm2FADisable()">Disable 2FA</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            document.body.insertAdjacentHTML('beforeend', modalContent);
+        }
+
+        async function confirm2FADisable() {
+            const password = document.getElementById('2fa-disable-password').value;
+            const code = document.getElementById('2fa-disable-code').value;
+            
+            if (!password || !code || code.length !== 6) {
+                showNotification('Please enter both password and 2FA code', 'error');
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/auth/2fa/disable', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ password, code })
+                });
+
+                if (response.ok) {
+                    showNotification('Two-Factor Authentication disabled', 'success');
+                    closeModal('2fa-disable-modal');
+                    
+                    document.getElementById('toggle-2fa-btn').textContent = 'Enable';
+                    document.getElementById('toggle-2fa-btn').classList.remove('btn-danger');
+                    document.getElementById('toggle-2fa-btn').classList.add('btn-secondary');
+                } else {
+                    const error = await response.json();
+                    showNotification(error.error || 'Failed to disable 2FA', 'error');
+                }
+            } catch (error) {
+                console.error('Error disabling 2FA:', error);
+                showNotification('Error disabling 2FA', 'error');
+            }
+        }
+
+        function getDeviceIcon(deviceType) {
+            const icons = {
+                'mobile': '📱',
+                'tablet': '💻',
+                'desktop': '🖥️',
+                'unknown': '📟'
+            };
+            return icons[deviceType] || icons['unknown'];
+        }
+
+        function formatTimestamp(timestamp) {
+            if (!timestamp) return 'Unknown';
+            const date = new Date(timestamp);
+            const now = new Date();
+            const diff = now - date;
+            
+            if (diff < 60000) return 'Just now';
+            if (diff < 3600000) return `${Math.floor(diff / 60000)} minutes ago`;
+            if (diff < 86400000) return `${Math.floor(diff / 3600000)} hours ago`;
+            return date.toLocaleDateString();
+        }
+
+        function closeModal(modalId) {
+            const modal = document.getElementById(modalId);
+            if (modal) {
+                modal.remove();
+            }
+        }
+
+        function copyBackupCodes(codes) {
+            navigator.clipboard.writeText(codes).then(() => {
+                showNotification('Backup codes copied to clipboard', 'success');
+            }).catch(() => {
+                showNotification('Failed to copy codes', 'error');
+            });
         }
 
         async function saveNotifications() {

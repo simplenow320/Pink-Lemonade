@@ -30,6 +30,12 @@ class User(db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     
+    # Two-Factor Authentication
+    totp_secret = db.Column(db.String(32))
+    two_factor_enabled = db.Column(db.Boolean, default=False)
+    backup_codes = db.Column(db.JSON)
+    two_factor_verified_at = db.Column(db.DateTime)
+    
     # Flask-Login properties
     @property
     def is_authenticated(self):
