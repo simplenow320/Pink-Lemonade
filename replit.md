@@ -47,10 +47,11 @@ Each section must be detailed (multiple sentences), include guardrails to preven
 - **Narrative Generator**: Automated proposal writing for various sections (e.g., executive summary, statement of need).
 - **Grant Intelligence**: Extracts requirements, evaluation criteria, and competitive insights.
 
-### Consultant-Quality Smart Tools (NEW)
-- **Case for Support Hybrid**: Uses all 51 organization profile fields for deep personalization. Template structure + real org data + minimal AI polish. Quality levels: Template ($0.01), Consultant ($0.05), Premium ($0.50). McKinsey/Bridgespan-level output at startup prices.
+### Consultant-Quality Smart Tools
+- **Case for Support Hybrid**: Uses all 60+ organization profile fields for deep personalization. Template structure + real org data + minimal AI polish. Quality levels: Template ($0.01), Consultant ($0.05), Premium ($0.50). McKinsey/Bridgespan-level output at startup prices.
 - **Impact Reporting Hybrid**: Dual-facing system integrating real beneficiary survey data. Collects authentic stories via QR codes, generates consultant-quality funder reports. Template + real participant data + minimal AI. KPMG/Deloitte-level reports at $0.05 vs $1.20 traditional.
-- **Deep Personalization Engine**: Never generic - uses YOUR 51-field org profile (mission, programs, demographics, achievements, etc.) and REAL beneficiary survey responses (stories, ratings, outcomes) to create authentic, data-driven documents.
+- **Deep Personalization Engine**: Never generic - uses YOUR 60+ field org profile including 9 consultant-quality fields (competitive_advantage, growth_plans, community_needs, market_gap, collaboration_approach, awards_recognition, media_coverage, partnerships, strategic_priorities) and REAL beneficiary survey responses to create authentic, data-driven documents.
+- **Organization as "The Brain"**: The Organization profile with 60+ fields serves as the central intelligence for all platform features - from grant matching to Smart Tools generation - ensuring every output is deeply personalized and never generic.
 
 ### Workflow Automation
 - **8-Stage Pipeline**: Manages grants through Discovery, Researching, Writing, Review, Submitted, Pending, Awarded/Declined, and Reporting stages.
