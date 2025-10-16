@@ -162,6 +162,7 @@ def create_app():
     from app.api.scraper import bp as scraper_bp
     from app.api.opportunities import bp as opportunities_bp
     from app.api.admin import admin_bp
+    from app.api.enhanced_matching import enhanced_matching_bp
     from app.api.scrape import bp as scrape_bp
     from app.api.ai_test import bp as ai_test_bp
     from app.api.writing import bp as writing_bp
@@ -301,6 +302,13 @@ def create_app():
         flask_app.register_blueprint(ai_grants_bp, url_prefix='/api/ai-grants')
     except ImportError as e:
         print(f"AI grants blueprint not available: {e}")
+    
+    # Register Enhanced Matching endpoints (Quality over Quantity)
+    try:
+        flask_app.register_blueprint(enhanced_matching_bp)
+        flask_app.logger.info("✅ Enhanced Matching (Quality) registered successfully")
+    except Exception as e:
+        flask_app.logger.warning(f"Could not register Enhanced Matching: {e}")
     
     # Register Workflow Management endpoints
     try:
