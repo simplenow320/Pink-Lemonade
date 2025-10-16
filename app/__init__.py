@@ -304,7 +304,9 @@ def create_app():
     # Register Smart Tools endpoints (Phase 4)
     try:
         from app.api.smart_tools import smart_tools_bp
+        from app.api.smart_tools_hybrid import smart_tools_hybrid_bp
         flask_app.register_blueprint(smart_tools_bp)
+        flask_app.register_blueprint(smart_tools_hybrid_bp, url_prefix='/api/smart-tools-hybrid')
     except ImportError as e:
         print(f"Smart Tools blueprint not available: {e}")
     
