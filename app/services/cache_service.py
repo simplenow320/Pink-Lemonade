@@ -4,7 +4,8 @@ Implements in-memory caching with TTL for frequently accessed data
 Enhanced with template caching for Smart Tools Hybrid System
 """
 from datetime import datetime, timedelta
-from typing import Any, Optional, Dict
+from typing import Any, Optional, Dict, Callable
+from functools import wraps
 import hashlib
 import json
 import logging
@@ -116,6 +117,30 @@ class CacheService:
         """Get cached grant data"""
         key = self._make_key('grant_data', org_id)
         return self.get(key)
+    
+    def cached(self, ttl_seconds: int = 300, key_prefix: str = None):
+        """Decorator for caching function results"""
+        def decorator(func: Callable) -> Callable:
+            @wraps(func)
+            def wrapper(*args, **kwargs):
+                # Generate cache key
+                prefix = key_prefix or func.__name__
+                cache_key = self._make_key(prefix, *args, **kwargs)
+                
+                # Check cache
+                cached_result = self.get(cache_key)
+                if cached_result is not None:
+                    logger.debug(f"Cache hit for {prefix}")
+                    return cached_result
+                
+                # Call function and cache result
+                result = func(*args, **kwargs)
+                self.set(cache_key, result, ttl_seconds)
+                logger.debug(f"Cached result for {prefix}")
+                return result
+            
+            return wrapper
+        return decorator
 
 
 class TemplateCache:
