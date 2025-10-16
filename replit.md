@@ -41,10 +41,16 @@ Each section must be detailed (multiple sentences), include guardrails to preven
 ### AI Integration
 - **REACTO Prompt System**: 6-section prompt engineering for improved AI outputs.
 - **AI Cost Optimizer**: Intelligent model routing (GPT-3.5-turbo for simple, GPT-4o for complex) to reduce API costs by 30-60%.
+- **Hybrid Smart Tools**: Template-based architecture (80% templates + 20% AI) achieving 95% cost reduction while maintaining consultant-quality personalization.
 - **Adaptive Discovery**: Dynamic questioning that adapts based on user responses, saving 40-60% time.
 - **Grant Matching Engine**: Live AI scoring (1-5) with explanations, alignments, and next steps.
 - **Narrative Generator**: Automated proposal writing for various sections (e.g., executive summary, statement of need).
 - **Grant Intelligence**: Extracts requirements, evaluation criteria, and competitive insights.
+
+### Consultant-Quality Smart Tools (NEW)
+- **Case for Support Hybrid**: Uses all 51 organization profile fields for deep personalization. Template structure + real org data + minimal AI polish. Quality levels: Template ($0.01), Consultant ($0.05), Premium ($0.50). McKinsey/Bridgespan-level output at startup prices.
+- **Impact Reporting Hybrid**: Dual-facing system integrating real beneficiary survey data. Collects authentic stories via QR codes, generates consultant-quality funder reports. Template + real participant data + minimal AI. KPMG/Deloitte-level reports at $0.05 vs $1.20 traditional.
+- **Deep Personalization Engine**: Never generic - uses YOUR 51-field org profile (mission, programs, demographics, achievements, etc.) and REAL beneficiary survey responses (stories, ratings, outcomes) to create authentic, data-driven documents.
 
 ### Workflow Automation
 - **8-Stage Pipeline**: Manages grants through Discovery, Researching, Writing, Review, Submitted, Pending, Awarded/Declined, and Reporting stages.

@@ -11,6 +11,8 @@ import logging
 from app.models import Organization
 from app.services.smart_tools_hybrid import SmartToolsHybridService
 from app.services.smart_tools import SmartToolsService  # Original service
+from app.services.case_for_support_hybrid import CaseForSupportHybridService
+from app.services.impact_reporting_hybrid import ImpactReportingHybridService
 
 logger = logging.getLogger(__name__)
 
@@ -19,6 +21,8 @@ smart_tools_hybrid_bp = Blueprint('smart_tools_hybrid', __name__)
 # Initialize services
 hybrid_service = SmartToolsHybridService()
 original_service = SmartToolsService()
+case_hybrid_service = CaseForSupportHybridService()
+impact_hybrid_service = ImpactReportingHybridService()
 
 @smart_tools_hybrid_bp.route('/compare', methods=['GET'])
 def compare_approaches():
@@ -349,4 +353,120 @@ def get_cost_savings():
         
     except Exception as e:
         logger.error(f"Error calculating savings: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+# ============= CASE FOR SUPPORT HYBRID ENDPOINTS =============
+
+@smart_tools_hybrid_bp.route('/case/generate/<quality_level>', methods=['POST'])
+@login_required
+def generate_case_for_support(quality_level):
+    """
+    Generate consultant-quality Case for Support with deep personalization
+    
+    Quality levels:
+    - template: Fast, basic structure with org data ($0.01)
+    - consultant: Template + org data + minimal AI polish ($0.05) - RECOMMENDED
+    - premium: Full AI customization for VIP campaigns ($0.50)
+    """
+    try:
+        user = get_current_user()
+        if not user:
+            return jsonify({'error': 'User not authenticated'}), 401
+        
+        # Get user's organization
+        org_id = user.org_id
+        if not org_id:
+            return jsonify({'error': 'No organization associated with user'}), 400
+        
+        # Validate quality level
+        if quality_level not in ['template', 'consultant', 'premium']:
+            return jsonify({
+                'error': 'Invalid quality level. Use: template, consultant, or premium'
+            }), 400
+        
+        data = request.get_json() or {}
+        
+        # Extract campaign details
+        campaign_details = {
+            'goal': data.get('goal', 100000),
+            'purpose': data.get('purpose', 'program expansion'),
+            'timeline': data.get('timeline', '12 months'),
+            'target_donors': data.get('target_donors', 'major donors'),
+            'donor_type': data.get('donor_type', 'foundation'),  # foundation, corporate, individual
+            'focus_area': data.get('focus_area', ''),
+            'urgency_factor': data.get('urgency_factor', 'medium'),
+            'specific_outcomes': data.get('specific_outcomes', []),
+            'budget_breakdown': data.get('budget_breakdown', {}),
+        }
+        
+        # Generate case for support
+        result = case_hybrid_service.generate_case_for_support(
+            org_id=org_id,
+            campaign_details=campaign_details,
+            quality_level=quality_level
+        )
+        
+        if result.get('success'):
+            return jsonify(result)
+        else:
+            return jsonify(result), 500
+    
+    except Exception as e:
+        logger.error(f"Error generating case for support: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+# ============= IMPACT REPORTING HYBRID ENDPOINTS =============
+
+@smart_tools_hybrid_bp.route('/impact/generate/<quality_level>', methods=['POST'])
+@login_required
+def generate_impact_report(quality_level):
+    """
+    Generate consultant-quality Impact Report using REAL beneficiary survey data
+    
+    Quality levels:
+    - template: Data aggregation only ($0.01)
+    - consultant: Template + real data + minimal AI storytelling ($0.05) - RECOMMENDED
+    - premium: Full AI narrative analysis ($0.50)
+    """
+    try:
+        user = get_current_user()
+        if not user:
+            return jsonify({'error': 'User not authenticated'}), 401
+        
+        # Get user's organization
+        org_id = user.org_id
+        if not org_id:
+            return jsonify({'error': 'No organization associated with user'}), 400
+        
+        # Validate quality level
+        if quality_level not in ['template', 'consultant', 'premium']:
+            return jsonify({
+                'error': 'Invalid quality level. Use: template, consultant, or premium'
+            }), 400
+        
+        data = request.get_json() or {}
+        
+        # Extract report parameters
+        report_params = {
+            'program_name': data.get('program_name'),  # Optional: specific program
+            'date_range': data.get('date_range', 'last_quarter'),  # last_month, last_quarter, last_year
+            'include_stories': data.get('include_stories', True),
+            'include_visualizations': data.get('include_visualizations', True),
+            'funder_name': data.get('funder_name'),  # Optional: customize for specific funder
+        }
+        
+        # Generate impact report using real beneficiary data
+        result = impact_hybrid_service.generate_impact_report(
+            org_id=org_id,
+            report_params=report_params,
+            quality_level=quality_level
+        )
+        
+        if result.get('success'):
+            return jsonify(result)
+        else:
+            return jsonify(result), 500
+    
+    except Exception as e:
+        logger.error(f"Error generating impact report: {e}")
         return jsonify({'success': False, 'error': str(e)}), 500
