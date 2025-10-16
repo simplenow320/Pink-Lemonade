@@ -95,6 +95,26 @@ class AIService:
         """Check if AI service is enabled (has API key)"""
         return bool(self.client is not None)
     
+    def generate_text(self, prompt: str, max_tokens: int = 200) -> str:
+        """
+        Generate simple text response from AI
+        Returns text string or empty string on failure
+        """
+        if not self.is_enabled():
+            return ""
+        
+        messages = [
+            {"role": "system", "content": "You are a helpful assistant. Provide concise, accurate responses."},
+            {"role": "user", "content": prompt}
+        ]
+        
+        result = self._make_request(messages, max_tokens=max_tokens, task_type="text_generation")
+        if isinstance(result, str):
+            return result
+        elif isinstance(result, dict):
+            return str(result.get('content', ''))
+        return ""
+    
     def _make_request(self, messages: List[Dict], 
                      response_format: Optional[Dict] = None,
                      max_tokens: int = 200,

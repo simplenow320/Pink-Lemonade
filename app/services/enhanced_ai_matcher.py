@@ -163,12 +163,13 @@ class EnhancedAIGrantMatcher:
         """Check hard eligibility requirements"""
         # Entity type check
         if grant.eligibility and '501(c)(3)' in grant.eligibility:
-            if not org.tax_status or '501c3' not in org.tax_status.lower():
+            if not org.org_type or '501c3' not in org.org_type.lower():
                 return {'eligible': False, 'reason': 'Requires 501(c)(3) status'}
         
         # Geographic check
-        if grant.geography and org.geographic_focus:
-            if grant.geography.lower() not in org.geographic_focus.lower():
+        org_location = f"{org.primary_city or ''}, {org.primary_state or ''}".strip(', ')
+        if grant.geography and org_location:
+            if grant.geography.lower() not in org_location.lower():
                 # Check if it's national/unrestricted
                 if 'national' not in grant.geography.lower() and 'unrestricted' not in grant.geography.lower():
                     return {'eligible': False, 'reason': f'Geographic mismatch: requires {grant.geography}'}
@@ -199,7 +200,7 @@ class EnhancedAIGrantMatcher:
             
             ORGANIZATION:
             Mission: {org.mission}
-            Programs: {org.programs_and_services}
+            Programs: {org.programs_services}
             Focus Areas: {org.focus_areas}
             
             GRANT:
@@ -271,7 +272,7 @@ class EnhancedAIGrantMatcher:
             ORGANIZATION:
             Type: {org.focus_areas}
             Size: {org.annual_budget}
-            Location: {org.geographic_focus}
+            Location: {org.primary_city}, {org.primary_state}
             
             Consider typical foundation giving patterns.
             Return only a number 0-100.
@@ -322,8 +323,9 @@ class EnhancedAIGrantMatcher:
         score = 50.0  # Base score
         
         # Local funders offer better relationship potential
-        if grant.geography and org.geographic_focus:
-            if any(loc in grant.geography.lower() for loc in org.geographic_focus.lower().split()):
+        org_location = f"{org.primary_city or ''} {org.primary_state or ''}".strip()
+        if grant.geography and org_location:
+            if any(loc in grant.geography.lower() for loc in org_location.lower().split()):
                 score += 30
         
         # Smaller grants often lead to larger ones
