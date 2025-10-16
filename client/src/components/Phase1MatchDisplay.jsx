@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { ChevronRight, Heart, Star, MapPin, Calendar, DollarSign, Target, Award } from 'lucide-react';
+import SourceBadge from './SourceBadge';
 
 /**
  * Phase 1: Clean Match Display Component
@@ -152,14 +153,10 @@ const Phase1MatchDisplay = () => {
 
       {/* Source Badge */}
       <div className="flex justify-between items-center">
-        <span className={`px-3 py-1 rounded-full text-xs font-medium ${
-          match.source === 'Federal Register' ? 'bg-blue-100 text-blue-700' :
-          match.source === 'Candid' ? 'bg-purple-100 text-purple-700' :
-          match.source === 'Foundation Directory' ? 'bg-green-100 text-green-700' :
-          'bg-gray-100 text-gray-700'
-        }`}>
-          {match.source}
-        </span>
+        <SourceBadge 
+          source_name={match.source_name || match.source} 
+          source_url={match.source_url}
+        />
         
         {match.url && (
           <a
