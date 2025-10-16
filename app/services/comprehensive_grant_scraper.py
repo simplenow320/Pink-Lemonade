@@ -5,7 +5,7 @@ including full documents, funder profiles, and contact intelligence
 import logging
 import requests
 import re
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Any
 from datetime import datetime
 import json
 from urllib.parse import urljoin, urlparse
@@ -52,17 +52,20 @@ class ComprehensiveGrantScraper:
             response.raise_for_status()
             
             # Extract clean text content (with fallbacks)
+            extracted_text: str = ""
             if HAS_TRAFILATURA:
-                extracted_text = trafilatura.extract(response.text, include_tables=True, include_links=True)
+                import trafilatura
+                text_result = trafilatura.extract(response.text, include_tables=True, include_links=True)
+                extracted_text = text_result if text_result else ""
             else:
                 # Simple fallback - extract from raw HTML
                 extracted_text = self._simple_text_extraction(response.text)
             
             # Also get structured HTML for better parsing (with fallback)
+            soup = None
             if HAS_BS4:
+                from bs4 import BeautifulSoup
                 soup = BeautifulSoup(response.text, 'html.parser')
-            else:
-                soup = None
             
             # Use AI to extract structured information
             grant_details = self._ai_extract_grant_info(extracted_text, grant_url)
@@ -143,6 +146,7 @@ class ComprehensiveGrantScraper:
         
         try:
             if HAS_AI_SERVICE:
+                from app.services.ai_service import ai_service
                 result = ai_service._make_request(
                     messages=[
                         {"role": "system", "content": "You are an expert at extracting structured grant information. Return only valid JSON."},
@@ -163,7 +167,7 @@ class ComprehensiveGrantScraper:
             logger.error(f"AI extraction failed: {e}")
             return self._fallback_extraction(text, url)
     
-    def _extract_contact_information(self, soup: BeautifulSoup, text: str) -> Dict:
+    def _extract_contact_information(self, soup: Optional[Any], text: str) -> Dict:
         """
         Extract comprehensive contact information
         """
@@ -199,10 +203,11 @@ class ComprehensiveGrantScraper:
             contacts['program_officers'].extend(matches)
         
         # Find links in HTML
-        for link in soup.find_all('a', href=True):
-            href = link['href']
-            if href.startswith('http') and any(domain in href for domain in ['.gov', '.org', '.edu']):
-                contacts['websites'].append(href)
+        if soup:
+            for link in soup.find_all('a', href=True):
+                href = link.get('href', '')
+                if isinstance(href, str) and href.startswith('http') and any(domain in href for domain in ['.gov', '.org', '.edu']):
+                    contacts['websites'].append(href)
         
         return contacts
     
@@ -342,30 +347,31 @@ class ComprehensiveGrantScraper:
         
         return timeline
     
-    def _extract_related_documents(self, soup: BeautifulSoup, base_url: str) -> List[Dict]:
+    def _extract_related_documents(self, soup: Optional[Any], base_url: str) -> List[Dict]:
         """
         Extract links to related documents (guidelines, forms, etc.)
         """
         documents = []
         
         # Find all links that might be documents
-        for link in soup.find_all('a', href=True):
-            href = link['href']
-            text = link.get_text(strip=True)
-            
-            # Check if it's a document link
-            doc_extensions = ['.pdf', '.doc', '.docx', '.xls', '.xlsx']
-            doc_keywords = ['guideline', 'form', 'application', 'instruction', 'template']
-            
-            if (any(ext in href.lower() for ext in doc_extensions) or 
-                any(keyword in text.lower() for keyword in doc_keywords)):
+        if soup:
+            for link in soup.find_all('a', href=True):
+                href = link.get('href', '')
+                text = link.get_text(strip=True)
                 
-                full_url = urljoin(base_url, href)
-                documents.append({
-                    'title': text,
-                    'url': full_url,
-                    'type': self._classify_document_type(text)
-                })
+                # Check if it's a document link
+                doc_extensions = ['.pdf', '.doc', '.docx', '.xls', '.xlsx']
+                doc_keywords = ['guideline', 'form', 'application', 'instruction', 'template']
+                
+                if isinstance(href, str) and (any(ext in href.lower() for ext in doc_extensions) or 
+                    any(keyword in text.lower() for keyword in doc_keywords)):
+                    
+                    full_url = urljoin(base_url, href)
+                    documents.append({
+                        'title': text,
+                        'url': full_url,
+                        'type': self._classify_document_type(text)
+                    })
         
         return documents
     

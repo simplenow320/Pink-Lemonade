@@ -294,6 +294,13 @@ class GrantDiscoveryServiceV2:
                     grant.funder = funder
                     grant.link = url
                     grant.source_url = url
+                    # Validate source_name before assignment
+                    if not source_name or source_name.strip() == '':
+                        logger.warning(f"Grant '{title}' missing source_name, using fallback")
+                        source_name = 'Unverified Source'
+
+                    grant.source_name = source_name
+                    grant.eligibility = description
                     grant.source_name = source_name
                     grant.eligibility = description
                     grant.status = 'discovery'
@@ -322,6 +329,12 @@ class GrantDiscoveryServiceV2:
     def _apply_ai_scoring(self, org_id: int, grant_ids: List[int], limit: int) -> List[Dict]:
         """Apply AI scoring with timeout protection"""
         try:
+            # Check if ai_matcher is available
+            if not self.ai_matcher:
+                logger.warning("AI matcher not available, returning unscored grants")
+                grants = Grant.query.filter(Grant.id.in_(grant_ids)).limit(limit).all()
+                return [g.to_dict() for g in grants]
+            
             # Limit scoring to prevent timeouts
             ids_to_score = grant_ids[:min(len(grant_ids), 15)]
             

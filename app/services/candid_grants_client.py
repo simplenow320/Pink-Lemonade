@@ -6,6 +6,7 @@ import json
 import logging
 import urllib.request
 import urllib.parse
+import urllib.error
 from datetime import datetime
 from typing import Optional, Dict, List
 
