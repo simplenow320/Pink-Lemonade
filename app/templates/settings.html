@@ -1086,6 +1086,9 @@
                 }
 
                 const data = await response.json();
+                console.log('2FA Setup Response:', data);
+                console.log('QR Code length:', data.qr_code?.length);
+                console.log('QR Code preview:', data.qr_code?.substring(0, 100));
                 
                 const modalContent = `
                     <div class="modal-overlay" id="2fa-setup-modal">
