@@ -73,6 +73,7 @@ def create_app():
     load_env_file()
     
     import os
+    import sys
     import requests
     
     flask_app = Flask(__name__)
@@ -113,8 +114,9 @@ def create_app():
         
     # Initialize scheduler for automated grant fetching (daily at 3 AM)
     # Note: With gunicorn, this must run in each worker process, not the master
-    # Store scheduler instance on flask_app to persist across requests
-    flask_app._scheduler = None
+    # Store scheduler instance in config to persist across requests
+    flask_app.config['_scheduler'] = None
+    flask_app.config['_scheduler_started'] = False
     
     def start_scheduler():
         # Use Flask app config instead of os.environ to avoid environment variable issues
@@ -132,8 +134,8 @@ def create_app():
                 flask_app.logger.warning("🟢 Calling scheduler.start()...")
                 scheduler.start()
                 flask_app.logger.warning("🟢 scheduler.start() returned")
-                # Store on flask_app so it persists
-                flask_app._scheduler = scheduler
+                # Store in config so it persists
+                flask_app.config['_scheduler'] = scheduler
                 flask_app.logger.warning(f"⏱️  Scheduler started, running={scheduler.running}, next_run={scheduler.next_run}")
                 flask_app.logger.warning("✅ SCHEDULER: Automated grant fetching enabled - daily at 3 AM UTC")
             except Exception as e:
@@ -147,8 +149,8 @@ def create_app():
     # Start scheduler after first request (ensures it runs in worker process)
     @flask_app.before_request
     def init_scheduler():
-        if not hasattr(flask_app, '_scheduler_started'):
-            flask_app._scheduler_started = True
+        if not flask_app.config.get('_scheduler_started', False):
+            flask_app.config['_scheduler_started'] = True
             flask_app.logger.warning("🚀 INITIALIZING SCHEDULER IN WORKER PROCESS")
             start_scheduler()
             flask_app.logger.warning("✅ SCHEDULER INITIALIZED")

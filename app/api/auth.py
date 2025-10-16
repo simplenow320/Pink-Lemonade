@@ -148,12 +148,13 @@ def login():
             password=password,
             remember=remember
         )
-        
+
         if result['success']:
-            # Set session
+            # Set session (session regeneration happens automatically with session.clear())
             session['user_id'] = result['user']['id']
             session['user_email'] = result['user']['email']
             session['is_authenticated'] = True
+            session['login_time'] = datetime.utcnow().isoformat()
             session.permanent = remember
             
             # Check if user needs onboarding
