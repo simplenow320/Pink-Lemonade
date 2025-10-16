@@ -65,3 +65,6 @@ requests
 schedule
 sendgrid
 sqlalchemy
+pillow
+pyotp
+qrcode[pil]
