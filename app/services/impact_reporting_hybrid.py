@@ -91,18 +91,38 @@ class ImpactReportingHybridService:
             return {'success': False, 'error': str(e)}
     
     def _extract_org_context(self, org: Organization) -> Dict[str, Any]:
-        """Extract organization context for report personalization"""
+        """Extract organization context for report personalization - uses ACTUAL model fields"""
+        
+        # Helper to safely extract JSON arrays
+        def get_json_list(value):
+            if isinstance(value, list):
+                return value
+            elif isinstance(value, str):
+                return [value]
+            return []
+        
+        # Build service area from city/state
+        service_area = ''
+        if org.primary_city and org.primary_state:
+            service_area = f"{org.primary_city}, {org.primary_state}"
+        elif org.primary_state:
+            service_area = org.primary_state
+        
         return {
             'name': org.name,
             'mission': org.mission or '',
-            'primary_focus_areas': org.primary_focus_areas or '',
-            'programs': org.programs or '',
-            'service_area': f"{org.primary_city}, {org.primary_state}" if org.primary_city else org.service_region or '',
-            'demographics_served': org.demographics_served or '',
-            'annual_budget': org.annual_budget or 0,
+            'primary_focus_areas': get_json_list(org.primary_focus_areas),  # JSON array
+            'programs': org.programs_services or '',  # CORRECT field name
+            'programs_services': org.programs_services or '',
+            'service_area': service_area,  # Built from city/state
+            'target_demographics': get_json_list(org.target_demographics),  # CORRECT field (JSON!)
+            'demographics_served': ', '.join(get_json_list(org.target_demographics)),  # Alias for compatibility
+            'annual_budget_range': org.annual_budget_range or '',  # CORRECT field (string!)
+            'annual_budget': org.annual_budget_range or '',  # Alias
             'staff_size': org.staff_size or '',
             'key_achievements': org.key_achievements or '',
-            'success_metrics': org.success_metrics or ''
+            'impact_metrics': org.impact_metrics or {},  # CORRECT field (JSON!)
+            'success_metrics': org.impact_metrics or {}  # Alias
         }
     
     def _collect_beneficiary_data(self, org_id: int, program_name: Optional[str], 
@@ -662,11 +682,8 @@ Original content:
 
 Polished version (preserve all data):"""
 
-            response = self.ai_service.generate_text(
-                polish_prompt,
-                max_tokens=max_tokens,
-                temperature=0.3
-            )
+            # Use AI to polish the flow
+            response = self.ai_service.improve_text(content, "professional")
             
             return response if response else content
             

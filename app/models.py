@@ -260,6 +260,17 @@ class Organization(db.Model):
     funding_priorities = db.Column(db.Text)  # Current funding needs
     exclusions = db.Column(db.JSON)  # Things they DON'T do/want
     
+    # Consultant-Quality Smart Tools Fields (for deep personalization)
+    awards_recognition = db.Column(db.JSON)  # Awards, honors, certifications
+    media_coverage = db.Column(db.JSON)  # Press mentions, media features
+    partnerships = db.Column(db.JSON)  # Key partnerships and collaborators
+    strategic_priorities = db.Column(db.JSON)  # Goals for next 1-3 years
+    growth_plans = db.Column(db.Text)  # Expansion and growth plans
+    competitive_advantage = db.Column(db.Text)  # What sets organization apart
+    community_needs = db.Column(db.Text)  # Community needs being addressed
+    market_gap = db.Column(db.Text)  # Market gap the org fills
+    collaboration_approach = db.Column(db.Text)  # How org approaches partnerships
+    
     # Candid Essentials PCS Codes and Locations
     pcs_subject_codes = db.Column(db.JSON)  # Candid PCS subject taxonomy codes
     pcs_population_codes = db.Column(db.JSON)  # Candid PCS population codes
@@ -305,7 +316,10 @@ class Organization(db.Model):
         optional_fields = [
             'legal_name', 'ein', 'year_founded', 'website', 'vision', 
             'programs_services', 'target_demographics', 'key_achievements',
-            'previous_funders', 'unique_capabilities'
+            'previous_funders', 'unique_capabilities', 'awards_recognition',
+            'media_coverage', 'partnerships', 'strategic_priorities', 
+            'growth_plans', 'competitive_advantage', 'community_needs',
+            'market_gap', 'collaboration_approach'
         ]
         
         completed = 0

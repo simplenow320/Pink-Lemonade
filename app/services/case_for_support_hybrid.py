@@ -68,7 +68,8 @@ class CaseForSupportHybridService:
             for section_name, content in sections.items():
                 if content:
                     narrative = Narrative()
-                    narrative.org_id = org_id
+                    # Narrative uses grant_id (nullable) - org case for support not tied to specific grant
+                    narrative.grant_id = None
                     narrative.section = f'case_{section_name}'
                     narrative.content = content
                     narrative.ai_generated = (quality_level != 'template')
@@ -99,73 +100,106 @@ class CaseForSupportHybridService:
             return {'success': False, 'error': str(e)}
     
     def _extract_org_context(self, org: Organization) -> Dict[str, Any]:
-        """Extract all 51 fields from organization profile for deep personalization"""
+        """Extract all Organization fields for deep personalization - uses ACTUAL model fields"""
+        
+        # Helper to safely extract JSON arrays
+        def get_json_list(value):
+            if isinstance(value, list):
+                return value
+            elif isinstance(value, str):
+                return [value]
+            return []
+        
+        # Helper to get first item from JSON array
+        def get_first(json_array):
+            items = get_json_list(json_array)
+            return items[0] if items else ''
+        
+        # Build service region from city/state
+        service_region = ''
+        if org.primary_city and org.primary_state:
+            service_region = f"{org.primary_city}, {org.primary_state}"
+        elif org.primary_state:
+            service_region = org.primary_state
+        
         return {
             # Core Identity (never generic - YOUR org)
             'name': org.name,
+            'legal_name': org.legal_name or '',
             'mission': org.mission or '',
             'vision': org.vision or '',
+            'values': org.values or '',
             'org_type': org.org_type or '501(c)(3)',
             'ein': org.ein or '',
             'year_founded': org.year_founded,
             'website': org.website or '',
             
-            # Programs & Services (YOUR specific work)
-            'primary_focus_areas': org.primary_focus_areas or '',
-            'secondary_focus_areas': org.secondary_focus_areas or '',
-            'programs_description': org.programs or '',
-            'current_programs': org.current_programs or '',
-            'program_count': len(org.current_programs.split(',')) if org.current_programs else 0,
+            # Programs & Services (YOUR specific work) - use programs_services!
+            'primary_focus_areas': get_json_list(org.primary_focus_areas),
+            'secondary_focus_areas': get_json_list(org.secondary_focus_areas),
+            'programs_description': org.programs_services or '',  # CORRECT field
+            'programs_services': org.programs_services or '',
+            'program_count': len((org.programs_services or '').split('\n')) if org.programs_services else 0,
             
             # Geography & Community (YOUR specific location)
             'service_area_type': org.service_area_type or '',
             'primary_city': org.primary_city or '',
             'primary_state': org.primary_state or '',
-            'primary_county': org.primary_county or '',
-            'zip_codes_served': org.zip_codes_served or '',
-            'geographic_scope': org.geographic_scope or '',
-            'service_region': org.service_region or '',
+            'primary_zip': org.primary_zip or '',
+            'primary_county': get_first(org.counties_served),  # JSON array
+            'counties_served': get_json_list(org.counties_served),
+            'states_served': get_json_list(org.states_served),
+            'service_region': service_region,  # Built from city/state
             
             # Impact & Reach (YOUR actual results)
-            'beneficiaries_served': org.beneficiaries_served or 0,
-            'demographics_served': org.demographics_served or '',
-            'target_population': org.target_population or '',
-            'annual_reach': org.annual_reach or 0,
+            'people_served_annually': org.people_served_annually or '',  # CORRECT field
+            'beneficiaries_served': org.people_served_annually or '',  # Alias
+            'target_demographics': get_json_list(org.target_demographics),  # JSON array
+            'age_groups_served': get_json_list(org.age_groups_served),
+            'target_population': ', '.join(get_json_list(org.target_demographics)),  # For compatibility
             
             # Financials (YOUR actual budget)
-            'annual_budget': org.annual_budget or 0,
-            'annual_budget_range': org.annual_budget_range or '',
-            'revenue_sources': org.revenue_sources or '',
-            'major_funders': org.major_funders or '',
+            'annual_budget_range': org.annual_budget_range or '',  # CORRECT field (string!)
+            'annual_budget': org.annual_budget_range or '',  # Alias
+            'typical_grant_size': org.typical_grant_size or '',
+            'grant_success_rate': org.grant_success_rate or 0,
             
             # Capacity (YOUR actual team)
-            'staff_size': org.staff_size or '',
-            'full_time_staff': org.full_time_staff or 0,
-            'part_time_staff': org.part_time_staff or 0,
-            'volunteer_count': org.volunteer_count or 0,
+            'staff_size': org.staff_size or '',  # Range string, not number
+            'volunteer_count': org.volunteer_count or '',
             'board_size': org.board_size or 0,
             
             # Achievements (YOUR actual track record)
             'key_achievements': org.key_achievements or '',
-            'awards_recognition': org.awards_recognition or '',
-            'partnerships': org.partnerships or '',
-            'media_coverage': org.media_coverage or '',
-            'success_metrics': org.success_metrics or '',
+            'impact_metrics': org.impact_metrics or {},  # JSON
+            'awards_recognition': get_json_list(org.awards_recognition),  # New field
+            'partnerships': get_json_list(org.partnerships),  # New field
+            'media_coverage': get_json_list(org.media_coverage),  # New field
+            
+            # Grant History
+            'previous_funders': get_json_list(org.previous_funders),  # JSON array
+            'preferred_grant_types': get_json_list(org.preferred_grant_types),
+            'grant_writing_capacity': org.grant_writing_capacity or '',
             
             # Strategic Context (YOUR actual plans)
-            'strategic_priorities': org.strategic_priorities or '',
-            'growth_plans': org.growth_plans or '',
-            'challenges_faced': org.challenges_faced or '',
-            'unique_approach': org.unique_approach or '',
-            'competitive_advantage': org.competitive_advantage or '',
+            'strategic_priorities': get_json_list(org.strategic_priorities),  # New field
+            'growth_plans': org.growth_plans or '',  # New field
+            'unique_capabilities': org.unique_capabilities or '',  # CORRECT field
+            'competitive_advantage': org.competitive_advantage or '',  # New field
+            'partnership_interests': org.partnership_interests or '',
+            'funding_priorities': org.funding_priorities or '',
             
             # Community Context (YOUR actual environment)
-            'community_needs': org.community_needs or '',
-            'market_gap': org.market_gap or '',
-            'collaboration_approach': org.collaboration_approach or '',
+            'community_needs': org.community_needs or '',  # New field
+            'market_gap': org.market_gap or '',  # New field
+            'collaboration_approach': org.collaboration_approach or '',  # New field
+            
+            # Special characteristics
+            'faith_based': org.faith_based or False,
+            'minority_led': org.minority_led or False,
+            'woman_led': org.woman_led or False,
             
             # Additional enrichment
-            'total_impact_stories': org.impact_stories_count if hasattr(org, 'impact_stories_count') else 0,
             'data_richness_score': self._calculate_data_richness(org)
         }
     
@@ -616,12 +650,8 @@ Original content:
 
 Polished version (keep it authentic to their data):"""
 
-            # Use cheap model for polishing
-            response = self.ai_service.generate_text(
-                polish_prompt,
-                max_tokens=max_tokens,
-                temperature=0.3  # Low temperature for consistency
-            )
+            # Use AI to polish the flow
+            response = self.ai_service.improve_text(content, "professional")
             
             return response if response else content
             

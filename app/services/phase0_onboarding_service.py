@@ -153,19 +153,26 @@ class Phase0OnboardingService:
             # Process standard fields
             standard_fields = [
                 'name', 'legal_name', 'ein', 'org_type', 'year_founded',
-                'website', 'mission', 'vision', 'annual_budget_range',
+                'website', 'mission', 'vision', 'values', 'annual_budget_range',
                 'staff_size', 'service_area_type', 'primary_city',
-                'primary_state', 'typical_grant_size', 'grant_writing_capacity'
+                'primary_state', 'typical_grant_size', 'grant_writing_capacity',
+                'programs_services', 'key_achievements', 'unique_capabilities',
+                'partnership_interests', 'funding_priorities',
+                # New consultant-quality fields
+                'growth_plans', 'competitive_advantage', 'community_needs',
+                'market_gap', 'collaboration_approach'
             ]
             
             for field in standard_fields:
                 if field in profile_data:
                     setattr(org, field, profile_data[field])
             
-            # Process array fields
+            # Process array/JSON fields
             array_fields = [
                 'primary_focus_areas', 'target_demographics', 'preferred_grant_types',
-                'keywords', 'exclusions', 'previous_funders'
+                'keywords', 'exclusions', 'previous_funders',
+                # New consultant-quality JSON fields
+                'awards_recognition', 'media_coverage', 'partnerships', 'strategic_priorities'
             ]
             
             for field in array_fields:

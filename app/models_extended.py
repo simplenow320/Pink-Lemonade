@@ -316,8 +316,9 @@ class SurveyResponse(db.Model):
     __tablename__ = "survey_responses"
     
     id = db.Column(db.Integer, primary_key=True)
-    project_id = db.Column(db.Integer, db.ForeignKey("projects.id"), nullable=False)
-    question_id = db.Column(db.Integer, db.ForeignKey("impact_questions.id"), nullable=False)
+    survey_id = db.Column(db.Integer, db.ForeignKey("surveys.id"), nullable=True)  # Link to Survey
+    project_id = db.Column(db.Integer, db.ForeignKey("projects.id"), nullable=True)  # Make nullable
+    question_id = db.Column(db.Integer, db.ForeignKey("impact_questions.id"), nullable=True)  # Make nullable
     
     # Response data
     response_text = db.Column(db.Text)
@@ -345,6 +346,7 @@ class SurveyResponse(db.Model):
     ai_categorization = db.Column(db.Text)  # JSON string for compatibility
     
     # Timestamps
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)  # For impact reporting queries
     submitted_at = db.Column(db.DateTime, default=datetime.utcnow)
     validated_at = db.Column(db.DateTime)
     
