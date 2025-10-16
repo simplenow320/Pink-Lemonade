@@ -222,6 +222,14 @@ def create_app():
     except ImportError:
         pass
     
+    # Register unified matching V2 endpoint - CONSOLIDATED VERSION
+    try:
+        from app.api.unified_matching_v2 import unified_v2_bp
+        flask_app.register_blueprint(unified_v2_bp)
+        flask_app.logger.info("✅ Unified Matching V2 registered successfully")
+    except ImportError as e:
+        flask_app.logger.warning(f"Could not register Unified Matching V2: {e}")
+    
     # Register the proper onboarding flow for grant matching
     try:
         from app.api.onboarding_flow import onboarding_bp as new_onboarding_bp

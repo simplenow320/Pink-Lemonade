@@ -27,7 +27,7 @@ You are a grant matching expert. Score this grant match (1-5).
 # GRANT
 • Title: {grant_data.get('title', '')[:80]}
 • Funder: {grant_data.get('funder', '')}
-• Amount: ${grant_data.get('amount_max', 0):,.0f}
+• Amount: ${grant_data.get('amount_max') or 0:,.0f}
 • Geography: {grant_data.get('geography', '')}
 • Description: {grant_data.get('description', '')[:150]}
 
@@ -91,7 +91,7 @@ Organization Information:
 Grant Requirements:
 - Funder: {grant_data.get('funder', 'Funder')}
 - Grant Purpose: {grant_data.get('description', 'Grant purpose not specified')[:300]}
-- Amount Requested: ${grant_data.get('amount_max', 50000) or 50000:,.0f}
+- Amount Requested: ${(grant_data.get('amount_max') or 50000):,.0f}
 
 Section-Specific Focus:
 {ReactoPrompts._get_section_focus(section)}
