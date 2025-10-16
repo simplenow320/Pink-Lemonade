@@ -226,6 +226,14 @@ function App() {
                     }
                   />
                   <Route
+                    path="/opportunities"
+                    element={
+                      <ErrorBoundary>
+                        <Grants />
+                      </ErrorBoundary>
+                    }
+                  />
+                  <Route
                     path="/grants/:id"
                     element={
                       <ErrorBoundary>
