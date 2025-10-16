@@ -205,38 +205,22 @@ class GrantFetcher:
             return None
     
     def fetch_usaspending_grants(self, limit: int = 30) -> List[Dict]:
-        """Fetch grant opportunities from USAspending"""
-        grants = []
-        
-        # API endpoint for assistance listings
-        url = 'https://api.usaspending.gov/api/v2/assistance/awards/'
-        
-        payload = {
-            'filters': {
-                'award_type_codes': ['02', '03', '04', '05'],  # Grant types
-                'time_period': [{
-                    'start_date': (datetime.now() - timedelta(days=30)).strftime('%Y-%m-%d'),
-                    'end_date': datetime.now().strftime('%Y-%m-%d')
-                }]
-            },
-            'limit': limit,
-            'page': 1
-        }
+        """Fetch grant opportunities from USAspending using the corrected client"""
+        from app.services.usaspending_client import get_usaspending_client
         
         try:
-            response = requests.post(url, json=payload, timeout=10)
+            client = get_usaspending_client()
+            grants = client.search_assistance_listings('grant')
             
-            if response.status_code == 200:
-                data = response.json()
+            # Limit results
+            if len(grants) > limit:
+                grants = grants[:limit]
                 
-                for award in data.get('results', []):
-                    grant = self.parse_usaspending_grant(award)
-                    if grant:
-                        grants.append(grant)
+            logger.info(f"USAspending: Fetched {len(grants)} grants using corrected client")
+            return grants
         except Exception as e:
             logger.error(f"USAspending API error: {e}")
-        
-        return grants
+            return []
     
     def parse_usaspending_grant(self, award: Dict) -> Optional[Dict]:
         """Parse USAspending award into grant format"""
