@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import Toast from '../components/Toast';
+import SourceBadge from '../components/SourceBadge';
 import api from '../utils/api';
 
 const Grants = () => {
@@ -564,29 +565,37 @@ const GrantCard = ({ grant, onFederalClick }) => {
       {/* Intelligence Insights */}
       <IntelligenceInsights intelligence={grant.historical_intelligence} />
       
-      <div className="flex gap-3 mt-2">
-        {grant.id && grant.id > 0 ? (
-          <Link 
-            to={`/grant/${grant.id}`}
-            className="text-sm text-pink-600 hover:text-pink-700"
-          >
-            Analyze Grant →
-          </Link>
-        ) : (
-          <span className="text-sm text-gray-400 cursor-not-allowed">
-            Analyze Grant →
-          </span>
-        )}
-        {grant.link && (
-          <a 
-            href={grant.link} 
-            target="_blank" 
-            rel="noopener noreferrer"
-            className="text-sm text-gray-600 hover:text-gray-700"
-          >
-            Official Page ↗
-          </a>
-        )}
+      <div className="flex justify-between items-center gap-3 mt-2">
+        <div className="flex gap-3">
+          {grant.id && grant.id > 0 ? (
+            <Link 
+              to={`/grant/${grant.id}`}
+              className="text-sm text-pink-600 hover:text-pink-700"
+            >
+              Analyze Grant →
+            </Link>
+          ) : (
+            <span className="text-sm text-gray-400 cursor-not-allowed">
+              Analyze Grant →
+            </span>
+          )}
+          {grant.link && (
+            <a 
+              href={grant.link} 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="text-sm text-gray-600 hover:text-gray-700"
+            >
+              Official Page ↗
+            </a>
+          )}
+        </div>
+        
+        {/* Source Badge */}
+        <SourceBadge 
+          source_name={grant.source_name || grant.source} 
+          source_url={grant.source_url || grant.link}
+        />
       </div>
     </div>
   );
