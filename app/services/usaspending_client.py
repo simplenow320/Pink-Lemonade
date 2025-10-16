@@ -80,7 +80,7 @@ class USAspendingClient:
                         "start_date": start_date.strftime("%Y-%m-%d"),
                         "end_date": end_date.strftime("%Y-%m-%d")
                     }],
-                    "award_type_codes": ["06", "07", "08", "09", "10", "11"],  # Correct grant codes
+                    "award_type_codes": ["02", "03", "04", "05"],  # Correct grant codes (block, formula, project, cooperative)
                     "keywords": [keywords] if keywords else None
                 },
                 "fields": [
