@@ -159,30 +159,56 @@ def sync_nonprofit(ein):
         nonprofit = Organization.query.filter_by(ein=ein).first()
 
         if nonprofit:
-            # Update existing record
+            # Update existing record using correct Organization model fields
             nonprofit.name = org_data.get('name', nonprofit.name)
-            nonprofit.city = org_data.get('city', nonprofit.city)
-            nonprofit.state = org_data.get('state', nonprofit.state)
-            nonprofit.zip_code = org_data.get('zipcode', nonprofit.zip_code)
-            nonprofit.address = org_data.get('address', nonprofit.address)
+            nonprofit.legal_name = org_data.get('name', nonprofit.legal_name)
+            nonprofit.primary_city = org_data.get('city', nonprofit.primary_city)
+            nonprofit.primary_state = org_data.get('state', nonprofit.primary_state)
+            nonprofit.primary_zip = org_data.get('zipcode', nonprofit.primary_zip)
             nonprofit.website = org_data.get('website', nonprofit.website)
 
-            # Update financial data if available
+            # Update financial data if available - map to annual_budget_range
             if latest_filing:
-                nonprofit.annual_revenue = latest_filing.get('totrevenue', nonprofit.annual_revenue)
-                nonprofit.assets = latest_filing.get('totassetsend', nonprofit.assets)
+                revenue = latest_filing.get('totrevenue')
+                if revenue:
+                    # Convert revenue to budget range format
+                    if revenue < 100000:
+                        nonprofit.annual_budget_range = '<$100K'
+                    elif revenue < 500000:
+                        nonprofit.annual_budget_range = '$100K-$500K'
+                    elif revenue < 1000000:
+                        nonprofit.annual_budget_range = '$500K-$1M'
+                    elif revenue < 5000000:
+                        nonprofit.annual_budget_range = '$1M-$5M'
+                    else:
+                        nonprofit.annual_budget_range = '$5M+'
         else:
-            # Create new record
+            # Create new record using correct Organization model fields
             nonprofit = Organization()
             nonprofit.ein = ein
             nonprofit.name = org_data.get('name')
-            nonprofit.city = org_data.get('city')
-            nonprofit.state = org_data.get('state')
-            nonprofit.zip_code = org_data.get('zipcode')
-            nonprofit.address = org_data.get('address')
+            nonprofit.legal_name = org_data.get('name')
+            nonprofit.primary_city = org_data.get('city')
+            nonprofit.primary_state = org_data.get('state')
+            nonprofit.primary_zip = org_data.get('zipcode')
             nonprofit.website = org_data.get('website')
+            
+            # Set financial data if available
             if latest_filing:
-                nonprofit.annual_revenue = latest_filing.get('totrevenue')
+                revenue = latest_filing.get('totrevenue')
+                if revenue:
+                    # Convert revenue to budget range format
+                    if revenue < 100000:
+                        nonprofit.annual_budget_range = '<$100K'
+                    elif revenue < 500000:
+                        nonprofit.annual_budget_range = '$100K-$500K'
+                    elif revenue < 1000000:
+                        nonprofit.annual_budget_range = '$500K-$1M'
+                    elif revenue < 5000000:
+                        nonprofit.annual_budget_range = '$1M-$5M'
+                    else:
+                        nonprofit.annual_budget_range = '$5M+'
+            
             db.session.add(nonprofit)
 
         # Commit changes
