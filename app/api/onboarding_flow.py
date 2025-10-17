@@ -8,7 +8,10 @@ from app.models import User, Organization, UserProgress
 from app.services.auth_manager import AuthManager
 from datetime import datetime
 import json
+import logging
 from sqlalchemy.exc import IntegrityError
+
+logger = logging.getLogger(__name__)
 
 onboarding_bp = Blueprint('onboarding', __name__, url_prefix='/onboarding')
 
@@ -88,6 +91,19 @@ def save_step1():
             org.user_id = user.id
             org.created_by_user_id = user.id
             db.session.add(org)
+            db.session.flush()  # Get org.id before proceeding
+            
+            # Create bi-directional link between user and organization
+            user.org_id = org.id
+            
+            # Verify relationship was created correctly
+            if org.user_id != user.id or user.org_id != org.id:
+                db.session.rollback()
+                logger.error(f"Failed to link user {user.id} with org {org.id}")
+                flash('There was an error setting up your organization. Please try again.', 'error')
+                return redirect(url_for('onboarding.step1'))
+            
+            logger.info(f"Created org {org.id} for user {user.id} during onboarding")
         
         # Update basic info
         org_name = request.form.get('org_name', '').strip()

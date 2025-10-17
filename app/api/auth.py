@@ -113,9 +113,25 @@ def register():
             org.created_by_user_id = result['user']['id']
             org.profile_completeness = 10  # Needs onboarding
             db.session.add(org)
+            db.session.flush()  # Get org.id before commit
+            
+            # Create bi-directional link between user and organization
+            user = User.query.get(result['user']['id'])
+            if not user:
+                db.session.rollback()
+                logger.error(f"User {result['user']['id']} not found after creation")
+                return jsonify({'error': 'Registration failed - user creation error'}), 500
+            
+            user.org_id = org.id
             db.session.commit()
             
-            logger.info(f"User registered and logged in: {email}")
+            # Verify relationship was created correctly
+            if org.user_id != user.id or user.org_id != org.id:
+                db.session.rollback()
+                logger.error(f"Failed to link user {user.id} with org {org.id}")
+                return jsonify({'error': 'Registration failed - organization setup error'}), 500
+            
+            logger.info(f"User registered and logged in: {email} with org {org.id}")
             
             return jsonify({
                 'message': 'Registration successful! Let\'s set up your organization profile.',

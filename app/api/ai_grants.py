@@ -6,7 +6,7 @@ Using REACTO structure for all AI operations
 from flask import Blueprint, jsonify, request, current_app, copy_current_request_context
 from app.services.ai_grant_matcher import AIGrantMatcher
 from app.services.historical_intelligence import get_intelligence_service
-from app.models import Grant, Organization, db
+from app.models import Grant, Organization, User, db
 import logging
 from datetime import datetime
 import time
@@ -105,13 +105,61 @@ def get_ai_matched_grants_auto():
             'error': 'Authentication required'
         }), 401
 
-    # Get organization for this user
+    # Get organization for this user with robust lookup
     org = Organization.query.filter_by(user_id=user_id).first()
+    
+    # Fallback: Look up by user.org_id and auto-repair if needed
+    if not org:
+        user = User.query.get(user_id)
+        if user and user.org_id:
+            org = Organization.query.get(user.org_id)
+            if org:
+                # Auto-repair missing user_id
+                org.user_id = user_id
+                db.session.commit()
+                logger.warning(f"Auto-repaired org_id {org.id} with user_id {user_id}")
+    
     if not org:
         return jsonify({
             'success': False,
-            'error': 'Organization profile not found. Please complete your profile.'
+            'error': 'Organization profile not found',
+            'message': 'Please complete your organization profile to use AI matching',
+            'action': 'redirect',
+            'url': '/profile'
         }), 404
+    
+    # Validate required fields for AI matching
+    required_fields = {}
+    missing_fields = []
+    
+    # Check mission
+    if not org.mission or org.mission.strip() == '':
+        missing_fields.append('mission')
+    
+    # Check focus areas
+    focus_areas = org.get_focus_areas() if hasattr(org, 'get_focus_areas') else []
+    if not focus_areas or len(focus_areas) == 0:
+        missing_fields.append('focus_areas')
+    
+    # Check location
+    location = f"{org.primary_city or ''}, {org.primary_state or ''}".strip()
+    if location == ',' or location == '' or location == 'N/A, N/A':
+        missing_fields.append('location')
+    
+    # Check budget
+    if not org.annual_budget_range or org.annual_budget_range.strip() == '':
+        missing_fields.append('budget')
+    
+    if missing_fields:
+        return jsonify({
+            'success': False,
+            'error': 'Incomplete organization profile',
+            'message': f'Please add the following to your profile: {", ".join(missing_fields)}',
+            'missing_fields': missing_fields,
+            'profile_completeness': org.profile_completeness or 0,
+            'action': 'redirect',
+            'url': '/profile'
+        }), 400
 
     # Call existing function with org_id
     return get_ai_matched_grants(org.id)
