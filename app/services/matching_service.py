@@ -456,6 +456,8 @@ class MatchingService:
                 scoring = self.score_item(item, tokens, snapshot)
                 item_with_score = item.copy()
                 item_with_score.update(scoring)
+                item_with_score['source_name'] = 'Candid News'
+                item_with_score['source_url'] = item.get('url') or 'https://candid.org'
                 item_with_score['sourceNotes'] = {
                     "api": "candid.news",
                     "query": build_query_terms(tokens)['news_query'],
@@ -481,6 +483,8 @@ class MatchingService:
                 scoring = self.score_item(item, tokens, snapshot)
                 item_with_score = item.copy()
                 item_with_score.update(scoring)
+                item_with_score['source_name'] = 'Grants.gov'
+                item_with_score['source_url'] = item.get('url') or item.get('link') or 'https://grants.gov'
                 item_with_score['sourceNotes'] = {
                     "api": "grants.gov",
                     "endpoint": "search2", 
