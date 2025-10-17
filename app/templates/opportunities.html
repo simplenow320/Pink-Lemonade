@@ -294,6 +294,40 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
+    // Helper function to get source icon based on source name
+    function getSourceIcon(source) {
+        if (!source) return '📌';
+        
+        const sourceLower = source.toLowerCase();
+        
+        if (sourceLower.includes('sam.gov') || sourceLower.includes('grants.gov')) return '🏛️';
+        if (sourceLower.includes('candid') || sourceLower.includes('foundation')) return '📚';
+        if (sourceLower.includes('federal register')) return '📋';
+        if (sourceLower.includes('hhs') || sourceLower.includes('health')) return '🏥';
+        if (sourceLower.includes('nsf') || sourceLower.includes('science')) return '🔬';
+        if (sourceLower.includes('education')) return '🎓';
+        if (sourceLower.includes('news') || sourceLower.includes('pnd')) return '📰';
+        if (sourceLower.includes('usaspending') || sourceLower.includes('historical')) return '📊';
+        
+        return '🔗';
+    }
+    
+    // Helper function to format source display
+    function formatSourceBadge(source, sourceUrl) {
+        const icon = getSourceIcon(source);
+        const displayName = source || 'Unknown Source';
+        
+        if (sourceUrl) {
+            return `<a href="${sourceUrl}" target="_blank" style="color:#6B6B6B;font-size:0.85rem;text-decoration:none;display:flex;align-items:center;gap:4px;margin-left:auto">
+                ${icon} <span style="border-bottom:1px dotted #B8899A">${displayName}</span>
+            </a>`;
+        } else {
+            return `<span style="color:#6B6B6B;font-size:0.85rem;display:flex;align-items:center;gap:4px;margin-left:auto">
+                ${icon} ${displayName}
+            </span>`;
+        }
+    }
+
     function loadUserPreferences() {
         // Auto-populate location and focus area from organization profile
         fetch('/api/organization/profile')
@@ -478,7 +512,7 @@ document.addEventListener('DOMContentLoaded', function() {
                             onmouseout="this.style.background='white';this.style.color='#B8899A'">
                         💾 Save
                     </button>
-                    ${grant.source ? `<span style="color:#6B6B6B;font-size:0.85rem;margin-left:auto">${grant.source}</span>` : ''}
+                    ${grant.source || grant.source_name ? formatSourceBadge(grant.source || grant.source_name, grant.source_url) : ''}
                 </div>
             </div>
         `).join('');
@@ -558,7 +592,7 @@ document.addEventListener('DOMContentLoaded', function() {
                             onmouseout="this.style.background='white';this.style.color='#B8899A'">
                         💾 Save
                     </button>
-                    ${match.grant?.source ? `<span style="color:#6B6B6B;font-size:0.85rem;margin-left:auto">${match.grant.source}</span>` : ''}
+                    ${match.grant?.source || match.grant?.source_name ? formatSourceBadge(match.grant.source || match.grant.source_name, match.grant?.source_url) : ''}
                 </div>
             </div>
         `).join('');
