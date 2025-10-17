@@ -86,10 +86,15 @@ def search_opportunities():
             db_grants = query.limit(50).all()
             
             for grant in db_grants:
+                # Use actual grant source if available, otherwise use a default
+                actual_source = grant.source_name or 'Database'
+                source_url = grant.source_url or ''
+                
                 opportunity = {
-                    'source': 'database',
-                    'source_type': 'Grant Database',
-                    'source_name': 'Pink Lemonade Database',
+                    'source': actual_source,
+                    'source_type': actual_source,
+                    'source_name': actual_source,
+                    'source_url': source_url,
                     'id': grant.id,
                     'title': grant.title or 'Grant Opportunity',
                     'funder': grant.funder or 'Foundation',
