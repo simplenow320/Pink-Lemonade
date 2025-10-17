@@ -22,7 +22,7 @@ def run_with_flask_context(func, *args, **kwargs):
     # Simplified approach: always use app context for threaded operations
     # This avoids complex request context copying issues while maintaining database access
     from flask import current_app
-    app = current_app._get_current_object()  # Get the actual app instance
+    app = current_app._get_current_object()  # type: ignore[attr-defined] # Get the actual app instance
     
     with app.app_context():
         return func(*args, **kwargs)
@@ -90,6 +90,31 @@ def request_timeout_protection(max_seconds=6):
                     
         return wrapper
     return decorator
+
+@ai_grants_bp.route('/match', methods=['POST'])
+@request_timeout_protection(max_seconds=6)
+def get_ai_matched_grants_auto():
+    """Get AI-matched grants using org_id from session"""
+    from flask import session
+
+    # Get user from session
+    user_id = session.get('user_id')
+    if not user_id:
+        return jsonify({
+            'success': False,
+            'error': 'Authentication required'
+        }), 401
+
+    # Get organization for this user
+    org = Organization.query.filter_by(user_id=user_id).first()
+    if not org:
+        return jsonify({
+            'success': False,
+            'error': 'Organization profile not found. Please complete your profile.'
+        }), 404
+
+    # Call existing function with org_id
+    return get_ai_matched_grants(org.id)
 
 @ai_grants_bp.route('/match/<int:org_id>', methods=['GET', 'POST'])
 @request_timeout_protection(max_seconds=6)  # CRITICAL: 6-second max for entire request
