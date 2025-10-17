@@ -86,14 +86,29 @@ def search_opportunities():
             db_grants = query.limit(50).all()
             
             for grant in db_grants:
-                # Use actual grant source if available, otherwise use a default
-                actual_source = grant.source_name or 'Database'
+                # Map source_name to filter-compatible source type
+                source_name = grant.source_name or 'Database'
                 source_url = grant.source_url or ''
                 
+                # Map human-readable source names to filter slugs for consistency
+                source_slug = 'database'
+                if source_name:
+                    source_lower = source_name.lower()
+                    if 'sam.gov' in source_lower or 'grants.gov' in source_lower:
+                        source_slug = 'federal_grants'
+                    elif 'candid' in source_lower or 'foundation' in source_lower:
+                        source_slug = 'foundation_database'
+                    elif 'federal register' in source_lower:
+                        source_slug = 'federal_grants'
+                    elif 'news' in source_lower or 'pnd' in source_lower:
+                        source_slug = 'foundation_news'
+                    elif 'historical' in source_lower or 'usaspending' in source_lower:
+                        source_slug = 'historical_awards'
+                
                 opportunity = {
-                    'source': actual_source,
-                    'source_type': actual_source,
-                    'source_name': actual_source,
+                    'source': source_slug,  # Machine-readable for filtering
+                    'source_type': source_name,  # Human-readable for display
+                    'source_name': source_name,  # Human-readable for display
                     'source_url': source_url,
                     'id': grant.id,
                     'title': grant.title or 'Grant Opportunity',
