@@ -137,7 +137,7 @@ def get_ai_matched_grants_auto():
         missing_fields.append('mission')
     
     # Check focus areas
-    focus_areas = org.get_focus_areas() if hasattr(org, 'get_focus_areas') else []
+    focus_areas = org.primary_focus_areas or []
     if not focus_areas or len(focus_areas) == 0:
         missing_fields.append('focus_areas')
     
