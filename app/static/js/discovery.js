@@ -166,32 +166,31 @@ async function saveGrant(grantId) {
     const grant = opportunities.find(g => g.id === grantId);
     if (!grant) return;
     
-    // Change status to 'saved' or 'idea'
-    grant.status = 'idea';
-    
-    // TODO: API call to save grant
-    if (DATA_MODE === 'API') {
-        try {
-            const response = await fetch(`/api/grants/${grantId}/status`, {
-                method: 'PATCH',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({status: 'idea'})
-            });
+    try {
+        const response = await fetch(`/api/grants/${grantId}/save`, {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'}
+        });
+        
+        const data = await response.json();
+        
+        if (response.ok && data.success) {
+            showSuccess(`"${grant.title}" saved! View in Saved Grants.`);
             
-            if (response.ok) {
-                showSuccess(`Grant "${grant.title}" saved successfully!`);
-                // Remove from discovery list
-                opportunities = opportunities.filter(g => g.id !== grantId);
-                displayOpportunities();
+            // Update button state to show it's saved
+            const saveButton = event.target;
+            if (saveButton) {
+                saveButton.textContent = '✓ Saved';
+                saveButton.disabled = true;
+                saveButton.style.opacity = '0.6';
+                saveButton.style.cursor = 'not-allowed';
             }
-        } catch (error) {
-            console.error('Error saving grant:', error);
-            showError('Failed to save grant. Please try again.');
+        } else {
+            showError(data.message || data.error || 'Failed to save grant');
         }
-    } else {
-        showSuccess(`Grant "${grant.title}" saved successfully!`);
-        opportunities = opportunities.filter(g => g.id !== grantId);
-        displayOpportunities();
+    } catch (error) {
+        console.error('Error saving grant:', error);
+        showError('Failed to save grant. Please try again.');
     }
 }
 
