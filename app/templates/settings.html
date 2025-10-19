@@ -1314,10 +1314,12 @@
                     body: JSON.stringify(notificationData)
                 });
 
+                const data = await response.json();
+
                 if (response.ok) {
-                    showNotification('Notification preferences updated', 'success');
+                    showNotification('Notification preferences saved! ✅', 'success');
                 } else {
-                    showNotification('Failed to update notifications', 'error');
+                    showNotification(data.error || 'Failed to update notifications', 'error');
                 }
             } catch (error) {
                 console.error('Error saving notifications:', error);
@@ -1336,16 +1338,18 @@
             };
 
             try {
-                const response = await fetch('/api/settings/user', {
+                const response = await fetch('/api/settings/preferences', {
                     method: 'POST',
                     headers: {'Content-Type': 'application/json'},
                     body: JSON.stringify(preferencesData)
                 });
 
+                const data = await response.json();
+
                 if (response.ok) {
-                    showNotification('Preferences updated successfully', 'success');
+                    showNotification('Preferences updated successfully! 🎉', 'success');
                 } else {
-                    showNotification('Failed to update preferences', 'error');
+                    showNotification(data.error || 'Failed to update preferences', 'error');
                 }
             } catch (error) {
                 console.error('Error saving preferences:', error);
