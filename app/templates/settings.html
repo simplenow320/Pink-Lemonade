@@ -304,6 +304,17 @@
 
         .tab-content.active {
             display: block;
+            min-height: 400px;
+        }
+        
+        .px-6 {
+            padding-left: 1.5rem !important;
+            padding-right: 1.5rem !important;
+        }
+        
+        .py-8 {
+            padding-top: 2rem !important;
+            padding-bottom: 2rem !important;
         }
 
         .modal-overlay {
@@ -645,133 +656,134 @@
 
         <!-- Notifications Tab -->
         <div id="notifications-tab" class="tab-content">
-            <div class="px-6 py-8">
-                <div class="settings-section">
-                <h2 class="section-title">Notification Preferences</h2>
-                <p class="text-gray-600 mb-6">Choose how you'd like to receive updates</p>
+            <div class="px-6 py-8" style="padding: 2rem 1.5rem;">
+                <div class="settings-section" style="background: #FAFAFA; padding: 2rem; border-radius: 0.75rem; border: 1px solid #E8E8E8;">
+                    <h2 class="section-title">Notification Preferences</h2>
+                    <p style="color: #6B6B6B; margin-bottom: 1.5rem;">Choose how you'd like to receive updates</p>
 
-                <form id="notifications-form">
-                    <div class="space-y-6">
-                        <div class="flex justify-between items-center">
-                            <div>
-                                <p class="font-medium">Email Updates</p>
-                                <p class="text-sm text-gray-600">General platform updates and news</p>
+                    <form id="notifications-form">
+                        <div style="display: flex; flex-direction: column; gap: 1.5rem;">
+                            <div style="display: flex; justify-content: space-between; align-items: center;">
+                                <div>
+                                    <p style="font-weight: 500; margin-bottom: 0.25rem;">Email Updates</p>
+                                    <p style="font-size: 0.875rem; color: #6B6B6B;">General platform updates and news</p>
+                                </div>
+                                <label class="toggle-switch">
+                                    <input type="checkbox" id="email_updates" checked>
+                                    <span class="slider"></span>
+                                </label>
                             </div>
-                            <label class="toggle-switch">
-                                <input type="checkbox" id="email_updates" checked>
-                                <span class="slider"></span>
-                            </label>
+
+                            <div style="display: flex; justify-content: space-between; align-items: center;">
+                                <div>
+                                    <p style="font-weight: 500; margin-bottom: 0.25rem;">Grant Alerts</p>
+                                    <p style="font-size: 0.875rem; color: #6B6B6B;">New grants matching your profile</p>
+                                </div>
+                                <label class="toggle-switch">
+                                    <input type="checkbox" id="grant_alerts" checked>
+                                    <span class="slider"></span>
+                                </label>
+                            </div>
+
+                            <div style="display: flex; justify-content: space-between; align-items: center;">
+                                <div>
+                                    <p style="font-weight: 500; margin-bottom: 0.25rem;">Deadline Reminders</p>
+                                    <p style="font-size: 0.875rem; color: #6B6B6B;">Reminders before grant deadlines</p>
+                                </div>
+                                <label class="toggle-switch">
+                                    <input type="checkbox" id="deadline_reminders" checked>
+                                    <span class="slider"></span>
+                                </label>
+                            </div>
+
+                            <div style="display: flex; justify-content: space-between; align-items: center;">
+                                <div>
+                                    <p style="font-weight: 500; margin-bottom: 0.25rem;">Weekly Digest</p>
+                                    <p style="font-size: 0.875rem; color: #6B6B6B;">Weekly summary of activity</p>
+                                </div>
+                                <label class="toggle-switch">
+                                    <input type="checkbox" id="weekly_digest">
+                                    <span class="slider"></span>
+                                </label>
+                            </div>
                         </div>
 
-                        <div class="flex justify-between items-center">
-                            <div>
-                                <p class="font-medium">Grant Alerts</p>
-                                <p class="text-sm text-gray-600">New grants matching your profile</p>
-                            </div>
-                            <label class="toggle-switch">
-                                <input type="checkbox" id="grant_alerts" checked>
-                                <span class="slider"></span>
-                            </label>
+                        <div style="margin-top: 2rem;">
+                            <button type="submit" class="btn-primary">Save Preferences</button>
                         </div>
-
-                        <div class="flex justify-between items-center">
-                            <div>
-                                <p class="font-medium">Deadline Reminders</p>
-                                <p class="text-sm text-gray-600">Reminders before grant deadlines</p>
-                            </div>
-                            <label class="toggle-switch">
-                                <input type="checkbox" id="deadline_reminders" checked>
-                                <span class="slider"></span>
-                            </label>
-                        </div>
-
-                        <div class="flex justify-between items-center">
-                            <div>
-                                <p class="font-medium">Weekly Digest</p>
-                                <p class="text-sm text-gray-600">Weekly summary of activity</p>
-                            </div>
-                            <label class="toggle-switch">
-                                <input type="checkbox" id="weekly_digest">
-                                <span class="slider"></span>
-                            </label>
-                        </div>
-                    </div>
-
-                    <div class="mt-8">
-                        <button type="submit" class="btn-primary">Save Preferences</button>
-                    </div>
-                </form>
+                    </form>
                 </div>
             </div>
         </div>
 
         <!-- Preferences Tab -->
         <div id="preferences-tab" class="tab-content">
-            <div class="px-6 py-8">
-                <div class="settings-section">
-                <h2 class="section-title">System Preferences</h2>
-                
-                <form id="preferences-form">
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-                        <div>
-                            <label class="form-label">Timezone</label>
-                            <select id="timezone" class="form-select">
-                                <option value="America/New_York">Eastern Time (ET)</option>
-                                <option value="America/Chicago">Central Time (CT)</option>
-                                <option value="America/Denver">Mountain Time (MT)</option>
-                                <option value="America/Los_Angeles">Pacific Time (PT)</option>
-                            </select>
+            <div class="px-6 py-8" style="padding: 2rem 1.5rem;">
+                <div class="settings-section" style="background: #FAFAFA; padding: 2rem; border-radius: 0.75rem; border: 1px solid #E8E8E8; margin-bottom: 2rem;">
+                    <h2 class="section-title">System Preferences</h2>
+                    
+                    <form id="preferences-form">
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 1.5rem;">
+                            <div>
+                                <label class="form-label" style="display: block; margin-bottom: 0.5rem; font-weight: 600;">Timezone</label>
+                                <select id="timezone" class="form-select" style="width: 100%; padding: 0.75rem; border: 1px solid #E8E8E8; border-radius: 0.5rem;">
+                                    <option value="America/New_York">Eastern Time (ET)</option>
+                                    <option value="America/Chicago">Central Time (CT)</option>
+                                    <option value="America/Denver">Mountain Time (MT)</option>
+                                    <option value="America/Los_Angeles">Pacific Time (PT)</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="form-label" style="display: block; margin-bottom: 0.5rem; font-weight: 600;">Date Format</label>
+                                <select id="date_format" class="form-select" style="width: 100%; padding: 0.75rem; border: 1px solid #E8E8E8; border-radius: 0.5rem;">
+                                    <option value="MM/DD/YYYY">MM/DD/YYYY</option>
+                                    <option value="DD/MM/YYYY">DD/MM/YYYY</option>
+                                    <option value="YYYY-MM-DD">YYYY-MM-DD</option>
+                                </select>
+                            </div>
                         </div>
-                        <div>
-                            <label class="form-label">Date Format</label>
-                            <select id="date_format" class="form-select">
-                                <option value="MM/DD/YYYY">MM/DD/YYYY</option>
-                                <option value="DD/MM/YYYY">DD/MM/YYYY</option>
-                                <option value="YYYY-MM-DD">YYYY-MM-DD</option>
-                            </select>
-                        </div>
-                    </div>
 
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-                        <div>
-                            <label class="form-label">Currency Display</label>
-                            <select id="currency" class="form-select">
-                                <option value="USD">US Dollar ($)</option>
-                                <option value="EUR">Euro (€)</option>
-                                <option value="GBP">British Pound (£)</option>
-                                <option value="CAD">Canadian Dollar (C$)</option>
-                            </select>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 1.5rem;">
+                            <div>
+                                <label class="form-label" style="display: block; margin-bottom: 0.5rem; font-weight: 600;">Currency Display</label>
+                                <select id="currency" class="form-select" style="width: 100%; padding: 0.75rem; border: 1px solid #E8E8E8; border-radius: 0.5rem;">
+                                    <option value="USD">US Dollar ($)</option>
+                                    <option value="EUR">Euro (€)</option>
+                                    <option value="GBP">British Pound (£)</option>
+                                    <option value="CAD">Canadian Dollar (C$)</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="form-label" style="display: block; margin-bottom: 0.5rem; font-weight: 600;">Theme</label>
+                                <select id="theme" class="form-select" style="width: 100%; padding: 0.75rem; border: 1px solid #E8E8E8; border-radius: 0.5rem;">
+                                    <option value="light">Light</option>
+                                    <option value="dark">Dark</option>
+                                    <option value="auto">Auto</option>
+                                </select>
+                            </div>
                         </div>
-                        <div>
-                            <label class="form-label">Theme</label>
-                            <select id="theme" class="form-select">
-                                <option value="light">Light</option>
-                                <option value="dark">Dark</option>
-                                <option value="auto">Auto</option>
-                            </select>
-                        </div>
-                    </div>
 
-                    <button type="submit" class="btn-primary">Save Preferences</button>
-                </form>
+                        <button type="submit" class="btn-primary">Save Preferences</button>
+                    </form>
                 </div>
                 
-                <div class="settings-section">
-                <h2 class="section-title">Account Actions</h2>
-                <div class="space-y-4">
-                    <div class="flex justify-between items-center">
-                        <div>
-                            <p class="font-medium">Export Data</p>
-                            <p class="text-sm text-gray-600">Download all your account data</p>
+                <div class="settings-section" style="background: #FAFAFA; padding: 2rem; border-radius: 0.75rem; border: 1px solid #E8E8E8;">
+                    <h2 class="section-title">Account Actions</h2>
+                    <div style="display: flex; flex-direction: column; gap: 1rem;">
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <div>
+                                <p style="font-weight: 500;">Export Data</p>
+                                <p style="font-size: 0.875rem; color: #6B6B6B;">Download all your account data</p>
+                            </div>
+                            <button onclick="exportData()" class="btn-secondary">Export</button>
                         </div>
-                        <button onclick="exportData()" class="btn-secondary">Export</button>
-                    </div>
-                    <div class="flex justify-between items-center">
-                        <div>
-                            <p class="font-medium">Delete Account</p>
-                            <p class="text-sm text-gray-600">Permanently delete your account and data</p>
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <div>
+                                <p style="font-weight: 500;">Delete Account</p>
+                                <p style="font-size: 0.875rem; color: #6B6B6B;">Permanently delete your account and data</p>
+                            </div>
+                            <button onclick="confirmDeleteAccount()" class="btn-danger">Delete</button>
                         </div>
-                        <button onclick="confirmDeleteAccount()" class="btn-danger">Delete</button>
                     </div>
                 </div>
             </div>
