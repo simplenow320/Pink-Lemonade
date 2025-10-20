@@ -293,3 +293,46 @@ def update_preferences():
         db.session.rollback()
         logger.error(f"Error updating preferences: {e}")
         return jsonify({'error': str(e)}), 500
+
+
+@bp.route('/export', methods=['GET'])
+def export_user_data():
+    """Export all user data as JSON"""
+    try:
+        user = AuthManager.get_current_user()
+        if not user:
+            return jsonify({'error': 'Not authenticated'}), 401
+
+        org = db.session.query(Organization).filter_by(user_id=user.id).first()
+
+        export_data = {
+            'user': {
+                'email': user.email,
+                'first_name': user.first_name,
+                'last_name': user.last_name,
+                'phone': user.phone,
+                'created_at': user.created_at.isoformat() if user.created_at else None
+            },
+            'organization': {
+                'name': org.name if org else None,
+                'ein': org.ein if org else None,
+                'mission': org.mission if org else None,
+                'website': org.website if org else None,
+            } if org else None,
+            'preferences': {
+                'timezone': user.timezone,
+                'notifications': user.notification_preferences
+            }
+        }
+
+        from flask import make_response
+        import json
+        response = make_response(json.dumps(export_data, indent=2))
+        response.headers['Content-Type'] = 'application/json'
+        response.headers['Content-Disposition'] = 'attachment; filename=account-data.json'
+        return response
+
+    except Exception as e:
+        logger.error(f"Error exporting data: {e}")
+        return jsonify({'error': str(e)}), 500
+

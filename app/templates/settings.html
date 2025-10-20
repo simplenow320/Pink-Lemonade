@@ -299,14 +299,14 @@
         }
 
         .tab-content {
-            display: none;
+            display: none !important;
+        }
+        .tab-content.active {
+            display: block !important;
+            min-height: 400px;
+            visibility: visible !important;
         }
 
-        .tab-content.active {
-            display: block;
-            min-height: 400px;
-        }
-        
         .px-6 {
             padding-left: 1.5rem !important;
             padding-right: 1.5rem !important;
@@ -788,7 +788,6 @@
                 </div>
             </div>
         </div>
-    </div>
 
     <script>
         // Tab functionality with debugging
@@ -820,6 +819,10 @@
 
         // Initialize page
         document.addEventListener('DOMContentLoaded', () => {
+            const activeTab = document.querySelector('.tab-content.active');
+            if (activeTab) {
+                activeTab.style.display = 'block';
+            }
             loadUserSettings();
             setupEventListeners();
             setupProgramManagement();
