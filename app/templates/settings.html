@@ -791,18 +791,30 @@
     </div>
 
     <script>
-        // Tab functionality
+        // Tab functionality with debugging
+        console.log('Settings page JavaScript loaded');
+        
         document.querySelectorAll('.tab-button').forEach(button => {
             button.addEventListener('click', () => {
                 const tabName = button.getAttribute('data-tab');
+                console.log(`Switching to tab: ${tabName}`);
                 
                 // Update active tab button
                 document.querySelectorAll('.tab-button').forEach(btn => btn.classList.remove('active'));
                 button.classList.add('active');
                 
                 // Update active tab content
-                document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
-                document.getElementById(`${tabName}-tab`).classList.add('active');
+                document.querySelectorAll('.tab-content').forEach(content => {
+                    content.classList.remove('active');
+                    console.log(`Removed active from: ${content.id}`);
+                });
+                
+                const targetTab = document.getElementById(`${tabName}-tab`);
+                targetTab.classList.add('active');
+                console.log(`Added active to: ${targetTab.id}`);
+                console.log(`Display style:`, window.getComputedStyle(targetTab).display);
+                console.log(`Height:`, window.getComputedStyle(targetTab).height);
+                console.log(`Children count:`, targetTab.children.length);
             });
         });
 
