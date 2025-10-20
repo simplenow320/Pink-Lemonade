@@ -36,15 +36,15 @@ def get_user_profile():
         # Get real user from session
         from flask import session
         from app.models import User
-        
+
         user_id = session.get('user_id')
         if not user_id:
             return jsonify({'error': 'Not authenticated'}), 401
-            
+
         user = User.query.get(user_id)
         if not user:
             return jsonify({'error': 'User not found'}), 404
-        
+
         # Return real user data
         user_data = {
             'first_name': user.first_name or '',
@@ -55,7 +55,7 @@ def get_user_profile():
             'org_name': user.org_name or '',
             'role': user.role or 'member'
         }
-        
+
         return jsonify(user_data)
     except Exception as e:
         logger.error(f"Error getting user profile: {e}")
@@ -66,11 +66,11 @@ def update_user_profile():
     """Update user profile"""
     try:
         data = request.json
-        
+
         # In production, this would update the authenticated user
         # For now, just return success
         logger.info(f"User profile update: {data}")
-        
+
         return jsonify({'message': 'User profile updated successfully'})
     except Exception as e:
         logger.error(f"Error updating user profile: {e}")
@@ -85,17 +85,17 @@ def get_documents():
         org = Organization.query.first()
         if not org:
             return jsonify([])
-        
+
         # Get documents from org's documents field
         documents = org.documents if hasattr(org, 'documents') else []
-        
+
         # If documents is a string, try to parse it as JSON
         if isinstance(documents, str):
             try:
                 documents = json.loads(documents)
             except:
                 documents = []
-        
+
         return jsonify(documents)
     except Exception as e:
         logger.error(f"Error getting documents: {e}")
@@ -107,36 +107,43 @@ def upload_document():
     try:
         if 'file' not in request.files:
             return jsonify({'error': 'No file provided'}), 400
-        
+
         file = request.files['file']
         if file.filename == '':
             return jsonify({'error': 'No file selected'}), 400
-        
+
+        # Fix LSP error - add null check
+        if not file.filename:
+            return jsonify({'error': 'No filename provided'}), 400
+
         if not allowed_file(file.filename):
             return jsonify({'error': 'File type not allowed'}), 400
-        
+
         # Check file size
         file.seek(0, os.SEEK_END)
         file_size = file.tell()
         file.seek(0)
-        
+
         if file_size > MAX_FILE_SIZE:
             return jsonify({'error': 'File too large (max 10MB)'}), 400
-        
-        # Save file
+
+        # Save file with type-safe filename
         filename = secure_filename(file.filename)
+        if not filename:
+            return jsonify({'error': 'Invalid filename'}), 400
+
         timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
         unique_filename = f"{timestamp}_{filename}"
         filepath = os.path.join(UPLOAD_FOLDER, unique_filename)
-        
+
         file.save(filepath)
-        
+
         # Get organization
         org = Organization.query.first()
         if not org:
             # Don't create a default organization
             return jsonify({'error': 'No organization found. Please create one first'}), 404
-        
+
         # Add document to organization
         document = {
             'id': len(org.documents) + 1 if hasattr(org, 'documents') and org.documents else 1,
@@ -146,7 +153,7 @@ def upload_document():
             'uploaded_at': datetime.now().isoformat(),
             'type': filename.rsplit('.', 1)[1].lower()
         }
-        
+
         # Update documents list
         if hasattr(org, 'documents'):
             if isinstance(org.documents, str):
@@ -158,16 +165,16 @@ def upload_document():
                 documents = org.documents or []
         else:
             documents = []
-        
+
         documents.append(document)
-        
+
         # Store as JSON string in database
         org.documents = json.dumps(documents)
         db.session.commit()
-        
+
         logger.info(f"Document uploaded: {filename}")
         return jsonify(document)
-        
+
     except Exception as e:
         logger.error(f"Error uploading document: {e}")
         db.session.rollback()
@@ -180,7 +187,7 @@ def delete_document(doc_id):
         org = Organization.query.first()
         if not org:
             return jsonify({'error': 'Organization not found'}), 404
-        
+
         # Get documents
         if hasattr(org, 'documents'):
             if isinstance(org.documents, str):
@@ -192,7 +199,7 @@ def delete_document(doc_id):
                 documents = org.documents or []
         else:
             documents = []
-        
+
         # Find and remove document
         document_to_delete = None
         for doc in documents:
@@ -200,24 +207,24 @@ def delete_document(doc_id):
                 document_to_delete = doc
                 documents.remove(doc)
                 break
-        
+
         if not document_to_delete:
             return jsonify({'error': 'Document not found'}), 404
-        
+
         # Delete file from filesystem
         try:
             if os.path.exists(document_to_delete['path']):
                 os.remove(document_to_delete['path'])
         except Exception as e:
             logger.warning(f"Could not delete file: {e}")
-        
+
         # Update database
         org.documents = json.dumps(documents)
         db.session.commit()
-        
+
         logger.info(f"Document deleted: {document_to_delete['name']}")
         return jsonify({'message': 'Document deleted successfully'})
-        
+
     except Exception as e:
         logger.error(f"Error deleting document: {e}")
         db.session.rollback()
@@ -230,7 +237,7 @@ def clear_all_documents():
         org = Organization.query.first()
         if not org:
             return jsonify({'error': 'Organization not found'}), 404
-        
+
         # Get documents
         if hasattr(org, 'documents'):
             if isinstance(org.documents, str):
@@ -242,7 +249,7 @@ def clear_all_documents():
                 documents = org.documents or []
         else:
             documents = []
-        
+
         # Delete all files
         for doc in documents:
             try:
@@ -250,14 +257,14 @@ def clear_all_documents():
                     os.remove(doc['path'])
             except Exception as e:
                 logger.warning(f"Could not delete file: {e}")
-        
+
         # Clear documents in database
         org.documents = json.dumps([])
         db.session.commit()
-        
+
         logger.info("All documents cleared")
         return jsonify({'message': 'All documents cleared successfully'})
-        
+
     except Exception as e:
         logger.error(f"Error clearing documents: {e}")
         db.session.rollback()
@@ -267,78 +274,100 @@ def clear_all_documents():
 def export_profile():
     """Export complete profile as JSON"""
     try:
+        # Get authenticated user
+        from flask import session
+        from app.models import User
+
+        user_id = session.get('user_id')
+        if not user_id:
+            return jsonify({'error': 'Not authenticated'}), 401
+
+        user = User.query.get(user_id)
+        if not user:
+            return jsonify({'error': 'User not found'}), 404
+
         # Get organization
         org = Organization.query.first()
         if not org:
             return jsonify({'error': 'Organization not found'}), 404
-        
-        # Prepare export data
+
+        # Prepare export data with REAL user information
         export_data = {
             'organization': org.to_dict(),
             'user': {
-                'first_name': 'User',
-                'last_name': 'Name',
-                'email': 'user@example.org',
-                'phone': '(555) 123-4567',
-                'title': 'Grant Manager'
+                'first_name': user.first_name or '',
+                'last_name': user.last_name or '',
+                'email': user.email,
+                'phone': user.phone or '',
+                'title': user.job_title or '',
+                'role': user.role or 'member'
             },
             'documents_count': len(json.loads(org.documents)) if hasattr(org, 'documents') and org.documents else 0,
             'export_date': datetime.now().isoformat()
         }
-        
+
         # Create JSON file
         export_filename = f"profile_export_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
         export_path = os.path.join(UPLOAD_FOLDER, export_filename)
-        
+
         with open(export_path, 'w') as f:
             json.dump(export_data, f, indent=2, default=str)
-        
+
         return send_file(export_path, as_attachment=True, download_name=export_filename)
-        
+
     except Exception as e:
         logger.error(f"Error exporting profile: {e}")
         return jsonify({'error': str(e)}), 500
 
-@bp.route('/context', methods=['GET'])
+@bp.route('/ai-context', methods=['GET'])
 def get_ai_context():
     """Get the AI context built from profile and documents"""
     try:
         org = Organization.query.first()
         if not org:
-            return jsonify({'context': 'No organization profile available'})
-        
+            return jsonify({
+                'context': 'No organization profile available',
+                'status': 'incomplete',
+                'message': 'Please complete your organization profile first'
+            })
+
         # Build context from organization data
         context_parts = []
-        
+
         if org.name:
             context_parts.append(f"Organization: {org.name}")
-        
+
         if org.mission:
             context_parts.append(f"Mission: {org.mission}")
-        
+
         if hasattr(org, 'focus_areas') and org.focus_areas:
             areas = org.focus_areas if isinstance(org.focus_areas, list) else [org.focus_areas]
             context_parts.append(f"Focus Areas: {', '.join(areas)}")
-        
+
         if hasattr(org, 'location') and org.location:
             context_parts.append(f"Location: {org.location}")
-        
+
         if hasattr(org, 'keywords') and org.keywords:
             keywords = org.keywords if isinstance(org.keywords, list) else [org.keywords]
             context_parts.append(f"Keywords: {', '.join(keywords)}")
-        
+
         # Add document count
         if hasattr(org, 'documents') and org.documents:
             doc_count = len(json.loads(org.documents)) if isinstance(org.documents, str) else len(org.documents)
             context_parts.append(f"Supporting Documents: {doc_count} uploaded")
-        
+
         context = '\n'.join(context_parts)
-        
+
+        # Determine if profile is ready for AI matching
+        is_ready = len(context_parts) >= 4  # Need at least name, mission, focus areas, location
+
         return jsonify({
             'context': context,
-            'enhanced': len(context_parts) > 3  # Consider profile enhanced if it has more than basic info
+            'status': 'ready' if is_ready else 'incomplete',
+            'message': 'AI context is complete and ready for grant matching' if is_ready else 'Complete more profile fields for better AI matching',
+            'enhanced': len(context_parts) > 3
         })
-        
+
     except Exception as e:
         logger.error(f"Error getting AI context: {e}")
         return jsonify({'error': str(e)}), 500
